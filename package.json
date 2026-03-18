@@ -15,7 +15,7 @@
     "static-analysis": "npm run lint:eslint",
     "validate:composition": "python3 scripts/validate_master_shell.py",
     "scan:secrets": "git log --all --full-history -- '*.env' | head -5 && grep -rn 'password\\|secret\\|token\\|api_key' domains/productivity/task-tracking/src/ --include='*.js' | grep -v test || echo 'secret scan: 의심 패턴 없음'",
-    "scan:dependencies": "echo '[확인 필요] dependency scan: npm audit (의존성 추가 후) 또는 Snyk 필요' && exit 0",
+    "scan:dependencies": "python3 scripts/validate_dependency_baseline.py",
     "test:authn-authz": "node --test 'domains/**/tests/interface/**/*.test.js'",
     "test:input-validation": "node --test 'domains/**/tests/**/*.test.js'",
     "generate:sbom": "python3 scripts/generate_sbom.py",

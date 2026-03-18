@@ -159,3 +159,36 @@ worklog/core-learning-log.md
 
 - dependency scan 기준선 실동작화
 - 실제 원격 브랜치/PR 자동화 연결
+
+---
+
+## v0.3.1 - 2026-03-19 - Dependency Scan Baseline Activation
+
+### 변경 사항
+
+**dependency-scan 게이트를 placeholder에서 실동작 검증기로 전환**
+
+### 추가된 자산
+
+```
+scripts/validate_dependency_baseline.py
+```
+
+### 핵심 효과
+
+- `scan:dependencies`가 실제 검증 명령으로 동작
+- `package.json` ↔ `package-lock.json` 정합성 검증
+- runtime dependency 유입 차단
+- integrity / license 메타데이터 검증
+
+### 검증
+
+- `npm run scan:dependencies`
+- `npm run lint`
+- `npm run test:contract`
+- `npm test`
+
+### 다음 릴리즈 예정
+
+- advisory feed 연동 전략 수립
+- 실제 서버 기동 smoke 기준선 강화

@@ -100,12 +100,28 @@ npm run test:e2e-smoke
 ## 저장소 기본 공급망 검증 명령
 
 ```bash
+npm run scan:dependencies
 npm run generate:sbom
 npm run verify:provenance
 ```
 
 이 기준선은 저장소 수준에서 다음을 보장한다.
 
+1. dependency lockfile 과 package manifest 가 서로 일치한다.
+2. 현재 코어 baseline 에서는 runtime dependency 유입이 즉시 감지된다.
+3. 잠긴 패키지의 integrity/license 메타데이터가 존재한다.
+4. 실제 CI/CD 서명 체계 도입 전에도 공급망 증적이 재생성 가능하다.
+
+## 저장소 기본 dependency scan 명령
+
+```bash
+npm run scan:dependencies
+```
+
+현재 코어 기준선은 외부 CVE API 없이도 다음을 검증한다.
+
 1. SBOM 산출 경로가 고정된다.
-2. provenance evidence가 입력/출력 digest를 가진다.
-3. 실제 CI/CD 서명 체계 도입 전에도 공급망 증적이 재생성 가능하다.
+2. `package.json` 과 `package-lock.json` root metadata 가 일치한다.
+3. runtime dependency 유입이 없고, 현재는 dev tooling 만 잠겨 있다.
+4. 잠긴 패키지는 integrity 와 허용 license 정보를 가진다.
+5. 실제 advisory feed 연동은 Phase 2 에서 추가한다.

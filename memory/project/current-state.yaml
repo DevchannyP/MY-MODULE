@@ -60,7 +60,7 @@ active_modules:
       unit: "PASS (133/133 billing — 89 domain/app + 44 interface)"
       lint: "PASS (0 errors)"
       secret_scan: "PASS"
-      dependency_scan: "PASS (외부 의존 없음)"
+      dependency_scan: "PASS (lockfile baseline validator: runtime deps 0, integrity/license complete)"
       contract_test: "PASS (task-management+billing drift validator)"
       e2e_smoke: "PASS (BillingController smoke suite)"
       authn_authz: "PASS (BillingController authz regression suite)"
@@ -86,7 +86,7 @@ active_modules:
         status: "FIXED"
         fix: "null로 명시 반환"
 
-quality_gate_last_run: "2026-03-18"
+quality_gate_last_run: "2026-03-19"
 quality_gate_result: "PASS"
 quality_gate_detail:
   unit_tests: "PASS (247/247)"        # task-management 91+23 + billing 89+44 = 247
@@ -98,7 +98,7 @@ quality_gate_detail:
   type_check: "PASS (JSDoc + @ts-check boundary validator)"
   static_analysis: "PASS (ESLint 10.0.3, repo-wide domains + src + scripts, 0 errors)"
   secret_scan: "PASS"
-  dependency_scan: "PASS (runtime deps 0, dev deps 2 locked)"
+  dependency_scan: "PASS (lockfile baseline validator: runtime deps 0, direct dev deps 2, integrity/license complete)"
   authn_authz: "PASS (interface controller regression suites 2/2)"
   input_validation: "PASS (INV001~INV004 경계 강제)"
   sbom: "PASS (SPDX baseline artifact generated)"
@@ -159,5 +159,6 @@ notes: |
   2026-03-18: e2e smoke 기준선 도입 - controller-level smoke 6/6 PASS, Stage D 전체 PASS로 전환.
   2026-03-19: Git 거버넌스 기준선 도입 - ADR 0007, branch/commit/PR 규칙, learning log 템플릿, release evidence 생성기 추가.
   2026-03-19: 실제 git 흐름 적용 - 기본 브랜치를 main으로 전환하고 root baseline commit 후 작업 브랜치로 이동.
+  2026-03-19: dependency scan 기준선 실동작화 - validate_dependency_baseline.py 도입, lockfile/runtime/license/integrity 기준 PASS.
   Phase 2 잔여 조건: 실제 서버 기동 smoke, dependency scan 실검증, CI/CD release evidence 연동.
   기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.

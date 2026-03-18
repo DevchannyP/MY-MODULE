@@ -113,13 +113,24 @@ queue:
     id: "Q-110"
     track: "CORE-SECURITY"
     action: "dependency scan 기준선 실동작화"
-    done: false
+    done: true
     goal: "placeholder 상태인 dependency scan을 lockfile 기반 실검증 또는 명시적 baseline으로 전환한다."
+    result: "PASS — scan:dependencies를 lockfile/runtime/license/integrity validator로 전환하고 상태 문서와 판정 근거를 일치시켰다."
     success_criteria:
       - "`scan:dependencies`가 placeholder가 아니라 실제 점검을 수행한다"
       - "runtime/dev dependency 현황과 판정 근거가 문서/상태 파일에 일치한다"
 
   - priority: 10
+    id: "Q-112"
+    track: "CORE-SECURITY"
+    action: "advisory feed 연동 전략 수립"
+    done: false
+    goal: "오프라인 dependency baseline 다음 단계로 npm audit 또는 동등 advisory feed 연동 정책을 정한다."
+    success_criteria:
+      - "오프라인 baseline 과 온라인 advisory scan 의 역할 분리가 문서화된다"
+      - "Phase 2 연동 방식과 차단 조건이 정리된다"
+
+  - priority: 11
     id: "Q-106"
     track: "CORE-COMPOSITION"
     action: "마스터 셸 조합 규칙 강화"
@@ -130,7 +141,7 @@ queue:
       - "조합 규칙 검증 포인트가 문서 또는 스크립트로 존재한다"
       - "새 도메인 편입 시 필요한 입력이 명확해진다"
 
-  - priority: 11
+  - priority: 12
     id: "Q-107"
     track: "DOMAIN-VIDEO"
     action: "첫 확장 도메인 video 청사진 작성"
@@ -211,6 +222,11 @@ completed:
     completed_at: "2026-03-19"
     result: "ADR 0007 + git governance docs + PR template + release evidence generator baseline"
 
+  - id: "DONE-015"
+    action: "dependency scan 기준선 실동작화 (Q-110)"
+    completed_at: "2026-03-19"
+    result: "scan:dependencies PASS — lockfile/runtime/license/integrity baseline validator"
+
 active_risks:
   - ref: "memory/project/unresolved-risks.yaml"
     high_priority:
@@ -223,3 +239,4 @@ active_risks:
       - "R-PLAT-005"
       - "R-PLAT-006"
       - "R-PLAT-008"
+      - "R-PLAT-009"

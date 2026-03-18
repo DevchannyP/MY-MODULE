@@ -101,3 +101,24 @@
 - release evidence 생성기
 
 를 추가했다.
+
+## 8. dependency scan 기준선
+
+### 왜 했나
+
+문 앞에 경비원이 없으면 누가 들어왔는지 모른다.
+의존성도 마찬가지다.
+
+### 무엇을 했나
+
+- `scan:dependencies`를 placeholder 에서 실제 검증기로 바꿨다.
+- lockfile 이 잠겨 있는지
+- runtime dependency 가 새로 들어오지 않았는지
+- integrity 와 license 가 있는지
+
+를 자동으로 확인하게 했다.
+
+### 배운 점
+
+보안 검사는 꼭 인터넷과 거대한 도구가 있어야 시작되는 게 아니다.
+먼저 "내 저장소 안에서 당장 증명할 수 있는 것"부터 고정하는 게 중요하다.

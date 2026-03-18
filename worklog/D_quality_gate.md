@@ -285,6 +285,47 @@
 
 ---
 
+## 2026-03-19 - Core Platform - dependency scan 기준선 실동작화
+
+**날짜**: 2026-03-19
+**트랙**: CORE-SECURITY (Q-110)
+**범위**: package.json + package-lock.json + supply-chain docs
+**실행자**: Codex (자동화)
+
+---
+
+### 핵심 변경
+
+| 항목 | 이전 | 현재 |
+|------|------|------|
+| scan:dependencies | placeholder echo | `validate_dependency_baseline.py` 실검증 |
+| 판정 근거 | 문서 설명과 실제 명령 불일치 | lockfile/runtime/license/integrity 기준으로 일치 |
+| dependency gate | 추상적 PASS | 오프라인 재현 가능한 PASS |
+
+### 이 검증기가 보는 것
+
+- `package.json` 과 `package-lock.json` root metadata 일치 여부
+- runtime dependency 유입 여부
+- 잠긴 패키지의 `integrity` 존재 여부
+- 잠긴 패키지의 `license` 존재 여부
+- 허용된 license 집합 준수 여부
+
+### 검증 결과
+
+| 게이트 | 결과 | 상세 |
+|--------|------|------|
+| dependency-scan | **PASS** | `npm run scan:dependencies` |
+| lint | **PASS** | `npm run lint` |
+| contract-tests | **PASS** | `npm run test:contract` |
+| regression tests | **PASS** | `npm test` |
+
+### 결정
+
+- 현재 코어 dependency scan 의 1차 기준은 "오프라인 advisory 조회"가 아니라 "잠금/무결성/유입 통제"다.
+- 실제 CVE feed 연동은 다음 단계에서 추가하되, 지금은 저장소 내부에서 재현 가능한 baseline 을 먼저 고정한다.
+
+---
+
 ## 2026-03-18 - Stage D - task-management 품질 게이트 3차 판정 (ESLint 해소)
 
 **날짜**: 2026-03-18
