@@ -1,5 +1,5 @@
 # Workflow OS - 미해결 리스크 목록
-as_of: "2026-03-18"
+as_of: "2026-03-19"
 
 risks:
   - id: "R-PLAT-001"

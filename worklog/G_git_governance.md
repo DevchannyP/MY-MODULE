@@ -63,3 +63,11 @@ release evidence는 그 설명의 출발점이다.
 
 - dependency scan 기준선 실동작화
 - 실제 커밋/브랜치/PR까지 원격과 연결
+
+## 7. 이번 턴에 실제로 한 git 행동
+
+1. 로컬 작성자 이름과 이메일을 저장소에 설정했다.
+2. 기본 브랜치를 `main`으로 바꿨다.
+3. 현재 전체 저장소 상태를 root baseline commit으로 남겼다.
+4. `chore/core-git-governance-activation` 작업 브랜치를 만들었다.
+5. 이 브랜치에서 release evidence를 다시 생성해 실제 git 상태를 반영하도록 했다.

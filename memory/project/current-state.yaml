@@ -1,14 +1,14 @@
 # Workflow OS - 현재 저장소 상태
 # 갱신 시점: Stage 종료마다 반드시 갱신할 것
 
-as_of: "2026-03-18"
+as_of: "2026-03-19"
 schema_version: "0.1.0"
 
 repository:
   name: "my-module"
   purpose: "Workflow OS 코어 플랫폼 - 격리 모듈 생성·조합·검증 엔진"
   phase: "core-platform-upgrade-for-video-era"
-  scm_governance: "IN_PROGRESS (git governance docs + release evidence baseline 추가 중)"
+  scm_governance: "PASS (main baseline commit + working branch workflow activated)"
 
 stage_states:
   A: "PASS"
@@ -158,5 +158,6 @@ notes: |
   2026-03-18: authn/authz 회귀 게이트 실동작화 - test:authn-authz 추가, interface controller regression 67/67 PASS.
   2026-03-18: e2e smoke 기준선 도입 - controller-level smoke 6/6 PASS, Stage D 전체 PASS로 전환.
   2026-03-19: Git 거버넌스 기준선 도입 - ADR 0007, branch/commit/PR 규칙, learning log 템플릿, release evidence 생성기 추가.
+  2026-03-19: 실제 git 흐름 적용 - 기본 브랜치를 main으로 전환하고 root baseline commit 후 작업 브랜치로 이동.
   Phase 2 잔여 조건: 실제 서버 기동 smoke, dependency scan 실검증, CI/CD release evidence 연동.
   기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.

@@ -1,8 +1,8 @@
 {
-  "generated_at_utc": "2026-03-18T15:19:54.322767+00:00",
+  "generated_at_utc": "2026-03-18T15:23:41.295065+00:00",
   "repository": "my-module",
-  "branch": "master",
-  "head_commit": "UNAVAILABLE",
+  "branch": "chore/core-git-governance-activation",
+  "head_commit": "7cdd24ebdbd4b0eb43f0396b2e702a2e81c4b56a",
   "last_completed_stage": "D(4차)",
   "quality_gate_result": "PASS",
   "next_action": {

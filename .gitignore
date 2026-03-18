@@ -9,6 +9,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Python
+__pycache__/
+*.pyc
+
 # 빌드 산출물
 dist/
 build/
