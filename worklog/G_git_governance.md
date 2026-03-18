@@ -71,3 +71,15 @@ release evidence는 그 설명의 출발점이다.
 3. 현재 전체 저장소 상태를 root baseline commit으로 남겼다.
 4. `chore/core-git-governance-activation` 작업 브랜치를 만들었다.
 5. 이 브랜치에서 release evidence를 다시 생성해 실제 git 상태를 반영하도록 했다.
+
+## 8. branch protection 기준선이 왜 필요한가
+
+문서를 쉽게 말하면 "창고 문 사용 설명서"이고,
+branch protection 은 "창고 문 실제 자물쇠"다.
+
+둘 중 하나만 있으면 부족하다.
+
+- 설명서만 있고 자물쇠가 없으면 아무나 들어갈 수 있다.
+- 자물쇠만 있고 설명서가 없으면 다른 프로젝트가 같은 문을 만들기 어렵다.
+
+그래서 이번 기준선은 자물쇠 규칙을 저장소 안에 글로 남기는 작업이다.

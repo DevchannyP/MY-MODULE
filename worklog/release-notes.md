@@ -228,3 +228,38 @@ scripts/validate_advisory_policy.py
 
 - GitHub branch protection 기준선 정리
 - 실제 서버 기동 smoke 기준선 강화
+
+---
+
+## v0.3.3 - 2026-03-19 - GitHub Branch Protection Baseline
+
+### 변경 사항
+
+**GitHub 원격 보호 규칙의 저장소 내부 기준선을 policy file 과 validator 로 고정**
+
+### 추가된 자산
+
+```
+docs/adr/0009-github-branch-protection-baseline.md
+docs/reference/github-branch-protection.md
+artifacts/github/branch-protection-policy.yaml
+scripts/validate_branch_protection_policy.py
+```
+
+### 핵심 효과
+
+- `main` 보호 규칙 고정
+- required checks 목록 고정
+- PR 템플릿과 Git 흐름 문서에 required checks 반영
+- branch protection 정책 자체를 검증하는 명령 추가
+
+### 검증
+
+- `npm run check:branch-protection-policy`
+- `npm run lint`
+- `npm test`
+
+### 다음 릴리즈 예정
+
+- 실제 서버 기동 smoke 기준선 강화
+- GitHub 원격 설정 점검 절차 구체화

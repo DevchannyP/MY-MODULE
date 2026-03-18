@@ -100,6 +100,7 @@ quality_gate_detail:
   secret_scan: "PASS"
   dependency_scan: "PASS (lockfile baseline validator: runtime deps 0, direct dev deps 2, integrity/license complete)"
   advisory_policy: "PASS (offline/online split + blocking policy baseline)"
+  branch_protection_policy: "PASS (main protection + required checks baseline)"
   authn_authz: "PASS (interface controller regression suites 2/2)"
   input_validation: "PASS (INV001~INV004 경계 강제)"
   sbom: "PASS (SPDX baseline artifact generated)"
@@ -162,5 +163,6 @@ notes: |
   2026-03-19: 실제 git 흐름 적용 - 기본 브랜치를 main으로 전환하고 root baseline commit 후 작업 브랜치로 이동.
   2026-03-19: dependency scan 기준선 실동작화 - validate_dependency_baseline.py 도입, lockfile/runtime/license/integrity 기준 PASS.
   2026-03-19: advisory feed 전략 기준선 도입 - ADR 0008, advisory policy file, policy validator 추가.
+  2026-03-19: branch protection 기준선 도입 - ADR 0009, branch protection policy file, validator, PR required checks 반영.
   Phase 2 잔여 조건: 실제 서버 기동 smoke, dependency scan 실검증, CI/CD release evidence 연동.
   기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.

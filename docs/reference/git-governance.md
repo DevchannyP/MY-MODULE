@@ -39,6 +39,7 @@ PR에는 아래 내용이 빠지면 안 된다.
 3. 검증 명령
 4. memory/worklog 동기화 여부
 5. 위험과 rollback 포인트
+6. branch protection required checks 충족 여부
 
 ## 3. 작업 단위 커밋이 중요한 이유
 
@@ -60,6 +61,7 @@ Git 커밋도 같다.
 - current-state / next-actions / risks가 업데이트됐는가
 - worklog에 이유와 검증이 남았는가
 - release evidence를 생성했는가
+- branch protection required checks 목록이 최신인가
 
 ## 5. 권장 흐름
 

@@ -1,0 +1,20 @@
+version: "0.1.0"
+target_branch: "main"
+enforcement:
+  direct_push: false
+  pull_request_required: true
+  minimum_approvals: 1
+  dismiss_stale_reviews: true
+  force_push: false
+  branch_deletion: false
+required_checks:
+  - "lint"
+  - "test:contract"
+  - "type-check"
+  - "test"
+  - "scan:dependencies"
+  - "check:advisory-policy"
+  - "generate:release-evidence"
+notes:
+  remote_configuration_owner: "GitHub repository settings"
+  repository_baseline_owner: "Workflow OS core repository"

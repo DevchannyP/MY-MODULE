@@ -14,6 +14,9 @@
 - [ ] `npm run test:contract`
 - [ ] `npm run type-check`
 - [ ] `npm test`
+- [ ] `npm run scan:dependencies`
+- [ ] `npm run check:advisory-policy`
+- [ ] `npm run check:branch-protection-policy`
 - [ ] `npm run generate:release-evidence`
 
 ## 코어 일관성 점검

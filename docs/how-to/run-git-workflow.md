@@ -43,6 +43,9 @@ npm run lint
 npm run test:contract
 npm run type-check
 npm test
+npm run scan:dependencies
+npm run check:advisory-policy
+npm run check:branch-protection-policy
 npm run generate:release-evidence
 ```
 
@@ -58,3 +61,10 @@ git push -u origin feat/core-release-evidence
 2. 어떤 위험을 줄였는가
 3. 어떤 검증을 통과했는가
 4. 다음 작업은 무엇인가
+
+## 7. GitHub branch protection 확인 항목
+
+1. `main` direct push 가 막혀 있는가
+2. 최소 1회 review 가 필요한가
+3. required checks 가 policy file 과 같은가
+4. force push 와 branch deletion 이 막혀 있는가
