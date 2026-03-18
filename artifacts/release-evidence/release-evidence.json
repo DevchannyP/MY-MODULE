@@ -1,14 +1,14 @@
 {
-  "generated_at_utc": "2026-03-18T15:41:02.296321+00:00",
+  "generated_at_utc": "2026-03-18T15:46:03.060581+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "9691b05ee089de3769d14cd373703aa28a0aa4c2",
+  "head_commit": "345c30cab7c6a86fdc72d0a4b6e0659c3c9343cb",
   "last_completed_stage": "D(4차)",
   "quality_gate_result": "PASS",
   "next_action": {
-    "priority": "11",
-    "id": "Q-113",
-    "track": "CORE-OPERATIONS",
-    "action": "GitHub branch protection 기준선 정리"
+    "priority": "12",
+    "id": "Q-114",
+    "track": "CORE-QUALITY",
+    "action": "실제 서버 기동 smoke 기준선 강화"
   }
 }
