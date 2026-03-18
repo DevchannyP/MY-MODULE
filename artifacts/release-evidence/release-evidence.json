@@ -1,14 +1,14 @@
 {
-  "generated_at_utc": "2026-03-18T15:23:41.295065+00:00",
+  "generated_at_utc": "2026-03-18T15:33:35.323488+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "7cdd24ebdbd4b0eb43f0396b2e702a2e81c4b56a",
+  "head_commit": "4e6743715b4ae6ec99a2edac885a57f5d0a46fd2",
   "last_completed_stage": "D(4차)",
   "quality_gate_result": "PASS",
   "next_action": {
-    "priority": "9",
-    "id": "Q-110",
+    "priority": "10",
+    "id": "Q-112",
     "track": "CORE-SECURITY",
-    "action": "dependency scan 기준선 실동작화"
+    "action": "advisory feed 연동 전략 수립"
   }
 }
