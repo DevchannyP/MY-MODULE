@@ -1,0 +1,36 @@
+# Workflow OS - 비기능 요구사항 (Non-Functional Requirements)
+version: "0.1.0"
+last_updated: "2026-03-17"
+
+performance:
+  api_latency_p50_ms: 100
+  api_latency_p99_ms: 200
+  ui_first_contentful_paint_ms: 1500
+  ui_time_to_interactive_ms: 3000
+
+reliability:
+  availability_percent: 99.9
+  rpo_minutes: 60     # Recovery Point Objective
+  rto_minutes: 30     # Recovery Time Objective
+  error_budget_percent: 0.1
+
+security:
+  auth: "모든 API 엔드포인트는 인증 필요 (예외는 ADR로 정당화)"
+  authz: "최소 권한 원칙 적용"
+  secrets: "코드/로그/환경변수에 시크릿 하드코딩 금지"
+  dependency_scan: "알려진 CVE가 있는 의존성 사용 금지 (High/Critical)"
+
+observability:
+  metrics: "핵심 비즈니스 지표 + RED 지표(Rate, Error, Duration) 필수"
+  tracing: "분산 추적 필수 (trace-id 전파)"
+  logging: "구조화 로그 (JSON) + 컨텍스트 ID 포함"
+  alerting: "SLO 위반 시 자동 알림"
+
+supply_chain:
+  sbom: "SPDX 또는 CycloneDX 형식 SBOM 필수"
+  provenance: "빌드 증명 (SLSA Level 1 이상)"
+  dependency_pinning: "의존성 버전 고정 필수"
+
+scalability:
+  horizontal_scaling: "stateless 설계 권장"
+  data_partitioning: "[확인 필요] 도메인별 파티셔닝 전략 수립 필요"

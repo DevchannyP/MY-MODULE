@@ -1,0 +1,225 @@
+# Workflow OS - 다음 실행 큐
+# 모든 자동 작업은 current-state.yaml → core-upgrade-plan.yaml → unresolved-risks.yaml →
+# next-actions.yaml 순서로 읽고 우선순위를 결정한다.
+as_of: "2026-03-18"
+current_phase: "core-platform-upgrade-for-video-era"
+strategy_ref: "memory/project/core-upgrade-plan.yaml"
+
+execution_policy:
+  mode: "continuous-safe-upgrade"
+  principles:
+    - "코드 직접 참조가 아닌 계약 중심 조합을 유지한다."
+    - "완료 선언 전 관련 품질 게이트를 직접 실행한다."
+    - "구조 판단은 ADR 또는 memory 업데이트 없이 지나가지 않는다."
+    - "사용자 변경사항은 되돌리지 않는다."
+    - "한 턴에서 안전하게 끝낼 수 있는 범위는 연속 처리한다."
+
+queue:
+  - priority: 1
+    id: "Q-101"
+    track: "CORE-QUALITY"
+    action: "저장소 전역 품질 게이트 범위 정렬"
+    done: true
+    goal: "task-management에 편중된 lint/static-analysis 범위를 billing, master-shell, src까지 확장한다."
+    result: "PASS — lint/static-analysis를 domains+src+scripts 범위로 확장하고 숨겨진 ESLint 오류 8건을 해소했다."
+    deliverables:
+      - "package.json 스크립트 정비"
+      - "도메인별 또는 전역 lint 실행 경로 확정"
+      - "worklog/D_quality_gate.md 후속 기록"
+    success_criteria:
+      - "주요 소스 경로가 공통 스크립트로 검증된다"
+      - "기존 PASS 상태를 깨지 않는다"
+
+  - priority: 2
+    id: "Q-102"
+    track: "CORE-QUALITY"
+    action: "타입 안정성 기본선 도입"
+    done: true
+    goal: "TypeScript 전환 전 단계로 JSDoc+tsc 또는 동등한 타입 점검 체계를 도입한다."
+    dependencies: ["Q-101"]
+    result: "PASS — JSDoc + @ts-check 호환 경계 문서화와 type boundary validator 도입, type-check PASS."
+    success_criteria:
+      - "type-check 스크립트가 의미 있는 검증을 수행한다"
+      - "도메인 코어의 주요 포트/엔티티에 최소 타입 경계가 생긴다"
+
+  - priority: 3
+    id: "Q-103"
+    track: "CORE-CONTRACT"
+    action: "계약 테스트 하네스 추가"
+    done: true
+    goal: "openapi/ui/capability 계약과 구현 사이의 드리프트를 자동으로 감지한다."
+    result: "PASS — test:contract 도입, task-management 응답 계약 드리프트 2건 수정, task-management+billing 교차 검증 PASS."
+    dependencies: ["Q-101"]
+    success_criteria:
+      - "contract-tests가 NOT_CONFIGURED에서 벗어난다"
+      - "최소 1개 도메인에 대한 계약 검증 경로가 동작한다"
+
+  - priority: 4
+    id: "Q-104"
+    track: "CORE-OPERATIONS"
+    action: "관측성/롤백/플래그 운영 기준선 문서화 및 스캐폴딩"
+    done: true
+    goal: "마스터 셸과 각 도메인에 공통 적용할 운영 표준을 만든다."
+    result: "PASS — check:observability/test:rollback 실동작화, rollback playbook 추가, observability/flag baseline 구조화."
+    success_criteria:
+      - "observability/rollback/feature flag 기준이 문서와 설정에 반영된다"
+      - "NOT_CONFIGURED 항목 해소에 필요한 최소 스캐폴딩이 생긴다"
+
+  - priority: 5
+    id: "Q-105"
+    track: "CORE-SUPPLY-CHAIN"
+    action: "SBOM/Provenance 기본선 수립"
+    done: true
+    goal: "향후 자동화 파이프라인에서 공급망 증적을 남길 수 있는 저장소 규약을 만든다."
+    result: "PASS — SPDX SBOM 산출물과 deterministic provenance evidence baseline 도입."
+    success_criteria:
+      - "SBOM 산출 위치와 명령이 정해진다"
+      - "provenance/rollback 검증 흐름이 문서화된다"
+
+  - priority: 6
+    id: "Q-108"
+    track: "CORE-SECURITY"
+    action: "authn-authz 회귀 게이트 실동작화"
+    done: true
+    goal: "현재 존재하는 controller authz regression 테스트를 독립 게이트 명령으로 승격한다."
+    result: "PASS — test:authn-authz를 tests/interface 독립 게이트로 승격, task-management+billing interface suites PASS."
+    success_criteria:
+      - "`test:authn-authz`가 placeholder가 아니라 실제 검증을 수행한다"
+      - "task-management와 billing 모두 포함한다"
+
+  - priority: 7
+    id: "Q-109"
+    track: "CORE-QUALITY"
+    action: "e2e smoke 기준선 스캐폴딩"
+    done: true
+    goal: "HTTP 인터페이스 계층 기준 최소 smoke 검증 경로를 만든다."
+    result: "PASS — test:e2e-smoke를 controller-level smoke 게이트로 도입, 성공/403/404 기준선 suites 2/2, scenarios 6 PASS."
+    success_criteria:
+      - "`test:e2e-smoke`가 최소 인터페이스 smoke를 수행한다"
+      - "핵심 경로 성공/404/권한 실패를 빠르게 검증한다"
+
+  - priority: 8
+    id: "Q-111"
+    track: "CORE-OPERATIONS"
+    action: "git 브랜치 전략 및 release evidence 기준선 수립"
+    done: true
+    goal: "코어 저장소와 다른 프로젝트를 연결할 수 있는 형상관리 규칙과 근거 파일을 저장소 안에 고정한다."
+    result: "PASS — ADR 0007, git governance docs, PR template, learning log template, release evidence generator baseline 추가."
+    success_criteria:
+      - "기본 브랜치와 작업 브랜치 규칙이 문서화된다"
+      - "PR 체크리스트와 release evidence 경로가 정해진다"
+
+  - priority: 9
+    id: "Q-110"
+    track: "CORE-SECURITY"
+    action: "dependency scan 기준선 실동작화"
+    done: false
+    goal: "placeholder 상태인 dependency scan을 lockfile 기반 실검증 또는 명시적 baseline으로 전환한다."
+    success_criteria:
+      - "`scan:dependencies`가 placeholder가 아니라 실제 점검을 수행한다"
+      - "runtime/dev dependency 현황과 판정 근거가 문서/상태 파일에 일치한다"
+
+  - priority: 10
+    id: "Q-106"
+    track: "CORE-COMPOSITION"
+    action: "마스터 셸 조합 규칙 강화"
+    done: true
+    goal: "plugin registry, navigation, catalog, feature flag 간의 일관성 검사를 자동화한다."
+    result: "PASS — validate:composition 스크립트 도입, observability 참조 누락 1건 수정, master-shell 조합 정합성 PASS."
+    success_criteria:
+      - "조합 규칙 검증 포인트가 문서 또는 스크립트로 존재한다"
+      - "새 도메인 편입 시 필요한 입력이 명확해진다"
+
+  - priority: 11
+    id: "Q-107"
+    track: "DOMAIN-VIDEO"
+    action: "첫 확장 도메인 video 청사진 작성"
+    done: false
+    goal: "video 도메인 온보딩을 위한 requirements/glossary/domain-map/contract 전략 초안을 만든다."
+    dependencies: ["Q-101", "Q-106"]
+    success_criteria:
+      - "video 도메인 요구사항 초안이 존재한다"
+      - "Stage A 진입 조건과 위험도가 명확하다"
+
+completed:
+  - id: "DONE-001"
+    action: "Workflow OS 저장소 뼈대 초기화"
+    completed_at: "2026-03-17"
+
+  - id: "DONE-002"
+    action: "task-management 도메인 Stage A~E 구현 및 검증"
+    completed_at: "2026-03-18"
+    result: "TaskController 포함, authz regression 23/23 PASS"
+
+  - id: "DONE-003"
+    action: "billing 도메인 Stage A~E 구현 및 검증"
+    completed_at: "2026-03-18"
+    result: "BillingController 포함, authz regression 44/44 PASS"
+
+  - id: "DONE-004"
+    action: "ESLint 도입 및 정적 분석 기준선 수립"
+    completed_at: "2026-03-18"
+    result: "task-management static-analysis PASS"
+
+  - id: "DONE-005"
+    action: "설명 문서 확장"
+    completed_at: "2026-03-18"
+    result: "boundary-and-contracts.md, composition-and-shell.md 추가"
+
+  - id: "DONE-006"
+    action: "코어 전역 품질 게이트 범위 정렬 (Q-101)"
+    completed_at: "2026-03-18"
+    result: "repo-wide lint/static-analysis PASS — domains+src+scripts 기준선 확립"
+
+  - id: "DONE-007"
+    action: "마스터 셸 조합 규칙 자동 검증 (Q-106)"
+    completed_at: "2026-03-18"
+    result: "validate:composition PASS — registry/nav/catalog/flags/observability 교차 검증 기준선 수립"
+
+  - id: "DONE-008"
+    action: "계약 드리프트 검증 하네스 구축 (Q-103)"
+    completed_at: "2026-03-18"
+    result: "test:contract PASS — capability/ui/openapi/events/interface 교차 검증 기준선 수립"
+
+  - id: "DONE-009"
+    action: "타입 안정성 기본선 도입 (Q-102)"
+    completed_at: "2026-03-18"
+    result: "type-check PASS — core boundary files에 JSDoc + @ts-check 기준선 수립"
+
+  - id: "DONE-010"
+    action: "운영 기준선 스캐폴딩 (Q-104)"
+    completed_at: "2026-03-18"
+    result: "observability-check/test:rollback PASS — 구조화된 운영 baseline 수립"
+
+  - id: "DONE-011"
+    action: "공급망 기준선 수립 (Q-105)"
+    completed_at: "2026-03-18"
+    result: "generate:sbom/verify:provenance PASS — 공급망 증적 baseline 수립"
+
+  - id: "DONE-012"
+    action: "authn/authz 회귀 게이트 실동작화 (Q-108)"
+    completed_at: "2026-03-18"
+    result: "test:authn-authz PASS — interface controller regression suites 2/2"
+
+  - id: "DONE-013"
+    action: "e2e smoke 기준선 스캐폴딩 (Q-109)"
+    completed_at: "2026-03-18"
+    result: "test:e2e-smoke PASS — controller-level smoke 6/6"
+
+  - id: "DONE-014"
+    action: "git 브랜치 전략 및 release evidence 기준선 수립 (Q-111)"
+    completed_at: "2026-03-19"
+    result: "ADR 0007 + git governance docs + PR template + release evidence generator baseline"
+
+active_risks:
+  - ref: "memory/project/unresolved-risks.yaml"
+    high_priority:
+      - "R-PLAT-007"
+    medium_priority:
+      - "R-PLAT-001"
+      - "R-PLAT-002"
+      - "R-PLAT-003"
+      - "R-PLAT-004"
+      - "R-PLAT-005"
+      - "R-PLAT-006"
+      - "R-PLAT-008"

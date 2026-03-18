@@ -1,0 +1,90 @@
+# Master Shell - Observability 설정
+version: "0.2.0"
+last_updated: "2026-03-18"
+
+dashboards:
+  - id: "task-management-dashboard"
+    name: "작업 관리 대시보드"
+    description: "작업 생성·완료율, 상태 전이 빈도, API 응답시간(RED 지표) 모니터링"
+    url: "dashboard://workflow-os/task-management-overview"
+    plugin_id: "task-management-plugin"
+    metrics:
+      - name: "작업 생성 수 (일별)"
+        type: "rate"
+        source: "TaskCreated 이벤트"
+      - name: "작업 완료율 (%)"
+        type: "ratio"
+        source: "TaskStatusChanged(DONE) / TaskCreated"
+      - name: "API 응답시간 p99"
+        type: "duration"
+        source: "openapi.yaml 엔드포인트"
+      - name: "API 오류율 (%)"
+        type: "error"
+        source: "HTTP 5xx 비율"
+      - name: "상태 전이 실패 수"
+        type: "count"
+        source: "transition-task-status 4xx 응답"
+
+  - id: "billing-dashboard"
+    name: "정산관리 대시보드"
+    description: "인보이스 전이, 결제 추적, 정산 예외 처리 상태를 모니터링"
+    url: "dashboard://workflow-os/billing-overview"
+    plugin_id: "billing-plugin"
+    metrics:
+      - name: "인보이스 생성 수 (일별)"
+        type: "rate"
+        source: "InvoiceCreated 이벤트"
+      - name: "결제 실패율 (%)"
+        type: "error"
+        source: "payment sync 실패 비율"
+      - name: "정산 예외 OPEN 건수"
+        type: "count"
+        source: "billing.exception 상태 집계"
+      - name: "승인 API 응답시간 p99"
+        type: "duration"
+        source: "billing openapi approve/reject endpoint"
+
+alert_groups:
+  - id: "task-management-alerts"
+    name: "작업 관리 알림"
+    plugin_id: "task-management-plugin"
+    channel: "alert://workflow-os/task-management"
+    rules:
+      - name: "API 오류율 초과"
+        condition: "error_rate > 1% (5분 평균)"
+        severity: "warning"
+      - name: "p99 응답시간 초과"
+        condition: "latency_p99 > 200ms (nfr.yaml 기준)"
+        severity: "warning"
+      - name: "가용성 하락"
+        condition: "availability < 99.9% (1시간 평균)"
+        severity: "critical"
+
+  - id: "billing-alerts"
+    name: "정산관리 알림"
+    plugin_id: "billing-plugin"
+    channel: "alert://workflow-os/billing"
+    rules:
+      - name: "정산 예외 급증"
+        condition: "open_exceptions > 20 (15분 평균)"
+        severity: "warning"
+      - name: "결제 실패율 초과"
+        condition: "payment_error_rate > 1% (5분 평균)"
+        severity: "critical"
+      - name: "승인 권한 오류 발생"
+        condition: "billing_authz_error_count > 0"
+        severity: "critical"
+
+global_settings:
+  tracing_enabled: true
+  metrics_enabled: true
+  logging_enabled: true
+  sampling_rate: 0.1
+  log_format: "json"
+  required_log_fields:
+    - "timestamp"
+    - "level"
+    - "service"
+    - "trace_id"
+    - "span_id"
+    - "message"

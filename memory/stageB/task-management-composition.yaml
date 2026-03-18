@@ -1,0 +1,142 @@
+# Stage B Memory - task-management 조합
+# 생성일: 2026-03-17
+# 조합기와 마스터 UI는 코드보다 이 파일을 먼저 읽는다.
+
+module_id: "task-management"
+stage_a_memory_ref: "memory/stageA/task-management.yaml"
+
+# ── 1. 외부 계약 의존 ────────────────────────────────────────────────────
+depends_on_contracts: []
+# task-management는 현재 다른 도메인 계약에 의존하지 않는다.
+# 미래에 identity/auth 도메인 assignee 검증을 위임할 경우:
+#   - path: "domains/identity/auth/contract/capability.yaml"
+#     module_id: "auth-management"
+#     capability_ids: ["verify-user-identity"]
+#     type: "capability"
+# → 추가 시 Stage A 재실행 없이 Stage B 재실행으로 처리 가능.
+# → 단, auth 모듈이 Stage A PASS 상태여야 한다.
+
+# ── 2. 이 모듈이 제공하는 계약 ───────────────────────────────────────────
+provides_contracts:
+  - path: "domains/productivity/task-tracking/contract/capability.yaml"
+    type: "capability"
+    capabilities:
+      - "create-task"
+      - "get-task"
+      - "list-tasks"
+      - "transition-task-status"
+      - "reassign-task"
+  - path: "domains/productivity/task-tracking/contract/ui-contract.yaml"
+    type: "ui"
+    screens: ["task-list", "task-detail", "task-create"]
+  - path: "domains/productivity/task-tracking/contract/openapi.yaml"
+    type: "http"
+  - path: "domains/productivity/task-tracking/contract/events.schema.json"
+    type: "events"
+    events_emitted: ["TaskCreated", "TaskStatusChanged", "TaskReassigned"]
+
+# ── 3. 화면 조합 ─────────────────────────────────────────────────────────
+screen_composition:
+  - screen_id: "task-list"
+    name: "작업 목록 화면"
+    route: "/tasks"
+    capabilities_used: ["list-tasks"]
+    depends_on_modules: []
+    data_flow:
+      - "list-tasks capability 호출 → 작업 목록 렌더링"
+      - "필터(상태/담당자) 변경 → list-tasks 재호출"
+      - "목록 행 클릭 → task-detail 화면으로 이동 (task_id 전달)"
+
+  - screen_id: "task-detail"
+    name: "작업 상세 화면"
+    route: "/tasks/:task_id"
+    capabilities_used: ["get-task", "transition-task-status", "reassign-task"]
+    depends_on_modules: []
+    data_flow:
+      - "진입 시 get-task capability 호출 → 작업 정보 렌더링"
+      - "'작업 시작' 버튼 → transition-task-status(IN_PROGRESS) → get-task 재호출"
+      - "'완료 처리' 버튼 → transition-task-status(DONE) → 버튼 비활성화"
+      - "'취소' 버튼 → transition-task-status(CANCELLED) → 상태 업데이트"
+      - "'담당자 변경' → reassign-task → get-task 재호출"
+    visibility_rules:
+      - "'작업 시작' 버튼: status == PENDING 일 때만 표시"
+      - "'완료 처리' 버튼: status == IN_PROGRESS 일 때만 표시"
+      - "'취소' 버튼: status in [PENDING, IN_PROGRESS] 일 때만 표시"
+
+  - screen_id: "task-create"
+    name: "작업 생성 화면"
+    route: "/tasks/new"
+    capabilities_used: ["create-task"]
+    depends_on_modules: []
+    data_flow:
+      - "폼 제출 → create-task capability 호출"
+      - "성공 → task-detail 화면으로 이동 (생성된 task_id 전달)"
+      - "'취소' → task-list 화면으로 이동"
+    validation_rules:
+      - "title: 필수, 1~200자"
+      - "assignee_id: 필수"
+      - "due_date: 선택, 오늘 이후여야 함 (INV003 클라이언트 사전 검증)"
+
+# ── 4. 화면 탐색 흐름 (Navigation Flow) ─────────────────────────────────
+navigation_flow:
+  entry: "/tasks"
+  flows:
+    - from: "task-list"
+      to: "task-detail"
+      trigger: "목록 행 클릭"
+    - from: "task-list"
+      to: "task-create"
+      trigger: "'새 작업 만들기' 버튼"
+    - from: "task-detail"
+      to: "task-list"
+      trigger: "뒤로 가기 또는 완료/취소 후 자동 이동"
+    - from: "task-create"
+      to: "task-detail"
+      trigger: "생성 성공 시 자동 이동"
+    - from: "task-create"
+      to: "task-list"
+      trigger: "'취소' 버튼"
+
+# ── 5. 공유 라이브러리 ────────────────────────────────────────────────────
+shared_libs: []
+# 현재 공유 라이브러리 없음.
+# 추가 필요 시 반드시 ADR로 정당화 후 여기에 등록.
+# 공유 라이브러리는 도메인 코어에 의존성을 갖지 않아야 한다.
+
+# ── 6. 적용된 조합 정책 ──────────────────────────────────────────────────
+composition_policy_applied:
+  - "C001: 모듈 간 직접 코드 참조 없음 (depends_on_contracts: [] 확인)"
+  - "C002: 도메인 코어는 UI/DB/프레임워크를 import하지 않도록 src/domain/ 분리 계획"
+  - "ui-contract.yaml capabilities_required가 capability.yaml의 실제 capability ID와 일치 확인"
+  - "화면 권한(ui-contract permissions)이 Stage A 권한 모델(task-owner/task-viewer)과 일치 확인"
+
+# ── 7. 계약 정합성 검증 결과 ─────────────────────────────────────────────
+contract_consistency_check:
+  ui_vs_capability:
+    - screen: "task-list"
+      required: ["list-tasks"]
+      exists_in_capability: true
+    - screen: "task-detail"
+      required: ["get-task", "transition-task-status", "reassign-task"]
+      exists_in_capability: true
+    - screen: "task-create"
+      required: ["create-task"]
+      exists_in_capability: true
+  permission_consistency:
+    - role: "task-owner"
+      ui_contract_screens: ["task-list", "task-detail", "task-create"]
+      stageA_permissions: ["create-task", "get-task", "list-tasks", "transition-task-status", "reassign-task"]
+      consistent: true
+    - role: "task-viewer"
+      ui_contract_screens: ["task-list", "task-detail"]
+      stageA_permissions: ["get-task", "list-tasks"]
+      consistent: true
+
+completed_at: "2026-03-17"
+gate_result: "PASS"
+gate_failures: []
+notes: |
+  - 외부 의존 없는 단순 조합. 단일 bounded context 자기완결.
+  - assignee_id 검증은 현재 capability precondition 텍스트로만 명시.
+    추후 identity 도메인 연동 시 depends_on_contracts에 추가 필요 (Stage B 재실행).
+  - enable_bulk_assign: false 플래그는 Stage C에서 처리.

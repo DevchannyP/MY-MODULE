@@ -1,0 +1,52 @@
+# Master Shell - Navigation
+# 마스터 UI 포털의 메뉴 구조
+# 기술 용어 금지. 도메인 언어만 사용.
+version: "0.2.0"
+last_updated: "2026-03-18"
+
+navigation_groups:
+  - id: "productivity"
+    label: "생산성 관리"              # 도메인 포털 메뉴 그룹 이름
+    icon: "briefcase"
+    order: 1
+    items:
+      - plugin_id: "task-management-plugin"
+        label: "작업 관리"            # 도메인 언어. 사용자가 보는 메뉴 이름.
+        route: "/tasks"
+        feature_flag: "enable_task_management"
+        # feature_flag: false → 메뉴 미노출.
+        # Stage D PASS + flag: true 전환 후 노출.
+
+  - id: "billing"
+    label: "정산"
+    icon: "receipt"
+    order: 2
+    items:
+      - plugin_id: "billing-plugin"
+        label: "정산관리 홈"
+        route: "/billing"
+        feature_flag: "billing.enabled"
+      - plugin_id: "billing-plugin"
+        label: "인보이스 목록"
+        route: "/billing/invoices"
+        feature_flag: "billing.invoice.enabled"
+      - plugin_id: "billing-plugin"
+        label: "결제상태 추적"
+        route: "/billing/payments"
+        feature_flag: "billing.payment.enabled"
+      - plugin_id: "billing-plugin"
+        label: "정산 예외처리"
+        route: "/billing/exceptions"
+        feature_flag: "billing.exception.enabled"
+        required_permission: "billing.admin"
+
+# ── 탐색 구조 설명 ──────────────────────────────────────────────────────
+# 생산성 관리
+#   └─ 작업 관리  (/tasks)          ← enable_task_management: true 시 표시
+#        ├─ 작업 목록 (/tasks)
+#        ├─ 작업 상세 (/tasks/:id)
+#        └─ 새 작업 만들기 (/tasks/new)
+#
+# 추가 그룹 예시 (미래 확장):
+# - id: "hr"
+#   label: "인사 관리"

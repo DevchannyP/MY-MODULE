@@ -1,0 +1,536 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/requirements.schema.json",
+  "title": "Workflow OS — Domain Requirements Schema",
+  "description": "DOMAIN_TEMPLATE.yaml 검증 스키마 (JSON Schema 2020-12). Stage A 진입 전 반드시 통과해야 한다.",
+  "type": "object",
+
+  "$defs": {
+    "severityLevel": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2", "P3"],
+      "description": "P0=즉시수정(불변조건위반), P1=계약·보안오류, P2=구현갭, P3=구조개선"
+    },
+    "riskLevel": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "description": "LOW=보조기능, MEDIUM=운영영향, HIGH=금전간접·핵심PII, CRITICAL=금전직접·규제직적용"
+    },
+    "stageId": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "E"],
+      "description": "A=격리모듈생성, B=도메인조합, C=마스터UI편입, D=품질게이트, E=적대적검증"
+    },
+    "enforcementLayer": {
+      "type": "string",
+      "enum": ["domain-entity", "use-case", "repository", "ui"],
+      "description": "불변조건이 강제되는 아키텍처 레이어"
+    },
+    "moneyField": {
+      "type": "object",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "number", "exclusiveMinimum": 0 },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3, "pattern": "^[A-Z]{3}$" }
+      },
+      "additionalProperties": false
+    },
+    "invariantEntry": {
+      "type": "object",
+      "required": ["id", "description", "severity"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z]{2,8}-[A-Z]?[0-9]{3,4}$",
+          "description": "유니크 ID — 도메인 접두사 권장 (예: INV-B001, INV-HR001)"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "description": "한 문장으로 명확하게. 주어+술어 필수."
+        },
+        "severity": { "$ref": "#/$defs/severityLevel" },
+        "enforcement": { "$ref": "#/$defs/enforcementLayer" },
+        "test_required": { "type": "boolean", "default": true },
+        "audit_required": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "permissionRole": {
+      "type": "object",
+      "required": ["id", "description", "actions"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$",
+          "description": "도메인 접두사 포함 (예: billing.read, hr.admin)"
+        },
+        "description": { "type": "string" },
+        "actions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "audit_all_actions": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "screenEntry": {
+      "type": "object",
+      "required": ["id", "path", "title", "required_permission"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "path": { "type": "string", "pattern": "^/", "description": "절대 경로 (/ 시작)" },
+        "title": { "type": "string" },
+        "required_permission": { "type": "string" },
+        "must": { "type": "array", "items": { "type": "string" } },
+        "should": { "type": "array", "items": { "type": "string" } },
+        "must_not": { "type": "array", "items": { "type": "string" } },
+        "conditional_fields": { "type": "array" }
+      },
+      "additionalProperties": false
+    },
+    "domainEventEntry": {
+      "type": "object",
+      "required": ["name", "trigger", "payload"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][a-zA-Z]+$",
+          "description": "PascalCase (예: InvoicePaid, EmployeeHired)"
+        },
+        "trigger": { "type": "string" },
+        "payload": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "subscribers": { "type": "array", "items": { "type": "string" } },
+        "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "idempotent": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "stateMachineEntry": {
+      "type": "object",
+      "required": ["entity", "states", "initial_state"],
+      "properties": {
+        "entity": { "type": "string" },
+        "states": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+        "initial_state": { "type": "string" },
+        "terminal_states": { "type": "array", "items": { "type": "string" } },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "array", "items": { "type": "string" } },
+              "requires_permission": { "type": "string" },
+              "requires_approval": { "type": "boolean" },
+              "audit": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "sloDefinition": {
+      "type": "object",
+      "properties": {
+        "availability": {
+          "type": "object",
+          "properties": {
+            "target_percent": { "type": "number", "minimum": 90, "maximum": 100 },
+            "measurement_window": { "type": "string", "pattern": "^[0-9]+[dhm]$" }
+          }
+        },
+        "latency": {
+          "type": "object",
+          "properties": {
+            "p50_ms":  { "type": "number", "minimum": 0 },
+            "p99_ms":  { "type": "number", "minimum": 0 },
+            "p999_ms": { "type": "number", "minimum": 0 }
+          }
+        },
+        "error_rate": {
+          "type": "object",
+          "properties": {
+            "target_percent": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        "throughput": {
+          "type": "object",
+          "properties": {
+            "peak_rps": { "type": "number", "minimum": 0 }
+          }
+        },
+        "dora": {
+          "type": "object",
+          "properties": {
+            "deployment_frequency": { "type": "string", "enum": ["hourly","daily","weekly","monthly"] },
+            "lead_time_for_changes": { "type": "string", "enum": ["hours","days","weeks","months"] },
+            "change_failure_rate_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+            "mttr_hours": { "type": "number", "minimum": 0 }
+          }
+        },
+        "custom": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  },
+
+  "required": ["identity", "invariants", "permissions", "screens"],
+
+  "properties": {
+    "identity": {
+      "type": "object",
+      "required": ["id", "name", "domain", "description", "risk_level"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "minLength": 2,
+          "maxLength": 50,
+          "description": "영문 소문자·하이픈 (예: billing, hr-payroll)"
+        },
+        "name": { "type": "string", "minLength": 2 },
+        "domain": { "type": "string", "minLength": 2 },
+        "bounded_context": { "type": "string" },
+        "owner": { "type": "string" },
+        "description": {
+          "type": "string",
+          "minLength": 20,
+          "description": "도메인이 해결하는 비즈니스 문제 (20자 이상)"
+        },
+        "risk_level": { "$ref": "#/$defs/riskLevel" }
+      },
+      "additionalProperties": false
+    },
+
+    "ubiquitous_language": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["term", "korean", "definition"],
+        "properties": {
+          "term": { "type": "string", "pattern": "^[A-Z][a-zA-Z]+$", "description": "PascalCase 영문" },
+          "korean": { "type": "string" },
+          "definition": { "type": "string", "minLength": 10 },
+          "aggregate_root": { "type": "boolean", "default": false }
+        },
+        "additionalProperties": false
+      },
+      "description": "도메인 용어 사전 — 코드 네이밍의 유일한 근거"
+    },
+
+    "bounded_contexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "ui_path": { "type": "string" }
+        }
+      }
+    },
+
+    "invariants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/invariantEntry" },
+      "minItems": 1,
+      "description": "최소 1개 이상의 불변조건이 필요하다 (P0 권장)"
+    },
+
+    "state_machines": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/stateMachineEntry" }
+    },
+
+    "permissions": {
+      "type": "object",
+      "required": ["roles"],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/permissionRole" },
+          "minItems": 1,
+          "description": "최소 1개 이상의 권한 역할 필요 (read/write/admin 3단계 권장)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "screens": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/screenEntry" },
+      "minItems": 1,
+      "description": "최소 1개 이상의 화면 정의 필요"
+    },
+
+    "domain_events": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/domainEventEntry" }
+    },
+
+    "integrations": {
+      "type": "object",
+      "properties": {
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["domain", "purpose", "contract"],
+            "properties": {
+              "domain": { "type": "string" },
+              "purpose": { "type": "string" },
+              "contract": {
+                "type": "string",
+                "description": "계약 파일 경로만 허용 (코드 직접 참조 금지 — C001)"
+              },
+              "coupling": { "type": "string", "enum": ["loose", "tight"], "default": "loose" },
+              "integration_pattern": { "type": "string", "enum": ["sync", "async", "event-driven"] }
+            }
+          }
+        },
+        "provides_to": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["domain", "contract"],
+            "properties": {
+              "domain": { "type": "string" },
+              "contract": { "type": "string" },
+              "events": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "risk": {
+      "type": "object",
+      "properties": {
+        "classification": {
+          "type": "string",
+          "enum": ["public", "internal", "confidential", "restricted"]
+        },
+        "regulatory_scope": { "type": "array", "items": { "type": "string" } },
+        "data_sensitivity": {
+          "type": "object",
+          "properties": {
+            "pii_fields": { "type": "array", "items": { "type": "string" } },
+            "encryption_required": { "type": "boolean" },
+            "retention_years": { "type": "integer", "minimum": 0 },
+            "masking_in_logs": { "type": "boolean" }
+          }
+        },
+        "audit_trail": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "immutable": { "type": "boolean" },
+            "fields": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "financial_risk": {
+          "type": "object",
+          "properties": {
+            "double_entry": { "type": "boolean" },
+            "amount_limit_per_tx": { "type": ["number", "null"] },
+            "reconciliation_required": { "type": "boolean" },
+            "four_eyes_principle": { "type": "boolean" },
+            "idempotency_required": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "slo": { "$ref": "#/$defs/sloDefinition" },
+
+    "security": {
+      "type": "object",
+      "properties": {
+        "asvs_level": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "authentication": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean" },
+            "mfa_required": { "type": "boolean" },
+            "session_timeout_minutes": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "authorization": {
+          "type": "object",
+          "properties": {
+            "model": { "type": "string", "enum": ["RBAC", "ABAC", "ReBAC"] },
+            "principle": { "type": "string" }
+          }
+        },
+        "input_validation": {
+          "type": "object",
+          "properties": {
+            "sanitize_all_inputs": { "type": "boolean" },
+            "max_field_length": { "type": "integer", "minimum": 1 },
+            "sql_injection_prevention": { "type": "boolean" },
+            "xss_prevention": { "type": "boolean" }
+          }
+        },
+        "data_protection": {
+          "type": "object",
+          "properties": {
+            "encryption_at_rest": { "type": "boolean" },
+            "encryption_in_transit": { "type": "boolean" },
+            "masking_in_logs": { "type": "boolean" }
+          }
+        },
+        "rate_limiting": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "requests_per_minute": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "zero_trust": {
+          "type": "object",
+          "properties": {
+            "verify_every_request": { "type": "boolean" },
+            "assume_breach": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "quality": {
+      "type": "object",
+      "properties": {
+        "functional_correctness": {
+          "type": "object",
+          "properties": {
+            "invariant_coverage": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "boundary_test_required": { "type": "boolean" }
+          }
+        },
+        "maintainability": {
+          "type": "object",
+          "properties": {
+            "max_file_lines": { "type": "integer", "minimum": 1 },
+            "max_function_lines": { "type": "integer", "minimum": 1 },
+            "cyclomatic_complexity": { "type": "integer", "minimum": 1 },
+            "test_coverage_percent": { "type": "integer", "minimum": 0, "maximum": 100 }
+          }
+        }
+      }
+    },
+
+    "observability": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "rate": { "type": "boolean" },
+            "error_rate": { "type": "boolean" },
+            "duration": { "type": "boolean" },
+            "business_metrics": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "tracing": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "correlation_id": { "type": "boolean" }
+          }
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "format": { "type": "string", "enum": ["json", "text"] },
+            "level": { "type": "string", "enum": ["debug", "info", "warn", "error"] },
+            "include_correlation_id": { "type": "boolean" },
+            "mask_pii": { "type": "boolean" }
+          }
+        },
+        "alerting": {
+          "type": "object",
+          "properties": {
+            "slo_breach": { "type": "boolean" },
+            "error_spike": { "type": "boolean" },
+            "latency_spike": { "type": "boolean" }
+          }
+        }
+      }
+    },
+
+    "stage": { "$ref": "#/$defs/stageId" },
+
+    "contracts": {
+      "type": "object",
+      "properties": {
+        "http":       { "type": "string", "description": "OpenAPI 계약 파일 경로" },
+        "events":     { "type": "string", "description": "AsyncAPI 또는 events.schema.json 경로" },
+        "ui":         { "type": "string", "description": "ui-contract.yaml 경로" },
+        "capability": { "type": "string", "description": "capability.yaml 경로" }
+      }
+    },
+
+    "feature_flags": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" },
+      "description": "모든 플래그는 Stage D PASS 전까지 false"
+    },
+
+    "routing": {
+      "type": "object",
+      "properties": {
+        "entry_point":      { "type": "string", "pattern": "^/" },
+        "navigation_group": { "type": "string" },
+        "plugin_slot":      { "type": "string" }
+      }
+    },
+
+    "rollout": {
+      "type": "object",
+      "properties": {
+        "strategy": { "type": "string", "enum": ["immediate", "gradual", "canary"] },
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "audience_percent"],
+            "properties": {
+              "name": { "type": "string" },
+              "audience_percent": { "type": "integer", "minimum": 0, "maximum": 100 },
+              "criteria": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "notes": { "type": "string" }
+  },
+
+  "if": {
+    "properties": {
+      "identity": {
+        "properties": { "risk_level": { "enum": ["HIGH", "CRITICAL"] } },
+        "required": ["risk_level"]
+      }
+    }
+  },
+  "then": {
+    "properties": {
+      "risk": {
+        "required": ["classification"],
+        "properties": {
+          "audit_trail": {
+            "properties": { "enabled": { "const": true } },
+            "required": ["enabled"]
+          }
+        }
+      }
+    },
+    "description": "HIGH/CRITICAL 도메인은 risk.classification과 audit_trail.enabled: true가 필요하다"
+  },
+
+  "additionalProperties": true
+}

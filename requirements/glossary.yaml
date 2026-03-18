@@ -1,0 +1,68 @@
+# Workflow OS - 도메인 용어 사전
+# Stage A에서 확정되어야 하며, 변경 시 Stage A를 재실행한다.
+version: "0.1.0"
+last_updated: "2026-03-17"
+
+# ── task-tracking 도메인 용어 (Stage A 확정) ──────────────────────────────
+domain_terms:
+  - term: "작업 (Task)"
+    definition: "완료 가능한 최소 업무 단위. 제목, 담당자, 마감일, 상태를 가진다."
+    synonyms: ["태스크", "할 일"]
+    anti_patterns: ["프로젝트(여러 작업의 묶음)와 혼용 금지"]
+
+  - term: "작업 상태 (Task Status)"
+    definition: "작업의 생애주기 위치. 대기(PENDING) → 진행(IN_PROGRESS) → 완료(DONE) 또는 취소(CANCELLED)."
+    synonyms: ["상태"]
+    anti_patterns: ["DONE → IN_PROGRESS 역전이 금지 (불변조건 INV002 참조)"]
+
+  - term: "담당자 (Assignee)"
+    definition: "작업을 실제로 수행할 책임을 가진 사람. 한 작업에 최소 1명 필수."
+    synonyms: ["할당자"]
+    anti_patterns: ["담당자 없는 작업 생성 금지 (불변조건 INV001 참조)"]
+
+  - term: "마감일 (Due Date)"
+    definition: "작업이 완료되어야 하는 날짜. 과거 날짜로 생성 불가."
+    synonyms: ["기한", "데드라인"]
+    anti_patterns: ["마감일 없는 완료 전환 금지 (권고)"]
+
+  - term: "작업 목록 화면 (Task List View)"
+    definition: "담당자별·상태별로 작업을 조회하는 도메인 화면. 필터와 정렬 기능 포함."
+    synonyms: ["작업 목록"]
+    anti_patterns: []
+
+  - term: "작업 상세 화면 (Task Detail View)"
+    definition: "단일 작업의 전체 정보를 보고 상태 전이·담당자 변경을 수행하는 도메인 화면."
+    synonyms: ["작업 상세"]
+    anti_patterns: []
+
+# ── Workflow OS 공통 용어 (시스템 전체 적용) ─────────────────────────────
+terms:
+  - term: "Bounded Context"
+    definition: "하나의 도메인 모델이 일관성을 유지하는 경계. 경계 외부와는 계약으로만 통신한다."
+    synonyms: []
+    anti_patterns: ["모듈 간 코드 직접 참조", "공유 데이터베이스 스키마"]
+
+  - term: "Public Contract"
+    definition: "모듈이 외부에 공개하는 인터페이스 명세. HTTP(OpenAPI), 이벤트(AsyncAPI), UI(ui-contract), 기능(capability) 네 가지 유형이 있다."
+    synonyms: ["계약", "인터페이스 명세"]
+    anti_patterns: ["내부 구현 직접 호출", "암묵적 결합"]
+
+  - term: "Stage Router"
+    definition: "requirements.yaml의 stage 필드와 변경 감지 결과를 기반으로 실행할 Stage를 결정하는 논리적 라우팅 규칙."
+    synonyms: ["라우터"]
+
+  - term: "Quality Gate"
+    definition: "Stage D에서 판정하는 품질/보안/공급망/관측성 검증 체크포인트. FAIL 시 완료 선언 불가."
+    synonyms: ["품질 게이트", "게이트"]
+
+  - term: "Master Shell"
+    definition: "도메인 포털 역할을 하는 통합 UI 쉘. 기술 콘솔이 아닌 도메인 포털 + 플러그인 쉘로 정의한다."
+    synonyms: ["마스터 UI", "포털"]
+
+  - term: "Plugin Registry"
+    definition: "Master Shell에 탑재된 플러그인 목록과 메타데이터. navigation, feature-flags, observability 설정을 포함한다."
+    synonyms: ["플러그인 레지스트리"]
+
+  - term: "Domain Core"
+    definition: "UI/DB/프레임워크/네트워크를 모르는 순수 도메인 로직. 의존성은 안쪽으로만 흐른다."
+    synonyms: ["도메인 코어", "순수 도메인"]

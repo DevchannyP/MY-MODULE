@@ -1,0 +1,6 @@
+<type>(<scope>): <summary>
+
+예:
+feat(core): add release evidence generator
+docs(vcs): define branch and pr workflow
+fix(quality): align dependency scan baseline

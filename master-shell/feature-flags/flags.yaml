@@ -1,0 +1,33 @@
+# Master Shell - Feature Flags (전역)
+# 플러그인별 feature flag를 여기에 전역 등록한다.
+# 기본값은 반드시 false (안전한 쪽).
+# 변경은 Stage C 범위. 활성화는 Stage D PASS 후.
+version: "0.2.0"
+last_updated: "2026-03-18"
+
+global_flags:
+  enable_experimental_features: false
+  enable_debug_mode: false
+
+plugin_flags:
+  # task-management 플러그인
+  enable_task_management: false         # true: 마스터 UI 메뉴 노출 + 플러그인 활성화
+                                        # false: 마스터 UI 미노출 (Stage D PASS 전)
+  enable_bulk_assign: false             # true: 작업 목록에서 여러 작업을 동시에 담당자 변경
+                                        # false: 단일 작업 담당자 변경만 허용 (기본)
+
+  # billing 플러그인
+  billing.enabled: false               # true: 정산 도메인 전체 활성화 (홈 화면 노출)
+  billing.invoice.enabled: false       # true: 인보이스 목록·상세 활성화
+  billing.payment.enabled: false       # true: 결제상태 추적 화면 활성화
+  billing.exception.enabled: false     # true: 정산 예외처리 화면 활성화 (billing.admin 전용)
+
+# ── 활성화 절차 ──────────────────────────────────────────────────────────
+# 1. Stage D 품질 게이트 전체 PASS
+# 2. enable_task_management: true (내부 환경 먼저)
+# 3. plugin-registry의 rollout.percentage를 10으로 상향 (canary)
+# 4. 모니터링 후 이상 없으면 100으로 상향
+# 5. plugin status: inactive → active 변경
+#
+# 긴급 비활성화:
+# enable_task_management: false 로 즉시 변경 → 코드 배포 없이 기능 비활성화

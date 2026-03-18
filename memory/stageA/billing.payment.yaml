@@ -1,0 +1,69 @@
+# Stage A Memory - billing.payment
+# 생성일: 2026-03-18
+
+module_key: billing.payment
+bounded_context: billing
+domain: billing
+status: generated
+gate_result: PASS
+
+ubiquitous_language:
+  - term: "결제 (Payment)"
+    definition: "인보이스에 대한 실제 금액 이전. 상태는 PENDING/SUCCESS/FAILED/MISMATCH."
+  - term: "미매칭 (Mismatch)"
+    definition: "결제 금액 ≠ 인보이스 총액인 상태. 예외처리 대상 (INV-B006)."
+  - term: "동기화 (Sync)"
+    definition: "외부 결제 시스템과의 상태 정합성 확인 작업."
+
+invariants:
+  - id: INV-B006
+    description: "결제 금액 ≠ 인보이스 총액이면 MISMATCH로 분류한다."
+    enforcement: "BillingDomainService.detectMismatch(), resolvePaymentStatus()"
+
+permissions:
+  - role: billing.read
+    capabilities: [can.read.payment]
+    screens: [billing.payment]
+  - role: billing.write
+    capabilities: [can.retry.payment.sync]
+
+ui_contract:
+  route_base: /billing/payments
+  screens:
+    - module_key: billing.payment
+      route: /billing/payments
+      mount: PaymentStatusPage
+      feature_flag: billing.payment.enabled
+
+http_contract:
+  file: domains/billing/contracts/openapi.yaml
+  key_operations:
+    - listPayments
+    - getPayment
+    - retryPaymentSync
+
+capability_contract:
+  file: domains/billing/contracts/capability.yaml
+
+event_contract:
+  file: domains/billing/contracts/events.schema.json
+  emits:
+    - PaymentMismatchDetected
+
+capabilities:
+  - can.read.payment
+  - can.retry.payment.sync
+
+tests:
+  unit: PASS
+  contract: pending
+  integration: pending
+
+risks:
+  - id: R-BILL-002
+    severity: high
+    description: "외부 결제 시스템과의 동기화 실패 시 재시도 정책이 미정. FAILED 상태 결제가 무한 대기 가능."
+    mitigation: "재시도 횟수 상한 및 데드레터 처리 정책 설계 필요 (Stage B/D에서 구체화)"
+    status: open
+
+adrs: []

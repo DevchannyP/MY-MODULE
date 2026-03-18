@@ -1,0 +1,95 @@
+# UI Contract - Billing Domain
+# 모든 billing 화면의 마운트 계약을 한 파일에 정의한다.
+# 마스터 UI 쉘은 이 파일을 기준으로 라우팅과 플러그인 등록을 수행한다.
+
+screens:
+  - module_key: billing.home
+    route: /billing
+    mount: BillingHomePage
+    title: 정산관리 홈
+    nav_group: 정산
+    permissions:
+      - billing.read
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: billing.enabled
+    observability_tags:
+      - domain:billing
+      - screen:home
+
+  - module_key: billing.invoice
+    route: /billing/invoices
+    mount: InvoiceListPage
+    title: 인보이스 목록
+    nav_group: 정산
+    permissions:
+      - billing.read
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: billing.invoice.enabled
+    observability_tags:
+      - domain:billing
+      - screen:invoice-list
+
+  - module_key: billing.invoice.detail
+    route: /billing/invoices/:invoice_id
+    mount: InvoiceDetailPage
+    title: 인보이스 상세
+    nav_group: null
+    permissions:
+      - billing.read
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: billing.invoice.enabled
+    observability_tags:
+      - domain:billing
+      - screen:invoice-detail
+
+  - module_key: billing.payment
+    route: /billing/payments
+    mount: PaymentStatusPage
+    title: 결제상태 추적
+    nav_group: 정산
+    permissions:
+      - billing.read
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: billing.payment.enabled
+    observability_tags:
+      - domain:billing
+      - screen:payment-status
+
+  - module_key: billing.exception
+    route: /billing/exceptions
+    mount: BillingExceptionsPage
+    title: 정산 예외처리
+    nav_group: 정산
+    permissions:
+      - billing.admin
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: billing.exception.enabled
+    observability_tags:
+      - domain:billing
+      - screen:exceptions
+
+design_tokens:
+  color_scheme: billing
+  accent: "#1a73e8"
+
+invariant_display:
+  # 합계 불변조건 위반 시 UI 배지 스타일
+  total_mismatch_badge:
+    color: warning
+    label: "합계 불일치"
+    tooltip: "라인 항목의 합계가 인보이스 총액과 다릅니다"

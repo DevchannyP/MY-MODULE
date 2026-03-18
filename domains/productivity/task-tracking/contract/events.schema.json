@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "task-tracking Events",
+  "description": "작업 추적 도메인에서 발행하는 이벤트 스키마",
+  "definitions": {
+    "TaskCreated": {
+      "description": "새 작업이 생성되었을 때 발행된다.",
+      "type": "object",
+      "required": ["event_id", "event_type", "occurred_at", "payload"],
+      "properties": {
+        "event_id":    { "type": "string" },
+        "event_type":  { "type": "string", "const": "TaskCreated" },
+        "occurred_at": { "type": "string", "format": "date-time" },
+        "payload": {
+          "type": "object",
+          "required": ["task_id", "title", "assignee_id", "status"],
+          "properties": {
+            "task_id":     { "type": "string" },
+            "title":       { "type": "string" },
+            "assignee_id": { "type": "string" },
+            "due_date":    { "type": "string", "format": "date" },
+            "status":      { "type": "string", "const": "PENDING" }
+          }
+        }
+      }
+    },
+    "TaskStatusChanged": {
+      "description": "작업 상태가 전이되었을 때 발행된다.",
+      "type": "object",
+      "required": ["event_id", "event_type", "occurred_at", "payload"],
+      "properties": {
+        "event_id":    { "type": "string" },
+        "event_type":  { "type": "string", "const": "TaskStatusChanged" },
+        "occurred_at": { "type": "string", "format": "date-time" },
+        "payload": {
+          "type": "object",
+          "required": ["task_id", "old_status", "new_status"],
+          "properties": {
+            "task_id":    { "type": "string" },
+            "old_status": { "type": "string", "enum": ["PENDING", "IN_PROGRESS", "DONE", "CANCELLED"] },
+            "new_status": { "type": "string", "enum": ["IN_PROGRESS", "DONE", "CANCELLED"] }
+          }
+        }
+      }
+    },
+    "TaskReassigned": {
+      "description": "작업 담당자가 변경되었을 때 발행된다.",
+      "type": "object",
+      "required": ["event_id", "event_type", "occurred_at", "payload"],
+      "properties": {
+        "event_id":    { "type": "string" },
+        "event_type":  { "type": "string", "const": "TaskReassigned" },
+        "occurred_at": { "type": "string", "format": "date-time" },
+        "payload": {
+          "type": "object",
+          "required": ["task_id", "old_assignee_id", "new_assignee_id"],
+          "properties": {
+            "task_id":         { "type": "string" },
+            "old_assignee_id": { "type": "string" },
+            "new_assignee_id": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

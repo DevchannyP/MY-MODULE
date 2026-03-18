@@ -1,0 +1,93 @@
+# Stage B Memory - billing domain composition
+# 생성일: 2026-03-18
+# 입력: memory/stageA/billing.invoice.yaml, billing.payment.yaml, billing.exception.yaml
+# 목적: billing 도메인의 모든 모듈을 계약만으로 조합한 결과
+
+domain_key: billing
+composed_from:
+  - billing.invoice
+  - billing.payment
+  - billing.exception
+  - billing.home (summary 뷰 — 별도 모듈 없이 기존 유스케이스 재사용)
+
+status: composed
+gate_result: PASS
+
+routes:
+  base: /billing
+  pages:
+    - path: /billing
+      module_key: billing.home
+      feature_flag: billing.enabled
+    - path: /billing/invoices
+      module_key: billing.invoice
+      feature_flag: billing.invoice.enabled
+    - path: /billing/invoices/:invoice_id
+      module_key: billing.invoice.detail
+      feature_flag: billing.invoice.enabled
+    - path: /billing/payments
+      module_key: billing.payment
+      feature_flag: billing.payment.enabled
+    - path: /billing/exceptions
+      module_key: billing.exception
+      feature_flag: billing.exception.enabled
+
+route_conflict_check:
+  result: PASS
+  notes: "billing 경로는 /billing 접두사로 완전 격리. task-tracking(/tasks)과 충돌 없음."
+
+permission_conflict_check:
+  result: PASS
+  notes: |
+    billing.read / billing.write / billing.admin은 기존 task-owner / task-viewer와 충돌 없음.
+    권한 네이밍이 도메인 접두사로 격리되어 있어 교차 오염 없음.
+
+shared:
+  libs:
+    - react
+    - design-system
+  notes: "billing은 task-tracking과 동일한 shared deps를 사용. version 충돌 없음."
+
+integration:
+  type: module_federation
+  strategy: |
+    billing 도메인은 단일 MF remote로 노출한다.
+    entry: billing_remote/App
+    exposes:
+      - BillingHomePage
+      - InvoiceListPage
+      - InvoiceDetailPage
+      - PaymentStatusPage
+      - BillingExceptionsPage
+  microfrontend_decision: "Module Federation 채택 (ADR-0004 예정)"
+  unique_names:
+    - billing_remote
+
+composition_graph:
+  - billing.invoice → billing.home (summary 집계용)
+  - billing.payment → billing.home (미매칭 알림)
+  - billing.exception → billing.home (open 예외 수)
+  - billing.exception → billing.invoice (DISPUTED→PAID 상태 전이 연동)
+
+contracts_verified:
+  - domains/billing/contracts/openapi.yaml ✓
+  - domains/billing/contracts/ui-contract.yaml ✓
+  - domains/billing/contracts/capability.yaml ✓
+  - domains/billing/contracts/events.schema.json ✓
+
+tests:
+  contract: pending
+  integration: pending
+
+risks:
+  - ref: R-BILL-001
+    stage_b_note: "라인 항목 불변성 문제는 직렬화 경계에서 자연 해소 예상"
+  - ref: R-BILL-002
+    stage_b_note: "결제 재시도 정책은 billing_remote 내 infrastructure 계층에서 처리"
+  - ref: R-BILL-003
+    stage_b_note: "동시 승인은 인메모리 기준 순차 처리. 실 DB에서 optimistic locking ADR 필요"
+  - id: R-BILL-005
+    severity: medium
+    description: "billing_remote가 마스터 UI에서 지연 로드될 때 초기 렌더 블로킹 위험"
+    mitigation: "Suspense + fallback 로딩 UI 적용 (Stage C에서 plugin 등록 시 명시)"
+    status: open

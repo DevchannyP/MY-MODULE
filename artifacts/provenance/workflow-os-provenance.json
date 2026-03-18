@@ -1,0 +1,70 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "workflow-os://core-supply-chain-baseline",
+      "externalParameters": {
+        "module_id": "task-management",
+        "stage": "D"
+      },
+      "internalParameters": {
+        "lockfile_sha256": "253fa53719a6d49329796121e3de124cc1559a3a0c0f5362ada819b4c3421c2f",
+        "package_json_sha256": "b96a42e25a4532416f958f941f79b37e6d2b8d18e767f3ad2f32670008828e6d",
+        "requirements_sha256": "9664a02d9a9e1273b7542ecc119c72826503e4c6219c96af24b727ac89d7f970"
+      },
+      "resolvedDependencies": [
+        {
+          "digest": {
+            "sha256": "253fa53719a6d49329796121e3de124cc1559a3a0c0f5362ada819b4c3421c2f"
+          },
+          "uri": "package-lock.json"
+        },
+        {
+          "digest": {
+            "sha256": "b96a42e25a4532416f958f941f79b37e6d2b8d18e767f3ad2f32670008828e6d"
+          },
+          "uri": "package.json"
+        },
+        {
+          "digest": {
+            "sha256": "9664a02d9a9e1273b7542ecc119c72826503e4c6219c96af24b727ac89d7f970"
+          },
+          "uri": "requirements/requirements.yaml"
+        },
+        {
+          "digest": {
+            "sha256": "838374b6c58fa3c2a699376fefb98e568ab406dd8378f8289c1fa862097536dd"
+          },
+          "uri": "scripts/generate_sbom.py"
+        }
+      ]
+    },
+    "builder": {
+      "id": "local://workflow-os/core-baseline"
+    },
+    "runDetails": {
+      "byproducts": [
+        {
+          "name": "sbom-path",
+          "value": "artifacts/sbom/workflow-os.spdx.json"
+        },
+        {
+          "name": "policy-path",
+          "value": "artifacts/provenance/provenance-policy.yaml"
+        }
+      ],
+      "metadata": {
+        "invocationId": "workflow-os-core-supply-chain-baseline"
+      }
+    }
+  },
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "subject": [
+    {
+      "digest": {
+        "sha256": "f2a71cd77c312bde2da4b23803ce6caceec8ba3cf142160e0a455de5435d0a6b"
+      },
+      "name": "artifacts/sbom/workflow-os.spdx.json"
+    }
+  ]
+}

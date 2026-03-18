@@ -1,0 +1,14 @@
+{
+  "generated_at_utc": "2026-03-18T15:19:54.322767+00:00",
+  "repository": "my-module",
+  "branch": "master",
+  "head_commit": "UNAVAILABLE",
+  "last_completed_stage": "D(4차)",
+  "quality_gate_result": "PASS",
+  "next_action": {
+    "priority": "9",
+    "id": "Q-110",
+    "track": "CORE-SECURITY",
+    "action": "dependency scan 기준선 실동작화"
+  }
+}

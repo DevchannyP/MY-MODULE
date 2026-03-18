@@ -1,0 +1,55 @@
+# Master Shell - Rollback Playbook
+version: "0.1.0"
+last_updated: "2026-03-18"
+
+defaults:
+  incident_log: "worklog/incidents.md"
+  required_steps:
+    - "disable-primary-flag"
+    - "confirm-plugin-inactive"
+    - "check-dashboard-and-alerts"
+    - "record-incident"
+
+global:
+  rto_minutes: 30
+  rollback_execution_target_minutes: 5
+  verification:
+    - "feature flag가 false로 전환된다"
+    - "plugin-registry status가 inactive를 유지한다"
+    - "dashboard와 alert_group이 영향 범위를 추적한다"
+    - "incident log가 기록된다"
+
+plugins:
+  - plugin_id: "task-management-plugin"
+    owner: "productivity-team"
+    rollback:
+      strategy: "disable_flag"
+      disable_flags:
+        - "enable_task_management"
+        - "enable_bulk_assign"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "상태 전이 실패 급증"
+    verification:
+      dashboard: "task-management-dashboard"
+      alert_group: "task-management-alerts"
+      expected_status: "inactive"
+
+  - plugin_id: "billing-plugin"
+    owner: "platform-team"
+    rollback:
+      strategy: "disable_flag"
+      disable_flags:
+        - "billing.enabled"
+        - "billing.invoice.enabled"
+        - "billing.payment.enabled"
+        - "billing.exception.enabled"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "합계 불변조건(INV-B001) 위반 감지"
+    verification:
+      dashboard: "billing-dashboard"
+      alert_group: "billing-alerts"
+      expected_status: "inactive"

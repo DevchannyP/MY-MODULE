@@ -1,0 +1,1227 @@
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WORKFLOW OS — 도메인 요구사항 템플릿 v3.0
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# 사용법:
+#   1. 이 파일을 복사한다: cp DOMAIN_TEMPLATE.yaml my-domain.yaml
+#   2. [필수] 표시된 항목을 채운다
+#   3. Claude에게: "A [도메인명]" 입력
+#   4. 이후 "계속"만 반복
+#
+# 작성 원칙:
+#   - "무엇을 해야 하는가"만 적는다. "어떻게"는 Claude가 결정한다.
+#   - 불확실하면 [확인 필요] 로 표시하고 비워둔다.
+#   - 더 자세할수록 더 좋은 코드가 나온다.
+#
+# 참조 표준 (v3.0 기준):
+#   ┌─ 도메인 설계 ──────────────────────────────────────────────────────────────┐
+#   │ DDD          : Evans "Domain-Driven Design" (2003)                        │
+#   │              + Vernon "Implementing DDD" (2013)                           │
+#   │              + Wlaschin "Domain Modeling Made Functional" (2018)          │
+#   │ 아키텍처     : Cockburn Hexagonal Architecture (2005)                     │
+#   │              + Martin "Clean Architecture" (2017)                         │
+#   │              + Brown C4 Model (c4model.com)                               │
+#   │ 이벤트       : Brandolini "Introducing Event Storming" (2021)             │
+#   │              + Young CQRS (2010) + Garcia-Molina Saga (1987)              │
+#   │ 팀           : Skelton/Pais "Team Topologies" (2019)                      │
+#   ├─ 보안 ─────────────────────────────────────────────────────────────────────┤
+#   │ OWASP ASVS   : Application Security Verification Standard 4.0             │
+#   │ NIST SP 800-53 Rev 5  : Security & Privacy Controls                       │
+#   │ NIST SP 800-207       : Zero Trust Architecture                           │
+#   │ NIST SP 800-218       : SSDF (Software Supply Chain Security)             │
+#   │ ISO 27001:2022        : ISMS                                              │
+#   │ MITRE ATT&CK : Enterprise Framework v14                                   │
+#   │ CWE Top 25   : 2023 Edition                                               │
+#   │ PCI-DSS v4.0 : 금융 카드 보안                                             │
+#   ├─ 프라이버시 ───────────────────────────────────────────────────────────────┤
+#   │ GDPR         : Article 5/17/25/32/35 (Privacy by Design & Default)        │
+#   │ 개인정보보호법: 2023년 개정 + 개인정보 영향평가 고시                       │
+#   │ ISO 29101    : Privacy Architecture Framework                              │
+#   │ NIST PF 1.0  : Privacy Framework                                          │
+#   ├─ 품질 & 테스트 ────────────────────────────────────────────────────────────┤
+#   │ ISO/IEC 25010:2023    : SQuaRE 품질 특성                                  │
+#   │ Meszaros "xUnit Test Patterns" (2007)                                     │
+#   │ Fewster "Software Test Automation" + Mutation Testing (Jia/Harman 2011)   │
+#   │ Pact.io    : Consumer-Driven Contract Testing                              │
+#   │ Hypothesis : Property-Based Testing                                       │
+#   ├─ 운영 & 신뢰성 ────────────────────────────────────────────────────────────┤
+#   │ Google SRE Book (2016) + SRE Workbook (2018) — 4 Golden Signals          │
+#   │ Burn Rate Alerts: SRE Workbook Ch.5 (Multi-Window, Multi-Burn-Rate)      │
+#   │ DORA "Accelerate" (2018) + State of DevOps Report 2023                   │
+#   │ Rosenthal "Chaos Engineering" (2020)                                      │
+#   │ Nygard "Release It!" 2nd ed. (2018)                                      │
+#   ├─ 공급망 ───────────────────────────────────────────────────────────────────┤
+#   │ SLSA Framework v1.0  : Supply-chain Levels for Software Artifacts         │
+#   │ SPDX 2.3 + CycloneDX 1.5 : SBOM 표준                                     │
+#   │ NIST SSDF SP 800-218  : Secure Software Development Framework             │
+#   └─ 금융 & 규제 ──────────────────────────────────────────────────────────────┘
+#     Basel III/IV · PCI-DSS v4.0 · SOX · IFRS 9 · 전자금융거래법 · 근로기준법
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ── 1. 도메인 정체성 [필수] ────────────────────────────────────────────────────
+# DDD 원칙: Bounded Context는 모델의 유효 경계다. 경계 밖에서 같은 단어는
+# 다른 의미를 가진다. (Evans 2003, Ch.14)
+identity:
+  id: ""                          # [필수] 영문 소문자·하이픈 (예: billing, hr, inventory)
+  name: ""                        # [필수] 한글 도메인 이름 (예: 정산관리)
+  domain: ""                      # [필수] 최상위 도메인 (예: finance, productivity, ops)
+  bounded_context: ""             # DDD 경계 컨텍스트 (생략 시 id와 동일)
+  owner: ""                       # 책임 팀 (예: finance-team)
+  description: |                  # [필수] 이 도메인이 해결하는 비즈니스 문제 (2~5줄)
+    [이 도메인이 담당하는 핵심 업무를 설명한다]
+    [주요 데이터 흐름과 책임 경계를 명시한다]
+    [다른 도메인과의 경계선 — 무엇을 하지 않는지도 명시한다]
+
+  # ── 리스크 수준 ──────────────────────────────────────────────────────────────
+  # LOW    : 보조 기능, 공개 정보 (공지, FAQ, 대시보드 조회)
+  # MEDIUM : 운영 영향, 일반 개인정보 (재고관리, CRM, 일정관리)
+  # HIGH   : 금전 간접·핵심 개인정보 (정산, HR급여, 의료기록)
+  # CRITICAL: 금전 직접 처리·규제 직적용 (결제원장, 증권, 개인신용)
+  # → risk_level이 높을수록 불변조건·감사·보안이 자동 강화된다 (CLAUDE.md 참조)
+  risk_level: MEDIUM              # LOW / MEDIUM / HIGH / CRITICAL
+
+  # ── 제품 계층 (선택 — 배포 우선순위 결정에 사용) ─────────────────────────────
+  # core     : 서비스 핵심 경쟁력 — 장애 시 서비스 불가
+  # growth   : 사용자 경험 향상 — 장애 시 일부 기능 저하
+  # support  : 운영 효율화 — 장애 시 내부 불편만 발생
+  product_tier: "growth"          # core / growth / support
+
+
+# ── 2. 유비쿼터스 언어 [필수] ─────────────────────────────────────────────────
+# DDD 원칙: 개발자·도메인 전문가가 동일한 언어로 대화해야 한다.
+# 이 목록이 클래스명·변수명·API 경로·이벤트명·DB 컬럼명의 유일한 근거다.
+# 팁: 기획서·화면 설계서·법령에 등장하는 모든 핵심 명사를 추가한다.
+# 팁: 동음이의어가 있는 경우 이 경계 컨텍스트에서의 의미를 명확히 적는다.
+ubiquitous_language:
+  - term: ""                      # [필수] 영문 클래스명 PascalCase (예: Invoice, Employee)
+    korean: ""                    # [필수] 한글 (예: 인보이스, 직원)
+    definition: ""                # [필수] 이 도메인에서의 정확한 의미 (10자 이상)
+    aggregate_root: false         # 이 엔티티가 집계 루트(Aggregate Root)인가?
+    # aggregate_root: true → 이 엔티티를 통해서만 내부 상태를 변경한다 (Evans Ch.6)
+
+  # ── 컨텍스트 맵 관계 유형 (DDD — 경계 컨텍스트 간 관계) ─────────────────────
+  # 이 도메인이 다른 도메인과 어떤 관계인지 메모로 남긴다:
+  # - Shared Kernel  : 공유 모델 (양팀 협업 필수) — 최소화 권장
+  # - Customer/Supplier: 하류 도메인이 상류 요구사항을 협상할 수 있음
+  # - Conformist     : 상류 모델을 그대로 수용 (협상력 없음)
+  # - ACL            : Anti-Corruption Layer — 번역 레이어로 격리
+  # - Open Host      : 공개 API 프로토콜을 다수 소비자에게 제공
+  # - Published Language: 표준 프로토콜(OpenAPI/AsyncAPI)로 통신
+
+  # 예시:
+  # - term: "Invoice"
+  #   korean: "인보이스"
+  #   definition: "청구 문서. 라인 항목 합산이 총액과 반드시 일치해야 한다.
+  #                주문(Order) 도메인의 '주문서'와 다르다 — 이미 확정된 금액이다."
+  #   aggregate_root: true
+  #
+  # - term: "LineItem"
+  #   korean: "라인 항목"
+  #   definition: "인보이스의 개별 청구 행. 수량 × 단가 = 소계. 독립 생존 불가."
+  #   aggregate_root: false
+
+
+# ── 3. 경계 컨텍스트 상세 ──────────────────────────────────────────────────────
+# 도메인이 여러 하위 컨텍스트(서브도메인)로 구성되는 경우 명시한다.
+# C4 Model 기준: Container 레벨 분해 (Brown, c4model.com)
+bounded_contexts:
+  - id: ""                        # 예: billing.invoice / billing.payment
+    description: ""               # 이 컨텍스트의 책임 범위
+    ui_path: ""                   # 예: /billing/invoices
+    # relationship_type: "ACL"   # Shared Kernel / Customer-Supplier / Conformist / ACL / Open Host
+
+
+# ── 4. 불변조건 [필수 — 가장 중요!] ──────────────────────────────────────────
+# ════════════════════════════════════════════════════════════════════════
+# 불변조건(Invariant)은 어떤 상황에서도 위반할 수 없는 비즈니스 진실이다.
+# 이것이 시스템의 신뢰성 근거이며, 모든 테스트의 중심이다.
+# ════════════════════════════════════════════════════════════════════════
+#
+# 유형별 작성 가이드:
+#   [비즈니스]  "~해야 한다" / "~할 수 없다" — 도메인 규칙
+#   [보안]      "~권한 없이 ~에 접근할 수 없다" — 접근제어
+#   [동시성]    "동일 ~는 동시에 1회만 ~될 수 있다" — 경쟁 조건
+#   [시간]      "~일 이후에는 ~할 수 없다" — 시간 기반 제약
+#   [참조]      "~이 존재해야만 ~할 수 있다" — 참조 무결성
+#
+# 심각도 기준 (Stage E 갭 처리 매트릭스와 동일):
+#   P0 — 위반 시 데이터 손상·금전 손실 → 즉시 수정 필수
+#   P1 — 위반 시 계약·보안 오류 → 수정 + ADR
+#   P2 — 비즈니스 규칙 미준수 → 문서화 + 수정
+#   P3 — 구조적 개선 → ADR 결정 후 처리
+#
+# 적용 레이어:
+#   domain-entity : 집계 루트 내부 — 가장 강력한 보호선
+#   use-case      : 유스케이스 — 권한·사전조건 검사
+#   repository    : 저장소 레이어 — 영속성 제약
+#   ui            : 화면 레이어 — UX 수준 검증 (보안 방어선 아님)
+invariants:
+  - id: ""                        # [필수] 유니크 ID — 도메인 접두사 권장
+                                  # 형식: INV-[도메인약어][숫자] (예: INV-B001, INV-HR001)
+    description: ""               # [필수] 한 문장 — "~해야 한다" / "~할 수 없다" 형식
+    severity: P1                  # P0 / P1 / P2 / P3
+    enforcement: "domain-entity"  # domain-entity / use-case / repository / ui
+    test_required: true           # Stage D 단위 테스트 필수 여부 (P0/P1은 항상 true)
+    audit_required: false         # 위반 시도 시 감사 로그 기록 (HIGH/CRITICAL 권장)
+
+  # ══════════════════════════════════════════════════════════════════════
+  # 도메인별 불변조건 예시 라이브러리
+  # ══════════════════════════════════════════════════════════════════════
+  #
+  # ── [금융/결제] ──────────────────────────────────────────────────────
+  # - id: "INV-FIN001"
+  #   description: "결제 금액은 반드시 0보다 커야 한다"
+  #   severity: P0
+  #   enforcement: "domain-entity"
+  #   test_required: true
+  #   audit_required: false
+  #
+  # - id: "INV-FIN002"
+  #   description: "동일 idempotency_key의 결제 요청은 1회만 처리된다"
+  #   severity: P0
+  #   enforcement: "use-case"
+  #   test_required: true
+  #   audit_required: true
+  #
+  # - id: "INV-FIN003"
+  #   description: "인보이스 라인 항목 합산은 총액과 정확히 일치해야 한다"
+  #   severity: P0
+  #   enforcement: "domain-entity"
+  #   test_required: true
+  #   audit_required: false
+  #
+  # - id: "INV-FIN004"
+  #   description: "PAID 또는 CANCELLED 상태의 인보이스는 수정할 수 없다"
+  #   severity: P0
+  #   enforcement: "domain-entity"
+  #   test_required: true
+  #   audit_required: true
+  #
+  # - id: "INV-FIN005"
+  #   description: "단일 거래 한도(amount_limit_per_tx)를 초과하는 결제는 처리할 수 없다"
+  #   severity: P1
+  #   enforcement: "use-case"
+  #   test_required: true
+  #   audit_required: true
+  #
+  # ── [HR/인사] ────────────────────────────────────────────────────────
+  # - id: "INV-HR001"
+  #   description: "재직 중인 직원만 성과 평가 대상이 된다"
+  #   severity: P0
+  #   enforcement: "use-case"
+  #   test_required: true
+  #   audit_required: false
+  #
+  # - id: "INV-HR002"
+  #   description: "급여 정보는 hr.admin 권한 보유자만 조회할 수 있다"
+  #   severity: P1
+  #   enforcement: "use-case"
+  #   test_required: true
+  #   audit_required: true
+  #
+  # - id: "INV-HR003"
+  #   description: "퇴직 처리된 직원은 재직 상태로 복원할 수 없다"
+  #   severity: P0
+  #   enforcement: "domain-entity"
+  #   test_required: true
+  #   audit_required: true
+  #
+  # ── [재고/물류] ──────────────────────────────────────────────────────
+  # - id: "INV-INV001"
+  #   description: "재고 수량은 음수가 될 수 없다"
+  #   severity: P0
+  #   enforcement: "domain-entity"
+  #   test_required: true
+  #   audit_required: false
+  #
+  # - id: "INV-INV002"
+  #   description: "출고 수량은 현재 가용 재고를 초과할 수 없다"
+  #   severity: P0
+  #   enforcement: "use-case"
+  #   test_required: true
+  #   audit_required: true
+  #
+  # ── [동시성 제어] ────────────────────────────────────────────────────
+  # - id: "INV-CON001"
+  #   description: "동일 집계 루트에 대한 동시 수정은 낙관적 잠금(version 필드)으로 거부된다"
+  #   severity: P1
+  #   enforcement: "repository"
+  #   test_required: true
+  #   audit_required: false
+  #
+  # ── [시간 기반] ──────────────────────────────────────────────────────
+  # - id: "INV-TIME001"
+  #   description: "결제 기한(due_date) 이후에는 DRAFT 상태 변경을 할 수 없다"
+  #   severity: P1
+  #   enforcement: "use-case"
+  #   test_required: true
+  #   audit_required: false
+
+
+# ── 5. 상태 전이 ────────────────────────────────────────────────────────────
+# 핵심 집계 루트의 생명주기(Lifecycle)를 정의한다.
+# 원칙: terminal_states는 Object.freeze — 코드로 탈출 불가능
+# 원칙: 모든 전이는 명시적 — 미정의 전이는 자동 거부
+# Event Storming: 상태 전이 = 커맨드(Command) → 이벤트(Event) 쌍
+state_machines:
+  - entity: ""                    # 집계 루트명 (예: Invoice, Order, Employee)
+    states: []                    # 모든 상태 (예: [DRAFT, PENDING, PAID, CANCELLED])
+    initial_state: ""             # 생성 시 초기 상태 (예: DRAFT)
+    terminal_states: []           # 되돌릴 수 없는 최종 상태 (예: [PAID, CANCELLED])
+    transitions:
+      - from: ""                  # 출발 상태
+        to: []                    # 도달 가능 상태 목록
+        requires_permission: ""   # 이 전이에 필요한 권한 (없으면 생략)
+        requires_approval: false  # 관리자 2인 승인 필요 (4-eyes principle)
+        audit: false              # 이 전이를 감사 로그에 기록
+
+  # ── 예시: 인보이스 생명주기 ──
+  # - entity: "Invoice"
+  #   states: [DRAFT, PENDING, APPROVED, PAID, CANCELLED, DISPUTED]
+  #   initial_state: DRAFT
+  #   terminal_states: [PAID, CANCELLED]
+  #   transitions:
+  #     - from: DRAFT        # 작성 완료 → 승인 요청
+  #       to: [PENDING]
+  #       requires_permission: "billing.write"
+  #
+  #     - from: PENDING      # 승인 → APPROVED (관리자 단독)
+  #       to: [APPROVED, CANCELLED]
+  #       requires_permission: "billing.admin"
+  #       audit: true
+  #
+  #     - from: APPROVED     # 결제 확인 → PAID
+  #       to: [PAID, CANCELLED]
+  #       requires_permission: "billing.write"
+  #       audit: true
+  #
+  #     - from: APPROVED     # 고액 결제: 4-eyes 원칙
+  #       to: [PAID]
+  #       requires_permission: "billing.admin"
+  #       requires_approval: true   # CRITICAL 도메인 자동 적용
+  #       audit: true
+  #
+  #     - from: DISPUTED     # 분쟁 해결 (관리자만)
+  #       to: [PAID, CANCELLED]
+  #       requires_permission: "billing.admin"
+  #       requires_approval: true
+  #       audit: true
+
+  # ── 예시: 주문 생명주기 ──
+  # - entity: "Order"
+  #   states: [PENDING, CONFIRMED, SHIPPED, DELIVERED, RETURNED, CANCELLED]
+  #   initial_state: PENDING
+  #   terminal_states: [DELIVERED, CANCELLED]
+  #   transitions:
+  #     - from: PENDING
+  #       to: [CONFIRMED, CANCELLED]
+  #     - from: CONFIRMED
+  #       to: [SHIPPED, CANCELLED]
+  #       requires_permission: "fulfillment.write"
+  #     - from: SHIPPED
+  #       to: [DELIVERED, RETURNED]
+  #     - from: DELIVERED
+  #       to: [RETURNED]
+  #       requires_permission: "fulfillment.admin"
+  #       audit: true
+
+
+# ── 6. 권한 모델 [필수] ───────────────────────────────────────────────────────
+# 최소 권한 원칙 (NIST SP 800-53 Rev.5 AC-6, OWASP ASVS 4.0.1 V4)
+# 설계 기준:
+#   - read / write / admin 3단계가 표준 (단순하게 시작한다)
+#   - 금전·PII·감사 접근은 별도 권한으로 분리한다
+#   - 관리자 권한은 항상 audit_all_actions: true
+#   - 권한 ID는 반드시 도메인 접두사를 포함한다 (예: billing.admin)
+#
+# 모델 선택 가이드:
+#   RBAC  : 역할 기반 — 대부분의 비즈니스 도메인 (기본값)
+#   ABAC  : 속성 기반 — 조건부 접근 (예: 본인 데이터만, 부서 내부만)
+#   ReBAC : 관계 기반 — 소셜/협업 (예: Google Docs "편집자만")
+permissions:
+  roles:
+    - id: ""                      # [필수] 도메인 접두사 포함 (예: billing.read)
+      description: ""             # 이 권한으로 할 수 있는 것 (한 문장)
+      actions: []                 # 허용 행동 목록 (동사-명사 형식 권장)
+      audit_all_actions: false    # true: 이 역할의 모든 행동을 감사 로그에 기록
+
+  # ── 예시 세트 1: 정산(billing) 도메인 ──
+  # roles:
+  #   - id: "billing.read"
+  #     description: "인보이스·결제 내역 조회"
+  #     actions: ["list-invoices", "view-invoice", "list-payments", "view-payment"]
+  #     audit_all_actions: false
+  #
+  #   - id: "billing.write"
+  #     description: "인보이스 작성·라인 추가·상태전이 (승인 제외)"
+  #     actions: ["create-invoice", "add-line-item", "submit-invoice", "cancel-invoice"]
+  #     audit_all_actions: false
+  #
+  #   - id: "billing.admin"
+  #     description: "인보이스 승인·분쟁 해결·환불 처리·정산 마감"
+  #     actions: ["approve-invoice", "reject-invoice", "resolve-dispute",
+  #               "process-refund", "close-billing-period", "view-audit-log"]
+  #     audit_all_actions: true   # 모든 행동 감사 (HIGH/CRITICAL 필수)
+
+  # ── 예시 세트 2: HR 도메인 ──
+  # roles:
+  #   - id: "hr.read"
+  #     description: "직원 목록·기본 정보 조회"
+  #     actions: ["list-employees", "view-employee-profile"]
+  #     audit_all_actions: false
+  #
+  #   - id: "hr.write"
+  #     description: "직원 정보 수정·신규 직원 등록"
+  #     actions: ["create-employee", "update-employee-profile", "update-department"]
+  #     audit_all_actions: false
+  #
+  #   - id: "hr.admin"
+  #     description: "급여·평가·퇴직 처리 등 민감 HR 업무"
+  #     actions: ["view-salary", "update-salary", "conduct-review",
+  #               "terminate-employee", "view-personal-data"]
+  #     audit_all_actions: true
+
+
+# ── 7. 화면 / UI 요구사항 [필수] ──────────────────────────────────────────────
+# MoSCoW 우선순위 기법 (Clegg/Barker 1994):
+#   must     : 반드시 구현 — 없으면 제품 출시 불가
+#   should   : 구현 권장 — 없어도 출시 가능하나 품질 저하
+#   must_not : 절대 금지 — 보안·법률·비즈니스 규칙 위반
+#
+# 접근성 기준: WCAG 2.1 Level AA (EU Web Accessibility Directive)
+# 성능 기준: Core Web Vitals (LCP < 2.5s, FID < 100ms, CLS < 0.1)
+screens:
+  - id: ""                        # [필수] 화면 ID kebab-case (예: invoice-list)
+    path: ""                      # [필수] URL 절대 경로 (예: /billing/invoices)
+    title: ""                     # [필수] 화면 제목 한글
+    required_permission: ""       # [필수] 이 화면 진입에 필요한 권한 ID
+    must: []                      # 반드시 구현 항목 (MoSCoW: Must)
+    should: []                    # 구현 권장 항목 (MoSCoW: Should)
+    must_not: []                  # 절대 금지 항목 (보안·비즈니스 규칙)
+    conditional_fields: []        # 권한·상태에 따라 조건부 노출되는 필드
+
+  # ── 예시: 인보이스 목록 ──
+  # - id: "invoice-list"
+  #   path: "/billing/invoices"
+  #   title: "인보이스 목록"
+  #   required_permission: "billing.read"
+  #   must:
+  #     - "인보이스 목록 페이지네이션 조회 (기본 20건/페이지)"
+  #     - "상태(DRAFT/PENDING/PAID/CANCELLED) 필터"
+  #     - "기간 필터 (발행일 범위)"
+  #     - "거래처명·인보이스 번호 검색"
+  #     - "총액·잔액 합계 표시"
+  #   should:
+  #     - "CSV/Excel 내보내기"
+  #     - "인쇄 미리보기"
+  #     - "배치 상태 변경 (최대 50건)"
+  #   must_not:
+  #     - "billing.admin 없이 결제 금액 상세 노출"
+  #     - "타 조직 인보이스 노출"
+  #     - "삭제된 인보이스 기본 목록 노출"
+  #   conditional_fields:
+  #     - "승인 버튼 — billing.admin 권한 보유 시에만 노출"
+  #     - "내부 메모 — billing.write 이상 시에만 노출"
+  #
+  # - id: "invoice-detail"
+  #   path: "/billing/invoices/:id"
+  #   title: "인보이스 상세"
+  #   required_permission: "billing.read"
+  #   must:
+  #     - "라인 항목 목록 (수량·단가·소계)"
+  #     - "총액·세액·최종 금액"
+  #     - "상태 이력 타임라인"
+  #     - "첨부 파일 다운로드"
+  #   should:
+  #     - "PDF 출력"
+  #     - "관련 결제 내역 연결"
+  #   must_not:
+  #     - "미지급 인보이스의 계좌 정보 평문 노출"
+
+
+# ── 8. 도메인 이벤트 ───────────────────────────────────────────────────────────
+# Event Storming 기반 (Alberto Brandolini, 2021)
+# 이벤트는 과거형이다 — "~됐다(ed)" 형식 필수 (예: InvoicePaid, EmployeeHired)
+# 원칙: 이벤트는 불변이다 — 발행 후 수정 불가 (Append-Only)
+# 원칙: idempotent: true인 이벤트는 중복 발행해도 부작용 없어야 한다
+domain_events:
+  - name: ""                      # [필수] PascalCase 과거형 (예: InvoicePaid)
+    trigger: ""                   # 언제 이 이벤트가 발행되는가? (유스케이스 성공 후)
+    payload: []                   # [필수] 이벤트에 포함될 필드 목록 (최소 1개)
+    subscribers: []               # 이 이벤트를 소비하는 다른 도메인 목록
+    severity: MEDIUM              # LOW/MEDIUM/HIGH — 실패 시 재시도 우선순위
+    idempotent: true              # 중복 처리 시 부작용 없어야 하는가?
+    # schema_version: "1.0"       # 이벤트 스키마 버전 (semver) — 하위 호환 변경만 허용
+
+  # ── 예시 ──
+  # - name: "InvoicePaid"
+  #   trigger: "결제 확인 완료 (TransitionInvoiceStatusUseCase PAID 전이 성공)"
+  #   payload: ["invoice_id", "amount", "currency", "paid_at",
+  #             "payment_method", "correlation_id"]
+  #   subscribers: ["accounting", "notification", "reporting"]
+  #   severity: HIGH
+  #   idempotent: true
+  #
+  # - name: "EmployeeTerminated"
+  #   trigger: "퇴직 처리 완료 (TerminateEmployeeUseCase 성공)"
+  #   payload: ["employee_id", "termination_date", "reason_code",
+  #             "final_settlement_amount", "correlation_id"]
+  #   subscribers: ["payroll", "access-management", "asset-management", "benefits"]
+  #   severity: HIGH
+  #   idempotent: true
+  #
+  # - name: "InventoryDepleted"
+  #   trigger: "재고 수량이 안전 재고(safety_stock) 미만으로 하락"
+  #   payload: ["sku_id", "current_qty", "safety_stock_qty", "location_id"]
+  #   subscribers: ["procurement", "notification"]
+  #   severity: MEDIUM
+  #   idempotent: true
+
+
+# ── 9. 외부 통합 ────────────────────────────────────────────────────────────
+# 원칙(C001): 계약(contract) 파일 참조만 허용 — 코드 직접 import 절대 금지
+# 결합도 분류:
+#   loose : 계약 파일 참조만 — 권장 (인터페이스 변경 시 독립적 적응 가능)
+#   tight : 코드 직접 참조 — 금지 (C001 위반)
+#
+# 통합 패턴 선택:
+#   sync         : 동기 HTTP — 즉시 응답 필요, 가용성 의존성 발생
+#   async        : 비동기 메시지 — 높은 처리량, 결과적 일관성
+#   event-driven : 이벤트 발행/구독 — 느슨한 결합, 도메인 이벤트 기반
+integrations:
+  depends_on: []
+  # - domain: "identity"
+  #   purpose: "JWT 토큰 검증 및 사용자 권한 확인"
+  #   contract: "domains/identity/contracts/capability.yaml"
+  #   coupling: "loose"
+  #   integration_pattern: "sync"
+  #
+  # - domain: "notification"
+  #   purpose: "인보이스 발행·결제 완료 알림 발송"
+  #   contract: "domains/notification/contracts/events.schema.json"
+  #   coupling: "loose"
+  #   integration_pattern: "event-driven"
+
+  provides_to: []
+  # - domain: "accounting"
+  #   contract: "domains/billing/contracts/events.schema.json"
+  #   events: ["InvoicePaid", "InvoiceCancelled"]
+  #
+  # - domain: "reporting"
+  #   contract: "domains/billing/contracts/openapi.yaml"
+  #   events: []
+
+
+# ── 10. 위험 분류 ─────────────────────────────────────────────────────────────
+# risk_level에 따라 Claude가 자동으로 보안·감사·암호화를 강화한다. (CLAUDE.md)
+risk:
+  # ── 데이터 분류 (정보보호 정책 · ISO 27001:2022 A.5.12) ──────────────────────
+  # public       : 누구나 접근 가능 (공지사항, 가격표)
+  # internal     : 임직원 접근 (내부 문서, 운영 데이터)
+  # confidential : 제한된 부서만 접근 (급여, 재무제표)
+  # restricted   : 최고 기밀 (법적 증거, 암호화 키, 개인신용)
+  classification: "internal"      # public / internal / confidential / restricted
+
+  # ── 관련 규정 (법률·규제 준수) ───────────────────────────────────────────────
+  # 대한민국: 개인정보보호법 · 전자금융거래법 · 근로기준법 · 의료법 · 자본시장법
+  # 국제: GDPR(EU) · CCPA(미국 캘리포니아) · PDPA(태국/싱가포르) · LGPD(브라질)
+  # 금융: PCI-DSS v4.0 · Basel III/IV · SOX · IFRS 9
+  # 보안: ISO 27001 · SOC 2 Type II · FedRAMP
+  regulatory_scope: []
+  # 예시: ["개인정보보호법", "전자금융거래법", "PCI-DSS v4.0", "GDPR"]
+
+  # ── 개인정보 처리 (개인정보보호법 §4 · GDPR Art.5) ──────────────────────────
+  data_sensitivity:
+    pii_fields: []                # 개인식별정보 필드 목록 (로그 마스킹 자동 적용)
+    # 예: ["user_id", "name", "email", "phone", "ssn", "account_number"]
+    encryption_required: false    # 저장 시 암호화 필수 (AES-256-GCM 권장)
+    retention_years: 3            # 데이터 보존 기간 (법정 기간 확인 필요)
+                                  # 전자금융거래법: 5년 / 근로기준법: 3년 / GDPR: 최소화 원칙
+    masking_in_logs: false        # 로그에서 PII 마스킹 (pii_fields 존재 시 true 권장)
+
+    # ── GDPR 법적 근거 (Art.6 처리 근거, pii_fields 존재 시 필수) ─────────────
+    # lawful_basis: "contract"    # consent / contract / legal_obligation /
+    #                             # vital_interests / public_task / legitimate_interest
+    # data_subject_rights:        # GDPR Art.15~22 — 정보주체 권리 지원 목록
+    #   - "access"                # 열람권 (Art.15)
+    #   - "rectification"         # 정정권 (Art.16)
+    #   - "erasure"               # 삭제권 (Art.17) — "잊혀질 권리"
+    #   - "portability"           # 이동권 (Art.20)
+
+  # ── 감사 추적 (Basel III · SOX · 개인정보보호법 §29 · GDPR Art.5.2) ─────────
+  # HIGH/CRITICAL 도메인: enabled: true, immutable: true 필수
+  audit_trail:
+    enabled: false                # HIGH/CRITICAL은 true 필수 (스키마 강제)
+    immutable: false              # 감사 로그 수정·삭제 불가 (Append-Only 스토리지)
+    fields:                       # 기본 감사 필드 (아래 전체 세트 권장)
+      - "actor_id"                # 행위자 ID
+      - "action"                  # 수행한 행동
+      - "timestamp"               # 발생 시각 (UTC, ISO 8601)
+    # 완전한 감사 로그 (HIGH 이상 권장):
+    # fields:
+    #   - "actor_id"              # 행위자 ID
+    #   - "actor_role"            # 행위자 역할
+    #   - "action"                # 수행 행동
+    #   - "resource_type"         # 대상 리소스 타입
+    #   - "resource_id"           # 대상 리소스 ID
+    #   - "before_state"          # 변경 전 상태
+    #   - "after_state"           # 변경 후 상태
+    #   - "timestamp"             # 발생 시각 (UTC)
+    #   - "ip_address"            # 접속 IP
+    #   - "user_agent"            # 클라이언트 정보
+    #   - "correlation_id"        # 요청 추적 ID
+    #   - "session_id"            # 세션 ID
+
+  # ── 금융 리스크 (Basel III/IV · PCI-DSS v4.0 · 전자금융거래법) ──────────────
+  # 금전을 직접 처리하는 도메인만 작성한다
+  financial_risk:
+    double_entry: false           # 복식부기 패턴 적용 (차변 = 대변 항등식)
+    amount_limit_per_tx: null     # 단일 거래 한도 (null = 무제한, CRITICAL 시 필수)
+    reconciliation_required: false # 일별/월별 정산 대조 필요
+    four_eyes_principle: false    # 고액 거래 시 2인 승인 필요 (CRITICAL 자동 활성화)
+    idempotency_required: false   # 결제 멱등성 (CRITICAL 자동 활성화)
+    # currency_precision: 2       # 통화 소수점 자리수 (KRW: 0, USD: 2, BTC: 8)
+    # supported_currencies: ["KRW", "USD"]
+
+
+# ── 11. SLO (서비스 수준 목표) ────────────────────────────────────────────────
+# Google SRE Book (2016) Ch.4 + SRE Workbook (2018) Ch.2
+# 원칙: SLO는 "사용자가 느끼는 신뢰성"을 숫자로 표현한다.
+# 원칙: Error Budget = 100% - SLO target → 혁신과 안정성의 균형점
+#
+# SLI (Service Level Indicator) → SLO (Service Level Objective) 계층:
+#   SLI: 측정 가능한 지표 (p99 응답시간, 오류율 등)
+#   SLO: SLI의 목표값 (p99 < 300ms, 오류율 < 0.1%)
+#   SLA: 위반 시 페널티가 있는 계약 (외부 고객 대상)
+slo:
+  availability:
+    target_percent: 99.9          # 99.9% = 월 43분 / 99.99% = 월 4분 다운타임 허용
+    measurement_window: "30d"     # 측정 기간 (Google: 28일 또는 4주 권장)
+    # error_budget_policy:
+    #   freeze_depleted: true     # Error Budget 소진 시 릴리스 동결
+    #   alert_at_percent: 50      # 50% 소진 시 알림
+
+  latency:
+    p50_ms: 100                   # 중간값 — 대다수 사용자 경험
+    p99_ms: 300                   # 99번째 백분위 — 롱테일 사용자 경험
+    p999_ms: 1000                 # 최악의 경우 (Elite: p999 < 1s)
+    # 참고: Google의 사용자 이탈 기준 — 200ms 초과 시 이탈 증가 (AWS re:Invent 2021)
+
+  error_rate:
+    target_percent: 0.1           # 요청의 0.1% 이하만 오류 (5xx 기준)
+
+  throughput:
+    peak_rps: 100                 # 피크 초당 요청 수 (부하 테스트 근거로 사용)
+
+  # DORA 지표 (개발팀 생산성 측정 — DORA "Accelerate" 2018 / State of DevOps 2023)
+  # Elite 수준 기준 (2023 DORA Report):
+  #   deployment_frequency: "hourly" (Elite) — 일 1회 이상
+  #   lead_time_for_changes: "hours" (Elite) — 1시간 미만
+  #   change_failure_rate_percent: 5 (Elite) — 5% 이하
+  #   mttr_hours: 1 (Elite) — 1시간 이내
+  dora:
+    deployment_frequency: "weekly"   # hourly / daily / weekly / monthly
+    lead_time_for_changes: "days"    # hours / days / weeks / months
+    change_failure_rate_percent: 5   # Elite < 5%, High 5-10%, Medium 10-15%
+    mttr_hours: 1                    # 평균 복구 시간 (Mean Time To Restore)
+
+  # 도메인 특화 비즈니스 SLI/SLO (선택)
+  custom: []
+  # - name: "payment_success_rate"
+  #   description: "결제 성공률 — 결제 시도 대비 최종 성공 비율"
+  #   target_percent: 99.5
+  #   measurement_window: "24h"
+  #
+  # - name: "invoice_processing_time"
+  #   description: "인보이스 생성부터 PAID 전이까지 평균 소요 시간"
+  #   target_hours: 72
+  #   measurement_window: "30d"
+
+
+# ── 12. 보안 요구사항 ──────────────────────────────────────────────────────────
+# OWASP ASVS 4.0 · NIST SP 800-53 Rev.5 · NIST SP 800-207 (Zero Trust)
+# ISO 27001:2022 · MITRE ATT&CK Enterprise v14 · CWE Top 25 (2023)
+security:
+  # OWASP ASVS 수준 — risk_level에 따라 자동 조정됨 (CLAUDE.md)
+  # Level 1: 기본 (모든 앱) — 자동화 점검 가능, CWE Top 25 방어
+  # Level 2: 표준 (금전·개인정보) — 수동 검토 포함, OWASP Top 10 완전 방어
+  # Level 3: 고급 (고위험 금융·의료·방산) — 완전한 형식 검증 + 침투 테스트
+  asvs_level: 1                   # LOW→1, MEDIUM→1, HIGH→2, CRITICAL→3 (자동 강화)
+
+  authentication:
+    required: true                # 모든 엔드포인트 인증 필수 (ASVS V2)
+    mfa_required: false           # HIGH: 권장, CRITICAL: 필수 (ASVS V2.6)
+    session_timeout_minutes: 30   # 비활동 세션 자동 만료 (ASVS V3.3)
+    # token_type: "JWT"           # JWT / session-cookie / opaque-token
+    # token_expiry_minutes: 60    # Access Token 만료 시간
+
+  authorization:
+    model: "RBAC"                 # RBAC / ABAC / ReBAC
+    principle: "least-privilege"  # 최소 권한 원칙 (NIST 800-53 AC-6)
+    # resource_level: false       # 리소스 수준 권한 (예: 본인 데이터만) → ABAC 권장
+
+  input_validation:               # OWASP Top 10 A03:2021 Injection 방어
+    sanitize_all_inputs: true     # 모든 외부 입력 검증 필수
+    max_field_length: 2000        # 필드 최대 길이 (DoS 방어)
+    sql_injection_prevention: true  # Parameterized Query 강제
+    xss_prevention: true          # 출력 인코딩 + CSP 헤더
+    # path_traversal_prevention: true  # ../../../etc/passwd 방어
+    # prototype_pollution_prevention: true  # JS 객체 오염 방어
+
+  data_protection:
+    encryption_at_rest: false     # CRITICAL: AES-256-GCM 필수
+    encryption_in_transit: true   # TLS 1.2+ 필수 (TLS 1.3 권장)
+    masking_in_logs: false        # PII 필드 존재 시 true 필수
+    # key_rotation_days: 90       # 암호화 키 순환 주기 (PCI-DSS: 연 1회 이상)
+    # crypto_algorithm: "AES-256-GCM"  # 승인된 암호화 알고리즘 목록
+
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 1000     # 도메인 특성에 맞게 조정 (인증 API: 10, 일반: 1000)
+    # burst_limit: 200            # 순간 최대 허용량 (Token Bucket 알고리즘)
+    # per_user: true              # 사용자별 독립 제한 (IP 공유 환경 대응)
+
+  # Zero Trust 원칙 (NIST SP 800-207 · Google BeyondCorp)
+  # "신뢰하지 말고 항상 검증하라 (Never Trust, Always Verify)"
+  zero_trust:
+    verify_every_request: true    # 세션 기반 신뢰 없음 — 매 요청마다 검증
+    assume_breach: true           # 내부 네트워크도 신뢰하지 않음
+
+
+# ── 13. 품질 요구사항 (ISO/IEC 25010:2023) ────────────────────────────────────
+# SQuaRE (Software Quality Requirements and Evaluation) 표준
+# 8가지 품질 특성: 기능적 적합성 · 성능 효율성 · 호환성 · 사용성 ·
+#                 신뢰성 · 보안성 · 유지보수성 · 이식성
+quality:
+  # 기능적 적합성 (Functional Correctness)
+  functional_correctness:
+    invariant_coverage: 100       # 모든 불변조건에 테스트 필수 (%)
+    boundary_test_required: true  # 경계값 분석 (BVA) 테스트 필수
+    # equivalence_partitioning: true  # 동치 분할 테스트 권장
+
+  # 신뢰성 (Reliability · Fault Tolerance)
+  reliability:
+    fault_tolerance: true         # 부분 실패 시 서비스 계속
+    graceful_degradation: true    # 외부 의존 실패 시 최소 기능 유지
+
+  # 유지보수성 (Maintainability — ISO 25010 §4.2.7)
+  maintainability:
+    max_file_lines: 300           # 파일당 최대 줄 수 (300을 넘으면 분리 검토)
+    max_function_lines: 50        # 함수당 최대 줄 수
+    cyclomatic_complexity: 10     # 순환 복잡도 최대값 (McCabe 기준: 10 이하 권장)
+    test_coverage_percent: 80     # 라인 커버리지 목표 (P0/P1 불변조건: 100%)
+
+  # 이식성 (Portability · Framework Agnostic)
+  portability:
+    zero_external_dependencies: true  # 도메인 코어: 외부 라이브러리 의존 없음
+    framework_agnostic: true          # Express/NestJS 무관하게 동작
+
+
+# ── 14. 관찰가능성 요구사항 ────────────────────────────────────────────────────
+# Google SRE 4대 황금 신호: Latency · Traffic · Errors · Saturation
+# RED 지표 (Tom Wilkie): Rate · Error · Duration
+# USE 지표 (Brendan Gregg): Utilization · Saturation · Errors
+observability:
+  # RED 지표 (Rate, Error, Duration) — 모든 서비스 필수
+  metrics:
+    rate: true                    # 초당 요청 수 (Traffic)
+    error_rate: true              # 오류율 (Errors — 5xx/4xx 구분)
+    duration: true                # 응답 시간 (p50/p95/p99/p999)
+    business_metrics: []          # 도메인 특화 비즈니스 지표
+    # 예: ["invoice_created_per_hour", "payment_success_rate",
+    #      "dispute_open_count", "avg_invoice_amount"]
+
+  # 분산 추적 (OpenTelemetry 표준 — W3C TraceContext)
+  tracing:
+    enabled: true
+    correlation_id: true          # 모든 요청에 trace-id 전파 (서비스 간 추적)
+
+  # 구조화 로그 (JSON — 기계 파싱 가능)
+  logging:
+    format: "json"                # 구조화 JSON (ELK/Grafana Loki 연동 전제)
+    level: "info"                 # debug / info / warn / error
+    include_correlation_id: true  # 모든 로그에 correlation_id 포함
+    mask_pii: false               # PII 필드 존재 시 true 필수
+
+  # 알림 규칙 — SRE Workbook Ch.5 다중 번 레이트 기반 권장
+  alerting:
+    slo_breach: true              # SLO 위반 시 자동 알림 (Error Budget 소진율 기반)
+    error_spike: true             # 에러율 급증 (1분 내 임계값 초과)
+    latency_spike: true           # p99 응답시간 급증
+    # burn_rate_alerts:           # SRE Workbook 다중 번 레이트 알림 (권장)
+    #   - window: "1h"            # 1시간 창 — 빠른 소진 감지
+    #     burn_rate: 14.4         # 2% Error Budget을 1시간에 소진
+    #     severity: "page"        # 즉시 대응 필요
+    #   - window: "6h"            # 6시간 창 — 중속 소진 감지
+    #     burn_rate: 6            # 5% Error Budget을 6시간에 소진
+    #     severity: "ticket"
+    #   - window: "3d"            # 3일 창 — 느린 소진 감지
+    #     burn_rate: 1
+    #     severity: "review"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── 이하: v3.0 신규 섹션 ── (스키마 additionalProperties: true로 허용됨)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ── 15. 커맨드 카탈로그 (CQRS Command Side) ───────────────────────────────────
+# CQRS (Command Query Responsibility Segregation — Greg Young 2010)
+# 원칙: 커맨드는 상태를 변경하고 이벤트를 발행한다. 데이터를 반환하지 않는다.
+# 원칙: 쿼리는 상태를 변경하지 않는다. 순수한 읽기 작업이다.
+# → 이 섹션은 "쓰기 측(Command Side)"의 의도를 명확히 한다.
+commands:
+  - name: ""                      # 커맨드명 PascalCase (예: CreateInvoice, PayInvoice)
+    description: ""               # 이 커맨드의 비즈니스 의도
+    required_permission: ""       # 실행에 필요한 권한 ID
+    input_fields: []              # 커맨드 입력 필드 목록
+    emits_events: []              # 성공 시 발행되는 이벤트 목록
+    idempotent: false             # 동일 커맨드 재실행 시 부작용 없음 (멱등성)
+    # saga_step: false            # 이 커맨드가 Saga의 일부인가?
+
+  # ── 예시 ──
+  # - name: "CreateInvoice"
+  #   description: "새 인보이스 초안 생성"
+  #   required_permission: "billing.write"
+  #   input_fields: ["customer_id", "line_items", "due_date", "currency"]
+  #   emits_events: ["InvoiceCreated"]
+  #   idempotent: false
+  #
+  # - name: "PayInvoice"
+  #   description: "인보이스 결제 처리 — APPROVED → PAID 전이"
+  #   required_permission: "billing.write"
+  #   input_fields: ["invoice_id", "payment_method", "idempotency_key"]
+  #   emits_events: ["InvoicePaid"]
+  #   idempotent: true            # idempotency_key로 중복 처리 방지
+
+
+# ── 16. 읽기 모델 / 프로젝션 (CQRS Query Side) ────────────────────────────────
+# 읽기 모델: 도메인 이벤트를 소비해 쿼리에 최적화된 뷰를 생성한다.
+# 원칙: 읽기 모델은 쓰기 모델과 다른 데이터 구조를 가질 수 있다 (역정규화 허용).
+# 원칙: 이벤트 소싱 없이도 CQRS 적용 가능 — Phase 1은 단순 조회 API로 시작.
+read_models:
+  - name: ""                      # 읽기 모델명 (예: InvoiceListView, EmployeeSummary)
+    description: ""               # 이 뷰가 최적화하는 쿼리 패턴
+    source_events: []             # 이 뷰를 갱신하는 이벤트 목록
+    fields: []                    # 뷰에 포함되는 필드 (역정규화 포함)
+    required_permission: ""       # 조회에 필요한 권한
+
+  # ── 예시 ──
+  # - name: "InvoiceListView"
+  #   description: "목록 화면 최적화 — 페이지네이션·필터·정렬을 빠르게"
+  #   source_events: ["InvoiceCreated", "InvoicePaid", "InvoiceCancelled"]
+  #   fields: ["id", "invoice_number", "customer_name", "total_amount",
+  #            "currency", "status", "due_date", "created_at"]
+  #   required_permission: "billing.read"
+  #
+  # - name: "BillingSummaryView"
+  #   description: "월별 정산 요약 대시보드 — 집계 조회"
+  #   source_events: ["InvoicePaid", "InvoiceCancelled"]
+  #   fields: ["period", "total_invoiced", "total_paid", "total_outstanding",
+  #            "overdue_count", "dispute_count"]
+  #   required_permission: "billing.admin"
+
+
+# ── 17. 사가 (Saga — 분산 트랜잭션) ──────────────────────────────────────────
+# Garcia-Molina & Salem "Sagas" (SIGMOD 1987)
+# 원칙: 마이크로서비스 환경에서 2PC 대신 Saga로 분산 일관성을 달성한다.
+# 유형:
+#   choreography  : 이벤트 기반 — 중앙 오케스트레이터 없음 (느슨한 결합)
+#   orchestration : 중앙 오케스트레이터가 단계별 커맨드를 발행 (흐름 명확)
+# 원칙: 각 단계는 실패 시 보상 트랜잭션(Compensating Transaction)을 가진다.
+sagas:
+  - name: ""                      # Saga명 (예: OrderFulfillmentSaga)
+    description: ""               # 이 Saga가 조율하는 비즈니스 프로세스
+    type: "choreography"          # choreography / orchestration
+    steps:
+      - step: 1
+        domain: ""                # 담당 도메인
+        command: ""               # 실행 커맨드
+        on_success_event: ""      # 성공 시 발행되는 이벤트
+        compensation: ""          # 실패 시 보상 커맨드 (롤백)
+
+  # ── 예시: 주문-재고-결제 사가 ──
+  # - name: "OrderPaymentSaga"
+  #   description: "주문 확정 → 재고 예약 → 결제 처리 → 배송 시작"
+  #   type: "choreography"
+  #   steps:
+  #     - step: 1
+  #       domain: "inventory"
+  #       command: "ReserveStock"
+  #       on_success_event: "StockReserved"
+  #       compensation: "ReleaseStock"
+  #
+  #     - step: 2
+  #       domain: "billing"
+  #       command: "ChargePayment"
+  #       on_success_event: "PaymentCharged"
+  #       compensation: "RefundPayment"
+  #
+  #     - step: 3
+  #       domain: "fulfillment"
+  #       command: "CreateShipment"
+  #       on_success_event: "ShipmentCreated"
+  #       compensation: "CancelShipment"
+
+
+# ── 18. 복원력 패턴 (Resilience — Fault Tolerance) ────────────────────────────
+# Nygard "Release It!" 2nd ed. (2018) — 안정화 패턴
+# Newman "Building Microservices" 2nd ed. (2021) — 탄력성 설계
+# 원칙: 의존 서비스의 실패를 격리하고, 시스템을 자기 치유 가능하게 설계한다.
+resilience:
+  # 서킷 브레이커 (Circuit Breaker — Nygard 2007)
+  # CLOSED → OPEN → HALF-OPEN 상태 전이로 연쇄 장애 방지
+  circuit_breaker:
+    enabled: true
+    failure_threshold_percent: 50    # 50% 실패율 초과 시 OPEN
+    wait_duration_seconds: 30        # OPEN → HALF-OPEN 대기 시간
+    # half_open_max_calls: 5         # HALF-OPEN 상태에서 허용할 탐침 요청 수
+
+  # 격벽 (Bulkhead — 선박 격벽 패턴)
+  # 하나의 의존성 장애가 전체 스레드 풀을 소진하지 않도록 격리
+  bulkhead:
+    enabled: false                   # 외부 의존이 많은 경우 true 권장
+    # max_concurrent_calls: 20       # 최대 동시 호출 수
+    # max_wait_ms: 100               # 대기 최대 시간
+
+  # 타임아웃 (Timeout)
+  timeouts:
+    external_call_ms: 3000           # 외부 서비스 호출 타임아웃
+    db_query_ms: 500                 # DB 쿼리 타임아웃
+    total_request_ms: 5000           # 전체 요청 처리 타임아웃
+
+  # 재시도 (Retry — Exponential Backoff + Jitter)
+  retry:
+    max_attempts: 3
+    initial_delay_ms: 100
+    backoff_multiplier: 2            # 100ms → 200ms → 400ms
+    max_delay_ms: 5000
+    jitter: true                     # 천둥 군집(thundering herd) 방지
+
+  # 폴백 (Fallback)
+  fallback:
+    enabled: false
+    # strategy: "cached"             # cached / default / degraded
+    # cache_ttl_seconds: 300         # 캐시 TTL
+
+
+# ── 19. API 진화 전략 ──────────────────────────────────────────────────────────
+# 하위 호환성 보장 없이는 계약(Contract)이 신뢰를 잃는다.
+# semver 원칙: MAJOR.MINOR.PATCH
+#   MAJOR: 호환성 파괴 변경 (필드 제거, 타입 변경, 의미 변경)
+#   MINOR: 하위 호환 추가 (새 필드 추가, 새 엔드포인트)
+#   PATCH: 버그 수정 (동작 변경 없음)
+api_evolution:
+  current_version: "1.0.0"           # 현재 API 버전 (semver)
+  versioning_strategy: "url-path"    # url-path (/v1/...) / header / query-param
+
+  breaking_change_policy:
+    notice_period_days: 90           # 파괴적 변경 사전 고지 기간 (Enterprise: 180일)
+    deprecation_header: true         # Deprecation/Sunset HTTP 헤더 제공 (RFC 8594)
+    migration_guide_required: true   # 마이그레이션 가이드 필수 작성
+
+  backward_compat_rules:
+    - "기존 필드 제거 금지 (MAJOR 없이)"
+    - "필드 타입 변경 금지 (MAJOR 없이)"
+    - "필수 필드를 선택 필드로 변경 가능 (MINOR)"
+    - "새 선택 필드 추가 가능 (MINOR)"
+    - "새 enum 값 추가 가능 (MINOR) — 소비자의 unknown 처리 확인 필요"
+    - "새 enum 값 제거 금지 (MAJOR 없이)"
+
+  # Consumer-Driven Contract Testing (Pact.io)
+  # 소비자가 기대하는 계약을 공급자가 검증한다 — 파괴적 변경 조기 발견
+  contract_testing:
+    enabled: false                   # 다수 소비자 도메인이 있는 경우 true 권장
+    # tool: "pact"                   # pact / spring-cloud-contract
+
+
+# ── 20. 프라이버시 (Privacy by Design) ────────────────────────────────────────
+# GDPR Article 25: 설계 단계부터 데이터 보호 (Privacy by Design & Default)
+# Cavoukian "Privacy by Design — 7 Foundational Principles" (2010)
+# ISO 29101: Privacy Architecture Framework
+# 개인정보보호법 제33조: 개인정보 영향평가 (DPIA)
+privacy:
+  # 프라이버시 기본값 (GDPR Art.25.2 — Privacy by Default)
+  by_default:
+    collect_minimum_required: true    # 목적에 필요한 최소 데이터만 수집
+    retain_minimum_period: true       # 법정 최소 기간만 보존
+    share_minimum_required: true      # 꼭 필요한 제3자에게만 공유
+
+  # DPIA 트리거 (개인정보 영향평가 필요 조건 — GDPR Art.35 · 개인정보보호법 §33)
+  # 아래 중 하나라도 해당하면 DPIA 수행 필요 [확인 필요]
+  dpia_required: false              # DPIA 수행 필요 여부
+  dpia_triggers:                    # 해당하는 항목 체크
+    - automated_decision_making: false    # 프로파일링·자동 의사결정 (GDPR Art.22)
+    - large_scale_processing: false       # 대규모 개인정보 처리
+    - sensitive_data_categories: false    # 민감정보 (건강·종교·정치·생체 등)
+    - systematic_monitoring: false        # 공공장소 체계적 모니터링
+    - cross_border_transfer: false        # GDPR 역외 이전 (EU EEA → 제3국)
+
+  # 개인정보 수명주기 관리
+  data_lifecycle:
+    anonymization_strategy: ""      # 보존 기간 만료 후 처리 방법
+    # anonymization_strategy 예시:
+    #   "pseudonymization" : 가명처리 — 재식별 가능성 있음, 연구·통계 목적
+    #   "anonymization"    : 익명처리 — 재식별 불가, GDPR 적용 제외
+    #   "deletion"         : 완전 삭제 — 복구 불가
+
+  # 동의 관리 (consent_required: true인 경우만)
+  consent:
+    required: false                 # 법적 근거가 '동의'인 경우 true
+    # granular: true                # 항목별 세분화 동의
+    # withdraw_mechanism: true      # 동의 철회 메커니즘 필수
+
+
+# ── 21. 공급망 보안 ─────────────────────────────────────────────────────────
+# NIST SSDF (SP 800-218) · SLSA Framework v1.0 · SPDX 2.3 · CycloneDX 1.5
+# Executive Order 14028 (미국 대통령령): 소프트웨어 공급망 보안 강화
+supply_chain:
+  # SBOM (Software Bill of Materials — SPDX 2.3 또는 CycloneDX 1.5)
+  # 이 도메인이 사용하는 모든 오픈소스·상용 컴포넌트 목록
+  sbom:
+    required: true
+    format: "cyclonedx"             # spdx / cyclonedx
+    update_trigger: "on-dependency-change"  # on-release / on-dependency-change / weekly
+
+  # SLSA (Supply-chain Levels for Software Artifacts — slsa.dev)
+  # Level 1: 빌드 스크립트화 · Level 2: 빌드 서비스 · Level 3: 변조 방지
+  slsa_level: 1                     # 1 / 2 / 3 (HIGH: 2, CRITICAL: 3 권장)
+
+  # 의존성 보안 스캔
+  dependency_scanning:
+    block_known_cves: true          # High/Critical CVE 의존성 사용 금지 (nfr.yaml)
+    auto_update_patch: true         # PATCH 버전 자동 업데이트 허용
+    license_check: true             # GPL 등 카피레프트 라이선스 사용 금지 확인
+    # scan_tool: "osv-scanner"      # osv-scanner / snyk / dependabot / trivy
+
+  # 의존성 버전 고정 (Reproducible Builds)
+  dependency_pinning:
+    pin_exact_versions: true        # package-lock.json / yarn.lock 필수 커밋
+    # integrity_check: true         # npm --require-integrity / subresource integrity
+
+
+# ── 22. 용량 계획 (Capacity Planning) ────────────────────────────────────────
+# Google SRE Book Ch.17 · AWS Well-Architected Framework — Reliability Pillar
+# 목적: 예측 불가 트래픽 급증에도 SLO를 유지하기 위한 사전 준비
+capacity_planning:
+  # 트래픽 프로파일
+  traffic_profile:
+    avg_rps: 10                     # 평균 초당 요청 수
+    peak_rps: 100                   # 피크 초당 요청 수 (SLO.throughput과 일치)
+    peak_hours: "09:00-18:00 KST"   # 피크 시간대
+    growth_rate_percent_yearly: 50  # 연간 예상 성장률
+
+  # 스케일링 정책
+  scaling:
+    strategy: "horizontal"          # horizontal / vertical / both
+    min_instances: 1
+    max_instances: 10
+    # scale_out_trigger:            # 스케일 아웃 임계값
+    #   cpu_percent: 70
+    #   memory_percent: 80
+    #   rps_per_instance: 50
+
+  # 부하 테스트 요구사항 (Stage D PASS 조건 포함 권장)
+  load_testing:
+    required: false                 # HIGH/CRITICAL: true 권장
+    # tool: "k6"                    # k6 / gatling / locust / jmeter
+    # target_rps: 200               # 2× peak_rps (안전 여유)
+    # duration_minutes: 30
+
+
+# ── 23. 테스트 전략 ────────────────────────────────────────────────────────────
+# Meszaros "xUnit Test Patterns" (2007) — 테스트 대역 패턴
+# Google Testing Blog — 테스트 피라미드 (Mike Cohn)
+# Jia/Harman "An Analysis and Survey of the Development of Mutation Testing" (2011)
+# 원칙: 테스트는 문서다 — 코드 변경 없이 요구사항을 검증한다.
+testing_strategy:
+  # 테스트 피라미드 (Google 권장 비율: 70% 단위 / 20% 통합 / 10% E2E)
+  pyramid:
+    unit:
+      target_percent: 80            # 코드 라인 커버리지 목표
+      focus: "invariants + value-objects + state-machines"
+      framework: "node:test"        # jest / mocha / node:test (built-in)
+
+    integration:
+      enabled: true
+      focus: "use-case + repository + controller"
+      use_real_db: false            # InMemory(Phase1) / Real DB(Phase2)
+
+    e2e:
+      enabled: false                # Stage D 이후 별도 E2E 스위트 구성 권장
+      # tool: "playwright"
+
+  # 변이 테스트 (Mutation Testing — 테스트 품질 측정)
+  # 코드를 의도적으로 변형(변이)하여 테스트가 감지하는지 확인
+  # 변이 생존율이 높으면 테스트가 취약함을 의미
+  mutation_testing:
+    enabled: false                  # HIGH/CRITICAL P0 불변조건에 권장
+    # tool: "stryker"               # stryker (JS) / pitest (Java) / mutmut (Python)
+    # min_kill_rate_percent: 80     # 변이 제거율 목표 (80% 이상 권장)
+
+  # 속성 기반 테스트 (Property-Based Testing)
+  # 무작위 입력으로 수학적 속성(불변조건)을 검증 — 경계값 자동 탐색
+  property_based:
+    enabled: false                  # 금융 계산·상태 전이에 강력히 권장
+    # tool: "fast-check"            # fast-check (JS) / hypothesis (Python)
+    # focus: "Money value-object, amount invariants"
+
+  # 혼돈 공학 (Chaos Engineering — Rosenthal 2020)
+  # "Production에서 먼저 실패하지 않으려면 실험실에서 먼저 실패하라"
+  chaos_engineering:
+    enabled: false                  # CRITICAL + product_tier=core 권장
+    # experiments:
+    #   - "외부 의존 서비스 응답 지연 (500ms 주입)"
+    #   - "의존 서비스 완전 중단"
+    #   - "DB 연결 풀 소진"
+    #   - "메모리 압박 (메모리 누수 시뮬레이션)"
+
+
+# ── 24. 팀 토폴로지 ────────────────────────────────────────────────────────────
+# Skelton/Pais "Team Topologies" (2019)
+# 팀 유형 → 인지 부하·의사소통 경로·소유권을 명확히 한다.
+team_topology:
+  team_type: "stream-aligned"       # stream-aligned / enabling / complicated-subsystem / platform
+  # stream-aligned    : 비즈니스 흐름에 정렬 — 가장 일반적
+  # enabling          : 다른 팀 역량 향상 지원 (플랫폼 팀)
+  # complicated-subsystem: 특수 전문성 필요 (ML, 암호화, 규제)
+  # platform          : 내부 서비스 플랫폼 제공
+
+  interaction_modes:               # 다른 팀과의 상호작용 방식
+    - team: ""
+      mode: "x-as-a-service"      # collaboration / x-as-a-service / facilitating
+
+  cognitive_load_budget: "medium"  # low / medium / high
+  # cognitive_load_budget: 팀이 감당 가능한 복잡도 수준
+  # 과도한 인지 부하 → 실수·기술부채 증가 → 팀 분리 검토
+
+
+# ── 25. ADR 참조 목록 (Architecture Decision Records) ──────────────────────────
+# Nygard "Documenting Architecture Decisions" (2011)
+# 원칙: 모든 중요한 설계 결정은 ADR로 기록한다 (C004 — CLAUDE.md)
+# ADR 형식: 제목 / 상태(Proposed/Accepted/Deprecated/Superseded) /
+#           맥락 / 결정 / 결과 / 대안
+adr_refs: []
+# - id: "ADR-001"
+#   title: "InMemory → PostgreSQL 마이그레이션 전략"
+#   status: "proposed"            # proposed / accepted / deprecated / superseded
+#   path: "docs/adr/ADR-001-db-migration.md"
+#   supersedes: null
+#
+# - id: "ADR-002"
+#   title: "결제 도메인 CQRS 적용 결정"
+#   status: "accepted"
+#   path: "docs/adr/ADR-002-cqrs-billing.md"
+#   supersedes: null
+
+
+# ── 26. 스테이지 설정 ──────────────────────────────────────────────────────────
+# Claude가 어느 Stage부터 시작할지 (보통 A)
+stage: "A"
+# A: 처음 생성 시 (계약·불변조건·도메인 설계)
+# B: Stage A 완료 후 조합 검증
+# C: Stage B 완료 후 마스터 쉘 편입
+# D: 구현 완료 후 품질 게이트
+# E: 구현 완료 후 적대적 검증
+
+
+# ── 27. 계약 경로 ─────────────────────────────────────────────────────────────
+# Stage A 완료 후 자동 생성됨 — 미리 작성하지 않아도 됨
+contracts:
+  # http:       "domains/[id]/contracts/openapi.yaml"      # 자동 생성 (OpenAPI 3.1)
+  # events:     "domains/[id]/contracts/events.schema.json" # 자동 생성 (AsyncAPI/JSON Schema)
+  # ui:         "domains/[id]/contracts/ui-contract.yaml"   # 자동 생성
+  # capability: "domains/[id]/contracts/capability.yaml"    # 자동 생성
+
+
+# ── 28. 기능 플래그 ───────────────────────────────────────────────────────────
+# Stage D PASS 전까지 모두 false (안전한 기본값 — 프로덕션 격리)
+# 플래그 유형:
+#   release     : 미완성 기능 숨김 (Stage D PASS 후 활성화)
+#   experiment  : A/B 테스트 (통계적 유의성 달성 후 결정)
+#   operational : 운영 제어 (성능 문제 시 즉시 비활성화)
+#   permission  : 특정 사용자 그룹에게만 노출
+feature_flags: {}
+# 예시 (자동 생성되므로 미리 작성 불필요):
+# [id]_enabled: false
+
+
+# ── 29. 라우팅 ────────────────────────────────────────────────────────────────
+routing:
+  entry_point: ""                  # 예: /billing / /hr / /inventory
+  navigation_group: ""             # 예: finance / people / operations / product
+  plugin_slot: "main-content"      # master-shell 슬롯 (기본: main-content)
+
+
+# ── 30. 롤아웃 전략 (카나리 배포) ─────────────────────────────────────────────
+# Netflix/Amazon 카나리 릴리스 패턴
+# 원칙: 폭발 반경(Blast Radius) 최소화 — 문제 발생 시 영향 받는 사용자를 최소화
+# 원칙: 관측 → 판단 → 진행/롤백 의사결정에 최소 24시간 안정 확인
+rollout:
+  strategy: "gradual"              # immediate(LOW) / gradual(MEDIUM) / canary(HIGH/CRITICAL)
+  phases:
+    - name: "internal"
+      audience_percent: 5          # 팀 내부 (dogfooding)
+      criteria: "기본 기능 동작 확인 + 오류 없음"
+
+    - name: "beta"
+      audience_percent: 20         # 얼리어답터·파트너
+      criteria: "Stage D PASS + 48시간 내부 안정 + SLO 기준 충족"
+
+    - name: "full"
+      audience_percent: 100        # 전체 사용자
+      criteria: "SLO 목표 충족 + 오류율 0.1% 이하 + 7일 beta 안정"
+
+  # 롤백 트리거 (자동 롤백 조건)
+  rollback_triggers:
+    - "오류율 1% 초과 (5분 지속)"
+    - "p99 응답시간 SLO 2× 초과 (5분 지속)"
+    - "P0 불변조건 위반 발생"
+
+
+# ── 31. 추가 메모 ──────────────────────────────────────────────────────────────
+# 요구사항 작성자가 Claude에게 전달하고 싶은 특이사항
+notes: |
+  [특이사항이 있으면 여기에 적는다]
+  [예: 레거시 시스템과의 호환성, 마이그레이션 계획, 예외 처리 방침]
+  [예: 외부 규제 기관 보고 요구사항, 특수 감사 요건]
+  [예: 현재 팀의 기술 스택 제약, 성능 병목 지점]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 작성 완료 체크리스트 (Stage A 진입 전 확인)
+# ─────────────────────────────────────────────────────────────────────────────
+# [필수]
+# [ ] identity.id, name, domain, description, risk_level 작성
+# [ ] ubiquitous_language — 핵심 명사 5개 이상 (aggregate_root 지정)
+# [ ] invariants — P0 불변조건 1개 이상 (test_required: true)
+# [ ] permissions — read / write / admin 3단계 역할 정의
+# [ ] screens — 핵심 화면 1개 이상 (path + required_permission + must 항목)
+# [ ] risk.classification 설정
+#
+# [risk_level HIGH/CRITICAL 추가 필수]
+# [ ] risk.audit_trail.enabled: true + immutable: true
+# [ ] risk.data_sensitivity.pii_fields 작성 (PII가 있는 경우)
+# [ ] security.mfa_required: true (CRITICAL)
+# [ ] security.data_protection.encryption_at_rest: true (CRITICAL)
+#
+# [금전 처리 도메인 추가 필수]
+# [ ] risk.financial_risk 섹션 작성
+# [ ] risk.financial_risk.idempotency_required: true (CRITICAL)
+# [ ] risk.financial_risk.four_eyes_principle: true (CRITICAL)
+# [ ] risk.financial_risk.amount_limit_per_tx 설정 (CRITICAL)
+#
+# [권장 (품질 향상)]
+# [ ] state_machines — 핵심 집계 루트 생명주기 정의
+# [ ] domain_events — 다른 도메인에 영향을 주는 이벤트 정의
+# [ ] commands — CQRS 커맨드 카탈로그 작성
+# [ ] read_models — 쿼리 최적화 뷰 정의
+# [ ] slo — 가용성·지연시간·오류율 목표 설정
+# [ ] resilience — 외부 의존이 있는 경우 circuit_breaker: true
+# [ ] supply_chain.sbom.required: true 확인
+# [ ] api_evolution.current_version 설정
+# [ ] privacy.dpia_required — DPIA 필요 여부 판단
+# [ ] rollout.rollback_triggers 현실적으로 설정
+# ═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,45 @@
+# Master Shell - 도메인 카탈로그
+# 마스터 UI 포털에서 탐색 가능한 도메인 목록
+version: "0.2.0"
+last_updated: "2026-03-18"
+
+domains:
+  - id: "productivity"
+    name: "생산성 관리"
+    description: "담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역"
+    bounded_contexts:
+      - id: "task-tracking"
+        name: "작업 추적"
+        description: "작업의 생애주기(생성→진행→완료)를 추적하고 담당자·마감일을 관리한다"
+        stage_a_memory: "memory/stageA/task-management.yaml"
+        stage_b_memory: "memory/stageB/task-management-composition.yaml"
+    plugins:
+      - "task-management-plugin"
+    domain_map_ref: "requirements/domain-map.yaml"
+    status: "active"
+    registered_at: "2026-03-17"
+    note: "task-management 플러그인은 feature_flag=false 상태. Stage D PASS 후 활성화 예정."
+
+  - id: "billing"
+    name: "정산관리"
+    description: "인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 도메인 영역"
+    bounded_contexts:
+      - id: "billing.invoice"
+        name: "인보이스"
+        description: "인보이스 생성·조회·상태전이. 합계 불변조건(INV-B001) 항상 유지."
+        stage_a_memory: "memory/stageA/billing.invoice.yaml"
+      - id: "billing.payment"
+        name: "결제상태"
+        description: "결제 요청·응답 추적. 미매칭 감지 (INV-B006)."
+        stage_a_memory: "memory/stageA/billing.payment.yaml"
+      - id: "billing.exception"
+        name: "정산 예외"
+        description: "미매칭·오류 항목 관리자 승인 워크플로. DISPUTED→PAID는 admin 전용 (INV-B005)."
+        stage_a_memory: "memory/stageA/billing.exception.yaml"
+    stage_b_memory: "memory/stageB/billing.yaml"
+    plugins:
+      - "billing-plugin"
+    domain_map_ref: "requirements/domain-map.yaml"
+    status: "inactive"
+    registered_at: "2026-03-18"
+    note: "billing 플러그인은 feature_flag=false 상태. Stage D PASS 후 internal 5% rollout 시작."

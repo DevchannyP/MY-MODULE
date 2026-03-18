@@ -1,0 +1,85 @@
+# Stage C Memory - task-management 플러그인 등록
+# 생성일: 2026-03-17
+# 조합기와 마스터 UI는 코드보다 이 파일을 먼저 읽는다.
+
+module_id: "task-management"
+plugin_id: "task-management-plugin"
+stage_b_memory_ref: "memory/stageB/task-management-composition.yaml"
+
+# ── 1. 플러그인 등록 정보 ────────────────────────────────────────────────
+plugin_registry_entry: "master-shell/plugin-registry/registry.yaml"
+registry_status: "inactive"           # feature_flag=false 동안 inactive
+
+navigation:
+  group: "productivity"
+  group_label: "생산성 관리"
+  label: "작업 관리"
+  icon: "checklist"
+  order: 1
+
+entry_point: "/tasks"
+
+# ── 2. Feature Flags ─────────────────────────────────────────────────────
+feature_flags:
+  enable_task_management: false       # 마스터 UI 노출 여부
+  enable_bulk_assign: false           # 일괄 담당자 변경 기능
+flags_file: "master-shell/feature-flags/flags.yaml"
+
+# ── 3. Rollout 정책 ──────────────────────────────────────────────────────
+rollout:
+  strategy: "canary"
+  initial_percentage: 0
+  full_rollout_condition: "Stage D 품질 게이트 전체 PASS 후"
+  activation_steps:
+    - step: 1
+      action: "enable_task_management: true (내부 환경)"
+      trigger: "Stage D PASS"
+    - step: 2
+      action: "rollout.percentage: 10 (canary)"
+      trigger: "내부 검증 완료"
+    - step: 3
+      action: "rollout.percentage: 100 + status: active"
+      trigger: "canary 모니터링 이상 없음 (최소 24시간)"
+
+# ── 4. Observability 연결 ────────────────────────────────────────────────
+observability:
+  dashboard_id: "task-management-dashboard"
+  alert_group_id: "task-management-alerts"
+  observability_config: "master-shell/observability/config.yaml"
+  metrics_tracked:
+    - "작업 생성 수 (일별)"
+    - "작업 완료율 (%)"
+    - "API 응답시간 p99"
+    - "API 오류율 (%)"
+    - "상태 전이 실패 수"
+  alert_conditions:
+    - "API 오류율 > 1% → warning"
+    - "p99 > 200ms → warning"
+    - "가용성 < 99.9% → critical"
+
+# ── 5. 계약 참조 (Stage C 등록 기준) ────────────────────────────────────
+contracts:
+  ui: "domains/productivity/task-tracking/contract/ui-contract.yaml"
+  capability: "domains/productivity/task-tracking/contract/capability.yaml"
+
+# ── 6. 마스터 UI 읽기 순서 확인 ─────────────────────────────────────────
+master_shell_read_order:
+  1: "memory/project/current-state.yaml"
+  2: "master-shell/plugin-registry/registry.yaml"
+  3: "master-shell/feature-flags/flags.yaml"
+  4: "domains/productivity/task-tracking/contract/ui-contract.yaml"
+  5: "domains/productivity/task-tracking/contract/capability.yaml"
+  note: "모듈 코드(src/)는 읽지 않는다"
+
+# ── 7. 도메인 카탈로그 등록 ──────────────────────────────────────────────
+catalog_ref: "master-shell/catalog/domains.yaml"
+catalog_domain_id: "productivity"
+
+registered_at: "2026-03-17"
+gate_result: "PASS"
+gate_failures: []
+notes: |
+  - plugin-registry, navigation, feature-flags, observability, catalog 모두 등록 완료.
+  - feature_flag 기본값 false → 마스터 UI 미노출 상태가 안전한 기본.
+  - 활성화는 Stage D PASS 후 rollout 절차에 따라 단계적으로 진행.
+  - [확인 필요] RISK002: observability dashboard URL, alert channel 미확정.

@@ -1,0 +1,162 @@
+# Workflow OS - 현재 저장소 상태
+# 갱신 시점: Stage 종료마다 반드시 갱신할 것
+
+as_of: "2026-03-18"
+schema_version: "0.1.0"
+
+repository:
+  name: "my-module"
+  purpose: "Workflow OS 코어 플랫폼 - 격리 모듈 생성·조합·검증 엔진"
+  phase: "core-platform-upgrade-for-video-era"
+  scm_governance: "IN_PROGRESS (git governance docs + release evidence baseline 추가 중)"
+
+stage_states:
+  A: "PASS"
+  B: "PASS"
+  C: "PASS"
+  D: "PASS"
+  E: "PASS"
+
+last_completed_stage: "D(4차)"
+
+active_modules:
+  - module_id: "task-management"
+    domain: "productivity"
+    bounded_context: "task-tracking"
+    plugin_id: "task-management-plugin"
+    stage_a_memory: "memory/stageA/task-management.yaml"
+    stage_b_memory: "memory/stageB/task-management-composition.yaml"
+    stage_c_memory: "memory/stageC/task-management-plugin.yaml"
+    contract_dir: "domains/productivity/task-tracking/contract/"
+    plugin_status: "inactive"
+    feature_flag: "enable_task_management"
+    feature_flag_value: false
+    interface_layer: "PASS (TaskController.js — 5경로, authz regression suite PASS, smoke PASS)"
+
+  - module_id: "billing"
+    domain: "billing"
+    bounded_contexts:
+      - billing.invoice
+      - billing.payment
+      - billing.exception
+    plugin_id: "billing-plugin"
+    stage_a_memories:
+      - "memory/stageA/billing.invoice.yaml"
+      - "memory/stageA/billing.payment.yaml"
+      - "memory/stageA/billing.exception.yaml"
+    stage_b_memory: "memory/stageB/billing.yaml"
+    contract_dir: "domains/billing/contracts/"
+    plugin_status: "inactive"
+    feature_flag: "billing.enabled"
+    feature_flag_value: false
+    unit_tests: "PASS (89/89)"
+    stage_a: "PASS"
+    stage_b: "PASS"
+    stage_c: "PASS"
+    stage_d: "PASS"
+    stage_e: "PASS"
+    interface_layer: "PASS (BillingController.js — 11경로, authz regression suite PASS, smoke PASS)"
+    stage_d_detail:
+      unit: "PASS (133/133 billing — 89 domain/app + 44 interface)"
+      lint: "PASS (0 errors)"
+      secret_scan: "PASS"
+      dependency_scan: "PASS (외부 의존 없음)"
+      contract_test: "PASS (task-management+billing drift validator)"
+      e2e_smoke: "PASS (BillingController smoke suite)"
+      authn_authz: "PASS (BillingController authz regression suite)"
+    stage_e_gaps:
+      - id: "GAP-B001"
+        severity: "P1"
+        description: "비-DISPUTED 인보이스 approve 시 오류 code 없음"
+        status: "FIXED"
+        fix: "ApproveBillingExceptionUseCase CONFLICT 사전 검사 추가"
+      - id: "GAP-B002"
+        severity: "P2"
+        description: "빈 인보이스 total() 'KRW' 하드코딩 — 단일통화 전제 미명시"
+        status: "DOCUMENTED"
+        fix: "domain-spec.md 단일통화 제약 명시"
+      - id: "GAP-B003"
+        severity: "P3"
+        description: "결제 동기화 재시도 횟수 상한 없음"
+        status: "ADR_DECIDED"
+        adr: "docs/adr/0006-payment-retry-policy.md"
+      - id: "GAP-B004"
+        severity: "P3"
+        description: "GetBillingSummaryUseCase month_total 미반환"
+        status: "FIXED"
+        fix: "null로 명시 반환"
+
+quality_gate_last_run: "2026-03-18"
+quality_gate_result: "PASS"
+quality_gate_detail:
+  unit_tests: "PASS (247/247)"        # task-management 91+23 + billing 89+44 = 247
+  integration_tests: "PASS (유스케이스 수준)"
+  adversarial_tests: "PASS (43/43, Stage E)"
+  contract_tests: "PASS (test:contract — task-management+billing drift validator)"
+  e2e_smoke: "PASS (controller-level smoke suites 2/2, scenarios 6)"
+  lint_syntax: "PASS (repo-wide node --check: domains + src + scripts)"
+  type_check: "PASS (JSDoc + @ts-check boundary validator)"
+  static_analysis: "PASS (ESLint 10.0.3, repo-wide domains + src + scripts, 0 errors)"
+  secret_scan: "PASS"
+  dependency_scan: "PASS (runtime deps 0, dev deps 2 locked)"
+  authn_authz: "PASS (interface controller regression suites 2/2)"
+  input_validation: "PASS (INV001~INV004 경계 강제)"
+  sbom: "PASS (SPDX baseline artifact generated)"
+  provenance: "PASS (deterministic provenance evidence baseline)"
+  rollback: "PASS (policy baseline validator + rollback playbook)"
+  observability: "PASS (policy baseline validator + structured observability config)"
+  release_evidence: "PASS (release evidence generator baseline added)"
+
+stage_e_findings:
+  total_gaps: 3
+  gaps_fixed: 1
+  gaps_adred: 2
+  gap_details:
+    - id: "GAP-001"
+      severity: "P2"
+      description: "capability.yaml INV004 누락 (reassign-task CANCELLED 예외)"
+      status: "FIXED"
+    - id: "GAP-002"
+      severity: "P3"
+      description: "permissions_required UseCase 미강제"
+      status: "ADR_DECIDED"
+      adr: "docs/adr/0002-permission-enforcement-layer.md"
+    - id: "GAP-003"
+      severity: "P3"
+      description: "InMemoryTaskRepository 낙관적 잠금 부재"
+      status: "ADR_DECIDED"
+      adr: "docs/adr/0003-optimistic-locking-policy.md"
+
+skeleton_initialized: true
+skeleton_initialized_at: "2026-03-17"
+stage_a_completed_at: "2026-03-17"
+stage_b_completed_at: "2026-03-17"
+stage_c_completed_at: "2026-03-17"
+stage_d_first_run_at: "2026-03-17"
+stage_e_completed_at: "2026-03-18"
+stage_d_second_run_at: "2026-03-18"
+stage_d_third_run_at: "2026-03-18"
+stage_d_fourth_run_at: "2026-03-18"
+
+notes: |
+  2026-03-17: 저장소 뼈대 초기화 완료
+  2026-03-17: Stage A~D 완료. Stage D 1차 PARTIAL_PASS. 단위 48/48 PASS. NOT_CONFIGURED 9건.
+  2026-03-18: Stage E 완료 - adversarial 43/43 PASS. 갭 3건 발견·조치. INV004 추가.
+  2026-03-18: Stage D 2차 재실행 - 91/91 PASS (adversarial 포함). NOT_CONFIGURED 9건 유지.
+  2026-03-18: ESLint 설치 (eslint@10.0.3) + eslint.config.mjs 구성. 소스 5건 수정. static-analysis PASS.
+  2026-03-18: Stage D 3차 재실행 - static-analysis PASS. NOT_CONFIGURED 9 → 8건.
+  2026-03-18: BillingController.js 구현 완료. 44/44 authz regression PASS. 전체 224/224 PASS.
+  2026-03-18: docs/explanation/ 완성 - boundary-and-contracts.md, composition-and-shell.md 추가.
+  2026-03-18: TaskController.js 구현 완료 (ADR-0002 이행). 23/23 authz regression PASS. 전체 247/247 PASS.
+  2026-03-18: 코어 업그레이드 장기 계획 수립 - memory/project/core-upgrade-plan.yaml 기준으로 플랫폼 강화 루프 전환.
+  2026-03-18: 코어 전역 품질 게이트 정렬 완료 - lint/static-analysis를 domains+src+scripts 범위로 확장, 숨겨진 ESLint 오류 8건 해소.
+  2026-03-18: 마스터 셸 조합 검증 도입 - validate:composition 추가, billing observability 참조 누락 수정, 교차 정합성 자동 점검 PASS.
+  2026-03-18: 계약 드리프트 검증 도입 - test:contract 추가, task-management capability/openapi 응답 드리프트 2건 수정, 양 도메인 교차 검증 PASS.
+  2026-03-18: 타입 안정성 기본선 도입 - core boundary files에 @ts-check + JSDoc 시그니처 추가, type-check PASS.
+  2026-03-18: 운영 기준선 도입 - check:observability/test:rollback 실동작화, rollback playbook 추가, structured observability/alert URI 적용.
+  2026-03-18: 공급망 기준선 도입 - SPDX SBOM 생성, provenance policy/evidence 생성, artifacts 경로 고정.
+  2026-03-18: authn/authz 회귀 게이트 실동작화 - test:authn-authz 추가, interface controller regression 67/67 PASS.
+  2026-03-18: e2e smoke 기준선 도입 - controller-level smoke 6/6 PASS, Stage D 전체 PASS로 전환.
+  2026-03-19: Git 거버넌스 기준선 도입 - ADR 0007, branch/commit/PR 규칙, learning log 템플릿, release evidence 생성기 추가.
+  Phase 2 잔여 조건: 실제 서버 기동 smoke, dependency scan 실검증, CI/CD release evidence 연동.
+  기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.

@@ -1,0 +1,31 @@
+# Stage C Memory Template
+# 저장 위치: memory/stageC/[module-id]-plugin.yaml
+
+module_id: "[module-id]"
+plugin_id: "[plugin-id]"
+
+navigation:
+  group: "[navigation-group-id]"
+  label: "[도메인 언어 레이블]"
+  order: 1
+
+entry_point: "/[route]"
+
+feature_flags:
+  "[flag-name]": false
+
+rollout:
+  strategy: "canary"
+  initial_percentage: 5
+  full_rollout_condition: "Stage D PASS 후"
+
+observability:
+  dashboard: "[확인 필요: 대시보드 URL]"
+  alert_group: "[alert-group-name]"
+
+plugin_registry_entry: "master-shell/plugin-registry/registry.yaml"
+
+registered_at: "YYYY-MM-DD"
+gate_result: "PASS | FAIL"
+gate_failures: []
+notes: ""

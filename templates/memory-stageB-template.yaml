@@ -1,0 +1,31 @@
+# Stage B Memory Template
+# 저장 위치: memory/stageB/[module-id]-composition.yaml
+
+module_id: "[module-id]"
+
+depends_on_contracts:
+  - path: "[계약 파일 경로]"
+    module_id: "[의존하는 모듈 ID]"
+    capability_ids: ["[capability-id]"]
+    type: "capability | ui | events | http"
+
+provides_contracts:
+  - path: "contract/capability.yaml"
+    type: "capability"
+
+screen_composition:
+  - screen_id: "[screen-id]"
+    capabilities_used: ["[capability-id]"]
+    depends_on_modules: ["[module-id]"]
+
+shared_libs:
+  - name: "[lib-name]"
+    adr: "docs/adr/[NNNN-lib-decision].md"
+    justification: "[왜 공유 라이브러리가 필요한가]"
+
+composition_policy_applied: "constraints.yaml C001 준수 확인"
+
+completed_at: "YYYY-MM-DD"
+gate_result: "PASS | FAIL"
+gate_failures: []
+notes: ""

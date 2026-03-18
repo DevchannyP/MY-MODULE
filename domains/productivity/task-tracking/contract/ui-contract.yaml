@@ -1,0 +1,88 @@
+# task-tracking - UI Contract
+# 마스터 UI는 이 파일만 읽고 화면을 구성한다. 모듈 코드를 모른다.
+version: "0.1.0"
+module_id: "task-management"
+name: "작업 관리"
+description: "담당자가 자신의 작업을 확인하고, 상태를 전이하며, 새 작업을 생성하는 도메인 포털 화면"
+
+entry_points:
+  - route: "/tasks"
+    label: "작업 목록"
+    description: "내 작업과 팀 작업을 상태·담당자별로 조회한다"
+  - route: "/tasks/new"
+    label: "새 작업 만들기"
+    description: "새 작업을 생성하고 담당자를 지정한다"
+
+screens:
+  - id: "task-list"
+    name: "작업 목록 화면"
+    route: "/tasks"
+    description: "담당자별·상태별 작업 목록을 표시하고, 각 작업의 상세 화면으로 이동할 수 있다"
+    capabilities_required:
+      - "list-tasks"
+    data_requirements:
+      - source: "list-tasks"
+        fields: [task_id, title, assignee_id, due_date, status]
+    actions:
+      - id: "navigate-to-detail"
+        label: "작업 상세 보기"
+        triggers: "get-task capability 호출"
+      - id: "navigate-to-create"
+        label: "새 작업 만들기"
+        triggers: "create 화면으로 이동"
+    filters:
+      - field: "status"
+        label: "상태"
+        options: ["전체", "대기", "진행", "완료", "취소"]
+      - field: "assignee_id"
+        label: "담당자"
+
+  - id: "task-detail"
+    name: "작업 상세 화면"
+    route: "/tasks/:task_id"
+    description: "단일 작업의 전체 정보를 확인하고, 상태 전이·담당자 변경을 수행한다"
+    capabilities_required:
+      - "get-task"
+      - "transition-task-status"
+      - "reassign-task"
+    data_requirements:
+      - source: "get-task"
+        fields: [task_id, title, assignee_id, due_date, status, description, created_at, updated_at]
+    actions:
+      - id: "start-task"
+        label: "작업 시작"
+        triggers: "transition-task-status (new_status: IN_PROGRESS)"
+        visible_when: "status == PENDING"
+      - id: "complete-task"
+        label: "완료 처리"
+        triggers: "transition-task-status (new_status: DONE)"
+        visible_when: "status == IN_PROGRESS"
+      - id: "cancel-task"
+        label: "취소"
+        triggers: "transition-task-status (new_status: CANCELLED)"
+        visible_when: "status in [PENDING, IN_PROGRESS]"
+      - id: "reassign"
+        label: "담당자 변경"
+        triggers: "reassign-task capability 호출"
+
+  - id: "task-create"
+    name: "작업 생성 화면"
+    route: "/tasks/new"
+    description: "새 작업을 생성한다. 제목과 담당자는 필수 입력이다."
+    capabilities_required:
+      - "create-task"
+    actions:
+      - id: "submit-create"
+        label: "작업 만들기"
+        triggers: "create-task capability 호출"
+      - id: "cancel-create"
+        label: "취소"
+        triggers: "task-list 화면으로 이동"
+
+permissions:
+  - role: "task-owner"
+    screens: ["task-list", "task-detail", "task-create"]
+    actions: ["navigate-to-detail", "navigate-to-create", "start-task", "complete-task", "cancel-task", "reassign", "submit-create", "cancel-create"]
+  - role: "task-viewer"
+    screens: ["task-list", "task-detail"]
+    actions: ["navigate-to-detail"]

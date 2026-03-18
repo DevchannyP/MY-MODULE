@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/workflow-os/billing/events.schema.json",
+  "title": "Billing Domain Events Schema",
+  "definitions": {
+    "Money": {
+      "type": "object",
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount":   { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3 }
+      }
+    },
+    "EventEnvelope": {
+      "type": "object",
+      "required": ["event_id", "event_type", "domain", "occurred_at", "correlation_id", "payload"],
+      "properties": {
+        "event_id":       { "type": "string" },
+        "event_type":     { "type": "string" },
+        "domain":         { "type": "string", "const": "billing" },
+        "occurred_at":    { "type": "string", "format": "date-time" },
+        "correlation_id": { "type": "string" }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "InvoiceCreated" },
+            "payload": {
+              "type": "object",
+              "required": ["invoice_id", "customer_id", "status"],
+              "properties": {
+                "invoice_id":  { "type": "string" },
+                "customer_id": { "type": "string" },
+                "status":      { "type": "string", "const": "DRAFT" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "InvoiceStatusChanged" },
+            "payload": {
+              "type": "object",
+              "required": ["invoice_id", "from_status", "to_status"],
+              "properties": {
+                "invoice_id":  { "type": "string" },
+                "from_status": { "type": "string", "enum": ["DRAFT", "PENDING", "PAID", "CANCELLED", "DISPUTED"] },
+                "to_status":   { "type": "string", "enum": ["DRAFT", "PENDING", "PAID", "CANCELLED", "DISPUTED"] },
+                "changed_by":  { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "InvoiceTotalMismatchDetected" },
+            "payload": {
+              "type": "object",
+              "required": ["invoice_id", "declared_total", "computed_total"],
+              "properties": {
+                "invoice_id":      { "type": "string" },
+                "declared_total":  { "$ref": "#/definitions/Money" },
+                "computed_total":  { "$ref": "#/definitions/Money" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "PaymentMismatchDetected" },
+            "payload": {
+              "type": "object",
+              "required": ["payment_id", "invoice_id", "payment_amount", "invoice_total"],
+              "properties": {
+                "payment_id":      { "type": "string" },
+                "invoice_id":      { "type": "string" },
+                "payment_amount":  { "$ref": "#/definitions/Money" },
+                "invoice_total":   { "$ref": "#/definitions/Money" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "BillingExceptionApproved" },
+            "payload": {
+              "type": "object",
+              "required": ["exception_id", "invoice_id", "approved_by", "reason"],
+              "properties": {
+                "exception_id": { "type": "string" },
+                "invoice_id":   { "type": "string" },
+                "approved_by":  { "type": "string" },
+                "reason":       { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "BillingExceptionRejected" },
+            "payload": {
+              "type": "object",
+              "required": ["exception_id", "invoice_id", "rejected_by", "reason"],
+              "properties": {
+                "exception_id": { "type": "string" },
+                "invoice_id":   { "type": "string" },
+                "rejected_by":  { "type": "string" },
+                "reason":       { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

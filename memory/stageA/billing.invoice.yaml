@@ -1,0 +1,90 @@
+# Stage A Memory - billing.invoice
+# 생성일: 2026-03-18
+# 이 파일은 Stage A 완료 스냅샷이다.
+# 조합기와 마스터 UI는 코드보다 이 파일을 먼저 읽는다.
+
+module_key: billing.invoice
+bounded_context: billing
+domain: billing
+status: generated
+gate_result: PASS
+
+ubiquitous_language:
+  - term: "인보이스 (Invoice)"
+    definition: "청구 문서. 라인 항목의 합계가 총액과 동일해야 한다 (INV-B001 합계 불변조건)."
+  - term: "라인 항목 (LineItem)"
+    definition: "인보이스를 구성하는 개별 청구 항목. 수량 × 단가 = 금액. 금액은 0 초과 (INV-B004)."
+  - term: "인보이스 상태 (InvoiceStatus)"
+    definition: "DRAFT → PENDING → PAID/CANCELLED/DISPUTED. 역전이 불가 (INV-B002). PAID/CANCELLED는 terminal."
+
+invariants:
+  - id: INV-B001
+    description: "invoice.total = sum(lineItems[i].amount). total은 계산값이며 저장하지 않는다."
+    enforcement: "Invoice.total getter (computed), addLineItem"
+  - id: INV-B002
+    description: "허용된 상태 전이만 가능. 역전이 불가."
+    enforcement: "InvoiceStatus.canTransitionTo(), Invoice.transitionTo()"
+  - id: INV-B003
+    description: "PAID 인보이스는 삭제 불가."
+    enforcement: "InMemoryInvoiceRepository.delete() + 실제 DB 구현체에서도 동일 적용"
+  - id: INV-B004
+    description: "라인 항목 단가는 0 초과."
+    enforcement: "Money.isPositive(), Invoice.addLineItem()"
+
+permissions:
+  - role: billing.read
+    capabilities: [can.read.invoice, can.read.billing.summary]
+    screens: [billing.invoice, billing.invoice.detail]
+  - role: billing.write
+    capabilities: [can.create.invoice, can.add.invoice.line-item, can.transition.invoice.status]
+
+ui_contract:
+  route_base: /billing/invoices
+  screens:
+    - module_key: billing.invoice
+      route: /billing/invoices
+      mount: InvoiceListPage
+      feature_flag: billing.invoice.enabled
+    - module_key: billing.invoice.detail
+      route: /billing/invoices/:invoice_id
+      mount: InvoiceDetailPage
+      feature_flag: billing.invoice.enabled
+
+http_contract:
+  file: domains/billing/contracts/openapi.yaml
+  key_operations:
+    - listInvoices
+    - getInvoice
+    - createInvoice
+    - transitionInvoiceStatus
+    - addLineItem
+
+capability_contract:
+  file: domains/billing/contracts/capability.yaml
+
+event_contract:
+  file: domains/billing/contracts/events.schema.json
+  emits:
+    - InvoiceCreated
+    - InvoiceStatusChanged
+    - InvoiceTotalMismatchDetected
+
+capabilities:
+  - can.read.invoice
+  - can.create.invoice
+  - can.add.invoice.line-item
+  - can.transition.invoice.status
+
+tests:
+  unit: PASS
+  contract: pending
+  integration: pending
+
+risks:
+  - id: R-BILL-001
+    severity: medium
+    description: "DRAFT 상태의 라인 항목 배열이 외부에서 참조 공유될 경우 불변성 위반 가능"
+    mitigation: "addLineItem에서 spread 복사 사용. 실제 DB 저장 시 직렬화/역직렬화로 자연 격리"
+    status: open
+
+adrs: []

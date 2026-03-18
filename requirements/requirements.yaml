@@ -1,0 +1,74 @@
+# Workflow OS - Requirements
+# 이 파일만 교체하면 Stage A→E 전체가 반복 실행된다.
+# Schema: requirements/requirements.schema.json
+
+version: "0.1.0"
+
+module:
+  id: "task-management"
+  name: "작업 관리"
+  domain: "productivity"
+  bounded_context: "task-tracking"
+  owner: "productivity-team"
+  description: |
+    담당자가 작업을 생성·할당·진행·완료하는 흐름을 관리한다.
+    작업은 제목, 담당자, 마감일, 상태(대기/진행/완료/취소)를 가지며,
+    상태 전이는 정해진 불변조건 안에서만 허용한다.
+
+stage: "D"
+# A: bounded context / 용어 / 권한 / 불변조건 / public contract 변경 시
+# B: stageA memory / domain-map / 화면 구성 / shared libs / composition policy 변경 시
+# C: plugin registry / navigation / feature flag / rollout 정책 변경 시
+# D: 구현 후 검증, 수정 후 재검증 필요 시  ← 현재 (NOT_CONFIGURED 해소 후 재실행)
+# E: 반복 실패, 수동 개입 증가, 구조 단순화 필요 시  (1차 완료: 2026-03-18, PASS)
+# E 완료 후 Stage D 재실행으로 NOT_CONFIGURED 항목 해소 → 전체 PASS 목표
+
+contracts:
+  http: "domains/productivity/task-tracking/contract/openapi.yaml"
+  events: "domains/productivity/task-tracking/contract/events.schema.json"
+  ui: "domains/productivity/task-tracking/contract/ui-contract.yaml"
+  capability: "domains/productivity/task-tracking/contract/capability.yaml"
+
+nfr:
+  latency_p99_ms: 200
+  availability_percent: 99.9
+  rpo_minutes: 60
+  rto_minutes: 30
+
+quality_gates:
+  correctness:
+    - "unit-tests"
+    - "contract-tests"
+    - "integration-tests"
+    - "e2e-smoke"
+  code_health:
+    - "lint"
+    - "type-check"
+    - "static-analysis"
+  security:
+    - "secret-scan"
+    - "dependency-scan"
+    - "authn-authz-regression"
+    - "input-validation"
+  supply_chain:
+    - "sbom"
+    - "provenance-evidence"
+    - "rollback-verification"
+    - "observability-check"
+
+composition:
+  depends_on: []
+  # 이 모듈은 현재 다른 도메인에 의존하지 않는다.
+  # 의존 추가 시 계약 참조 경로만 허용. 예:
+  # - "domains/identity/auth/contract/capability.yaml"
+  provides:
+    - "domains/productivity/task-tracking/contract/capability.yaml"
+
+feature_flags:
+  enable_task_management: false
+  enable_bulk_assign: false
+
+routing:
+  entry_point: "/tasks"
+  navigation_group: "productivity"
+  plugin_slot: "main-content"

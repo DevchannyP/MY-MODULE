@@ -1,0 +1,86 @@
+# Master Shell - Plugin Registry
+# 마스터 UI에 탑재된 플러그인 목록
+# Stage C에서만 수정한다.
+# 마스터 UI는 이 파일 → ui_contract → capability_contract 순서로 읽는다. 모듈 코드는 읽지 않는다.
+version: "0.2.0"
+last_updated: "2026-03-18"
+
+plugins:
+  - id: "task-management-plugin"
+    name: "작업 관리"                 # 도메인 언어. 기술 용어 금지.
+    module_id: "task-management"
+    entry_point: "/tasks"
+    navigation:
+      group: "productivity"
+      label: "작업 관리"              # 마스터 UI 메뉴에 표시되는 레이블
+      icon: "checklist"
+      order: 1
+    ui_contract: "domains/productivity/task-tracking/contract/ui-contract.yaml"
+    capability_contract: "domains/productivity/task-tracking/contract/capability.yaml"
+    feature_flag: "enable_task_management"
+    rollout:
+      strategy: "canary"
+      percentage: 0                   # Stage D PASS 전까지 0%. PASS 후 단계적 확대.
+      full_rollout_condition: "Stage D 품질 게이트 전체 PASS 후"
+    rollback:
+      strategy: "disable_flag"
+      flag: "enable_task_management"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "상태 전이 실패 급증"
+    observability:
+      dashboard: "master-shell/observability/config.yaml#task-management-dashboard"
+      alert_group: "task-management-alerts"
+    status: "inactive"               # feature_flag=false 동안 inactive. PASS 후 active로 변경.
+    registered_at: "2026-03-17"
+    owner: "productivity-team"
+    stage_b_memory_ref: "memory/stageB/task-management-composition.yaml"
+    notes: |
+      - enable_task_management: false → 마스터 UI 미노출 상태.
+      - enable_bulk_assign: false → 일괄 담당자 변경 기능 비활성.
+      - Stage D PASS 후: status: active, rollout.percentage: 10 (canary) → 100 (전체)
+
+  - id: "billing-plugin"
+    name: "정산관리"
+    module_id: "billing"
+    entry_point: "/billing"
+    navigation:
+      group: "billing"
+      label: "정산"
+      icon: "receipt"
+      order: 2
+    ui_contract: "domains/billing/contracts/ui-contract.yaml"
+    capability_contract: "domains/billing/contracts/capability.yaml"
+    feature_flag: "billing.enabled"
+    rollout:
+      strategy: "canary"
+      phases:
+        - phase: internal
+          percentage: 5
+          condition: "Stage D 품질 게이트 PASS 후"
+        - phase: beta
+          percentage: 20
+          condition: "internal 7일 이상 error_rate 기준 충족"
+        - phase: full
+          percentage: 100
+          condition: "beta 7일 이상 error_rate 기준 충족"
+    rollback:
+      strategy: "disable_flag"
+      flag: "billing.enabled"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "합계 불변조건(INV-B001) 위반 감지"
+    observability:
+      dashboard: "master-shell/observability/config.yaml#billing-dashboard"
+      alert_group: "billing-alerts"
+    status: "inactive"
+    registered_at: "2026-03-18"
+    owner: "platform-team"
+    stage_b_memory_ref: "memory/stageB/billing.yaml"
+    notes: |
+      - billing.enabled: false → 마스터 UI 미노출 상태.
+      - billing.exception.enabled: false → 예외처리 화면 별도 제어 가능.
+      - DISPUTED→PAID 전이는 billing.admin 권한 필요 (INV-B005).
+      - Stage D PASS 후: status: active, internal 5% rollout 시작.

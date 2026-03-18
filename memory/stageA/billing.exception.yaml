@@ -1,0 +1,74 @@
+# Stage A Memory - billing.exception
+# 생성일: 2026-03-18
+
+module_key: billing.exception
+bounded_context: billing
+domain: billing
+status: generated
+gate_result: PASS
+
+ubiquitous_language:
+  - term: "정산 예외 (BillingException)"
+    definition: "미매칭·오류 항목. 유형은 MISMATCH/DISPUTED/SYNC_FAILURE."
+  - term: "관리자 승인 (AdminApproval)"
+    definition: "DISPUTED 인보이스를 PAID로 전이할 때 필요한 명시적 승인 행위."
+  - term: "예외 상태 (ExceptionStatus)"
+    definition: "OPEN → APPROVED/REJECTED → (RESOLVED). APPROVED는 인보이스를 PAID로 전이시킨다."
+
+invariants:
+  - id: INV-B005
+    description: "DISPUTED 인보이스는 관리자 승인(billing.admin) 없이 PAID로 전이 불가."
+    enforcement: "BillingDomainService.canTransitionDisputedToPaid(), ApproveBillingExceptionUseCase 권한 검사"
+
+permissions:
+  - role: billing.admin
+    capabilities: [can.read.billing.exception, can.approve.billing.exception, can.reject.billing.exception]
+    screens: [billing.exception]
+
+ui_contract:
+  route_base: /billing/exceptions
+  screens:
+    - module_key: billing.exception
+      route: /billing/exceptions
+      mount: BillingExceptionsPage
+      feature_flag: billing.exception.enabled
+
+http_contract:
+  file: domains/billing/contracts/openapi.yaml
+  key_operations:
+    - listBillingExceptions
+    - approveBillingException
+    - rejectBillingException
+
+capability_contract:
+  file: domains/billing/contracts/capability.yaml
+
+event_contract:
+  file: domains/billing/contracts/events.schema.json
+  emits:
+    - BillingExceptionApproved
+    - BillingExceptionRejected
+
+capabilities:
+  - can.read.billing.exception
+  - can.approve.billing.exception
+  - can.reject.billing.exception
+
+tests:
+  unit: PASS
+  contract: pending
+  integration: pending
+
+risks:
+  - id: R-BILL-003
+    severity: high
+    description: "DISPUTED→PAID 전이는 금액 이동을 수반한다. 동시 승인 시도 시 이중 처리 위험."
+    mitigation: "BillingException.approve()가 isOpen() 검사 후 상태 변경. 실 DB에서는 낙관적 잠금 또는 DB 레벨 unique constraint 필요."
+    status: open
+  - id: R-BILL-004
+    severity: medium
+    description: "billing.admin 권한 부여 기준과 감사 로그 정책이 미정."
+    mitigation: "보안 정책 문서와 연계하여 Stage D에서 authz regression 테스트 추가"
+    status: open
+
+adrs: []
