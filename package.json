@@ -16,6 +16,7 @@
     "validate:composition": "python3 scripts/validate_master_shell.py",
     "scan:secrets": "git log --all --full-history -- '*.env' | head -5 && grep -rn 'password\\|secret\\|token\\|api_key' domains/productivity/task-tracking/src/ --include='*.js' | grep -v test || echo 'secret scan: 의심 패턴 없음'",
     "scan:dependencies": "python3 scripts/validate_dependency_baseline.py",
+    "check:advisory-policy": "python3 scripts/validate_advisory_policy.py",
     "test:authn-authz": "node --test 'domains/**/tests/interface/**/*.test.js'",
     "test:input-validation": "node --test 'domains/**/tests/**/*.test.js'",
     "generate:sbom": "python3 scripts/generate_sbom.py",

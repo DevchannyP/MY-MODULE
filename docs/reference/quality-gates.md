@@ -116,6 +116,7 @@ npm run verify:provenance
 
 ```bash
 npm run scan:dependencies
+npm run check:advisory-policy
 ```
 
 현재 코어 기준선은 외부 CVE API 없이도 다음을 검증한다.
@@ -125,3 +126,15 @@ npm run scan:dependencies
 3. runtime dependency 유입이 없고, 현재는 dev tooling 만 잠겨 있다.
 4. 잠긴 패키지는 integrity 와 허용 license 정보를 가진다.
 5. 실제 advisory feed 연동은 Phase 2 에서 추가한다.
+
+## 저장소 기본 advisory strategy 검증 명령
+
+```bash
+npm run check:advisory-policy
+```
+
+현재 코어 기준선은 다음을 보장한다.
+
+1. 오프라인 baseline 과 온라인 advisory scan 의 역할이 문서와 정책 파일에 분리돼 있다.
+2. `main` 차단 조건과 경고 조건이 정책 파일에 기록돼 있다.
+3. 예외 승인 시 필요한 필드가 미리 정해져 있다.

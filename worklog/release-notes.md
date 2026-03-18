@@ -192,3 +192,39 @@ scripts/validate_dependency_baseline.py
 
 - advisory feed 연동 전략 수립
 - 실제 서버 기동 smoke 기준선 강화
+
+---
+
+## v0.3.2 - 2026-03-19 - Advisory Feed Strategy Baseline
+
+### 변경 사항
+
+**온라인 advisory scan 연동 정책을 ADR과 정책 파일로 고정**
+
+### 추가된 자산
+
+```
+docs/adr/0008-online-advisory-scan-strategy.md
+docs/reference/advisory-feed-policy.md
+artifacts/advisory/advisory-policy.yaml
+scripts/validate_advisory_policy.py
+```
+
+### 핵심 효과
+
+- 오프라인 dependency baseline 과 온라인 advisory scan 역할 분리
+- `main` 차단 기준 고정
+- 예외 승인 필드 고정
+- 정책 자체를 검증하는 명령 추가
+
+### 검증
+
+- `npm run check:advisory-policy`
+- `npm run scan:dependencies`
+- `npm run lint`
+- `npm test`
+
+### 다음 릴리즈 예정
+
+- GitHub branch protection 기준선 정리
+- 실제 서버 기동 smoke 기준선 강화

@@ -124,13 +124,24 @@ queue:
     id: "Q-112"
     track: "CORE-SECURITY"
     action: "advisory feed 연동 전략 수립"
-    done: false
+    done: true
     goal: "오프라인 dependency baseline 다음 단계로 npm audit 또는 동등 advisory feed 연동 정책을 정한다."
+    result: "PASS — ADR 0008, advisory policy file, validator 도입으로 offline/online 역할과 blocking policy를 고정했다."
     success_criteria:
       - "오프라인 baseline 과 온라인 advisory scan 의 역할 분리가 문서화된다"
       - "Phase 2 연동 방식과 차단 조건이 정리된다"
 
   - priority: 11
+    id: "Q-113"
+    track: "CORE-OPERATIONS"
+    action: "GitHub branch protection 기준선 정리"
+    done: false
+    goal: "저장소 내부 git 거버넌스와 GitHub 원격 보호 규칙이 어긋나지 않도록 branch protection 기준을 문서와 체크리스트로 고정한다."
+    success_criteria:
+      - "main 보호 규칙, PR merge 조건, required checks 가 정리된다"
+      - "원격 설정 의존 부분과 저장소 내부 규칙이 분리 문서화된다"
+
+  - priority: 12
     id: "Q-106"
     track: "CORE-COMPOSITION"
     action: "마스터 셸 조합 규칙 강화"
@@ -141,7 +152,7 @@ queue:
       - "조합 규칙 검증 포인트가 문서 또는 스크립트로 존재한다"
       - "새 도메인 편입 시 필요한 입력이 명확해진다"
 
-  - priority: 12
+  - priority: 13
     id: "Q-107"
     track: "DOMAIN-VIDEO"
     action: "첫 확장 도메인 video 청사진 작성"
@@ -227,10 +238,15 @@ completed:
     completed_at: "2026-03-19"
     result: "scan:dependencies PASS — lockfile/runtime/license/integrity baseline validator"
 
+  - id: "DONE-016"
+    action: "advisory feed 연동 전략 수립 (Q-112)"
+    completed_at: "2026-03-19"
+    result: "ADR 0008 + advisory policy file + validator baseline"
+
 active_risks:
   - ref: "memory/project/unresolved-risks.yaml"
     high_priority:
-      - "R-PLAT-007"
+      - "R-PLAT-010"
     medium_priority:
       - "R-PLAT-001"
       - "R-PLAT-002"

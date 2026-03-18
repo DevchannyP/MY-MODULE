@@ -40,6 +40,7 @@
 
 ```bash
 npm run scan:dependencies
+npm run check:advisory-policy
 npm run generate:sbom
 npm run verify:provenance
 ```
@@ -52,6 +53,7 @@ npm run verify:provenance
 4. SBOM 산출 경로가 고정되어 있다.
 5. provenance evidence가 입력과 산출물 digest를 가진다.
 6. 공급망 증적 파일이 저장소 내부에서 재생성 가능하다.
+7. 온라인 advisory scan 으로 넘어가기 전 정책 baseline 이 고정되어 있다.
 
 ## 현재 제한
 

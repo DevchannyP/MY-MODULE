@@ -326,6 +326,47 @@
 
 ---
 
+## 2026-03-19 - Core Platform - advisory feed 연동 전략 수립
+
+**날짜**: 2026-03-19
+**트랙**: CORE-SECURITY (Q-112)
+**범위**: advisory policy + ADR + security docs
+**실행자**: Codex (자동화)
+
+---
+
+### 핵심 변경
+
+| 항목 | 이전 | 현재 |
+|------|------|------|
+| online advisory 정책 | 메모 수준 언급만 존재 | ADR + policy file + validator |
+| 차단 기준 | 저장소 안에 고정 안 됨 | runtime High/Critical 차단 기준 명시 |
+| 예외 규칙 | 자유 텍스트 | required fields 고정 |
+
+### 이번에 고정한 구조
+
+- `docs/adr/0008-online-advisory-scan-strategy.md`
+- `docs/reference/advisory-feed-policy.md`
+- `artifacts/advisory/advisory-policy.yaml`
+- `scripts/validate_advisory_policy.py`
+
+### 검증 결과
+
+| 게이트 | 결과 | 상세 |
+|--------|------|------|
+| advisory-policy | **PASS** | `npm run check:advisory-policy` |
+| dependency-scan | **PASS** | `npm run scan:dependencies` |
+| lint | **PASS** | `npm run lint` |
+| regression tests | **PASS** | `npm test` |
+
+### 결정
+
+- 코어 저장소는 "오프라인 baseline"과 "온라인 advisory feed"를 서로 다른 층으로 유지한다.
+- `main` 차단 기준은 runtime dependency High/Critical advisory 로 고정한다.
+- dev dependency 취약점과 provider 장애는 우선 경고/기록으로 처리한다.
+
+---
+
 ## 2026-03-18 - Stage D - task-management 품질 게이트 3차 판정 (ESLint 해소)
 
 **날짜**: 2026-03-18

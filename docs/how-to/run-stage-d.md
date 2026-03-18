@@ -33,6 +33,7 @@ npm run static-analysis
 ```bash
 npm run scan:secrets        # Gitleaks 등
 npm run scan:dependencies   # lockfile/integrity/license/runtime-deps baseline
+npm run check:advisory-policy
 npm run test:authn-authz
 npm run test:input-validation
 ```
