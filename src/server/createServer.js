@@ -1,0 +1,265 @@
+'use strict';
+
+const http = require('node:http');
+const { URL } = require('node:url');
+
+const { TaskController } = require('../../domains/productivity/task-tracking/src/interface/TaskController');
+const { CreateTaskUseCase } = require('../../domains/productivity/task-tracking/src/application/CreateTaskUseCase');
+const { GetTaskUseCase } = require('../../domains/productivity/task-tracking/src/application/GetTaskUseCase');
+const { ListTasksUseCase } = require('../../domains/productivity/task-tracking/src/application/ListTasksUseCase');
+const { TransitionTaskStatusUseCase } = require('../../domains/productivity/task-tracking/src/application/TransitionTaskStatusUseCase');
+const { ReassignTaskUseCase } = require('../../domains/productivity/task-tracking/src/application/ReassignTaskUseCase');
+const { InMemoryTaskRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/InMemoryTaskRepository');
+
+const { BillingController } = require('../../domains/billing/src/interface/BillingController');
+const { fromError } = require('../shared/ProblemDetails');
+const { InMemoryEventPublisher } = require('../shared/EventPublisher');
+const { getFeatureFlags } = require('../infrastructure/FeatureFlagProvider');
+const { tracer, metrics, logger } = require('../infrastructure/telemetry');
+const { InMemoryInvoiceRepository } = require('../../domains/billing/src/infrastructure/InMemoryInvoiceRepository');
+const { InMemoryPaymentRepository } = require('../../domains/billing/src/infrastructure/InMemoryPaymentRepository');
+const { InMemoryBillingExceptionRepository } = require('../../domains/billing/src/infrastructure/InMemoryBillingExceptionRepository');
+
+function createTaskController(taskRepository = new InMemoryTaskRepository(), eventPublisher = new InMemoryEventPublisher()) {
+  return new TaskController({
+    createTask:           new CreateTaskUseCase(taskRepository, eventPublisher),
+    getTask:              new GetTaskUseCase(taskRepository),
+    listTasks:            new ListTasksUseCase(taskRepository),
+    transitionTaskStatus: new TransitionTaskStatusUseCase(taskRepository),
+    reassignTask:         new ReassignTaskUseCase(taskRepository),
+  });
+}
+
+function createBillingController() {
+  return new BillingController({
+    invoiceRepo: new InMemoryInvoiceRepository(),
+    paymentRepo: new InMemoryPaymentRepository(),
+    exceptionRepo: new InMemoryBillingExceptionRepository(),
+  });
+}
+
+function parsePermissions(headerValue) {
+  if (typeof headerValue !== 'string' || headerValue.trim() === '') {
+    return [];
+  }
+
+  return headerValue
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getCaller(headers) {
+  return {
+    userId: typeof headers['x-user-id'] === 'string' ? headers['x-user-id'] : 'anonymous',
+    permissions: parsePermissions(headers['x-permissions']),
+  };
+}
+
+function readRequestBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+
+    req.on('data', (chunk) => {
+      chunks.push(chunk);
+    });
+
+    req.on('end', () => {
+      if (chunks.length === 0) {
+        resolve({});
+        return;
+      }
+
+      try {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        resolve(JSON.parse(raw));
+      } catch {
+        reject(Object.assign(new Error('Invalid JSON body'), { code: 'VALIDATION_ERROR' }));
+      }
+    });
+
+    req.on('error', reject);
+  });
+}
+
+function findBillingRoute(pathname) {
+  const exactRoute = [
+    '/billing/invoices',
+    '/billing/payments',
+    '/billing/exceptions',
+    '/billing/summary',
+  ].find((route) => route === pathname);
+
+  if (exactRoute) {
+    return { path: exactRoute, params: {} };
+  }
+
+  const routePatterns = [
+    { match: /^\/billing\/invoices\/([^/]+)$/, path: '/billing/invoices/:invoice_id', param: 'invoice_id' },
+    { match: /^\/billing\/invoices\/([^/]+)\/status$/, path: '/billing/invoices/:invoice_id/status', param: 'invoice_id' },
+    { match: /^\/billing\/invoices\/([^/]+)\/line-items$/, path: '/billing/invoices/:invoice_id/line-items', param: 'invoice_id' },
+    { match: /^\/billing\/payments\/([^/]+)$/, path: '/billing/payments/:payment_id', param: 'payment_id' },
+    { match: /^\/billing\/payments\/([^/]+)\/sync$/, path: '/billing/payments/:payment_id/sync', param: 'payment_id' },
+    { match: /^\/billing\/exceptions\/([^/]+)\/approve$/, path: '/billing/exceptions/:exception_id/approve', param: 'exception_id' },
+    { match: /^\/billing\/exceptions\/([^/]+)\/reject$/, path: '/billing/exceptions/:exception_id/reject', param: 'exception_id' },
+  ];
+
+  for (const route of routePatterns) {
+    const matched = pathname.match(route.match);
+    if (matched) {
+      return { path: route.path, params: { [route.param]: matched[1] } };
+    }
+  }
+
+  return { path: pathname, params: {} };
+}
+
+function sendJson(res, status, body) {
+  const payload = JSON.stringify(body, null, 2);
+  res.writeHead(status, {
+    'content-type': 'application/json; charset=utf-8',
+    'content-length': Buffer.byteLength(payload),
+  });
+  res.end(payload);
+}
+
+/** FeatureFlagProvider stub — 모든 플래그 활성화 (테스트/smoke 전용) */
+function createAllEnabledFlags() {
+  return { isEnabled: () => true, getAll: () => ({}) };
+}
+
+function createAppHandler({
+  taskController = createTaskController(),
+  billingController = createBillingController(),
+  flags = null,  // null → 파일 기반 provider 사용 (프로덕션 기본값)
+} = {}) {
+  return async function appHandler(req, res) {
+    const url = new URL(req.url || '/', 'http://127.0.0.1');
+    const method = req.method || 'GET';
+    const caller = getCaller(req.headers);
+    const correlationId = typeof req.headers['x-correlation-id'] === 'string'
+      ? req.headers['x-correlation-id']
+      : undefined;
+
+    // ── OpenTelemetry 호환 계측 (W3C Trace Context 전파) ─────────────────
+    const parentCtx = tracer.extractContext(
+      typeof req.headers['traceparent'] === 'string' ? req.headers['traceparent'] : undefined
+    );
+    const span = tracer.startSpan(`http.${method} ${url.pathname}`, {
+      traceId:      parentCtx?.traceId,
+      parentSpanId: parentCtx?.parentSpanId,
+      attributes:   { 'http.method': method, 'http.route': url.pathname },
+    });
+    const startMs = Date.now();
+
+    try {
+      if (url.pathname === '/health') {
+        metrics.httpRequestsTotal.add(1, { route: '/health', method });
+        span.setStatus('ok').end();
+        sendJson(res, 200, { status: 'ok', service: 'my-module', transport: 'http',
+          traceId: span.traceId });
+        return;
+      }
+
+      const body = method === 'GET' || method === 'HEAD' ? {} : await readRequestBody(req);
+      const query = Object.fromEntries(url.searchParams.entries());
+
+      // ── Feature Flag 라우트 게이트 (OpenFeature 패턴) ──────────────────────
+      const resolvedFlags = flags || getFeatureFlags();
+
+      if (url.pathname.startsWith('/tasks')) {
+        if (!resolvedFlags.isEnabled('enable_task_management')) {
+          sendJson(res, 404, fromError(
+            Object.assign(new Error('task-management 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
+            { path: url.pathname },
+          ).body);
+          return;
+        }
+        const response = await taskController.handle({
+          method,
+          path: url.pathname,
+          params: {},
+          query,
+          body,
+          caller,
+          correlationId,
+        });
+        sendJson(res, response.status, response.body);
+        return;
+      }
+
+      if (url.pathname.startsWith('/billing')) {
+        if (!resolvedFlags.isEnabled('billing.enabled')) {
+          sendJson(res, 404, fromError(
+            Object.assign(new Error('billing 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
+            { path: url.pathname },
+          ).body);
+          return;
+        }
+        const route = findBillingRoute(url.pathname);
+        const response = await billingController.handle({
+          method,
+          path: route.path,
+          params: route.params,
+          query,
+          body,
+          caller,
+          correlationId,
+        });
+        sendJson(res, response.status, response.body);
+        return;
+      }
+
+      metrics.httpRequestsTotal.add(1, { route: url.pathname, method, status: 404 });
+      metrics.httpDurationMs.record(Date.now() - startMs, { route: url.pathname });
+      span.setAttribute('http.status_code', 404).setStatus('error').end();
+      sendJson(res, 404, { code: 'NOT_FOUND', message: `Route not found: ${method} ${url.pathname}` });
+    } catch (error) {
+      // RFC 7807 Problem Details at transport layer
+      const { status, body } = fromError(error, {
+        path: req.url,
+        correlationId: typeof req.headers['x-correlation-id'] === 'string'
+          ? req.headers['x-correlation-id'] : undefined,
+        traceId: span.traceId,
+      });
+      metrics.httpErrorsTotal.add(1, { route: url.pathname, method, status });
+      metrics.httpDurationMs.record(Date.now() - startMs, { route: url.pathname, error: true });
+      span.setAttribute('http.status_code', status).recordException(error).end();
+      logger.error('http.error', { trace_id: span.traceId, route: url.pathname, status, message: error.message });
+      sendJson(res, status, body);
+    }
+  };
+}
+
+function createServer(overrides = {}) {
+  return http.createServer(createAppHandler(overrides));
+}
+
+function startServer({ port = 3000, host = '127.0.0.1', flags = null } = {}) {
+  const server = createServer({ flags });
+
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, host, () => {
+      const address = server.address();
+      if (!address || typeof address === 'string') {
+        reject(new Error('Unable to determine listening address'));
+        return;
+      }
+
+      resolve({
+        server,
+        port: address.port,
+        host: address.address,
+        url: `http://${host}:${address.port}`,
+      });
+    });
+  });
+}
+
+module.exports = {
+  createAppHandler,
+  createServer,
+  startServer,
+  createAllEnabledFlags,
+};

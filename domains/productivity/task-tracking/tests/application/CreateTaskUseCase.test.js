@@ -8,6 +8,7 @@ const { ListTasksUseCase } = require('../../src/application/ListTasksUseCase');
 const { TransitionTaskStatusUseCase } = require('../../src/application/TransitionTaskStatusUseCase');
 const { ReassignTaskUseCase } = require('../../src/application/ReassignTaskUseCase');
 const { InMemoryTaskRepository } = require('../../src/infrastructure/InMemoryTaskRepository');
+const { InMemoryEventPublisher } = require('../../../../../src/shared/EventPublisher');
 
 describe('CreateTaskUseCase', () => {
   test('작업 생성 후 조회 가능 (create-task → get-task capability 흐름)', async () => {
@@ -28,6 +29,17 @@ describe('CreateTaskUseCase', () => {
     const repo = new InMemoryTaskRepository();
     const uc = new CreateTaskUseCase(repo);
     await assert.rejects(() => uc.execute({ title: '제목' }), /\[INV001\]/);
+  });
+
+  test('도메인 이벤트를 EventPublisher 포트로 발행한다', async () => {
+    const repo = new InMemoryTaskRepository();
+    const publisher = new InMemoryEventPublisher();
+    const uc = new CreateTaskUseCase(repo, publisher);
+
+    await uc.execute({ title: '이벤트 발행 테스트', assignee_id: 'user-1' });
+
+    assert.equal(publisher.published.length, 1);
+    assert.equal(publisher.published[0].event_type, 'TaskCreated');
   });
 });
 

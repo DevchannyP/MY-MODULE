@@ -5,11 +5,18 @@ const { Task } = require('../domain/entities/Task');
 /**
  * create-task capability 구현 (capability.yaml 1:1 매핑)
  * 선행 조건: assignee_id 필수, due_date >= 오늘 (도메인 내부에서 강제)
+ *
+ * EventPublisher 포트 주입으로 Transactional Outbox 패턴 지원.
+ * Benchmark: microservices.io Outbox Pattern, CloudEvents v1.0
  */
 class CreateTaskUseCase {
-  /** @param {import('./ports/TaskRepository').TaskRepository} taskRepository */
-  constructor(taskRepository) {
-    this._repo = taskRepository;
+  /**
+   * @param {import('./ports/TaskRepository').TaskRepository} taskRepository
+   * @param {import('../../../../../src/shared/EventPublisher').EventPublisher} [eventPublisher]
+   */
+  constructor(taskRepository, eventPublisher = null) {
+    this._repo      = taskRepository;
+    this._publisher = eventPublisher;
   }
 
   /**
@@ -20,8 +27,10 @@ class CreateTaskUseCase {
     const task = Task.create({ title, assignee_id, due_date, description });
     await this._repo.save(task);
     const events = task.pullDomainEvents();
-    // [확인 필요] 이벤트 버스 연동: events를 외부 이벤트 브로커로 발행하는 로직 필요
-    return { task_id: task.id, status: task.status, _events: events };
+    if (this._publisher && events.length > 0) {
+      await this._publisher.publish(events);
+    }
+    return { task_id: task.id, status: task.status };
   }
 }
 

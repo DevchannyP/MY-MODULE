@@ -13,13 +13,7 @@
  *   task:write → task-owner 이상
  */
 
-const ERROR_STATUS_MAP = {
-  FORBIDDEN:        403,
-  NOT_FOUND:        404,
-  CONFLICT:         409,
-  VALIDATION_ERROR: 400,
-  INTERNAL_ERROR:   500,
-};
+const { fromError } = require('../../../../../src/shared/ProblemDetails');
 
 class TaskController {
   /**
@@ -92,7 +86,8 @@ class TaskController {
       return this._handleReassign(req, assigneeMatch[1]);
     }
 
-    return { status: 404, body: { code: 'NOT_FOUND', message: '경로를 찾을 수 없습니다.' } };
+    const err = Object.assign(new Error('경로를 찾을 수 없습니다.'), { code: 'NOT_FOUND' });
+    return fromError(err, { path: req.path, correlationId: req.correlationId });
   }
 
   // ── 핸들러 ────────────────────────────────────────────────────────────────
@@ -164,25 +159,9 @@ class TaskController {
 
   // ── 오류 응답 ─────────────────────────────────────────────────────────────
 
+  /** RFC 7807 Problem Details 에러 응답 (IETF 표준) */
   _errorResponse(err, correlationId) {
-    const code   = err.code || this._inferErrorCode(err.message || '');
-    const status = ERROR_STATUS_MAP[code] || 500;
-    const body   = { code, message: err.message || '서버 오류가 발생했습니다.' };
-    if (correlationId) body.correlationId = correlationId;
-    return { status, body };
-  }
-
-  _inferErrorCode(message) {
-    if (message.includes('찾을 수 없습니다'))          return 'NOT_FOUND';
-    if (message.includes('[INV002]'))                  return 'CONFLICT';
-    if (message.includes('역전이'))                    return 'CONFLICT';
-    if (message.includes('DONE 상태 작업은'))           return 'CONFLICT';
-    if (message.includes('[INV001]'))                  return 'VALIDATION_ERROR';
-    if (message.includes('[INV003]'))                  return 'VALIDATION_ERROR';
-    if (message.includes('필수입니다'))                 return 'VALIDATION_ERROR';
-    if (message.includes('초과할 수 없습니다'))          return 'VALIDATION_ERROR';
-    if (message.includes('이후여야 합니다'))             return 'VALIDATION_ERROR';
-    return 'INTERNAL_ERROR';
+    return fromError(err, { correlationId });
   }
 }
 

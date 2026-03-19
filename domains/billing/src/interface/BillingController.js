@@ -23,13 +23,7 @@ const { GetBillingSummaryUseCase }       = require('../application/GetBillingSum
 const { ApproveBillingExceptionUseCase } = require('../application/ApproveBillingExceptionUseCase');
 const { RejectBillingExceptionUseCase }  = require('../application/RejectBillingExceptionUseCase');
 
-/** 도메인 오류 코드 → HTTP 상태 코드 */
-const ERROR_STATUS_MAP = Object.freeze({
-  FORBIDDEN:        403,
-  NOT_FOUND:        404,
-  CONFLICT:         409,
-  VALIDATION_ERROR: 400,
-});
+const { fromError } = require('../../../../src/shared/ProblemDetails');
 
 class BillingController {
   /**
@@ -230,25 +224,17 @@ class BillingController {
     }
   }
 
+  /** RFC 7807 Problem Details 에러 응답 (IETF 표준) */
   _errorResponse(err, correlationId) {
-    const code   = err.code || this._inferErrorCode(err.message);
-    const status = ERROR_STATUS_MAP[code] || 500;
-    return { status, body: { code, message: err.message, correlation_id: correlationId } };
-  }
-
-  /**
-   * 도메인 불변조건 오류 메시지로부터 오류 코드를 유추한다.
-   * UseCase가 code를 직접 첨부하지 않는 도메인 엔티티 오류 처리용.
-   */
-  _inferErrorCode(message) {
-    if (!message) return 'INTERNAL_ERROR';
-    if (message.includes('INV-B002')) return 'CONFLICT';          // 상태 역전이 불가
-    if (message.includes('INV-B003')) return 'CONFLICT';          // PAID 삭제 불가
-    if (message.includes('INV-B005')) return 'CONFLICT';          // DISPUTED→PAID 미승인
-    if (message.includes('INV-B004')) return 'VALIDATION_ERROR';  // 단가 > 0 위반
-    if (message.includes('INV-B001')) return 'CONFLICT';          // 합계 불변조건
-    if (message.includes('Currency mismatch')) return 'VALIDATION_ERROR';
-    return 'INTERNAL_ERROR';
+    // 도메인 불변조건 코드 매핑 (code 미첨부 케이스 대비)
+    if (!err.code && err.message) {
+      const m = err.message;
+      if (m.includes('INV-B002') || m.includes('INV-B003') || m.includes('INV-B005') || m.includes('INV-B001'))
+        err.code = 'CONFLICT';
+      else if (m.includes('INV-B004') || m.includes('Currency mismatch'))
+        err.code = 'VALIDATION_ERROR';
+    }
+    return fromError(err, { correlationId });
   }
 
   _pageOf(result, serializer) {

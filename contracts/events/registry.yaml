@@ -1,0 +1,99 @@
+# Workflow OS — Event Registry
+# 모든 도메인 이벤트의 중앙 목록. AsyncAPI Event Catalog 패턴.
+# Benchmark: AsyncAPI 3.0 (CNCF), Confluent Schema Registry, AWS EventBridge schema registry
+
+schema_version: "1"
+envelope: "contracts/events/envelope.schema.json"
+
+events:
+  # ── Productivity / Task-Tracking ──────────────────────────────────────────
+  - type: "com.workflow-os.task.created.v1"
+    source: "//workflow-os/productivity/task-tracking"
+    version: "1"
+    status: "active"
+    description: "작업이 생성됐을 때 발행"
+    schema: "domains/productivity/task-tracking/contract/events.schema.json#/definitions/TaskCreated"
+    produced_by:
+      - "domains/productivity/task-tracking/src/application/CreateTaskUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.task.status-changed.v1"
+    source: "//workflow-os/productivity/task-tracking"
+    version: "1"
+    status: "active"
+    description: "작업 상태가 전이됐을 때 발행"
+    schema: "domains/productivity/task-tracking/contract/events.schema.json#/definitions/TaskStatusChanged"
+    produced_by:
+      - "domains/productivity/task-tracking/src/application/TransitionTaskStatusUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.task.reassigned.v1"
+    source: "//workflow-os/productivity/task-tracking"
+    version: "1"
+    status: "active"
+    description: "작업 담당자가 변경됐을 때 발행"
+    schema: "domains/productivity/task-tracking/contract/events.schema.json#/definitions/TaskReassigned"
+    produced_by:
+      - "domains/productivity/task-tracking/src/application/ReassignTaskUseCase.js"
+    consumed_by: []
+
+  # ── Billing ───────────────────────────────────────────────────────────────
+  - type: "com.workflow-os.billing.invoice-created.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "인보이스가 생성됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/InvoiceCreated"
+    produced_by:
+      - "domains/billing/src/application/CreateInvoiceUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.invoice-status-changed.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "인보이스 상태가 전이됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/InvoiceStatusChanged"
+    produced_by:
+      - "domains/billing/src/application/TransitionInvoiceStatusUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.invoice-total-mismatch-detected.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "인보이스 총액 불일치가 감지됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/InvoiceTotalMismatchDetected"
+    produced_by:
+      - "domains/billing/src/application/CreateInvoiceUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.payment-mismatch-detected.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "결제 금액과 인보이스 총액 불일치가 감지됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/PaymentMismatchDetected"
+    produced_by:
+      - "domains/billing/src/application/GetBillingSummaryUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.exception-approved.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "정산 예외가 승인됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/BillingExceptionApproved"
+    produced_by:
+      - "domains/billing/src/application/ApproveBillingExceptionUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.exception-rejected.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "정산 예외가 거부됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/BillingExceptionRejected"
+    produced_by:
+      - "domains/billing/src/application/RejectBillingExceptionUseCase.js"
+    consumed_by: []

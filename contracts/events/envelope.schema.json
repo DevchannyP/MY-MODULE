@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/contracts/events/envelope",
+  "title": "Workflow OS — CloudEvents Envelope",
+  "description": "공통 이벤트 봉투 스키마. CloudEvents v1.0 spec 기반. 모든 도메인 이벤트는 이 봉투를 확장한다.",
+  "comment": "Benchmark: CNCF CloudEvents v1.0 (https://cloudevents.io)",
+  "type": "object",
+  "required": ["specversion", "id", "source", "type", "time"],
+  "additionalProperties": true,
+  "properties": {
+    "specversion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "CloudEvents spec 버전"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "이벤트 고유 ID (UUID v4 권장). source + id 조합이 전역 유일해야 함."
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^//workflow-os/.+",
+      "description": "이벤트 발생 출처 URI. 예: //workflow-os/productivity/task-tracking"
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^com\\.workflow-os\\.[a-z.-]+\\.v[0-9]+$",
+      "description": "역도메인 네이밍. 예: com.workflow-os.task.created.v1"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "이벤트 발생 시각 (ISO 8601)"
+    },
+    "datacontenttype": {
+      "type": "string",
+      "const": "application/json",
+      "description": "페이로드 콘텐츠 타입"
+    },
+    "dataschema": {
+      "type": "string",
+      "description": "페이로드 스키마 URI (선택)"
+    },
+    "subject": {
+      "type": "string",
+      "description": "이벤트 주체 식별자. 예: task-id-123"
+    },
+    "correlationid": {
+      "type": "string",
+      "description": "요청 상관 ID (분산 트레이싱용)"
+    },
+    "data": {
+      "type": "object",
+      "description": "이벤트 페이로드. 각 도메인 이벤트 스키마가 이를 구체화함."
+    }
+  }
+}
