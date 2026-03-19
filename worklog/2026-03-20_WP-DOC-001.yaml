@@ -1,0 +1,47 @@
+wp_id: "WP-DOC-001"
+goal: "legacy operator model이 남아 있는 template와 memory/project 문서를 root protocol과 정렬한다."
+completed: true
+completed_at: "2026-03-20"
+tier: "infra"
+
+files_created:
+  - path: "worklog/2026-03-20_WP-DOC-001.yaml"
+    purpose: "Structured evidence for legacy operator surface cleanup"
+
+files_modified:
+  - path: "requirements/DOMAIN_TEMPLATE.yaml"
+    change: "Replaced old autopilot usage instructions with root memory / Work Packet guidance"
+  - path: "memory/project/master-prompt.md"
+    change: "Marked the file as legacy reference and redirected session start to root memory"
+  - path: "memory/project/core-upgrade-plan.yaml"
+    change: "Marked the file as legacy detail surface and aligned execution loop wording to root Work Packet flow"
+  - path: "memory/project/next-actions.yaml"
+    change: "Declared root memory/wp-queue as the canonical next-packet selection surface"
+  - path: "memory/project/current-state.yaml"
+    change: "Declared root current-state as canonical and downgraded this file to legacy detail status"
+  - path: "memory/project/unresolved-risks.yaml"
+    change: "Declared root known_issues as canonical summary and kept this file as detail-only"
+
+validation:
+  layer1_schema:
+    - cmd: "npm run wp:validate"
+      result: "PASS"
+  layer2_contract:
+    - cmd: "npm run project:status"
+      result: "PASS"
+  layer3_scenario:
+    - cmd: "rg -n \"STATUS: legacy detail surface|canonical|root memory|Work Packet\" requirements/DOMAIN_TEMPLATE.yaml memory/project -S"
+      result: "PASS"
+
+decisions:
+  - id: "DOC-001-D1"
+    decision: "Retain memory/project as a legacy detail surface instead of deleting it"
+    rationale: "Existing scripts and historical evidence still reference these files, so truthful demotion is safer than removal."
+  - id: "DOC-001-D2"
+    decision: "Move execution guidance to root memory and leave legacy files as fallback-only references"
+    rationale: "One canonical operator surface avoids state drift while preserving historical planning context."
+
+risks:
+  - id: "DOC-001-R1"
+    risk: "Legacy files still exist and may be read by habit"
+    mitigation: "Each touched legacy file now states that root memory is canonical and should win on conflicts."

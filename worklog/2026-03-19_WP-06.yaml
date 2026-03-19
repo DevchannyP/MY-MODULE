@@ -1,0 +1,31 @@
+wp_id: "WP-2026-03-19-06"
+goal: "Add a structured project status runner for Stage A-E and current work-packet state."
+completed: true
+files_created:
+  - path: "scripts/project_status.js"
+    purpose: "Repository-wide structured status runner"
+  - path: "worklog/2026-03-19_WP-06.yaml"
+    purpose: "Structured evidence for project status runner"
+files_modified:
+  - path: "scripts/run_stage.js"
+    change: "Exported reusable stage evaluation helpers and switched YAML loading to python-backed parsing"
+  - path: "package.json"
+    change: "Added project:status script"
+  - path: "docs/reference/routing-rules.md"
+    change: "Documented npm run project:status as the routing/status entrypoint"
+validation:
+  lint: "pass"
+  tests: "skip"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "project:status is read-only and depends on legacy stage_states for detailed PASS/BLOCKED values."
+  - "HOW_TO_USE.md still explains the old autopilot interaction model."
+decisions:
+  - "Reuse run_stage evaluation logic instead of duplicating route/prerequisite rules."
+  - "Use python-backed YAML loading for status scripts so root memory arrays and nested structures are read truthfully."
+commands:
+  - "npm run project:status"
+  - "npm run stage:d"
+  - "npm run validate:requirements"
+  - "npm run lint"

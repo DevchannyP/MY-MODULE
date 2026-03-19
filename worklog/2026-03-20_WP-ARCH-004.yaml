@@ -1,0 +1,62 @@
+wp_id: "WP-ARCH-004"
+goal: "Reconcile orphan v2 capability claims with actual evidence and restore a green server wiring smoke baseline."
+completed: true
+completed_at: "2026-03-20"
+tier: "arch"
+
+files_created:
+  - path: "domains/productivity/task-tracking/tests/infrastructure/SQLiteTaskRepository.test.js"
+    purpose: "Persistence adapter baseline test for the SQLite repository"
+  - path: "worklog/2026-03-20_WP-ARCH-004.yaml"
+    purpose: "Structured evidence for reconciliation of orphan capabilities and smoke recovery"
+
+files_modified:
+  - path: "src/tests/smoke/serverWiring.smoke.test.js"
+    change: "Fixed the createServer import path and added a flag-off 404 HTTP smoke scenario"
+  - path: "domains/productivity/task-tracking/tests/application/CreateTaskUseCase.test.js"
+    change: "Added EventPublisher port verification for CreateTaskUseCase"
+  - path: "memory/current-state.yaml"
+    change: "Promoted implemented orphan capabilities to truthful working capabilities and removed contradictory manual release-evidence placeholder"
+  - path: "memory/wp-queue.yaml"
+    change: "Marked already-implemented packets done so the queue matches the actual repository state"
+
+validation:
+  layer1_schema:
+    - cmd: "npm run validate:requirements"
+      result: "PASS"
+    - cmd: "npm run lint"
+      result: "PASS"
+  layer2_contract:
+    - cmd: "npm run wp:validate"
+      result: "PASS"
+    - cmd: "npm run wp:reconcile"
+      result: "PASS — only truly pending capabilities remain scheduled"
+    - cmd: "npm run db:migrate:test"
+      result: "PASS"
+  layer3_scenario:
+    - cmd: "npm test"
+      result: "PASS"
+    - cmd: "npm run test:e2e-smoke"
+      result: "PASS"
+    - cmd: "npm run project:status"
+      result: "PASS"
+    - cmd: "npm run generate:release-evidence"
+      result: "PASS"
+    - cmd: "npm run session:end"
+      result: "PASS"
+
+decisions:
+  - id: "ARCH-004-D1"
+    decision: "이미 구현됐지만 packet evidence가 누락된 항목은 새 implementation packet을 만들지 않고 reconciliation packet에서 truthfully close한다"
+    rationale: "구현/검증이 존재하는 상태에서 queue만 뒤처진 경우, 동일 기능을 다시 구현하는 것은 false work를 만든다."
+  - id: "ARCH-004-D2"
+    decision: "release-evidence-automation은 pass capability로 승격하고 manual placeholder는 deployment-environment-smoke로 대체한다"
+    rationale: "GitHub Actions workflow가 이미 존재하므로 manual 표시는 거짓이다. 반면 배포 환경 smoke는 실제로 아직 manual이다."
+
+risks:
+  - id: "ARCH-004-R1"
+    risk: "release evidence script still falls back to legacy quality_gate_result because root state does not yet expose an equivalent release summary field"
+    mitigation: "Leave KI-EVIDENCE-001 open until root release summary is added"
+  - id: "ARCH-004-R2"
+    risk: "central event registry drift is still not enforced by test:contract in this packet"
+    mitigation: "Queue WP-DOM-002 as the next domain integrity packet after governance CI alignment"

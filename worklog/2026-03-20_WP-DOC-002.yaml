@@ -1,0 +1,47 @@
+wp_id: "WP-DOC-002"
+goal: "root entry docs를 현재 capability/CI/runtime 상태와 다시 일치시켜 다음 세션의 오판을 막는다."
+completed: true
+completed_at: "2026-03-20"
+tier: "infra"
+
+files_created:
+  - path: "worklog/2026-03-20_WP-DOC-002.yaml"
+    purpose: "Structured evidence for root entry documentation truthfulness alignment"
+
+files_modified:
+  - path: "README.md"
+    change: "Removed stale claims about echo-only stage scripts and missing GitHub Actions workflows; added current operator baseline"
+  - path: "HOW_TO_USE.md"
+    change: "Clarified that a new packet must be defined in root current-wp when the queue is empty"
+  - path: "memory/current-wp.yaml"
+    change: "Tracked and closed WP-DOC-002"
+  - path: "memory/current-state.yaml"
+    change: "Recorded root-entry-doc-truthfulness as a working capability and advanced last_completed_wp"
+  - path: "memory/wp-queue.yaml"
+    change: "Registered WP-DOC-002 as done"
+  - path: "memory/next-actions.yaml"
+    change: "Returned queue to NONE after packet completion"
+  - path: "memory/checkpoint.yaml"
+    change: "Added WP-DOC-002 to the completed packet ledger and verification summary"
+
+validation:
+  layer1_docs:
+    - cmd: "rg -n \"echo-only|GitHub Actions workflow는 아직 없다|queue가 비어 있으면|deployment smoke\" README.md HOW_TO_USE.md"
+      result: "PASS"
+  layer2_status:
+    - cmd: "npm run project:status"
+      result: "PASS"
+    - cmd: "npm run wp:reconcile"
+      result: "PASS"
+    - cmd: "npm run wp:health"
+      result: "PASS (health rating stayed ELITE, but gate pass rate remains below the 95% target)"
+
+decisions:
+  - id: "DOC-002-D1"
+    decision: "Limit the packet to root entry docs instead of broad HOW_TO_USE rewrite"
+    rationale: "README is the highest-risk operator entry point and had concrete false statements. A broader rewrite would expand scope without closing a higher-severity gap."
+
+risks:
+  - id: "DOC-002-R1"
+    risk: "Broader legacy docs outside the root entry surface may still contain stale phrasing."
+    mitigation: "Keep this packet focused and treat any remaining doc drift as a separate backlog candidate."

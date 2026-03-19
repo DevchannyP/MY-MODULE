@@ -1,0 +1,42 @@
+wp_id: "WP-2026-03-19-04"
+goal: "Normalize the bridge between root memory files and legacy memory/project files."
+completed: true
+files_created:
+  - path: "worklog/2026-03-19_WP-04.yaml"
+    purpose: "Structured evidence for root/legacy memory bridge normalization"
+files_modified:
+  - path: "scripts/generate_release_evidence.py"
+    change: "Release evidence now reads root memory first and falls back to legacy memory/project"
+  - path: "docs/how-to/run-stage-d.md"
+    change: "Stage D result recording now points to root memory with explicit legacy fallback"
+  - path: "docs/how-to/run-stage-e.md"
+    change: "Stage E next-action recording now points to root memory with legacy compatibility wording"
+  - path: "docs/how-to/run-git-workflow.md"
+    change: "Git workflow guide now references root memory files as the primary working set"
+  - path: "docs/reference/routing-rules.md"
+    change: "Routing decisions now record to root current-state with legacy detail as fallback"
+  - path: "docs/tutorial/master-shell-integration-example.md"
+    change: "Master-shell read order now starts from root memory"
+  - path: "memory/stageC/task-management-plugin.yaml"
+    change: "Stage C read order updated to root memory first with legacy fallback"
+  - path: "memory/wp-queue.yaml"
+    change: "Marked WP-2026-03-19-04 done and advanced queue to WP-2026-03-19-05"
+  - path: "memory/current-wp.yaml"
+    change: "Prepared WP-2026-03-19-05 as the next executor packet"
+validation:
+  lint: "pass"
+  tests: "skip"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "HOW_TO_USE.md and some legacy project artifacts still describe the old stage-autopilot model and need a dedicated doc cleanup packet."
+  - "Release evidence still reports quality_gate_result from legacy state when root state does not define that field."
+decisions:
+  - "Bridge policy is root-first with legacy fallback, not destructive migration."
+  - "Runtime consumers may keep reading memory/project/* temporarily, but all new session/handoff behavior is defined in root memory."
+commands:
+  - "rg -n \"memory/project|memory/current-state.yaml|memory/next-actions.yaml\" scripts docs memory/stageC README.md CLAUDE.md -S"
+  - "python3 scripts/generate_release_evidence.py"
+  - "npm run validate:requirements"
+  - "npm run lint"
+  - "python3 - <<'PY' ... bridge/state YAML parse ... PY"

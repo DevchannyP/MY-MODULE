@@ -1,0 +1,35 @@
+wp_id: "WP-RUN-001"
+goal: "배포 환경 수준 smoke 체크리스트와 executable baseline을 추가해 KI-RUN-001을 축소한다."
+completed: true
+completed_at: "2026-03-20"
+tier: "governance"
+
+files_created:
+  - path: "worklog/2026-03-20_WP-RUN-001.yaml"
+    purpose: "Structured evidence for runtime smoke baseline clarification"
+
+files_modified:
+  - path: "docs/how-to/run-stage-e.md"
+    change: "Added a truthful deployment-environment smoke baseline with preflight and manual runtime checklist"
+  - path: "docs/reference/quality-gates.md"
+    change: "Separated in-repo e2e smoke from deployment-environment smoke and marked runtime smoke as manual"
+  - path: "memory/current-state.yaml"
+    change: "Reduced KI-RUN-001 to documented-manual runtime verification instead of complete absence"
+
+validation:
+  layer1_schema:
+    - cmd: "rg -n \"deployment|runtime-environment|smoke|manual\" docs/how-to/run-stage-e.md docs/reference/quality-gates.md -S"
+      result: "PASS"
+  layer2_contract:
+    - cmd: "npm run project:status"
+      result: "PASS"
+
+decisions:
+  - id: "RUN-001-D1"
+    decision: "Treat deployment-environment smoke as a manual Stage E baseline until a real deploy target exists in-repo"
+    rationale: "The repository can document and standardize the operator check without pretending environment automation exists."
+
+risks:
+  - id: "RUN-001-R1"
+    risk: "Real deployed runtime smoke is still not automated"
+    mitigation: "Keep the checklist explicit and leave KI-RUN-001 open as a reduced low-severity operational gap."

@@ -1,0 +1,90 @@
+wp_id: "WP-RUN-003"
+goal: "deployment smoke를 저장소 안의 environment registry와 GitHub environment binding에 연결해 KI-RUN-001을 축소한다."
+completed: true
+completed_at: "2026-03-20"
+tier: "governance"
+
+files_created:
+  - path: "master-shell/operations/deployment-environments.yaml"
+    purpose: "Canonical environment registry for deployment smoke binding"
+  - path: "scripts/resolve_deployment_target.py"
+    purpose: "Resolve deployment smoke inputs from the selected GitHub environment or explicit override"
+  - path: "scripts/validate_deployment_smoke_binding.py"
+    purpose: "Validate registry/workflow drift and environment binding baseline"
+  - path: "worklog/2026-03-20_WP-RUN-003.yaml"
+    purpose: "Structured evidence for deployment environment binding"
+
+files_modified:
+  - path: ".github/workflows/deployment-smoke.yml"
+    change: "Switched from raw base_url-first manual input to environment_name choice bound to GitHub environments and registry-driven target resolution"
+  - path: ".github/workflows/quality-gates.yml"
+    change: "Added check:deployment-smoke-binding to CI governance checks"
+  - path: "package.json"
+    change: "Added check:deployment-smoke-binding npm script"
+  - path: "docs/reference/quality-gates.md"
+    change: "Documented the environment-bound deployment smoke workflow and registry validator"
+  - path: "docs/how-to/run-stage-d.md"
+    change: "Clarified deployment smoke is environment-bound and operator-triggered"
+  - path: "docs/how-to/run-stage-e.md"
+    change: "Updated Stage E deployment smoke flow to use environment registry and GitHub environment vars"
+  - path: "README.md"
+    change: "Updated current operating baseline to mention environment-bound deployment smoke"
+  - path: "memory/current-state.yaml"
+    change: "Recorded deployment-environment-binding capability and reduced KI-RUN-001 to remote provisioning gap"
+  - path: "memory/current-wp.yaml"
+    change: "Tracked and closed WP-RUN-003"
+  - path: "memory/wp-queue.yaml"
+    change: "Registered WP-RUN-003 as done"
+  - path: "memory/next-actions.yaml"
+    change: "Returned queue to NONE after packet completion"
+  - path: "memory/checkpoint.yaml"
+    change: "Added WP-RUN-003 to the completed packet ledger and verification summary"
+  - path: "scripts/reconcile_state.py"
+    change: "Mapped deployment-environment-binding to CAP-14 for future reconciliation fallback"
+
+validation:
+  layer1_binding:
+    - cmd: "python3 scripts/validate_deployment_smoke_binding.py"
+      result: "PASS"
+    - cmd: "npm run check:deployment-smoke-binding"
+      result: "PASS"
+    - cmd: "python3 scripts/resolve_deployment_target.py --environment internal --base-url-override http://127.0.0.1:3010 --json"
+      result: "PASS"
+    - cmd: "python3 scripts/resolve_deployment_target.py --environment internal --base-url-override http://127.0.0.1:3010 --json-output artifacts/deployment-smoke/target-resolution.json --json"
+      result: "PASS"
+  layer2_repo:
+    - cmd: "npm run lint"
+      result: "PASS"
+    - cmd: "npm run project:status"
+      result: "PASS"
+    - cmd: "npm run wp:reconcile"
+      result: "PASS"
+    - cmd: "npm run wp:health"
+      result: "PASS"
+    - cmd: "npm run project:status"
+      result: "PASS (final state shows current_wp and last_completed_wp both at WP-RUN-003, next_wp NONE)"
+
+artifacts:
+  - path: "artifacts/deployment-smoke/target-resolution.json"
+    note: "Example target resolution artifact showing how the selected environment maps to runtime smoke inputs"
+
+benchmark_sources:
+  - source: "GitHub Docs - Workflow syntax"
+    url: "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
+    adopted: "Used workflow_dispatch choice inputs for environment selection and bound jobs.<job_id>.environment.name to the selected input"
+  - source: "GitHub Docs - Deployments and environments"
+    url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments"
+    adopted: "Used GitHub environment vars as the primary source for deployed smoke target data because those vars are only available to jobs that reference the selected environment"
+
+decisions:
+  - id: "RUN-003-D1"
+    decision: "Introduce a repo-local deployment environment registry instead of hardcoding free-form target URLs into the workflow"
+    rationale: "The registry gives Git-backed evidence of expected environment names and required vars without pretending the remote environments are fully managed in-repo."
+  - id: "RUN-003-D2"
+    decision: "Keep base_url_override as a break-glass path"
+    rationale: "The repository still cannot guarantee remote GitHub environment provisioning, so an explicit override is needed to avoid blocking smoke execution while the remote setup catches up."
+
+risks:
+  - id: "RUN-003-R1"
+    risk: "Remote GitHub environments and their vars/protection rules may still be absent or drift outside git."
+    mitigation: "Keep KI-RUN-001 open at low severity and treat remote provisioning verification as the next runtime hardening packet."

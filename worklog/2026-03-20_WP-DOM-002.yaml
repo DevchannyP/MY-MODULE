@@ -1,0 +1,44 @@
+wp_id: "WP-DOM-002"
+goal: "중앙 이벤트 registry와 CloudEvents envelope를 contract drift 검증에 연결한다."
+completed: true
+completed_at: "2026-03-20"
+tier: "domain"
+
+files_created:
+  - path: "worklog/2026-03-20_WP-DOM-002.yaml"
+    purpose: "Structured evidence for central event registry validation coverage"
+
+files_modified:
+  - path: "contracts/events/registry.yaml"
+    change: "Normalized billing exception event entries and added missing mismatch events to the central registry"
+  - path: "domains/billing/contracts/events.schema.json"
+    change: "Promoted billing event variants into explicit schema definitions so the central registry can reference them directly"
+  - path: "scripts/validate_contract_drift.py"
+    change: "Extended contract drift validation to the central event registry, CloudEvents envelope, and produced_by file paths"
+  - path: "docs/reference/quality-gates.md"
+    change: "Documented central event registry and envelope validation as part of test:contract"
+
+validation:
+  layer1_schema:
+    - cmd: "npm run lint"
+      result: "PASS"
+  layer2_contract:
+    - cmd: "npm run test:contract"
+      result: "PASS"
+    - cmd: "npm run wp:validate"
+      result: "PASS"
+    - cmd: "npm run wp:reconcile"
+      result: "PASS — all desired_state capabilities satisfied after state promotion"
+
+decisions:
+  - id: "DOM-002-D1"
+    decision: "Keep the shared event contract static and file-based"
+    rationale: "A repository-local registry and envelope can be validated in CI without requiring a broker, schema registry, or runtime infrastructure."
+  - id: "DOM-002-D2"
+    decision: "Use explicit billing event definitions instead of implicit oneOf-only variants"
+    rationale: "Explicit definitions give the central registry stable schema refs and make drift detection deterministic."
+
+risks:
+  - id: "DOM-002-R1"
+    risk: "The central registry still documents event contracts only; it does not yet verify broker delivery semantics or consumer idempotency"
+    mitigation: "Keep runtime delivery guarantees separate from static contract integrity and schedule them only when broker infrastructure exists."

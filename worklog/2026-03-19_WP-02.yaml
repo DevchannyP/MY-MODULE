@@ -1,0 +1,33 @@
+wp_id: "WP-2026-03-19-02"
+goal: "Align the repository operator protocol with the Work Packet cycle model."
+completed: true
+files_created:
+  - path: "worklog/2026-03-19_WP-02.yaml"
+    purpose: "Structured evidence for protocol alignment"
+files_modified:
+  - path: "CLAUDE.md"
+    change: "Replaced legacy stage-autopilot prompt with Work Packet operating protocol"
+  - path: "README.md"
+    change: "Updated repository overview, current status, and quick start to Work Packet cycles"
+  - path: "docs/reference/memory-schema.md"
+    change: "Documented root memory files and the legacy memory/project bridge"
+  - path: "memory/wp-queue.yaml"
+    change: "Reprioritized queue and marked WP-2026-03-19-02 done"
+  - path: "memory/current-wp.yaml"
+    change: "Advanced current packet to WP-2026-03-19-03"
+validation:
+  lint: "pass"
+  tests: "skip"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "HOW_TO_USE.md and several how-to/reference documents still contain the legacy stage-autopilot model and need follow-up packets."
+  - "Some existing automation still reads memory/project/*, so the root memory model is primary for sessions but not yet universal."
+decisions:
+  - "Make Work Packet cycles the canonical operator model in CLAUDE.md while keeping Stage A→E as semantic architecture stages."
+  - "Treat memory/project/* as a legacy compatibility layer until a dedicated bridge WP completes."
+commands:
+  - "rg -n \"Work Packet|memory/current-state.yaml|memory/wp-queue.yaml|current-wp.yaml\" CLAUDE.md README.md docs/reference/memory-schema.md"
+  - "npm run validate:requirements"
+  - "npm run lint"
+  - "python3 - <<'PY' ... root memory YAML parse ... PY"

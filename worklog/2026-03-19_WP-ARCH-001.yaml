@@ -1,0 +1,66 @@
+wp_id: "WP-ARCH-001"
+goal: "DAG 스케줄러, context budget 시스템, requirements gap 검출기, session health 메트릭을 설치한다"
+completed: true
+completed_at: "2026-03-19"
+tier: "arch"
+
+files_created:
+  - scripts/wp_scheduler.py
+  - scripts/requirements_gap.py
+  - scripts/session_metrics.py
+  - worklog/2026-03-19_WP-ARCH-001.yaml   # this file
+
+files_modified:
+  - memory/wp-queue.yaml         # v1 linear → v2 DAG schema (schema_version, depends_on, tier, context_budget)
+  - memory/current-state.yaml    # desired_state + health_metrics + 3 new working_capabilities
+  - memory/checkpoint.yaml       # v2 session start protocol (tier_reads only, wp:next, wp:gaps)
+  - package.json                 # 7 new npm scripts: wp:next/status/validate/gaps/gaps:gen/health/health:trend
+  - CLAUDE.md                    # Context Budget 규칙, DAG 스케줄러 명령, Self-Healing State 섹션 추가
+
+validation:
+  layer1_schema:
+    - cmd: "python3 scripts/wp_scheduler.py --validate"
+      result: "DAG OK — no referential integrity issues (18 WPs, 0 cycles, 0 dangling deps)"
+    - cmd: "python3 scripts/wp_scheduler.py --json"
+      result: "total=18 done=10 ready=4 blocked=4"
+  layer2_contract:
+    - cmd: "python3 scripts/requirements_gap.py"
+      result: "9 gaps reported (8 desired_state + 1 NFR) — all are expected future WPs, not regressions"
+    - cmd: "python3 scripts/session_metrics.py"
+      result: "ELITE rating — 0% change failure rate, 95.8% gate pass rate, 9.0 WPs/session"
+  layer3_scenario:
+    - cmd: "npm run wp:next"
+      result: "Outputs 4 ready WPs: WP-ARCH-003, WP-ARCH-002, WP-GOV-001, WP-2026-03-19-10 (correct DAG resolution)"
+    - cmd: "npm run wp:gaps"
+      result: "Reports 9 gaps, all matching desired_state entries — self-consistent"
+
+decisions:
+  - id: "ARCH-001-D1"
+    decision: "DAG depends_on 대신 linear priority를 유지하지 않는다"
+    rationale: "Netflix Conductor / Airflow 패턴 채택: 의존성이 명시적이면 병렬 실행 가능, 블록 이유 가시화, CI에서 무결성 검증 가능"
+  - id: "ARCH-001-D2"
+    decision: "context_budget를 WP 레벨 메타데이터로 내장한다 (별도 파일 아님)"
+    rationale: "WP 정의와 읽기 전략을 함께 두면 에이전트가 WP를 선택할 때 즉시 budget을 알 수 있다. 별도 파일은 동기화 비용을 높인다."
+  - id: "ARCH-001-D3"
+    decision: "desired_state를 current-state.yaml 내부에 둔다 (Kubernetes ConfigMap 패턴)"
+    rationale: "실제 상태(working_capabilities)와 목표 상태(desired_state)가 같은 파일에 있으면 reconciliation 스크립트가 단일 파일만 읽으면 된다."
+  - id: "ARCH-001-D4"
+    decision: "session_metrics.py는 DORA 4 key metrics를 WP 생명주기에 직접 매핑한다"
+    rationale: "Deployment Frequency → WPs/session, Change Failure Rate → partial WPs, Lead Time → blocked WPs, MTTR → corrective WPs. 배포 단위가 없는 이 저장소에서 WP가 가장 의미 있는 단위다."
+
+risks:
+  - id: "ARCH-001-R1"
+    risk: "desired_state gap 9개가 모두 medium/low — 실제 critical 미구현이 숨겨져 있을 수 있다"
+    mitigation: "WP-ARCH-003(reconciliation script)에서 contract file 존재 여부를 hard check로 추가"
+  - id: "ARCH-001-R2"
+    risk: "wp_scheduler.py가 yaml 라이브러리에 의존 — Python env에 PyYAML 없으면 실패"
+    mitigation: "requirements_gap.py와 동일 의존성. 기존 scripts/도 모두 yaml 사용하므로 환경은 보장됨"
+
+benchmark_references:
+  - Netflix Conductor: "typed tasks, DAG dependency syntax, circuit breaker per task type"
+  - Apache Airflow: "depends_on_past, trigger_rule, DAG integrity checks"
+  - Kubernetes: "desired state in spec, actual state in status, reconciliation loop"
+  - DORA (Forsgren et al.): "4 key metrics — deployment frequency, lead time, change failure rate, MTTR"
+  - Toyota TPS: "pull-based (wp:next pulls ready work), WIP limit (max_new_files/max_modified_files)"
+  - Shape Up (Basecamp): "appetite = estimated_turns, scoping before starting"
+  - RAG/LLM context efficiency: "progressive disclosure, skip_if_capability cache"
