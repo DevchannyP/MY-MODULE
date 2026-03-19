@@ -1,6 +1,7 @@
 wp_id: "WP-NFR-001"
 goal: "NFR gap detector 로직 일관성 수정 — GATE_CAPABILITY_MAP 경유 NFR 커버리지 검사"
-completed: "2026-03-20"
+completed: true
+completed_at: "2026-03-20"
 result: "PASS"
 
 context: |

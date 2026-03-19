@@ -1,6 +1,7 @@
 wp_id: "WP-COMMIT-001"
 goal: "이전 세션의 완료된 WP 구현 전체를 의미 단위로 git에 커밋한다"
-completed: "2026-03-20"
+completed: true
+completed_at: "2026-03-20"
 result: "PASS"
 
 context: |
