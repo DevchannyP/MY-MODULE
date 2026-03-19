@@ -1,0 +1,126 @@
+name: Quality Gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  correctness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: WP queue DAG integrity
+        run: npm run wp:validate
+
+      - name: Requirements validation
+        run: npm run validate:requirements
+
+      - name: Contract drift validation
+        run: npm run test:contract
+
+      - name: Repository test suite
+        run: npm test
+
+      - name: Authn/Authz regression
+        run: npm run test:authn-authz
+
+      - name: E2E smoke
+        run: npm run test:e2e-smoke
+
+  quality-and-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type boundaries
+        run: npm run type-check
+
+      - name: Composition validation
+        run: npm run validate:composition
+
+      - name: Secret scan baseline
+        run: npm run scan:secrets
+
+      - name: Dependency baseline
+        run: npm run scan:dependencies
+
+      - name: Advisory policy
+        run: npm run check:advisory-policy
+
+      - name: Branch protection policy baseline
+        run: npm run check:branch-protection-policy
+
+      - name: Deployment smoke binding baseline
+        run: npm run check:deployment-smoke-binding
+
+      - name: Deployment environment provisioning baseline
+        run: npm run check:deployment-environment-provisioning
+
+  supply-chain-and-operations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate SBOM
+        run: npm run generate:sbom
+
+      - name: Verify provenance
+        run: npm run verify:provenance
+
+      - name: Rollback baseline
+        run: npm run test:rollback
+
+      - name: Observability baseline
+        run: npm run check:observability

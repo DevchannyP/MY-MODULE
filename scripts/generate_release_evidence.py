@@ -14,15 +14,17 @@ Release evidence generator.
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-CURRENT_STATE = ROOT / "memory/project/current-state.yaml"
-NEXT_ACTIONS = ROOT / "memory/project/next-actions.yaml"
+ROOT_CURRENT_STATE = ROOT / "memory/current-state.yaml"
+LEGACY_CURRENT_STATE = ROOT / "memory/project/current-state.yaml"
+ROOT_NEXT_ACTIONS = ROOT / "memory/next-actions.yaml"
+LEGACY_NEXT_ACTIONS = ROOT / "memory/project/next-actions.yaml"
 OUTPUT = ROOT / "artifacts/release-evidence/release-evidence.json"
 
 
@@ -40,47 +42,79 @@ def run_git(*args: str) -> str:
         return "UNAVAILABLE"
 
 
-def read_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+def pick_memory_path(primary: Path, fallback: Path) -> Path:
+    if primary.exists():
+        return primary
+    return fallback
 
 
-def extract_scalar(text: str, key: str, fallback: str = "UNKNOWN") -> str:
-    match = re.search(rf"^{re.escape(key)}:\s*\"?([^\n\"]+)\"?\s*$", text, re.MULTILINE)
-    return match.group(1).strip() if match else fallback
+def load_yaml(path: Path) -> dict:
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
 
-def extract_next_action(text: str) -> dict[str, str]:
-    pattern = re.compile(
-        r"- priority:\s*(?P<priority>\d+)\n"
-        r"\s+id:\s*\"(?P<id>[^\"]+)\"\n"
-        r"\s+track:\s*\"(?P<track>[^\"]+)\"\n"
-        r"\s+action:\s*\"(?P<action>[^\"]+)\"\n"
-        r"\s+done:\s*(?P<done>true|false)",
-        re.MULTILINE,
-    )
-    for match in pattern.finditer(text):
-        if match.group("done") == "false":
-          return {
-              "priority": match.group("priority"),
-              "id": match.group("id"),
-              "track": match.group("track"),
-              "action": match.group("action"),
-          }
+def extract_last_completed_stage(current_state: dict) -> str:
+    if isinstance(current_state.get("last_completed_stage"), str):
+        return current_state["last_completed_stage"]
+    if isinstance(current_state.get("last_completed_wp"), dict):
+        return "WORK_PACKET_MODE"
+    return "UNKNOWN"
+
+
+def extract_quality_gate_result(current_state: dict) -> str:
+    release_summary = current_state.get("release_summary")
+    if isinstance(release_summary, dict):
+        result = release_summary.get("quality_gate_result")
+        if isinstance(result, str):
+            return result
+    if isinstance(current_state.get("quality_gate_result"), str):
+        return current_state["quality_gate_result"]
+    return "UNKNOWN"
+
+
+def extract_next_action(next_actions: dict) -> dict[str, str]:
+    queue = next_actions.get("queue", [])
+    if isinstance(queue, list) and queue:
+        first = queue[0]
+        if isinstance(first, dict):
+            return {
+                "priority": str(first.get("priority", "NONE")),
+                "id": str(first.get("id", "NONE")),
+                "track": str(first.get("track", "WORK_PACKET")),
+                "action": str(first.get("action", first.get("goal", "NONE"))),
+            }
     return {"priority": "NONE", "id": "NONE", "track": "NONE", "action": "NONE"}
 
 
 def main() -> None:
-    current_state_text = read_text(CURRENT_STATE)
-    next_actions_text = read_text(NEXT_ACTIONS)
+    current_state_path = pick_memory_path(ROOT_CURRENT_STATE, LEGACY_CURRENT_STATE)
+    next_actions_path = pick_memory_path(ROOT_NEXT_ACTIONS, LEGACY_NEXT_ACTIONS)
+    current_state = load_yaml(current_state_path)
+    next_actions = load_yaml(next_actions_path)
+
+    import os
+    # SLSA-compatible provenance fields (GitHub Actions environment)
+    ci_env = {
+        "ci": os.environ.get("CI", "false"),
+        "github_sha": os.environ.get("GITHUB_SHA") or run_git("rev-parse", "HEAD"),
+        "github_ref": os.environ.get("GITHUB_REF", "local"),
+        "github_run_id": os.environ.get("GITHUB_RUN_ID", "local"),
+        "github_workflow": os.environ.get("GITHUB_WORKFLOW", "local"),
+    }
 
     evidence = {
+        "schema_version": "2",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "repository": "my-module",
-        "branch": run_git("branch", "--show-current"),
-        "head_commit": run_git("rev-parse", "HEAD"),
-        "last_completed_stage": extract_scalar(current_state_text, "last_completed_stage"),
-        "quality_gate_result": extract_scalar(current_state_text, "quality_gate_result"),
-        "next_action": extract_next_action(next_actions_text),
+        "branch": os.environ.get("GITHUB_REF", run_git("branch", "--show-current")),
+        "head_commit": ci_env["github_sha"],
+        "build_environment": ci_env,
+        "memory_sources": {
+            "current_state": str(current_state_path.relative_to(ROOT)),
+            "next_actions": str(next_actions_path.relative_to(ROOT)),
+        },
+        "last_completed_stage": extract_last_completed_stage(current_state),
+        "quality_gate_result": extract_quality_gate_result(current_state),
+        "next_action": extract_next_action(next_actions),
     }
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

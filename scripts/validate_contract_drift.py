@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate contract drift between capability/ui/openapi/events and interface code."""
+"""Validate contract drift between domain contracts, central event contracts, and interface code."""
 
 from __future__ import annotations
 
@@ -22,6 +22,10 @@ def load_yaml(relative_path: str) -> dict:
 def load_json(relative_path: str) -> dict:
     with (REPO_ROOT / relative_path).open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def load_data(relative_path: str) -> dict:
+    return load_json(relative_path) if relative_path.endswith(".json") else load_yaml(relative_path)
 
 
 def load_text(relative_path: str) -> str:
@@ -67,6 +71,14 @@ def task_event_ids(events_schema: dict) -> set[str]:
 
 
 def billing_event_ids(events_schema: dict) -> set[str]:
+    definitions = {
+        name
+        for name in events_schema.get("definitions", {}).keys()
+        if name not in {"Money", "EventEnvelope"}
+    }
+    if definitions:
+        return definitions
+
     names: set[str] = set()
     for variant in events_schema.get("oneOf", []):
         for item in variant.get("allOf", []):
@@ -79,6 +91,26 @@ def billing_event_ids(events_schema: dict) -> set[str]:
 def assert_contains(errors: list[str], source: str, needle: str, context: str) -> None:
     if needle not in source:
         errors.append(f"{context}: missing source snippet -> {needle}")
+
+
+def resolve_pointer(document: dict, pointer: str):
+    if not pointer:
+        return document
+    if not pointer.startswith("#/"):
+        raise ValueError(f"unsupported pointer format: {pointer}")
+
+    current = document
+    for token in pointer[2:].split("/"):
+        token = token.replace("~1", "/").replace("~0", "~")
+        if isinstance(current, list):
+            try:
+                index = int(token)
+            except ValueError as exc:
+                raise KeyError(token) from exc
+            current = current[index]
+            continue
+        current = current[token]
+    return current
 
 
 def validate_task_management(errors: list[str]) -> None:
@@ -180,10 +212,82 @@ def validate_billing(errors: list[str]) -> None:
         )
 
 
+def validate_event_registry(errors: list[str]) -> None:
+    registry = load_yaml("contracts/events/registry.yaml")
+    envelope_path = registry.get("envelope")
+
+    if not isinstance(envelope_path, str) or not (REPO_ROOT / envelope_path).exists():
+        errors.append("events-registry: envelope path is missing or does not exist")
+        return
+
+    envelope_schema = load_json(envelope_path)
+    required_envelope_fields = {"specversion", "id", "source", "type", "time"}
+    if not required_envelope_fields.issubset(set(envelope_schema.get("required", []))):
+        errors.append("events-registry: envelope.schema.json is missing CloudEvents required fields")
+
+    task_events_schema = load_json("domains/productivity/task-tracking/contract/events.schema.json")
+    billing_events_schema = load_json("domains/billing/contracts/events.schema.json")
+    registry_task_defs: set[str] = set()
+    registry_billing_defs: set[str] = set()
+    seen_types: set[str] = set()
+
+    for event in registry.get("events", []):
+        event_type = event.get("type")
+        source = event.get("source")
+        schema_ref = event.get("schema")
+
+        if not isinstance(event_type, str) or not event_type.startswith("com.workflow-os."):
+            errors.append(f"events-registry: invalid event type {event_type!r}")
+        elif event_type in seen_types:
+            errors.append(f"events-registry: duplicate event type {event_type}")
+        else:
+            seen_types.add(event_type)
+
+        if not isinstance(source, str) or not source.startswith("//workflow-os/"):
+            errors.append(f"events-registry: invalid event source for {event_type!r}")
+
+        if not isinstance(schema_ref, str) or "#/" not in schema_ref:
+            errors.append(f"events-registry: invalid schema ref for {event_type!r}")
+            continue
+
+        schema_path, pointer = schema_ref.split("#", 1)
+        schema_file = REPO_ROOT / schema_path
+        if not schema_file.exists():
+            errors.append(f"events-registry: schema file missing for {event_type}: {schema_path}")
+            continue
+
+        document = load_data(schema_path)
+        try:
+            resolve_pointer(document, f"#{pointer}")
+        except (KeyError, IndexError, ValueError):
+            errors.append(f"events-registry: schema pointer missing for {event_type}: {schema_ref}")
+            continue
+
+        definition_name = pointer.rsplit("/", 1)[-1]
+        normalized_schema_path = schema_path.replace("\\", "/")
+        if normalized_schema_path == "domains/productivity/task-tracking/contract/events.schema.json":
+            registry_task_defs.add(definition_name)
+        if normalized_schema_path == "domains/billing/contracts/events.schema.json":
+            registry_billing_defs.add(definition_name)
+
+        for producer in event.get("produced_by", []):
+            if not (REPO_ROOT / producer).exists():
+                errors.append(f"events-registry: produced_by path missing for {event_type}: {producer}")
+
+    missing_task = sorted(task_event_ids(task_events_schema) - registry_task_defs)
+    if missing_task:
+        errors.append(f"events-registry: task-tracking registry coverage missing {missing_task}")
+
+    missing_billing = sorted(billing_event_ids(billing_events_schema) - registry_billing_defs)
+    if missing_billing:
+        errors.append(f"events-registry: billing registry coverage missing {missing_billing}")
+
+
 def main() -> int:
     errors: list[str] = []
     validate_task_management(errors)
     validate_billing(errors)
+    validate_event_registry(errors)
 
     if errors:
         for error in errors:

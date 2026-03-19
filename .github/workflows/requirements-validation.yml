@@ -1,0 +1,37 @@
+name: Requirements Validation
+
+on:
+  pull_request:
+    paths:
+      - "requirements/**"
+      - "scripts/validate_requirements.py"
+      - "package.json"
+      - ".github/workflows/requirements-validation.yml"
+  push:
+    branches:
+      - "main"
+    paths:
+      - "requirements/**"
+      - "scripts/validate_requirements.py"
+      - "package.json"
+      - ".github/workflows/requirements-validation.yml"
+
+jobs:
+  validate-requirements:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run requirements validation
+        run: npm run validate:requirements
