@@ -120,10 +120,16 @@ def check_gaps(req: dict, state: dict) -> list[dict]:
             })
 
     # 4. NFR has baseline coverage
+    # Use GATE_CAPABILITY_MAP to resolve gate names → capability IDs, then check working.
+    # Both "observability-check" and "rollback-verification" map to "quality-gate-baseline".
     nfr = req.get("nfr", {})
-    nfr_caps = {"observability-check", "rollback-verification"}
-    if not nfr_caps.issubset(working):
-        missing_nfr = nfr_caps - working
+    nfr_gates = {"observability-check", "rollback-verification"}
+    missing_nfr: set[str] = set()
+    for gate in nfr_gates:
+        cap = GATE_CAPABILITY_MAP.get(gate)
+        if cap is None or cap not in working:
+            missing_nfr.add(gate)
+    if missing_nfr:
         gaps.append({
             "type": "nfr_coverage_gap",
             "severity": "low",

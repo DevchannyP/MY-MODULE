@@ -33,16 +33,22 @@ wps_completed:
   - "WP-DOC-002"
   - "WP-RUN-003"
   - "WP-RUN-004"
+  - "WP-NFR-001"
+  - "WP-COMMIT-001"
 
 wps_partial: []
 
 wps_not_started: []
 
 verification_summary:
-  total_commands_run: 67
-  passed: 59
+  total_commands_run: 82
+  passed: 74
   failed: 8
   skipped: 0
+  note: |
+    8 failures are in-session transient failures during WP development cycles
+    (e.g., ESLint globals, missing script stubs) that were immediately fixed.
+    All current gates pass. Gate pass rate reflects development-cycle history.
 
 next_session:
   protocol_version: "2"
@@ -56,21 +62,18 @@ next_session:
   first_wp: "NONE"
   first_wp_tier: "none"
   context_needed: |
-    v2 backlog is fully reconciled:
-    - wp:reconcile => Satisfied 17 / Scheduled 0 / Uncovered 0
-    - branch protection baseline is now enforced in quality-gates.yml
-    - central event registry and CloudEvents envelope are now part of test:contract
+    Session 2026-03-20 fully closed:
+    - wp:reconcile => Satisfied 18 / Scheduled 0 / Uncovered 0
+    - wp:gaps => 0 gaps (NFR gap detector logic fixed in WP-NFR-001)
+    - All completed WP work committed to git (WP-COMMIT-001)
+    - 255 tests pass, 0 failures
+    - branch: chore/core-git-governance-activation
 
-    Newly discovered hardening packets are also complete:
-      - WP-DOC-001  legacy template / memory-project cleanup (done)
-      - WP-EVID-001 root release summary + release-evidence legacy fallback removal (done)
-      - WP-RUN-001 deployment-environment smoke checklist/baseline (done)
-      - WP-RUN-002 deployment-environment smoke runner + workflow_dispatch evidence path (done)
-      - WP-DOC-002 root entry docs truthfulness realignment (done)
-      - WP-RUN-003 deployment environment registry + GitHub environment binding (done)
-      - WP-RUN-004 remote deployment environment provisioning audit baseline (done)
+    Queue is empty. Known low-severity open item:
+    - KI-RUN-001: remote deployment environment audit evidence still
+      needs operator collection outside git.
 
-    Queue is currently empty.
-    Remaining runtime gap is low severity:
-    - remote deployment environment audit evidence still needs operator collection outside git.
-    Start the next session by reading root memory and either collecting live audit evidence against the new policy/template baseline or defining a fresh packet from any newly discovered gap.
+    Next session: run wp:next → confirm 0 ready WPs → either
+    (a) open a PR to merge this branch to main, or
+    (b) define a new WP from any newly discovered gap (wp:gaps --gen).
+    The highest ROI next action is PR review and merge to main.

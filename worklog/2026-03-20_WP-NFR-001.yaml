@@ -1,0 +1,43 @@
+wp_id: "WP-NFR-001"
+goal: "NFR gap detector 로직 일관성 수정 — GATE_CAPABILITY_MAP 경유 NFR 커버리지 검사"
+completed: "2026-03-20"
+result: "PASS"
+
+context: |
+  requirements_gap.py의 NFR 검사(check #4)가 게이트 이름 "observability-check",
+  "rollback-verification"을 직접 capability ID로 취급해 working_capabilities와 비교했다.
+  이 두 게이트는 GATE_CAPABILITY_MAP에서 "quality-gate-baseline"으로 매핑되며,
+  quality-gate-baseline은 이미 working_capabilities에 존재한다.
+  따라서 gap detector가 false positive를 보고하고 있었다.
+
+root_cause: |
+  nfr_caps = {"observability-check", "rollback-verification"}
+  if not nfr_caps.issubset(working)  ← working은 capability ID 집합인데 gate 이름과 비교
+
+fix_applied: |
+  GATE_CAPABILITY_MAP을 경유해 gate name → capability ID로 변환 후 working과 비교.
+  두 게이트 모두 "quality-gate-baseline"으로 resolve → 이미 working에 존재 → gap 없음.
+
+files_created: []
+files_modified:
+  - "scripts/requirements_gap.py"
+  - "memory/checkpoint.yaml"
+  - "worklog/2026-03-20_WP-NFR-001.yaml"
+
+validation:
+  wp_gaps: "PASS — 0 gaps"
+  check_observability: "PASS"
+  test_rollback: "PASS"
+  wp_validate: "PASS"
+  wp_reconcile: "PASS — Satisfied 18 / Scheduled 0 / Uncovered 0"
+  npm_test: "PASS — 255 tests"
+
+risks:
+  - id: "R-NFR-001"
+    description: "NFR 검사는 이제 quality-gate-baseline capability 존재 여부에 의존한다. 이 capability가 working_capabilities에서 제거되면 gap이 다시 보고된다."
+    severity: "low"
+    mitigation: "quality-gate-baseline은 핵심 capability이므로 제거 가능성 없음."
+
+decisions:
+  - "gap detector logic fix (GATE_CAPABILITY_MAP 경유)를 채택: current-state.yaml에 중복 capability ID를 추가하는 것보다 일관성이 높음"
+  - "8개 historical gate failure는 in-session transient failure로 기록. checkpoint에 note 추가."
