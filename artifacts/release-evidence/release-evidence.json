@@ -1,14 +1,26 @@
 {
-  "generated_at_utc": "2026-03-18T15:46:03.060581+00:00",
+  "schema_version": "2",
+  "generated_at_utc": "2026-03-19T15:44:59.402674+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "345c30cab7c6a86fdc72d0a4b6e0659c3c9343cb",
-  "last_completed_stage": "D(4차)",
+  "head_commit": "2768b12e4c520b5c7a0ad5f8e41b9f9e79ca099a",
+  "build_environment": {
+    "ci": "false",
+    "github_sha": "2768b12e4c520b5c7a0ad5f8e41b9f9e79ca099a",
+    "github_ref": "local",
+    "github_run_id": "local",
+    "github_workflow": "local"
+  },
+  "memory_sources": {
+    "current_state": "memory/current-state.yaml",
+    "next_actions": "memory/next-actions.yaml"
+  },
+  "last_completed_stage": "WORK_PACKET_MODE",
   "quality_gate_result": "PASS",
   "next_action": {
-    "priority": "12",
-    "id": "Q-114",
-    "track": "CORE-QUALITY",
-    "action": "실제 서버 기동 smoke 기준선 강화"
+    "priority": "1",
+    "id": "WP-EVID-001",
+    "track": "WORK_PACKET",
+    "action": "root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다"
   }
 }

@@ -46,7 +46,76 @@
 3. 모든 게이트 PASS 시에만 Stage D 완료 선언.
 4. Stage D FAIL이 3회 이상 반복되면 Stage E 진입을 검토한다.
 
+## 현재 GitHub Actions 자동화 기준
+
+현재 저장소는 네 개의 workflow를 truth surface로 사용한다.
+
+1. `.github/workflows/requirements-validation.yml`
+   `requirements/**`와 validator 관련 변경에 대해 `npm run validate:requirements`를 빠르게 실행한다.
+2. `.github/workflows/quality-gates.yml`
+   로컬에서 이미 구현된 Stage D 품질 게이트와 governance baseline 을 PR과 `main` push에서 재사용한다.
+3. `.github/workflows/release-evidence.yml`
+   `main` push와 수동 실행에서 SBOM, provenance, release evidence 생성과 artifact upload를 수행한다.
+4. `.github/workflows/deployment-smoke.yml`
+   수동 실행에서 registry에 선언된 GitHub environment로 배포 환경 smoke를 바인딩한다.
+
+`quality-gates.yml`은 현재 다음 명령을 자동화한다.
+
+```bash
+npm run validate:requirements
+npm run test:contract
+npm test
+npm run test:authn-authz
+npm run test:e2e-smoke
+npm run lint
+npm run type-check
+npm run validate:composition
+npm run scan:secrets
+npm run scan:dependencies
+npm run check:advisory-policy
+npm run check:branch-protection-policy
+npm run check:deployment-smoke-binding
+npm run check:deployment-environment-provisioning
+npm run generate:sbom
+npm run verify:provenance
+npm run test:rollback
+npm run check:observability
+```
+
+다음 항목은 아직 `quality-gates.yml`의 상시 CI 범위 밖에 있다.
+
+1. GitHub 원격 branch protection 설정값 자체의 자동 조회/비교
+2. 배포 환경 또는 외부 인프라가 필요한 full runtime smoke 의 상시 자동 트리거
+
+`check:branch-protection-policy`는 저장소 안의 baseline 과 validator 를 강제한다.
+이 게이트는 GitHub 원격 설정을 직접 읽지는 않는다.
+즉, repository baseline 과 remote enforcement 는 서로 다른 층이며 둘 다 필요하다.
+
+대신 배포 환경 smoke 는 별도 on-demand workflow 로 승격됐다.
+
+1. `.github/workflows/deployment-smoke.yml`
+   `workflow_dispatch` 입력으로 registry에 선언된 `environment_name` 을 받아 GitHub environment job binding 위에서 실제 배포 환경 smoke runner 를 실행한다.
+2. `.github/workflows/quality-gates.yml`
+   `check:deployment-smoke-binding` 으로 environment registry와 workflow 입력/환경 바인딩이 drift 나지 않도록 강제한다.
+3. `check:deployment-environment-provisioning`
+   registry와 provisioning policy, generated audit template 간 drift 를 막는다.
+4. 배포 smoke artifact 는 `artifacts/deployment-smoke/latest.json`, `artifacts/deployment-smoke/target-resolution.json`, `artifacts/deployment-smoke/environment-provisioning-audit-template.json` 으로 남는다.
+5. 원격 GitHub environment provisioning 자체는 저장소 밖이므로 상시 CI 가 아니라 operator-collected 운영 증적으로 유지한다.
+
 ## 저장소 기본 계약 검증 명령
+
+```bash
+npm run validate:requirements
+```
+
+이 명령은 Stage A 입력 계약을 다음 기준으로 검증한다.
+
+1. `requirements.yaml`이 현재 저장소가 사용하는 top-level shape를 따른다.
+2. `contracts.*`와 `composition.*` 경로가 실제 계약 파일을 가리킨다.
+3. `quality_gates`가 저장소 기본선 항목을 빠뜨리지 않는다.
+4. `routing`, `feature_flags`, `nfr` 섹션이 구조적으로 유효하다.
+
+## 저장소 기본 contract drift 검증 명령
 
 ```bash
 npm run test:contract
@@ -58,6 +127,8 @@ npm run test:contract
 2. `capability.yaml` ↔ `openapi.yaml` operationId/응답 계약 불일치
 3. `events.schema.json` ↔ capability 이벤트 선언 불일치
 4. HTTP 인터페이스 코드 ↔ openapi 경로 드리프트
+5. `contracts/events/registry.yaml` ↔ domain event schema 정의 및 `produced_by` 경로 드리프트
+6. `contracts/events/envelope.schema.json` 이 CloudEvents 필수 필드를 유지하는지 여부
 
 ## 저장소 기본 타입 경계 검증 명령
 
@@ -90,12 +161,23 @@ npm run test:authn-authz
 npm run test:e2e-smoke
 ```
 
-현재 코어 기준선은 외부 서버가 아닌 controller-level smoke다.
+현재 코어 기준선은 controller-level smoke에 더해 최소 network-level server wiring smoke를 포함한다.
 
 1. 핵심 성공 경로가 인터페이스 계층에서 빠르게 검증된다.
-2. 존재하지 않는 리소스는 404를 유지한다.
-3. 권한 실패 경로는 403을 유지한다.
-4. 실제 네트워크 서버 smoke는 Phase 2 운영 환경에서 추가한다.
+2. `src/tests/smoke` 기준선이 실제 HTTP 서버를 기동해 transport, JSON body parsing, header-to-caller mapping 을 검증한다.
+3. 존재하지 않는 리소스는 404를 유지하고 권한 실패 경로는 403을 유지한다.
+4. 외부 인프라나 배포 환경을 포함한 full end-to-end smoke는 후속 packet에서 추가한다.
+
+배포 환경 smoke는 아직 `quality-gates.yml` 에 자동 연결되지 않았다.
+대신 Stage E 문서에 manual baseline 이 있다.
+
+1. `npm run test:e2e-smoke` 는 in-repo transport smoke 이다.
+2. `python3 scripts/resolve_deployment_target.py --environment <name>` 은 저장소 registry와 GitHub environment 변수를 기준으로 smoke target 을 해석한다.
+3. `npm run smoke:deployment -- --base-url <url>` 은 실제 배포 URL 대상으로 health/task/billing 권한 경로를 검증하고 JSON evidence 를 남긴다.
+4. `workflow_dispatch` 로 같은 runner 를 GitHub Actions 에서 실행할 수 있고, job 은 선택된 GitHub environment 에 바인딩된다.
+5. `npm run generate:deployment-environment-audit-template` 은 원격 GitHub environment audit 템플릿을 생성한다.
+6. `npm run check:deployment-environment-provisioning` 은 policy/template/registry drift 를 막지만, live remote 결과 자체를 조회하지는 않는다.
+7. 로그/ingress/runtime wiring 확인과 원격 environment provisioning 확인은 여전히 운영자 확인이 필요하므로 `STATUS: operator-collected` 로 유지한다.
 
 ## 저장소 기본 공급망 검증 명령
 

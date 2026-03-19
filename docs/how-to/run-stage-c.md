@@ -8,6 +8,15 @@
 - `contract/ui-contract.yaml`이 완성되어 있어야 한다.
 - `master-shell/plugin-registry/registry.yaml`이 존재해야 한다.
 
+## 빠른 상태 확인
+
+```bash
+npm run stage:c
+```
+
+이 명령은 현재 저장소 상태를 읽는 dry-run executor다.
+실제 파일을 변경하지 않고 Stage C prerequisite와 조합 검증 명령 힌트를 JSON으로 출력한다.
+
 ## 실행 절차
 
 ### 1단계: Plugin Registry 등록

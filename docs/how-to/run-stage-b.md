@@ -8,6 +8,15 @@
 - `memory/stageA/[module-id].yaml`이 존재해야 한다.
 - `requirements/domain-map.yaml`이 최신 상태여야 한다.
 
+## 빠른 상태 확인
+
+```bash
+npm run stage:b
+```
+
+이 명령은 현재 저장소 상태를 읽는 dry-run executor다.
+실제 파일을 변경하지 않고 prerequisite와 route 상태를 JSON으로 출력한다.
+
 ## 실행 절차
 
 ### 1단계: Stage A Memory 읽기

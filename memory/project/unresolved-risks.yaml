@@ -1,4 +1,7 @@
 # Workflow OS - 미해결 리스크 목록
+# STATUS: legacy detail surface
+# root memory/current-state.yaml 의 known_issues 가 canonical summary 이다.
+# 이 파일은 상세 리스크 메모를 보존하며, root issue 와 충돌할 경우 root memory 가 우선한다.
 as_of: "2026-03-19"
 
 risks:

@@ -38,4 +38,14 @@ Stage가 이미 PASS 상태여도 다음 경우 재실행한다:
 
 ## 라우팅 결정 기록
 
-라우팅 결정은 `memory/project/current-state.yaml`의 `stage_states` 섹션에 기록한다.
+라우팅 결정은 root `memory/current-state.yaml`에 기록한다.
+레거시 Stage 세부 상태가 필요한 경우에만 `memory/project/current-state.yaml`을 보조 참조한다.
+
+## 상태 확인 명령
+
+```bash
+npm run project:status
+```
+
+이 명령은 저장소 전체의 Stage A~E route 상태, legacy stage 상태, 현재 Work Packet, 다음 Work Packet을 JSON으로 출력한다.
+실행은 하지 않고 현재 상태만 읽는다.

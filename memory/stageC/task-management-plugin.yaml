@@ -64,12 +64,13 @@ contracts:
 
 # ── 6. 마스터 UI 읽기 순서 확인 ─────────────────────────────────────────
 master_shell_read_order:
-  1: "memory/project/current-state.yaml"
-  2: "master-shell/plugin-registry/registry.yaml"
-  3: "master-shell/feature-flags/flags.yaml"
-  4: "domains/productivity/task-tracking/contract/ui-contract.yaml"
-  5: "domains/productivity/task-tracking/contract/capability.yaml"
-  note: "모듈 코드(src/)는 읽지 않는다"
+  1: "memory/current-state.yaml"
+  2: "memory/project/current-state.yaml (legacy fallback)"
+  3: "master-shell/plugin-registry/registry.yaml"
+  4: "master-shell/feature-flags/flags.yaml"
+  5: "domains/productivity/task-tracking/contract/ui-contract.yaml"
+  6: "domains/productivity/task-tracking/contract/capability.yaml"
+  note: "모듈 코드(src/)는 읽지 않고, root memory를 기본 상태 입력으로 사용한다"
 
 # ── 7. 도메인 카탈로그 등록 ──────────────────────────────────────────────
 catalog_ref: "master-shell/catalog/domains.yaml"

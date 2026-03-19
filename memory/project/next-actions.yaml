@@ -1,6 +1,7 @@
 # Workflow OS - 다음 실행 큐
-# 모든 자동 작업은 current-state.yaml → core-upgrade-plan.yaml → unresolved-risks.yaml →
-# next-actions.yaml 순서로 읽고 우선순위를 결정한다.
+# STATUS: legacy detail surface
+# 실제 다음 Work Packet 선택은 root memory/wp-queue.yaml 과 memory/current-wp.yaml 이 기준이다.
+# 이 파일은 legacy 코어 업그레이드 히스토리와 상세 우선순위 참고용이다.
 as_of: "2026-03-19"
 current_phase: "core-platform-upgrade-for-video-era"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"

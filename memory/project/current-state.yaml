@@ -1,5 +1,7 @@
 # Workflow OS - 현재 저장소 상태
-# 갱신 시점: Stage 종료마다 반드시 갱신할 것
+# STATUS: legacy detail surface
+# root memory/current-state.yaml 이 canonical state 이며, 이 파일은 legacy stage-era 상세 기록이다.
+# 갱신 시점: root current-state 와 충돌하지 않는 범위에서만 상세 히스토리를 보강한다.
 
 as_of: "2026-03-19"
 schema_version: "0.1.0"

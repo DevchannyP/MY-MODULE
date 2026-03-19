@@ -1,98 +1,92 @@
 # Workflow OS - my-module
 
-**목적**: requirements/requirements.yaml 하나만 교체하면 격리 모듈 생성→도메인 조합→마스터 UI 편입→품질 게이트→적대적 검증의 전체 사이클이 반복 가능한 저장소 운영체제.
+MY-MODULE은 계약 중심 Workflow OS 저장소다.
+`requirements/requirements.yaml`을 입력 진실원으로 유지하면서, 저장소 변경은 Stage 단위가 아니라 Work Packet 사이클로 운영한다.
 
----
+## 운영 모델
+
+이 저장소의 기본 실행 단위는 Work Packet이다.
+
+1. `memory/wp-queue.yaml`에서 다음 작업을 선택한다.
+2. `memory/current-wp.yaml`에 목표, 범위, 검증, 롤백을 먼저 적는다.
+3. 코드/문서/검증/상태를 한 사이클 안에서 함께 닫는다.
+4. 결과를 `worklog/`와 `memory/`에 남긴다.
+
+Stage A→B→C→D→E는 여전히 아키텍처 의미와 품질 판정 기준으로 유지된다.
+다만 실행 방식은 "Stage 일괄 실행"이 아니라 "Stage 의미를 가진 Work Packet 반복"이다.
 
 ## 빠른 시작
 
-### 1. 요구사항 입력
+### 1. 현재 상태 읽기
 
-```yaml
-# requirements/requirements.yaml
-module:
-  id: "your-module-id"
-  name: "도메인 언어로 된 이름"
-  domain: "your-domain"
-  bounded_context: "your-context"
-stage: "A"
+- `memory/checkpoint.yaml`
+- `memory/wp-queue.yaml`
+- `memory/current-state.yaml`
+- `memory/current-wp.yaml`
+
+### 2. 입력 진실원 확인
+
+- `requirements/requirements.yaml`
+- `requirements/constraints.yaml`
+
+### 3. 검증 기준선 실행
+
+```bash
+npm run validate:requirements
+npm run lint
 ```
 
-### 2. Stage A 실행
+## 현재 검증된 기반
 
-docs/how-to/run-stage-a.md 참조
+- `task-management`, `billing` 도메인 계약과 구현이 존재한다.
+- `test:contract`, `validate:composition`, `type-check`, `scan:dependencies`, `test:e2e-smoke` 기준선이 존재한다.
+- `validate:requirements`는 더 이상 parse-only가 아니라 실제 구조/경로/quality gate 기준을 검증한다.
+- `stage:a`~`stage:e`는 echo-only가 아니라 현재 상태를 읽는 dry-run executor다.
+- GitHub Actions에는 `requirements-validation.yml`, `quality-gates.yml`, `release-evidence.yml`, `deployment-smoke.yml`이 존재한다.
 
-### 3. 다음 Stage 순서대로 진행
+## 현재 수동/잔여 영역
 
-A → B → C → D → (필요 시 E)
+- 일부 자동화와 문서는 여전히 `memory/project/*`를 레거시 fallback 입력으로 참조한다.
+- 배포 환경 smoke는 실행 가능한 runner, environment registry, provisioning policy, audit template 경로가 있지만, 원격 GitHub environment의 live audit evidence와 로그/ingress 확인은 아직 operator-collected다.
+- 현재 root memory 기준의 알려진 low-severity runtime gap은 `KI-RUN-001` 하나다.
 
----
+## 현재 운영 기준
+
+- queue가 비어 있으면 `memory/current-wp.yaml`을 새 packet 정의로 교체한 뒤 시작한다.
+- `npm run wp:next`와 `npm run wp:reconcile`이 현재 backlog truth surface다.
+- release evidence는 자동화되어 있고, deployment smoke는 environment-bound on-demand workflow로 실행한다.
+- remote deployment environment provisioning은 `master-shell/operations/deployment-environment-provisioning.yaml`과 generated audit template로 기준선을 관리한다.
 
 ## 저장소 구조
 
-```
+```text
 my-module/
-├── requirements/          # 요구사항 (이것만 교체하면 전체 재실행 가능)
-│   ├── requirements.yaml  # ← 주 설정 파일
-│   ├── glossary.yaml      # 도메인 용어 사전
-│   ├── domain-map.yaml    # 도메인 구성도
-│   ├── constraints.yaml   # 아키텍처 제약
-│   └── nfr.yaml           # 비기능 요구사항
-├── docs/
-│   ├── explanation/       # WHY 중심 개념 문서
-│   ├── reference/         # WHAT 중심 참조 문서
-│   ├── how-to/            # HOW 중심 절차 문서
-│   ├── tutorial/          # 학습용 예제/퀴즈
-│   └── adr/               # 아키텍처 결정 기록
-├── templates/             # 모듈/계약/플러그인 템플릿
-├── domains/               # 도메인 모듈 (Stage A 이후 생성)
-├── master-shell/          # 마스터 UI 포털 설정
-│   ├── plugin-registry/   # 등록된 플러그인 목록
-│   ├── navigation/        # 도메인 포털 네비게이션
-│   ├── feature-flags/     # 기능 플래그
-│   ├── observability/     # 관측성 설정
-│   └── catalog/           # 도메인 카탈로그
-├── memory/                # Stage별 산출물 스냅샷
-│   ├── stageA/
-│   ├── stageB/
-│   ├── stageC/
-│   └── project/           # 현재 상태, 리스크, 다음 작업
-└── worklog/               # 실행 로그, 리뷰, 수정, 릴리즈 노트
+├── requirements/          # 입력 진실원과 제약
+├── domains/               # 도메인 구현 및 계약
+├── master-shell/          # 조합/레지스트리/플래그/관측성
+├── scripts/               # 검증기와 생성기
+├── docs/                  # reference / how-to / adr / explanation
+├── memory/                # root session state + stage snapshots + legacy project memory
+├── worklog/               # Work Packet evidence
+├── artifacts/             # 생성된 품질/공급망 증적
+└── .github/               # 거버넌스 파일
 ```
 
-## 핵심 규칙 (constraints.yaml 참조)
+## 핵심 규칙
 
 | 규칙 | 설명 |
 |------|------|
 | C001 | 모듈 간 직접 코드 참조 금지 |
-| C002 | 도메인 코어는 UI/DB/프레임워크 모름 |
-| C003 | 각 모듈은 최소 1개 이상의 public contract 필수 |
-| C004 | 구조 판단은 ADR 없이 지나가지 않음 |
+| C002 | 도메인 코어는 UI/DB/프레임워크/네트워크를 모름 |
+| C003 | 모든 모듈은 최소 1개의 public contract를 가진다 |
+| C004 | 구조 판단은 ADR 또는 동등한 증적을 남긴다 |
 | C005 | 품질 게이트 FAIL이면 완료 선언 불가 |
-
-## Stage 진입 조건
-
-| Stage | 트리거 |
-|-------|--------|
-| A | bounded context / 용어 / 권한 / 불변조건 / contract 변경 |
-| B | stageA memory / domain-map / 화면 구성 / composition 변경 |
-| C | plugin registry / navigation / feature flag / rollout 변경 |
-| D | 구현 완료 또는 수정 후 검증 필요 |
-| E | 반복 실패 / 수동 개입 증가 / 구조 단순화 필요 |
-
-## 현재 상태
-
-**phase**: skeleton-initialized (2026-03-17)
-
-Stage A~E 모두 NOT_STARTED. requirements/requirements.yaml에 실제 모듈 정보를 입력하고 Stage A를 실행하면 된다.
-
-→ memory/project/next-actions.yaml 참조
 
 ## 관련 문서
 
-- **개념 이해**: docs/explanation/workflow-os-concept.md
-- **라우팅 규칙**: docs/reference/routing-rules.md
-- **Stage A 실행**: docs/how-to/run-stage-a.md
-- **현재 상태**: memory/project/current-state.yaml
-- **다음 작업**: memory/project/next-actions.yaml
-- **미해결 리스크**: memory/project/unresolved-risks.yaml
+- `CLAUDE.md`
+- `docs/reference/memory-schema.md`
+- `docs/reference/quality-gates.md`
+- `memory/current-state.yaml`
+- `memory/wp-queue.yaml`
+- `memory/checkpoint.yaml`

@@ -128,21 +128,20 @@ memory/stageA/*.yaml       ← 메모리
 
 변경은 `requirements.yaml`에만 한다. Stage A를 재실행하면 모든 산출물이 재생성된다.
 
-### 3.3 JSON Schema 2020-12 검증
+### 3.3 Stage A 입력 계약 검증
 
-`requirements.schema.json`이 `requirements.yaml`을 기계 검증한다.
+`requirements.schema.json`은 현재 `requirements.yaml`의 top-level shape를 문서화하고,
+실제 게이트는 `scripts/validate_requirements.py`가 수행한다.
 
 ```bash
-# Stage A 시작 시 자동 실행
-npx ajv validate -s requirements/requirements.schema.json \
-                 -d requirements/requirements.yaml
+# Stage A 시작 전 직접 실행
+npm run validate:requirements
 
 # 실패 예시
-Error: /invariants/0/enforcement_layer must be equal to one of the allowed values
-Allowed: ["domain", "usecase", "interface", "all"]
+ERROR: contracts.http: expected suffix openapi.yaml -> domains/productivity/task-tracking/src/index.js
 ```
 
-잘못된 요구사항이 코드 생성 전에 걸러진다.
+이 검증은 스키마 파싱 여부만 보는 것이 아니라 필수 섹션, 계약 경로, quality gate 기본선까지 확인한다.
 
 ---
 
@@ -154,7 +153,7 @@ Allowed: ["domain", "usecase", "interface", "all"]
 Stage A — 계약·설계 (WHAT)
   입력: requirements.yaml
   출력: contract/ 4종, domain-spec.md, memory/stageA/*.yaml
-  검증: JSON Schema, 불변조건 목록 완결성
+  검증: requirements validator, 불변조건 목록 완결성
 
 Stage B — 모듈 조합 (HOW)
   입력: memory/stageA/*.yaml, contract/

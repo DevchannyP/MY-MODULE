@@ -56,11 +56,12 @@ Stage D PASS 후 단계적으로 활성화한다.
 
 ## 마스터 UI가 읽는 순서
 
-1. `memory/project/current-state.yaml` 읽기
-2. `master-shell/plugin-registry/registry.yaml` 읽기
-3. 각 플러그인의 `ui_contract` 읽기
-4. 각 플러그인의 `capability_contract` 읽기
-5. Feature flag 확인 후 UI 렌더링
+1. root `memory/current-state.yaml` 읽기
+2. 필요 시 `memory/project/current-state.yaml`로 레거시 상세 보완
+3. `master-shell/plugin-registry/registry.yaml` 읽기
+4. 각 플러그인의 `ui_contract` 읽기
+5. 각 플러그인의 `capability_contract` 읽기
+6. Feature flag 확인 후 UI 렌더링
 
 **마스터 UI는 모듈 코드를 직접 읽지 않는다.**
 

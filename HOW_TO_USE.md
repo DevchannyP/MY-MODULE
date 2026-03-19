@@ -1,6 +1,6 @@
 # Workflow OS — 완벽 사용 가이드
 
-> **한 줄 요약**: `DOMAIN_TEMPLATE.yaml`을 복사해서 내 도메인 요구사항을 채운 뒤 `A [도메인명]`을 입력하면 Claude가 세계 최고 수준의 소프트웨어를 자동 생성·검증한다. 그 이후엔 `계속`만 누르면 된다.
+> **한 줄 요약**: 입력 요구사항과 root `memory/` 상태를 맞춘 뒤, 한 번에 하나의 Work Packet으로 저장소를 점진적으로 개선한다.
 
 ---
 
@@ -27,18 +27,18 @@
    │                                      │
    │  ① DOMAIN_TEMPLATE.yaml 작성         │
    │  ─────────────────────────────────►  │
-   │                                      │  Stage A: 계약·불변조건·도메인 설계
-   │  ② A [도메인명]                        │  Stage B: 모듈 조합 검증
-   │  ─────────────────────────────────►  │  Stage C: 마스터 쉘 편입
-   │                                      │  Stage D: 품질 게이트 (테스트·린트·보안)
-   │  ③ 계속                               │  Stage E: 적대적 검증 (갭 발견·수정)
+   │                                      │  WP 정의 → 실행 → 검증 → 증적 → 상태 갱신
+   │  ② memory/ 상태 확인                   │  Stage 의미: A → B → C → D → E
+   │  ─────────────────────────────────►  │  현재 route stage와 다음 WP를 판정
+   │                                      │  코드·문서·검증을 함께 닫음
+   │  ③ npm run project:status            │
    │  ─────────────────────────────────►  │
-   │                                      │  → PASS: feature_flag 활성화
-   │  결과물: 완성된 소프트웨어 🎉            │
+   │                                      │  → 결과를 worklog + memory에 기록
+   │  결과물: 추적 가능한 점진 개선            │
 ```
 
-**사용자가 하는 일**: 요구사항 작성 + `A [도메인명]` + `계속` 반복
-**Claude가 하는 일**: 설계 → 구현 → 검증 → 수정 → 보고 (전부)
+**사용자가 하는 일**: 요구사항과 우선순위를 정하고 현재 `memory/` 상태를 확인한다.
+**Claude가 하는 일**: 한 번에 하나의 Work Packet을 끝까지 닫는다.
 
 ---
 
@@ -76,7 +76,7 @@ my-module/
 └── worklog/                       ← 실행 이력
 ```
 
-### 2.2 Stage 사이클 (자동 체이닝)
+### 2.2 Stage 사이클과 Work Packet 관계
 
 ```
 A [요구사항 분석 → 계약 생성]
@@ -89,9 +89,9 @@ D [품질 게이트 — 15가지 검사]
   ↓ PASS
 E [적대적 검증 — 경계 케이스 파괴 시도]
   ↓ PASS
-  → 메모리 갱신 → feature_flag 활성화 검토 → 보고
+  → 메모리 갱신 → feature_flag 활성화 판단 → 보고
   ↓
-다음 도메인 A 또는 추가 요구사항 처리
+다음 Work Packet 선택 또는 요구사항 재정렬
 ```
 
 `D PARTIAL_PASS` → 실패 항목만 수정 → D 재실행
@@ -128,17 +128,22 @@ screens:
     required_permission: "hr.read"
 ```
 
-### Step 3: Claude에게 지시
+### Step 3: 현재 상태 확인
 
-```
-A hr
+```bash
+npm run project:status
 ```
 
-### Step 4: 이후 무한 반복
+### Step 4: 현재 Work Packet 진행
 
+```text
+memory/current-wp.yaml 확인
+memory/wp-queue.yaml 확인
+필요한 Work Packet 1개 진행
 ```
-계속
-```
+
+queue가 비어 있으면 root `memory/current-wp.yaml`에 새 packet을 먼저 정의하고,
+`npm run wp:reconcile` 결과와 모순되지 않게 진행한다.
 
 ---
 
@@ -486,7 +491,7 @@ integrations:
 | 갭 발견 보고 | P0~P3 심각도 분류 |
 | 즉시 수정 | P0/P1 코드 수정 + 테스트 추가 |
 | `docs/adr/[번호]-[제목].md` | P3 구조 결정 ADR |
-| `memory/project/` 갱신 | current-state, next-actions 최신화 |
+| root `memory/` 갱신 | current-state, current-wp, next-actions, checkpoint 최신화 |
 
 ---
 
@@ -546,29 +551,26 @@ FAIL         = 필수 게이트 1개 이상 FAIL
 
 | 입력 | Claude 행동 | 소요 시간 |
 |------|------------|----------|
-| `계속` | next-actions.yaml priority 1 자동 실행 | 상황에 따라 |
-| `A [도메인명]` | Stage A~E 전체 자동 실행 | 길다 |
-| `D [도메인명]` | Stage D (품질 게이트) 실행 | 중간 |
-| `E [도메인명]` | Stage E (적대적 검증) 실행 | 중간 |
-| `검토` | 현재 상태 요약 보고 | 짧다 |
-| `게이트` | 전 도메인 품질 게이트 실행 | 길다 |
+| `npm run project:status` | 저장소 전체 Stage/Work Packet 상태를 JSON으로 확인 | 짧다 |
+| `npm run stage:a` | Stage A 진입 가능 여부와 권장 명령 확인 | 짧다 |
+| `npm run stage:d` | Stage D readiness와 권장 게이트 확인 | 짧다 |
+| `memory/current-wp.yaml` 확인 | 현재 진행 패킷의 범위와 검증 기준 확인 | 짧다 |
+| `memory/wp-queue.yaml` 확인 | 다음 우선순위 패킷 확인 | 짧다 |
 
 ### 예시 시나리오
 
 ```
-# 시나리오 1: 새 도메인 추가 (권장 — 가장 간단)
-사용자: A hr
-Claude: [Stage A→E 전체 자동 실행, 완료 보고]
-사용자: 계속    ← 다음 큐 항목 자동 실행
-사용자: 계속    ← 반복
+# 시나리오 1: 현재 저장소 상태 확인
+사용자: npm run project:status
+Claude: [현재 route stage, current_wp, next_wp, manual placeholder 확인]
 
-# 시나리오 2: 특정 도메인 재검증
-사용자: D billing
-Claude: [billing 도메인 품질 게이트만 재실행]
+# 시나리오 2: 특정 Stage readiness 확인
+사용자: npm run stage:d
+Claude: [prerequisite, 권장 검증 명령, 참조 문서 확인]
 
-# 시나리오 3: 현재 상태 확인
-사용자: 검토
-Claude: [current-state + next-actions 읽고 요약]
+# 시나리오 3: 다음 작업 결정
+사용자: memory/current-wp.yaml / memory/wp-queue.yaml 확인
+Claude: [한 번에 하나의 Work Packet 범위로 진행]
 ```
 
 ---
@@ -770,34 +772,44 @@ slo:
 ### 10.1 여러 도메인 순서대로 추가
 
 ```yaml
-# requirements/my-plan.yaml (참고용 — 실제 파일 아님)
-phase_1:
-  - "A hr"       # 인사관리 먼저
-  - "A payroll"  # 급여 (hr 완료 후)
-
-phase_2:
-  - "A expense"  # 경비 (payroll 완료 후)
-  - "A approval" # 결재 (expense 완료 후)
+# memory/wp-queue.yaml 예시
+queue:
+  - id: "WP-HR-STAGE-A"
+    priority: 1
+    goal: "hr 도메인 Stage A 입력과 계약 초안을 만든다"
+  - id: "WP-PAYROLL-STAGE-A"
+    priority: 2
+    goal: "payroll 도메인 Stage A 입력과 계약 초안을 만든다"
+  - id: "WP-EXPENSE-STAGE-A"
+    priority: 3
+    goal: "expense 도메인 Stage A 입력과 계약 초안을 만든다"
 ```
 
-각 도메인을 순서대로 입력하면 된다. Claude가 `domain-map.yaml`에서 의존성을 확인한다.
+한 번에 여러 도메인을 동시에 실행하지 않는다. `memory/wp-queue.yaml`에서 우선순위를 주고, Claude는 한 번에 하나의 Work Packet만 닫는다.
 
 ### 10.2 기존 도메인 요구사항 변경
 
-```
-# 불변조건 추가 → Stage A 재실행 필요
-사용자: A hr    ← 기존 도메인도 A로 다시 실행하면 변경사항 반영
+기존 도메인 요구사항이 바뀌면 해당 도메인을 위한 새 Work Packet을 queue에 추가한다.
+
+예:
+
+```yaml
+- id: "WP-HR-REQ-UPDATE"
+  priority: 1
+  goal: "hr 도메인 불변조건 변경을 requirements와 계약에 반영한다"
 ```
 
-Claude는 기존 파일을 읽고 변경사항만 반영한다. (기존 코드 삭제 시 승인 요청)
+Claude는 기존 파일을 읽고 변경분만 반영한다. 삭제나 구조 변경이 필요하면 별도 packet으로 분리한다.
 
 ### 10.3 특정 게이트만 재실행
 
+```bash
+npm run stage:d
+npm run test:e2e-smoke
+npm run test:contract
 ```
-D billing       ← billing 도메인 품질 게이트 재실행
-E billing       ← billing 적대적 검증만 재실행
-게이트          ← 전체 도메인 모든 게이트 실행
-```
+
+Stage readiness는 `npm run stage:d`로 확인하고, 실제 재실행은 필요한 gate 명령만 직접 실행한다.
 
 ### 10.4 ADR (아키텍처 결정) 직접 지시
 
@@ -834,14 +846,17 @@ Claude: [ADR 작성 → next-actions 갱신]
 
 ### Q: 테스트가 계속 실패한다
 
-```
-# Claude에게 진단 요청
-검토
+구체적 실패 명령과 오류를 같이 남기는 것이 가장 빠르다.
+
+```text
+billing 도메인 테스트 오류: [오류 메시지]
+실행 명령: npm test
 ```
 
-또는 구체적 오류와 함께:
-```
-billing 도메인 테스트 오류: [오류 메시지]
+또는 현재 상태를 먼저 확인한다:
+
+```bash
+npm run project:status
 ```
 
 ---
@@ -860,22 +875,26 @@ billing 도메인 테스트 오류: [오류 메시지]
 ### Q: 새 요구사항을 추가하고 싶다
 
 1. `DOMAIN_TEMPLATE.yaml`을 복사해서 채운다
-2. `A [새 도메인명]` 실행
-3. `계속`으로 다음 큐 처리
+2. `requirements/requirements.yaml`과 관련 memory 상태를 맞춘다
+3. `npm run project:status`로 현재 route와 다음 WP를 확인한다
 
 기존 도메인에 기능 추가는:
 1. 해당 `requirements/` 파일에 내용 추가
-2. `A [기존 도메인명]` 재실행
+2. 관련 Work Packet을 새로 정의하거나 queue 우선순위를 조정한다
 
 ---
 
 ### Q: 상태가 헷갈린다
 
-```
-검토
+```bash
+npm run project:status
 ```
 
-Claude가 `current-state.yaml` + `next-actions.yaml`을 읽고 현재 상태를 1페이지로 요약한다.
+그리고 아래 파일을 순서대로 읽는다.
+
+1. `memory/current-state.yaml`
+2. `memory/current-wp.yaml`
+3. `memory/next-actions.yaml`
 
 ---
 
