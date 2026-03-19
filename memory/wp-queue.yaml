@@ -1,0 +1,630 @@
+# ============================================================
+# WP Queue v2 — DAG-Aware Work Packet Registry
+# ============================================================
+# Schema version: 2
+# Scheduler:  npm run wp:next     → next ready WPs (DAG-resolved)
+#             npm run wp:status   → full DAG status
+#             npm run wp:validate → referential integrity check
+#             npm run wp:gaps     → requirements gap report
+# ============================================================
+# depends_on: [] means immediately runnable
+# tier: infra(0) → arch(1) → governance(2) → domain(3) → meta(4)
+# context_budget:
+#   tier_reads: always read (session-essential, ~150 tokens total)
+#   context_reads: read only if gap in knowledge
+#   skip_if_capability: skip if already in working_capabilities
+#   estimated_turns: rough agent turn estimate
+# ============================================================
+
+schema_version: "2"
+queue_date: "2026-03-20"
+epic: "MY-MODULE Workflow OS v2 실체화"
+
+capabilities:
+
+  # ──────────────────────────────────────────────
+  # CAP-01  Operating model alignment  (DONE)
+  # ──────────────────────────────────────────────
+  - id: "CAP-01"
+    name: "Operating model alignment"
+    priority: 1
+    work_packets:
+      - id: "WP-2026-03-19-01"
+        goal: "requirements schema와 validator를 실제 requirements.yaml 구조에 맞게 정렬한다"
+        status: "done"
+        tier: "infra"
+        depends_on: []
+        completed_at: "2026-03-19"
+        result: "PASS — validate:requirements가 실제 구조/경로/gate baseline 검증으로 전환됐다."
+
+      - id: "WP-2026-03-19-02"
+        goal: "CLAUDE.md와 핵심 운영 문서를 Work Packet 사이클 모델로 정렬한다"
+        status: "done"
+        tier: "infra"
+        depends_on: []
+        completed_at: "2026-03-19"
+        result: "PASS — auto-loaded protocol, README, memory schema가 Work Packet 모델과 현재 상태에 맞게 정렬됐다."
+
+      - id: "WP-2026-03-19-03"
+        goal: "requirements validation을 CI와 stage entry documentation에 연결한다"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-2026-03-19-01"]
+        completed_at: "2026-03-19"
+        result: "PASS — GitHub Actions workflow와 Stage A how-to가 real requirements validator를 가리킨다."
+
+  # ──────────────────────────────────────────────
+  # CAP-02  Session memory normalization  (DONE)
+  # ──────────────────────────────────────────────
+  - id: "CAP-02"
+    name: "Session memory normalization"
+    priority: 2
+    work_packets:
+      - id: "WP-2026-03-19-04"
+        goal: "root memory files와 legacy memory/project files의 역할을 정리하고 bridge 규칙을 고정한다"
+        status: "done"
+        tier: "infra"
+        depends_on: []
+        completed_at: "2026-03-19"
+        result: "PASS — root memory is now the canonical session surface, key docs use explicit legacy fallback wording."
+
+  # ──────────────────────────────────────────────
+  # CAP-03  Stage executor truthfulness  (DONE)
+  # ──────────────────────────────────────────────
+  - id: "CAP-03"
+    name: "Stage executor truthfulness"
+    priority: 3
+    work_packets:
+      - id: "WP-2026-03-19-05"
+        goal: "echo-only stage scripts를 status/dry-run 가능한 실행기로 교체한다"
+        status: "done"
+        tier: "arch"
+        depends_on: ["WP-2026-03-19-01"]
+        completed_at: "2026-03-19"
+        result: "PASS — stage:a~stage:e now return truthful JSON dry-run status."
+
+      - id: "WP-2026-03-19-06"
+        goal: "project status runner를 추가해 stage A-E 상태를 구조화 출력한다"
+        status: "done"
+        tier: "arch"
+        depends_on: ["WP-2026-03-19-05"]
+        completed_at: "2026-03-19"
+        result: "PASS — npm run project:status now returns structured Stage A-E route status."
+
+  # ──────────────────────────────────────────────
+  # CAP-04  Runtime smoke coverage  (DONE)
+  # ──────────────────────────────────────────────
+  - id: "CAP-04"
+    name: "Runtime smoke coverage"
+    priority: 4
+    work_packets:
+      - id: "WP-2026-03-19-07"
+        goal: "controller-level smoke 다음 단계인 실제 server wiring smoke 기준선을 만든다"
+        status: "done"
+        tier: "domain"
+        depends_on: []
+        completed_at: "2026-03-19"
+        result: "PASS — test:e2e-smoke now includes a real HTTP server wiring smoke."
+
+  # ──────────────────────────────────────────────
+  # CAP-05  Governance automation  (DONE)
+  # ──────────────────────────────────────────────
+  - id: "CAP-05"
+    name: "Governance automation"
+    priority: 5
+    work_packets:
+      - id: "WP-2026-03-19-08"
+        goal: "기존 quality gate를 실행하는 GitHub Actions workflow를 추가한다"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-2026-03-19-03"]
+        completed_at: "2026-03-19"
+        result: "PASS — quality-gates.yml now automates implemented local gates in GitHub Actions."
+
+  # ──────────────────────────────────────────────
+  # CAP-06  Repository truthfulness  (DONE)
+  # ──────────────────────────────────────────────
+  - id: "CAP-06"
+    name: "Repository truthfulness"
+    priority: 6
+    work_packets:
+      - id: "WP-2026-03-19-09"
+        goal: "HOW_TO_USE와 남은 legacy how-to/reference 문서를 Work Packet 운영 모델로 정렬한다"
+        status: "done"
+        tier: "infra"
+        depends_on: ["WP-2026-03-19-02"]
+        completed_at: "2026-03-19"
+        result: "PASS — HOW_TO_USE no longer tells operators to drive the repo with legacy autopilot commands."
+
+  # ──────────────────────────────────────────────
+  # CAP-07  Domain onboarding  (PENDING)
+  # ──────────────────────────────────────────────
+  - id: "CAP-07"
+    name: "Domain onboarding"
+    priority: 7
+    work_packets:
+      - id: "WP-2026-03-19-10"
+        goal: "video 도메인 Stage A 청사진과 리스크 프로파일을 작성한다"
+        covers_capability: "video-domain-stage-a"
+        status: "done"
+        completed_at: "2026-03-19"
+        result: "PASS — memory/stageA/video.yaml: 6개 ubiquitous language, 2개 aggregate, INV-V001~V005, 5개 risk profile, permissions 3-tier, NFR 정의 완료."
+        tier: "domain"
+        depends_on: []
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "requirements/requirements.yaml"
+            - "requirements/domain-map.yaml"
+            - "requirements/DOMAIN_TEMPLATE.yaml"
+          skip_if_capability: []
+          estimated_turns: 3
+          max_new_files: 3
+          max_modified_files: 2
+
+  # ──────────────────────────────────────────────
+  # CAP-08  Architecture v2  (NEW — this session)
+  # ──────────────────────────────────────────────
+  - id: "CAP-08"
+    name: "Architecture v2 — DAG scheduler + Context Budget"
+    priority: 1
+    work_packets:
+      - id: "WP-ARCH-001"
+        goal: "DAG 스케줄러, context budget 시스템, requirements gap 검출기, session health 메트릭을 설치한다"
+        status: "done"
+        tier: "arch"
+        depends_on: []
+        completed_at: "2026-03-19"
+        result: "PASS — wp_scheduler.py, requirements_gap.py, session_metrics.py 구현 완료. wp-queue.yaml v2 DAG 스키마로 업그레이드. CLAUDE.md context budget 규칙 추가."
+
+      - id: "WP-ARCH-002"
+        goal: "wp-queue.yaml CI 자동 검증 — DAG 무결성 게이트를 quality-gates.yml에 추가한다"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-ARCH-001"]
+        completed_at: "2026-03-20"
+        result: "PASS — quality-gates.yml correctness job now runs npm run wp:validate on pull_request and main push."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - ".github/workflows/quality-gates.yml"
+            - "scripts/wp_scheduler.py"
+          skip_if_capability: []
+          estimated_turns: 2
+          max_new_files: 0
+          max_modified_files: 2
+
+      - id: "WP-ARCH-003"
+        goal: "desired_state와 actual capabilities 간 자동 reconciliation 스크립트를 구현한다"
+        covers_capability: "desired-state-reconciliation"
+        status: "done"
+        tier: "arch"
+        depends_on: ["WP-ARCH-001"]
+        completed_at: "2026-03-19"
+        result: "PASS — reconcile_state.py: Satisfied=3, Scheduled=5, Uncovered=0. covers_capability 필드로 명시적 WP↔capability 매핑 확립."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-state.yaml"
+          context_reads:
+            - "scripts/requirements_gap.py"
+            - "memory/wp-queue.yaml"
+          skip_if_capability: []
+          estimated_turns: 3
+          max_new_files: 1
+          max_modified_files: 3
+
+  # ──────────────────────────────────────────────
+  # CAP-09  Governance v2  (NEW)
+  # ──────────────────────────────────────────────
+  - id: "CAP-09"
+    name: "Governance v2 — Release Evidence Automation"
+    priority: 8
+    work_packets:
+      - id: "WP-GOV-001"
+        goal: "release evidence 생성을 GitHub Actions에 통합해 KI-EVIDENCE-001을 해소한다"
+        covers_capability: "release-evidence-automation"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-ARCH-001"]
+        completed_at: "2026-03-20"
+        result: "PASS — release-evidence.yml now generates SBOM, provenance, release evidence, and uploads artifacts in GitHub Actions."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-state.yaml"
+          context_reads:
+            - ".github/workflows/quality-gates.yml"
+            - "scripts/generate_release_evidence.py"
+            - "artifacts/release-evidence/release-evidence.json"
+          skip_if_capability: ["release-evidence-automation"]
+          estimated_turns: 3
+          max_new_files: 1
+          max_modified_files: 3
+
+      - id: "WP-GOV-002"
+        goal: "branch protection 정책 검증을 CI에 자동 추가한다"
+        covers_capability: "branch-protection-ci"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-GOV-001"]
+        completed_at: "2026-03-20"
+        result: "PASS — quality-gates.yml now runs check:branch-protection-policy and governance docs describe the repository-vs-remote enforcement boundary."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+          context_reads:
+            - ".github/workflows/quality-gates.yml"
+            - "scripts/validate_branch_protection_policy.py"
+          skip_if_capability: []
+          estimated_turns: 2
+          max_new_files: 0
+          max_modified_files: 1
+
+  # ──────────────────────────────────────────────
+  # CAP-10  Domain Expansion  (NEW)
+  # ──────────────────────────────────────────────
+  - id: "CAP-10"
+    name: "Domain Expansion — Billing + Cross-Domain"
+    priority: 9
+    work_packets:
+      - id: "WP-DOM-001"
+        goal: "billing 도메인 계약 파일(openapi, events, capability)을 Stage A 수준으로 완성한다"
+        covers_capability: "billing-domain-contracts"
+        status: "done"
+        tier: "domain"
+        depends_on: ["WP-2026-03-19-10"]
+        completed_at: "2026-03-20"
+        result: "PASS — billing domain already contains openapi, capability, events, and ui contracts aligned to contract drift validation."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "domains/billing/contracts/"
+            - "domains/productivity/task-tracking/contract/"
+            - "requirements/DOMAIN_TEMPLATE.yaml"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 4
+          max_modified_files: 2
+
+      - id: "WP-DOM-002"
+        goal: "cross-domain event bus 계약을 정의하고 contract drift 검증에 연결한다"
+        covers_capability: "cross-domain-event-bus"
+        status: "done"
+        tier: "domain"
+        depends_on: ["WP-DOM-001", "WP-2026-03-19-10"]
+        completed_at: "2026-03-20"
+        result: "PASS — central event registry, CloudEvents envelope, and produced_by paths are now enforced by test:contract."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "domains/productivity/task-tracking/contract/events.schema.json"
+            - "domains/billing/contracts/"
+            - "scripts/validate_contract_drift.py"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 2
+          max_modified_files: 3
+
+  # ──────────────────────────────────────────────
+  # CAP-12  Production Readiness — 이벤트·에러·Feature Flag
+  # Benchmark: CloudEvents(CNCF), RFC 7807(IETF), OpenFeature(CNCF)
+  # ──────────────────────────────────────────────
+  - id: "CAP-12"
+    name: "Production Readiness — Event / Error / Feature Flag"
+    priority: 11
+    work_packets:
+      - id: "WP-ERR-001"
+        goal: "RFC 7807 Problem Details 에러 응답 표준을 모든 컨트롤러에 적용한다"
+        covers_capability: "rfc7807-error-standard"
+        status: "done"
+        tier: "domain"
+        depends_on: []
+        completed_at: "2026-03-20"
+        result: "PASS — ProblemDetails helper and controller error responses are already wired and validated by repository tests."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "domains/productivity/task-tracking/src/interface/TaskController.js"
+            - "domains/billing/src/interface/BillingController.js"
+            - "domains/productivity/task-tracking/contract/openapi.yaml"
+          skip_if_capability: []
+          estimated_turns: 3
+          max_new_files: 2
+          max_modified_files: 4
+
+      - id: "WP-FLAG-001"
+        goal: "OpenFeature 패턴으로 Feature Flag 런타임 평가를 서버 wiring에 추가한다"
+        covers_capability: "feature-flag-runtime"
+        status: "done"
+        tier: "domain"
+        depends_on: ["WP-ERR-001"]
+        completed_at: "2026-03-20"
+        result: "PASS — FeatureFlagProvider is active in server wiring and the flag-off path is covered by e2e smoke."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "master-shell/flags.yaml"
+            - "src/server/"
+            - "src/index.js"
+          skip_if_capability: []
+          estimated_turns: 3
+          max_new_files: 2
+          max_modified_files: 3
+
+      - id: "WP-EVT-001"
+        goal: "Transactional Outbox 패턴으로 도메인 이벤트 발행을 보장한다"
+        covers_capability: "event-publishing"
+        status: "done"
+        tier: "domain"
+        depends_on: ["WP-ERR-001", "WP-DOM-002"]
+        completed_at: "2026-03-20"
+        result: "PASS — EventPublisher port, InMemory adapter, Outbox adapter stub, and CreateTaskUseCase event publication are present and tested."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "domains/productivity/task-tracking/src/application/CreateTaskUseCase.js"
+            - "domains/productivity/task-tracking/src/domain/entities/Task.js"
+            - "contracts/events/"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 3
+          max_modified_files: 4
+
+  # ──────────────────────────────────────────────
+  # CAP-13  Observability Implementation
+  # Benchmark: OpenTelemetry(CNCF), Google SRE RED method, 12-factor
+  # ──────────────────────────────────────────────
+  - id: "CAP-13"
+    name: "Observability — OpenTelemetry Instrumentation"
+    priority: 12
+    work_packets:
+      - id: "WP-OBS-001"
+        goal: "OpenTelemetry SDK로 HTTP trace·메트릭·구조화 로그 최소 계측을 추가한다"
+        covers_capability: "opentelemetry-instrumentation"
+        status: "done"
+        tier: "domain"
+        depends_on: ["WP-FLAG-001"]
+        completed_at: "2026-03-20"
+        result: "PASS — telemetry.js and createServer emit structured logs and request metrics with trace context."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "master-shell/config.yaml"
+            - "src/server/"
+            - "domains/productivity/task-tracking/src/interface/TaskController.js"
+            - "scripts/validate_operations.py"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 2
+          max_modified_files: 4
+
+  # ──────────────────────────────────────────────
+  # CAP-14  Persistence Layer
+  # Benchmark: Hexagonal Architecture, Testcontainers, Flyway
+  # ──────────────────────────────────────────────
+  - id: "CAP-14"
+    name: "Persistence — SQLite Repository Adapter"
+    priority: 13
+    work_packets:
+      - id: "WP-PERSIST-001"
+        goal: "SQLite 기반 TaskRepository 어댑터와 스키마 마이그레이션을 추가한다"
+        covers_capability: "sqlite-persistence"
+        status: "done"
+        tier: "domain"
+        depends_on: ["WP-EVT-001"]
+        completed_at: "2026-03-20"
+        result: "PASS — SQLiteTaskRepository, schema.sql, migration script, and infrastructure test now verify the persistence adapter."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "domains/productivity/task-tracking/src/infrastructure/"
+            - "domains/productivity/task-tracking/src/domain/entities/Task.js"
+          skip_if_capability: []
+          estimated_turns: 5
+          max_new_files: 4
+          max_modified_files: 3
+
+  # ──────────────────────────────────────────────
+  # CAP-11  Self-Improvement Loop  (NEW)
+  # ──────────────────────────────────────────────
+  - id: "CAP-11"
+    name: "Meta — Self-Improvement Loop"
+    priority: 10
+    work_packets:
+      - id: "WP-META-001"
+        goal: "세션 종료 시 자동으로 gap 검출 → 신규 WP 생성 → queue 갱신하는 자기개선 루프를 구현한다"
+        covers_capability: "self-improvement-loop"
+        status: "done"
+        tier: "meta"
+        depends_on: ["WP-ARCH-001", "WP-ARCH-003"]
+        completed_at: "2026-03-20"
+        result: "PASS — session:end runs gap detection, reconciliation, health reporting, and surfaces ready WPs automatically."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-state.yaml"
+            - "memory/wp-queue.yaml"
+          context_reads:
+            - "scripts/requirements_gap.py"
+            - "scripts/wp_scheduler.py"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 1
+          max_modified_files: 3
+
+  # ──────────────────────────────────────────────
+  # CAP-15  Remaining hardening discovered in strict review
+  # ──────────────────────────────────────────────
+  - id: "CAP-15"
+    name: "Hardening — Evidence / Runtime / Legacy Cleanup"
+    priority: 2
+    work_packets:
+      - id: "WP-EVID-001"
+        goal: "root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다"
+        status: "done"
+        tier: "arch"
+        depends_on: []
+        completed_at: "2026-03-20"
+        result: "PASS — release evidence now reads quality gate summary from root current-state and no longer needs the legacy quality_gate_result field."
+        context_budget:
+          tier_reads:
+            - "memory/current-state.yaml"
+            - "memory/checkpoint.yaml"
+          context_reads:
+            - "scripts/generate_release_evidence.py"
+            - ".github/workflows/release-evidence.yml"
+          skip_if_capability: []
+          estimated_turns: 3
+          max_new_files: 0
+          max_modified_files: 4
+
+      - id: "WP-DOC-001"
+        goal: "legacy operator model이 남아 있는 template와 memory/project 문서를 root protocol과 정렬한다"
+        status: "done"
+        tier: "infra"
+        depends_on: []
+        completed_at: "2026-03-20"
+        result: "PASS — DOMAIN_TEMPLATE and memory/project files now declare root memory as canonical and legacy surfaces as fallback-only."
+        context_budget:
+          tier_reads:
+            - "memory/current-state.yaml"
+            - "memory/checkpoint.yaml"
+          context_reads:
+            - "requirements/DOMAIN_TEMPLATE.yaml"
+            - "memory/project/"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 1
+          max_modified_files: 5
+
+      - id: "WP-RUN-001"
+        goal: "배포 환경 수준 smoke 체크리스트와 executable baseline을 추가해 KI-RUN-001을 축소한다"
+        status: "done"
+        tier: "governance"
+        depends_on: []
+        completed_at: "2026-03-20"
+        result: "PASS — Stage E docs now distinguish in-repo smoke from deployment-environment smoke and provide a truthful manual runtime checklist."
+        context_budget:
+          tier_reads:
+            - "memory/current-state.yaml"
+            - "memory/checkpoint.yaml"
+          context_reads:
+            - "docs/how-to/run-stage-e.md"
+            - "src/tests/smoke/serverWiring.smoke.test.js"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 2
+          max_modified_files: 4
+
+      - id: "WP-RUN-002"
+        goal: "배포 환경 smoke를 실제 실행 가능한 runner와 workflow_dispatch 경로로 승격한다"
+        covers_capability: "deployment-environment-smoke-runner"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-RUN-001"]
+        completed_at: "2026-03-20"
+        result: "PASS — deployment smoke now has an executable CLI runner, workflow_dispatch path, JSON artifact, and updated operator docs."
+        context_budget:
+          tier_reads:
+            - "memory/current-state.yaml"
+            - "memory/current-wp.yaml"
+          context_reads:
+            - "docs/how-to/run-stage-e.md"
+            - ".github/workflows/quality-gates.yml"
+            - "src/tests/smoke/serverWiring.smoke.test.js"
+          skip_if_capability:
+            - "deployment-environment-smoke-runner"
+          estimated_turns: 4
+          max_new_files: 3
+          max_modified_files: 8
+
+  - id: "CAP-13"
+    name: "Root entry doc truthfulness"
+    priority: 9
+    work_packets:
+      - id: "WP-DOC-002"
+        goal: "root entry docs를 현재 capability/CI/runtime 상태와 일치시킨다"
+        status: "done"
+        tier: "infra"
+        depends_on: ["WP-DOC-001", "WP-RUN-002"]
+        completed_at: "2026-03-20"
+        result: "PASS — README entry guidance no longer contradicts root memory about stage executors, GitHub Actions, or deployment smoke."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-state.yaml"
+          context_reads:
+            - "README.md"
+            - "HOW_TO_USE.md"
+            - "docs/reference/quality-gates.md"
+          skip_if_capability: []
+          estimated_turns: 2
+          max_new_files: 1
+          max_modified_files: 4
+
+  - id: "CAP-14"
+    name: "Deployment environment binding"
+    priority: 10
+    work_packets:
+      - id: "WP-RUN-003"
+        goal: "deployment smoke를 environment registry와 GitHub environment binding에 연결한다"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-RUN-002"]
+        completed_at: "2026-03-20"
+        result: "PASS — deployment smoke is now bound to named GitHub environments declared in a repo-local registry, and CI validates the binding."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-state.yaml"
+          context_reads:
+            - ".github/workflows/deployment-smoke.yml"
+            - "docs/how-to/run-stage-e.md"
+            - "master-shell/operations/rollback-playbook.yaml"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 4
+          max_modified_files: 8
+
+  - id: "CAP-15"
+    name: "Deployment environment provisioning audit"
+    priority: 11
+    work_packets:
+      - id: "WP-RUN-004"
+        goal: "원격 GitHub deployment environment provisioning을 policy/template/validator 기준으로 감사 가능하게 만든다"
+        status: "done"
+        tier: "governance"
+        depends_on: ["WP-RUN-003"]
+        completed_at: "2026-03-20"
+        result: "PASS — remote deployment environment provisioning now has a repo-local policy baseline, CI validator, and generated audit template without pretending live remote evidence is in git."
+        context_budget:
+          tier_reads:
+            - "memory/checkpoint.yaml"
+            - "memory/current-state.yaml"
+          context_reads:
+            - "master-shell/operations/deployment-environments.yaml"
+            - ".github/workflows/deployment-smoke.yml"
+            - "docs/how-to/run-stage-e.md"
+          skip_if_capability: []
+          estimated_turns: 4
+          max_new_files: 4
+          max_modified_files: 10
