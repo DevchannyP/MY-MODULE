@@ -94,16 +94,17 @@ class SQLiteTaskRepository {
   }
 
   /**
-   * @param {{ assignee_id?: string, status?: string, page?: number, page_size?: number }} filters
+   * @param {{ assignee_id?: string, status?: string, due_before?: string, page?: number, page_size?: number }} filters
    * @returns {Promise<{ items: Array<import('../domain/entities/Task').Task>, total: number }>}
    */
-  async findAll({ assignee_id, status, page = 1, page_size = 20 } = {}) {
+  async findAll({ assignee_id, status, due_before, page = 1, page_size = 20 } = {}) {
     const { Task } = require('../domain/entities/Task');
 
     let where = 'WHERE 1=1';
     const params = [];
     if (assignee_id) { where += ' AND assignee_id = ?'; params.push(assignee_id); }
     if (status)      { where += ' AND status = ?';      params.push(status); }
+    if (due_before)  { where += ' AND due_date < ?';    params.push(due_before); }
 
     const total = this._db.prepare(`SELECT COUNT(*) as c FROM tasks ${where}`)
       .get(...params).c;
