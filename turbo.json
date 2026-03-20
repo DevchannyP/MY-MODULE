@@ -1,0 +1,32 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "test": {
+      "dependsOn": [],
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**", "tests/**", "contracts/**"],
+      "cache": true
+    },
+    "test:domain": {
+      "dependsOn": [],
+      "outputs": [],
+      "inputs": ["src/domain/**", "tests/domain/**"],
+      "cache": true
+    },
+    "lint": {
+      "dependsOn": [],
+      "outputs": [],
+      "cache": true
+    },
+    "gate": {
+      "dependsOn": ["test", "lint"],
+      "outputs": ["artifacts/gate-results/**"],
+      "cache": false
+    },
+    "generate:report": {
+      "dependsOn": ["gate"],
+      "outputs": ["../../worklog/reports/**"],
+      "cache": false
+    }
+  }
+}

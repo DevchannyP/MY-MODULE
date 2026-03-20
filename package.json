@@ -49,7 +49,10 @@
     "db:migrate:test": "node -e \"const {SQLiteTaskRepository}=require('./domains/productivity/task-tracking/src/infrastructure/SQLiteTaskRepository');SQLiteTaskRepository.create(':memory:');console.log('Schema OK (in-memory)');\"",
     "session:end": "python3 scripts/session_end.py",
     "session:end:apply": "python3 scripts/session_end.py --apply",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:turbo": "turbo run test",
+    "gate:turbo": "turbo run gate",
+    "gate:all": "turbo run gate --parallel"
   },
   "keywords": [
     "workflow-os",
@@ -64,6 +67,7 @@
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.0.3",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "turbo": "^2.8.20"
   }
 }
