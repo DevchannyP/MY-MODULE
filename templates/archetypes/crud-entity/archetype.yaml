@@ -1,0 +1,19 @@
+archetype: crud-entity
+description: "기본 CRUD 도메인"
+risk_level_default: LOW
+preset_invariants:
+  - id: INV-CRUD-001
+    description: "엔티티 ID는 생성 후 변경할 수 없다"
+    severity: P0
+    enforcement: domain-entity
+    test_required: true
+  - id: INV-CRUD-002
+    description: "필수 필드가 누락된 엔티티는 생성할 수 없다"
+    severity: P0
+    enforcement: domain-entity
+    test_required: true
+  - id: INV-CRUD-003
+    description: "삭제된 엔티티는 수정할 수 없다"
+    severity: P1
+    enforcement: use-case
+    test_required: true

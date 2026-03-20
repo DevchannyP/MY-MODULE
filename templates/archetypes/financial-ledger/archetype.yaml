@@ -1,0 +1,37 @@
+archetype: financial-ledger
+description: "금전 도메인 — 복식부기, 대사, 금액 한도"
+risk_level_default: CRITICAL
+preset_invariants:
+  - id: INV-FIN-001
+    description: "금액은 0 이상이어야 한다"
+    severity: P0
+    enforcement: domain-entity
+    test_required: true
+  - id: INV-FIN-002
+    description: "차변과 대변의 합은 항상 일치해야 한다"
+    severity: P0
+    enforcement: domain-entity
+    test_required: true
+  - id: INV-FIN-003
+    description: "거래 한도를 초과하는 금액은 처리할 수 없다"
+    severity: P0
+    enforcement: use-case
+    test_required: true
+  - id: INV-FIN-004
+    description: "확정된 거래는 수정할 수 없다"
+    severity: P0
+    enforcement: domain-entity
+    test_required: true
+  - id: INV-FIN-005
+    description: "모든 금액 연산은 정수 단위로 수행해야 한다"
+    severity: P1
+    enforcement: domain-entity
+    test_required: true
+auto_enhancements:
+  - "감사 로그 (immutable)"
+  - "PII 마스킹"
+  - "OWASP ASVS L3"
+  - "이중 승인 (4-eyes)"
+  - "낙관적 잠금"
+  - "멱등성 키 강제"
+  - "복식부기 패턴"
