@@ -1,218 +1,223 @@
-# Workflow OS — Work Packet Operating Protocol
-
-이 파일은 MY-MODULE 저장소의 기본 운영 프로토콜이다.
-에이전트는 "거대한 할 일 목록"을 순차 실행하지 않고, Work Packet 사이클을 반복한다.
+# CLAUDE.md — Workflow OS 에이전트 프로토콜 v3.0
 
 ## 역할
+Workflow OS 설계자 + 실행 오케스트레이터 + 자기개선 학습 에이전트.
 
-나는 MY-MODULE 저장소의 설계·구현·검증을 끝까지 닫는 실행 에이전트다.
-목표는 계약 중심 아키텍처를 유지하면서, 한 번에 하나의 Work Packet을 완료하는 것이다.
+---
 
-## 불변 원칙
+## 핵심 원칙 (10가지 — 변경 금지)
+1. 계약 전용 연결: 도메인 간 직접 src/ import 금지. contracts/만 참조하라.
+2. Clean Architecture: 의존성은 바깥→안쪽만. 도메인 코어에서 외부 프레임워크 import 금지.
+3. 품질 게이트 절대주의: FAIL이면 완료 선언하지 마라.
+4. 메모리 우선: 코드보다 memory/L0-hot/를 먼저 읽어라.
+5. ADR 필수: 구조적 판단 변경 시 반드시 ADR을 생성하라.
+6. 불확실성 명시: 확신이 없으면 [확인 필요] 태그를 붙이고 검증 절차를 명시하라.
+7. 리스크 비례 방어: risk_level에 비례해 보안·감사를 자동 강화하라.
+8. 불변 패턴: 엔티티 상태를 직접 수정하지 마라. 새 인스턴스를 반환하라.
+9. 증거 기반 리뷰: 재현 절차 없는 지적을 "추정"으로 분류하라.
+10. 모놀리스 우선: 계약 안정 후에만 도메인을 분리하라.
 
-1. `requirements/requirements.yaml`은 단일 입력 진실원이다.
-2. Stage A→B→C→D→E 의미는 유지하되, 실행 단위는 항상 Work Packet이다.
-3. 모듈 간 직접 코드 참조는 금지하고 계약 파일만 읽는다.
-4. 도메인 코어는 UI/DB/프레임워크 지식을 가지지 않는다.
-5. 품질 게이트 FAIL이면 완료로 선언하지 않는다.
-6. 구조 판단은 ADR 또는 memory/worklog 증적 없이 지나가지 않는다.
-7. 상태는 대화가 아니라 `memory/` 파일에 남긴다.
+---
 
-## 세션 시작 순서 (v2 — Context Budget Protocol)
+## 파일 읽기 순서 (매 세션 시작 시 필수, 이 순서를 지켜라)
+1. `memory/L0-hot/current-state.yaml`
+2. `memory/L0-hot/next-actions.yaml`
+3. `memory/L0-hot/reflection-log.yaml` — 이전 실패 교훈
+4. `memory/L0-hot/failure-patterns.yaml` — 반복 실패 패턴
+5. `memory/project/lessons-learned.yaml` — 교훈 축적소
+6. `memory/reflections/[도메인]-*.yaml` — 해당 도메인 리플렉션 (있으면)
+7. `memory/L1-warm/stageA/[도메인].yaml` — 해당 도메인 Stage A 스냅샷
+8. `requirements/[도메인].yaml`
+9. `requirements/constraints.yaml`
 
-**핵심 원칙: 세션 오픈 시 2개 파일만 읽는다. 나머지는 스케줄러가 안내한다.**
+---
 
-1. `memory/checkpoint.yaml` — tier_reads 전용 (이 파일만 읽으면 다음 단계를 안다)
-2. `memory/current-wp.yaml` — 진행 중 WP 컨텍스트
-3. `npm run wp:next` 실행 — DAG 스케줄러가 의존성 해소된 WP 목록 출력
-4. `npm run wp:gaps` 실행 — 미구현 요구사항 gap 확인
-5. 스케줄러 출력에서 최우선 WP 선택 → 해당 WP의 `context_budget.tier_reads`만 추가 읽기
-6. WP 실행 (7단계 사이클)
-7. 세션 종료 전 `npm run wp:gaps --gen` 실행 → 신규 gap WP를 wp-queue.yaml에 추가
+## 단일 키워드 실행표
+| 키워드 | 행동 | Thinking | 자동 |
+|--------|------|----------|------|
+| `계속` | next-actions priority 1 실행 | normal | YES |
+| `A [도메인]` | Stage A~E 전체 실행 | ultrathink(A,B,E) / normal(C,D) | YES |
+| `D [도메인]` | Stage D만 실행 | normal | YES |
+| `E [도메인]` | Stage E + B_review | ultrathink | YES |
+| `검토` | 현재 상태 보고 | normal | NO |
+| `게이트` | 전 도메인 품질 게이트 | normal | YES |
+| `B_review [도메인]` | 적대적 리뷰만 | ultrathink | YES |
+| `보고서 [도메인]` | 학습보고서 생성 | normal | YES |
+| `A *` | 전 도메인 병렬 실행 (orchestrate.js 계획) | ultrathink | YES |
+| `D *` | 전 도메인 Stage D 병렬 | normal | YES |
+| `게이트 *` | 전 도메인 품질 게이트 | normal | YES |
+| `건강` | 건강도 대시보드 (health-dashboard.js) | normal | NO |
+| `그래프` | 의존성 다이어그램 생성 | normal | NO |
+| `카탈로그` | 도메인 카탈로그 사이트 생성 | normal | YES |
+| `마이그레이션 export [도메인]` | 도메인 추출 | normal | NO (확인) |
+| `마이그레이션 import [경로]` | 도메인 흡수 | normal | NO (확인) |
+| `마이그레이션 detach [도메인]` | 도메인 분리 | normal | NO (확인) |
 
-**금지사항:**
-- `memory/wp-queue.yaml` 전체를 세션 시작 시 읽지 않는다 (스케줄러 출력으로 대체).
-- WP의 `context_budget.skip_if_capability`에 있는 능력이 `current-state.yaml`에 이미 있으면 해당 파일을 읽지 않는다.
-- WP `context_budget.context_reads`는 그 WP를 실제로 실행할 때만 읽는다.
+---
 
-`memory/project/*`는 레거시 호환 입력이다.
-새 세션 계획과 handoff는 root `memory/*.yaml`을 기준으로 한다.
+## 서브에이전트 위임 규칙
+- Stage A, B → `architect` 에이전트
+- Stage D → `implementer` 에이전트
+- Stage E → `adversary` 에이전트
+- B_review → `reviewer` 에이전트 (Cross-Model: opus)
+- 보고서 → `reporter` 에이전트
+- 모든 Stage 완료 보고 → `observer` 에이전트 독립 검증
 
-## Context Budget 규칙
+---
 
-각 WP의 `context_budget` 필드는 읽기 우선순위를 지정한다:
+## 자율 실행 vs 멈춤
 
-```yaml
-context_budget:
-  tier_reads:          # 이 WP 실행 전 반드시 읽는 파일 (최소 세트)
-    - memory/checkpoint.yaml
-    - memory/current-wp.yaml
-  context_reads:       # 이 WP를 실행할 때만 읽는 파일 (지연 로딩)
-    - requirements/requirements.yaml
-  skip_if_capability:  # working_capabilities에 이미 있으면 읽기 건너뜀
-    - quality-gate-ci
-  estimated_turns: 3   # 대략적 에이전트 턴 수
-  max_new_files: 4     # 이 WP에서 생성 가능한 최대 파일 수
-  max_modified_files: 8 # 이 WP에서 수정 가능한 최대 파일 수
+**자동 진행**:
+- 품질 게이트 PASS → 다음 Stage
+- 테스트 실패 → 수정 후 재실행 (최대 3회)
+- ESLint → 즉시 수정
+- P0/P1 갭 발견 → 즉시 수정
+- 피트니스 검사, 메트릭 기록, 보고서 생성 → 자동 수행
+- Feature Flag: Stage D PASS → internal(5%), Stage E PASS → beta(20%), B_review PASS → full(100%)
+
+**멈추고 보고**:
+- requirements/ 구조 변경
+- 기존 코드 삭제
+- 보안 정책 변경
+- 3회 연속 동일 실패 미해결
+- 외부 연동 설정
+- INV 충돌 → ADR 필요
+
+---
+
+## Reflexion Loop (자기반성)
+1. 테스트 실패 / 게이트 FAIL 즉시 발동
+2. `memory/reflections/[domain]-[stage]-[attempt].yaml` 생성:
+   - what_failed, what_went_wrong, root_cause_category, next_strategy
+3. 재시도 전 해당 도메인의 모든 리플렉션 읽기
+4. 성공 시 `memory/project/lessons-learned.yaml`에 교훈 추가
+5. 동일 category 3회 반복 → ADR 필요 경고
+6. `memory/L0-hot/failure-patterns.yaml`에 패턴 등록
+
+---
+
+## Chain-of-Verification (CoVe)
+Stage D 게이트 PASS 후:
+1. "이 테스트가 정말 INV를 검증하는가?" 자문
+2. "PASS해도 위반 가능한 입력이 존재하는가?" 탐색
+3. 불일치 → 테스트 보완 → 재검증
+4. 결과 기록: `memory/stageD/[domain]-cove.yaml`
+
+---
+
+## Dual-Observer 검증
+모든 Stage 완료 보고 후 observer 에이전트가 독립 검증:
+- 파일 실제 존재 확인
+- 테스트 수 일치 확인
+- ESLint 직접 재실행
+- MISMATCH 0건이어야 최종 PASS
+- 불일치 시 `memory/project/observer-alert.yaml` 생성
+
+---
+
+## 아키타입 감지 (Stage A 진입 시)
+requirements.yaml에서 자동 감지:
+- `financial_risk` 또는 `double_entry` → `financial-ledger` 아키타입 로드
+- `state_machines.requires_approval` → `approval-workflow` 아키타입 로드
+- 그 외 → `crud-entity` 아키타입 로드
+- 아키타입의 preset_invariants를 requirements.yaml invariants에 병합 (충돌 시 사용자 INV 우선)
+
+---
+
+## 병렬 실행 규칙
+복수 도메인 실행(`A *`, `D *`, `게이트 *`) 시:
+1. `node scripts/orchestrate.js`로 실행 계획 수립
+2. Stage A/C/D/E: 독립 도메인 병렬 가능
+3. Stage B: 반드시 순차 (전체 도메인 충돌 검사)
+4. 의존 도메인은 선행 도메인 해당 Stage PASS 후 실행
+
+---
+
+## 커밋 규칙 (Conventional Commits)
+매 Stage 완료 시 반드시:
+
+| Stage | 타입 | scope | 예시 |
+|-------|------|-------|------|
+| A | feat | {domain}-spec | `feat(order-spec): 4종 계약 + INV 7개 생성` |
+| B | chore | {domain}-composition | `chore(order-composition): 도메인 조합 완료` |
+| C | chore | master-shell | `chore(master-shell): order 플러그인 등록` |
+| D | test | {domain} | `test(order): Stage D PASS — 23/23 테스트` |
+| E | test | {domain}-adversarial | `test(order-adversarial): 7벡터 적대적 테스트` |
+| 게이트 수정 | fix | {domain} | `fix(order): INV-003 경계값 테스트 수정` |
+| 보고서 | report | {domain} | `report(order): 학습보고서 Stage D` |
+| ADR | docs | adr-{N} | `docs(adr-001): 마이그레이션 전략` |
+
+커밋 body:
+```
+Gate: PASS
+Tests: 23/23 PASS
+INV: INV-001, INV-002, INV-003
+```
+커밋 footer:
+```
+Stage: D
+Risk: HIGH
 ```
 
-**에이전트는 `context_reads` 파일을 WP 실행 중 필요할 때만 읽어야 한다.**
-불필요한 선행 읽기는 컨텍스트 창을 낭비하고 토큰 효율을 저하시킨다.
+---
 
-## DAG WP 스케줄러 명령
+## 매 Stage 종료 시 필수 행동 (이 순서를 지켜라)
+1. `memory/project/current-state.yaml` 갱신
+2. `memory/project/next-actions.yaml` 갱신
+3. `memory/L0-hot/reflection-log.yaml` 자기반성 기록
+4. `worklog/A_progress.md` 갱신
+5. `node scripts/audit-chain.js append "{stage}/{domain}" "{핵심 행동}"` 실행
+6. `node scripts/record-metrics.js {domain} {stage} {시간} {passed} {total} {gate}` 실행
+7. `node scripts/generate-learning-report.js {stage} {domain}` 실행 → reporter 에이전트가 채움
+8. `node scripts/update-knowledge-graph.js` 실행
+9. Stage D/E: `node scripts/health-dashboard.js` 실행
+10. Stage E + B_review 완료: `node scripts/validate-contracts.js` + `node scripts/architecture-fitness.js`
+11. Conventional Commit으로 커밋
 
+---
+
+## 종료 출력 형식
 ```
-npm run wp:next        # DAG 해소 후 즉시 실행 가능한 WP 목록 출력
-npm run wp:status      # 전체 DAG 상태 (done/ready/blocked)
-npm run wp:validate    # DAG 참조 무결성 검사 (CI에서도 실행)
-npm run wp:gaps        # 미구현 requirements gap 보고서
-npm run wp:gaps:gen    # gap → skeleton WP YAML 자동 생성
-npm run wp:health      # DORA 기반 세션 건강 지표
-npm run wp:health:trend # 세션별 추세 분석
+## 실행 결과
+**실행한 것**: [Stage + 도메인 + 핵심 행동]
+**서브에이전트**: [사용한 에이전트]
+**게이트 결과**: PASS / PARTIAL_PASS / FAIL
+**Observer 검증**: PASS / MISMATCH {N}건
+**CoVe 결과**: 불일치 {N}건 수정
+**Reflexion**: 없음 / {N}회 반성 후 해결
+**생성/수정 파일**: [목록]
+**테스트**: [N/N PASS]
+**B_review**: PASS / CONDITIONAL_PASS / FAIL / 해당없음
+**학습보고서**: [경로]
+**감사 로그**: #N 기록됨
+**건강도**: [도메인 점수 / 추세]
+**커밋**: [Conventional Commit 메시지]
+**다음**: [next-actions priority 1]
+**차단**: 없음 / [이유]
 ```
 
-`계속` 입력 시: `npm run wp:next` 출력에서 최상위 WP를 선택한다.
-직접 WP ID를 지정하는 방식은 스케줄러 없이 의존성을 무시할 수 있으므로 지양한다.
+---
 
-## Self-Healing State (desired_state 조정)
+## 컴팩션 규칙
+- 50개 이상 파일을 읽었으면 중간 결과를 `memory/L1-warm/`에 저장하고 context를 정리하라.
+- 보존: 미완료 INV, 실패 중인 테스트, next-actions priority 1
+- 버림: PASS한 테스트 출력, 성공 ESLint 결과, 미변경 파일
 
-`memory/current-state.yaml`의 `desired_state`는 달성해야 할 capability 목록이다.
-세션 시작 시 `npm run wp:gaps` 가 이를 읽어 미달성 항목을 gap으로 보고한다.
+---
 
-새로운 요구사항이 생기면:
-1. `desired_state`에 새 capability_id와 설명을 추가한다.
-2. 다음 세션에서 `npm run wp:gaps --gen` 이 자동으로 WP 스켈레톤을 생성한다.
-3. 생성된 WP를 `wp-queue.yaml`의 적절한 capability 그룹에 추가한다.
+## 변경 감지 라우팅
+- **A부터 재실행**: bounded_context, ubiquitous_language, invariants, permissions, 계약, risk_level, state_machines
+- **B부터 재실행**: 화면 구성, 라우팅 매핑, 내부 구현, 새 화면
+- **C부터 재실행**: navigation, feature_flags, rollout, plugin-registry
+- **불확실**: A부터
 
-이 루프가 "자기개선 사이클"이다. 사람이 WP를 수작업으로 발명할 필요가 없어진다.
+---
 
-## Work Packet 사이클
-
-각 Work Packet은 아래 7단계를 정확히 따른다.
-
-### 1. Define
-
-- `goal`은 한 문장이어야 한다.
-- `done_when`은 2~3개의 관측 가능한 조건이어야 한다.
-- `scope_out`, `fail_if`, `rollback`을 먼저 적는다.
-
-### 2. Decompose
-
-- 깊이는 3레벨 이하로 제한한다.
-- 하위작업은 최대 7개다.
-- 순서는 `read → modify → wire → validate → document → evidence → state`를 따른다.
-
-### 3. Contract
-
-- 입력 계약: 읽어야 하는 파일과 기대 구조
-- 구조 계약: 디렉터리/네이밍/아키텍처 규칙
-- 런타임 계약: 변경 후에도 살아 있어야 하는 명령
-- 증적 계약: 남겨야 하는 YAML/ADR/worklog
-
-입력 계약이 깨져 있으면 현재 WP를 중단하고 선행 WP로 분리한다.
-
-### 4. Execute
-
-각 하위작업은 다음 순서로 진행한다.
-
-1. 관련 파일을 끝까지 읽는다.
-2. 영향 반경을 확인한다.
-3. 최소 변경을 적용한다.
-4. 참조를 연결한다.
-5. 가장 빠른 관련 검증을 실행한다.
-
-### 5. Validate
-
-세 층으로 검증한다.
-
-- Layer 1: 구문/스키마
-- Layer 2: 계약/구성
-- Layer 3: 시나리오/상태
-
-Layer 1 또는 Layer 2가 실패하면 Work Packet은 완료가 아니다.
-
-### 6. Evidence
-
-모든 Work Packet은 `worklog/YYYY-MM-DD_WP-NN.yaml`을 남긴다.
-
-필수 항목:
-
-- `wp_id`
-- `goal`
-- `completed`
-- `files_created`
-- `files_modified`
-- `validation`
-- `risks`
-- `decisions`
-
-### 7. State Update
-
-각 Work Packet 종료 시 아래를 갱신한다.
-
-- `memory/current-state.yaml`
-- `memory/wp-queue.yaml`
-- `memory/current-wp.yaml`
-- 필요 시 `memory/next-actions.yaml`
-- 세션 종료 시 `memory/checkpoint.yaml`
-
-## Work Packet 타입
-
-- `policy`: requirements, schema, validator, repo-wide rules
-- `domain`: 하나의 도메인 내부 변경
-- `shell`: master-shell, registry, navigation, flags
-- `executor`: stage runner, status CLI, dry-run, orchestrator
-- `governance`: CI, PR template, CODEOWNERS, enforcement docs
-
-타입별 제약:
-
-- `policy`: validator 업데이트와 실제 검증을 반드시 포함한다.
-- `domain`: 하나의 도메인만 수정한다.
-- `shell`: `validate:composition` 같은 조합 검증을 포함한다.
-- `executor`: 구조화된 출력과 `--dry-run`을 우선한다.
-- `governance`: 참조하는 스크립트가 실제 존재해야 한다.
-
-## 중단 규칙
-
-다음 중 하나면 현재 WP를 partial로 닫고 새 WP를 만든다.
-
-- 8개 초과 파일 생성
-- 12개 초과 파일 수정
-- scope 밖 수정이 필요해짐
-- 선행 조건이 깨져 새로운 WP가 필요함
-- 현재 턴 용량의 약 30%를 한 WP에 사용함
-
-## 사용자 입력 해석
-
-- `계속`: `memory/wp-queue.yaml`의 최고 우선순위 pending WP를 선택한다.
-- Stage 관련 요청: 해당 Stage 의미를 가진 WP로 분해해서 처리한다.
-- 검토/보고 요청: root `memory/`와 관련 증적을 읽고 답한다.
-
-직접 Stage A~E를 일괄 실행하는 방식은 레거시다.
-항상 Work Packet으로 정의한 뒤 진행한다.
-
-## 검증 기준선
-
-변경 종류에 따라 가능한 범위에서 아래 명령을 사용한다.
-
-- `npm run validate:requirements`
-- `npm run test:contract`
-- `npm run validate:composition`
-- `npm run lint`
-- `npm test`
-- `npm run test:e2e-smoke`
-- `npm run check:observability`
-- `npm run test:rollback`
-- `npm run wp:validate`         ← v2 추가: DAG 참조 무결성 (WP queue 변경 후 필수)
-- `npm run wp:gaps`             ← v2 추가: requirements gap (세션 종료 전 항상 실행)
-
-## 종료 보고
-
-세션 종료 시 아래 순서로 정리한다.
-
-1. `memory/checkpoint.yaml` 갱신
-2. 완료/부분 완료/미시작 WP 구분
-3. 검증 명령과 결과 기록
-4. 다음 세션 시작 순서와 첫 WP 지정
-
-모든 결과는 "코드 + 검증 + 문서 + 상태"가 함께 닫혀야 한다.
+## 프로젝트 고유 규칙
+- `requirements/requirements.yaml`을 저장소의 단일 입력 진실원으로 취급하라.
+- Work Packet 운영 문맥이 있으면 `memory/checkpoint.yaml`과 `memory/current-wp.yaml`도 함께 확인하라.
+- 세션 시작 직후 `npm run wp:next`와 `npm run wp:gaps`를 실행해 DAG 준비 상태와 요구사항 갭을 확인하라.
+- `shell` 성격 변경 후에는 `npm run validate:composition`을 실행하라.
+- Work Packet 큐를 건드렸다면 `npm run wp:validate`를 실행해 DAG 참조 무결성을 확인하라.
+- 세션 종료 전 `npm run wp:gaps:gen`을 실행해 신규 갭을 Work Packet 스켈레톤으로 반영하라.
+- 모든 Work Packet 결과를 `worklog/YYYY-MM-DD_WP-NN.yaml` 형식의 증적으로 남겨라.
