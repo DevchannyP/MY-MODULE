@@ -16,6 +16,9 @@ execution_policy:
     - "한 턴에서 안전하게 끝낼 수 있는 범위는 연속 처리한다."
 
 queue:
+  - priority: 0
+    action: "Phase 5 CLAUDE.md 재작성 실행"
+    done: false
   - priority: 1
     id: "Q-101"
     track: "CORE-QUALITY"

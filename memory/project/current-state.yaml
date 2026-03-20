@@ -168,3 +168,35 @@ notes: |
   2026-03-19: branch protection 기준선 도입 - ADR 0009, branch protection policy file, validator, PR required checks 반영.
   Phase 2 잔여 조건: 실제 서버 기동 smoke, dependency scan 실검증, CI/CD release evidence 연동.
   기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.
+
+upgrade_v3:
+  status: in_progress
+  date: "2026-03-20"
+  completed_phases: [0, 1, 2, 3, 4]
+  features_added:
+    - "3-Tier 메모리 계층 (L0-hot/L1-warm/L2-cold)"
+    - "Git Hooks + Conventional Commits (Husky + commitlint)"
+    - "Turborepo 병렬 태스크 러너"
+    - "Claude Skills 7종 + Subagents 6종"
+    - "학습보고서 자동 생성기 (기승전결 4막)"
+    - "도메인 마이그레이션 CLI (export/import/detach)"
+    - "Semantic Release + CHANGELOG 자동화"
+    - "Chain-of-Verification 자기검증"
+    - "Dual-Observer 독립 감사"
+    - "Property-Based Testing (fast-check)"
+    - "Cross-Model Review 프로토콜"
+    - "아키텍처 피트니스 (C001/C002/C003)"
+    - "SHA-256 해시 체인 감사 추적"
+    - "3종 아키타입 (crud-entity/financial-ledger/approval-workflow)"
+    - "계약 드리프트 검증 + 호환성 매트릭스"
+    - "의존성 그래프 Mermaid 시각화"
+    - "계약 기반 코드 스켈레톤 생성기"
+    - "DAG 기반 병렬 스케줄러"
+    - "ADR 자동생성 + 지식그래프"
+    - "건강도 대시보드 (4지표 종합)"
+    - "Error Budget SLO 판단"
+    - "릴리즈 증거 패키지"
+    - "도메인 카탈로그 정적 사이트"
+  backward_compatible: true
+  files_deleted: 0
+  existing_tests_broken: 0
