@@ -71,4 +71,23 @@ describe('ChangeAccessPolicyUseCase', () => {
     const video = await uc.execute({ videoId: 'vid-1', accessPolicy: 'PUBLIC' }, WRITE_CALLER);
     assert.equal(video.accessPolicy, 'PUBLIC');
   });
+
+  // ── GAP-V002 회귀 테스트 ────────────────────────────────────────────────────
+  test('[회귀] 비소유자 video:write → FORBIDDEN (INV-V003)', async () => {
+    const { uc, videoRepository } = makeUseCase();
+    await seedVideo(videoRepository); // uploaderId: 'user-1'
+    const otherCaller = { permissions: ['video:write'], userId: 'user-2' };
+    await assert.rejects(
+      () => uc.execute({ videoId: 'vid-1', accessPolicy: 'PUBLIC' }, otherCaller),
+      { code: 'FORBIDDEN' },
+    );
+  });
+
+  test('[회귀] video:admin은 타인 영상 정책 변경 가능', async () => {
+    const { uc, videoRepository } = makeUseCase();
+    await seedVideo(videoRepository); // uploaderId: 'user-1'
+    const adminCaller = { permissions: ['video:write', 'video:admin'], userId: 'admin-1' };
+    const video = await uc.execute({ videoId: 'vid-1', accessPolicy: 'PUBLIC' }, adminCaller);
+    assert.equal(video.accessPolicy, 'PUBLIC');
+  });
 });

@@ -60,4 +60,33 @@ describe('ReassignTaskUseCase', () => {
       /INV001/,
     );
   });
+
+  // ── 에러 코드 회귀 테스트 ────────────────────────────────────────────────────
+  test('[회귀] DONE 작업 재할당 → code=CONFLICT (HTTP 409 보장)', async () => {
+    const { reassignUC, createUC, transitionUC } = makeSetup();
+    const created = await createUC.execute({ title: '작업', assignee_id: 'user-1', due_date: tomorrow });
+    await transitionUC.execute({ task_id: created.task_id, new_status: 'IN_PROGRESS' });
+    await transitionUC.execute({ task_id: created.task_id, new_status: 'DONE' });
+    await assert.rejects(
+      () => reassignUC.execute({ task_id: created.task_id, new_assignee_id: 'user-2' }),
+      err => { assert.equal(err.code, 'CONFLICT'); return true; },
+    );
+  });
+
+  test('[회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)', async () => {
+    const { reassignUC } = makeSetup();
+    await assert.rejects(
+      () => reassignUC.execute({ task_id: 'nonexistent', new_assignee_id: 'user-2' }),
+      err => { assert.equal(err.code, 'NOT_FOUND'); return true; },
+    );
+  });
+
+  test('[회귀] INV001: 빈 new_assignee_id → code=VALIDATION_ERROR (HTTP 400 보장)', async () => {
+    const { reassignUC, createUC } = makeSetup();
+    const created = await createUC.execute({ title: '작업', assignee_id: 'user-1', due_date: tomorrow });
+    await assert.rejects(
+      () => reassignUC.execute({ task_id: created.task_id, new_assignee_id: '   ' }),
+      err => { assert.equal(err.code, 'VALIDATION_ERROR'); return true; },
+    );
+  });
 });

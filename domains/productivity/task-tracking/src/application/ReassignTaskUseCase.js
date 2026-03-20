@@ -9,10 +9,13 @@ class ReassignTaskUseCase {
 
   async execute({ task_id, new_assignee_id }) {
     const task = await this._repo.findById(task_id);
-    if (!task) throw new Error(`작업을 찾을 수 없습니다: ${task_id}`);
+    if (!task) throw Object.assign(new Error(`작업을 찾을 수 없습니다: ${task_id}`), { code: 'NOT_FOUND' });
 
     if (!TaskDomainService.canReassign(task)) {
-      throw new Error(`DONE 상태 작업은 담당자를 변경할 수 없습니다.`);
+      throw Object.assign(
+        new Error('DONE 상태 작업은 담당자를 변경할 수 없습니다.'),
+        { code: 'CONFLICT' },
+      );
     }
 
     task.reassign(new_assignee_id); // INV001은 Task 내부에서 throw

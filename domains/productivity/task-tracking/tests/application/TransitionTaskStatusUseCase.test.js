@@ -60,6 +60,24 @@ describe('TransitionTaskStatusUseCase', () => {
     );
   });
 
+  // ── 에러 코드 회귀 테스트 ────────────────────────────────────────────────────
+  test('[회귀] INV002 상태 전이 불가 → code=CONFLICT (HTTP 409 보장)', async () => {
+    const { transitionUC, createUC } = makeSetup();
+    const created = await createUC.execute({ title: '작업', assignee_id: 'user-1', due_date: tomorrow });
+    await assert.rejects(
+      () => transitionUC.execute({ task_id: created.task_id, new_status: 'DONE' }),
+      err => { assert.equal(err.code, 'CONFLICT'); return true; },
+    );
+  });
+
+  test('[회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)', async () => {
+    const { transitionUC } = makeSetup();
+    await assert.rejects(
+      () => transitionUC.execute({ task_id: 'ghost', new_status: 'IN_PROGRESS' }),
+      err => { assert.equal(err.code, 'NOT_FOUND'); return true; },
+    );
+  });
+
   test('result에 task_id/old_status/new_status 포함', async () => {
     const { transitionUC, createUC } = makeSetup();
     const created = await createUC.execute({ title: '작업', assignee_id: 'user-1', due_date: tomorrow });

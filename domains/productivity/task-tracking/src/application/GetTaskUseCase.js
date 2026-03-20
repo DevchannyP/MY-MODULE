@@ -7,7 +7,7 @@ class GetTaskUseCase {
 
   async execute({ task_id }) {
     const task = await this._repo.findById(task_id);
-    if (!task) throw new Error(`작업을 찾을 수 없습니다: ${task_id}`);
+    if (!task) throw Object.assign(new Error(`작업을 찾을 수 없습니다: ${task_id}`), { code: 'NOT_FOUND' });
     return task.toSnapshot();
   }
 }

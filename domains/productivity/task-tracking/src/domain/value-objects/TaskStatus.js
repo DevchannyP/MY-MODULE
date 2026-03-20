@@ -17,7 +17,10 @@ class TaskStatus {
 
   constructor(value) {
     if (!VALID_STATUSES.includes(value)) {
-      throw new Error(`유효하지 않은 작업 상태: ${value}. 허용값: ${VALID_STATUSES.join(', ')}`);
+      throw Object.assign(
+        new Error(`유효하지 않은 작업 상태: ${value}. 허용값: ${VALID_STATUSES.join(', ')}`),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     this.#value = value;
   }
@@ -30,9 +33,12 @@ class TaskStatus {
 
   transitionTo(nextStatus) {
     if (!this.canTransitionTo(nextStatus)) {
-      throw new Error(
-        `[INV002] 상태 전이 불가: ${this.#value} → ${nextStatus}. ` +
-        `허용된 전이: ${ALLOWED_TRANSITIONS[this.#value].join(', ') || '없음 (terminal 상태)'}`
+      throw Object.assign(
+        new Error(
+          `[INV002] 상태 전이 불가: ${this.#value} → ${nextStatus}. ` +
+          `허용된 전이: ${ALLOWED_TRANSITIONS[this.#value].join(', ') || '없음 (terminal 상태)'}`
+        ),
+        { code: 'CONFLICT' },
       );
     }
     return new TaskStatus(nextStatus);

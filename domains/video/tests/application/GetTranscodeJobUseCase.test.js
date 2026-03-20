@@ -95,6 +95,29 @@ describe('GetTranscodeJobUseCase', () => {
     assert.equal(job.status, 'RUNNING');
   });
 
+  // ── GAP-V003 회귀 테스트 ────────────────────────────────────────────────────
+  test('[회귀] PRIVATE 영상의 Job을 비소유자가 조회 → FORBIDDEN (INV-V003)', async () => {
+    const { uc, videoRepository, transcodeJobRepository } = makeUseCase();
+    // PRIVATE 영상 (uploaderId: user-1)
+    const v = Video.create({ videoId: 'priv-1', title: '비공개', uploaderId: 'user-1', originalFileRef: 'ref', accessPolicy: 'PRIVATE' });
+    await videoRepository.save(v);
+    await seedJob(transcodeJobRepository, { jobId: 'job-p', videoId: 'priv-1' });
+    const attacker = { permissions: ['video:read'], userId: 'attacker-99' };
+    await assert.rejects(
+      () => uc.execute({ videoId: 'priv-1', jobId: 'job-p' }, attacker),
+      { code: 'FORBIDDEN' },
+    );
+  });
+
+  test('[회귀] PRIVATE 영상의 Job을 소유자가 조회 → 성공 (INV-V003)', async () => {
+    const { uc, videoRepository, transcodeJobRepository } = makeUseCase();
+    const v = Video.create({ videoId: 'priv-2', title: '비공개', uploaderId: 'user-1', originalFileRef: 'ref', accessPolicy: 'PRIVATE' });
+    await videoRepository.save(v);
+    await seedJob(transcodeJobRepository, { jobId: 'job-q', videoId: 'priv-2' });
+    const job = await uc.execute({ videoId: 'priv-2', jobId: 'job-q' }, READ_CALLER);
+    assert.equal(job.jobId, 'job-q');
+  });
+
   test('COMPLETED 상태 Job + outputRenditionRef 포함 조회 성공', async () => {
     const { uc, videoRepository, transcodeJobRepository } = makeUseCase();
     await seedVideo(videoRepository);

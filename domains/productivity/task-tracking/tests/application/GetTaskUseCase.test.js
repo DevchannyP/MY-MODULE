@@ -33,6 +33,14 @@ describe('GetTaskUseCase', () => {
     );
   });
 
+  test('[회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)', async () => {
+    const { getUC } = makeSetup();
+    await assert.rejects(
+      () => getUC.execute({ task_id: 'nonexistent' }),
+      err => { assert.equal(err.code, 'NOT_FOUND'); return true; },
+    );
+  });
+
   test('snapshot에 status 필드 포함됨', async () => {
     const { getUC, createUC } = makeSetup();
     const created = await createUC.execute({ title: '작업2', assignee_id: 'user-2', due_date: tomorrow });

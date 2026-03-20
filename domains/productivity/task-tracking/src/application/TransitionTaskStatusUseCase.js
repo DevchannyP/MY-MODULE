@@ -7,7 +7,7 @@ class TransitionTaskStatusUseCase {
 
   async execute({ task_id, new_status }) {
     const task = await this._repo.findById(task_id);
-    if (!task) throw new Error(`작업을 찾을 수 없습니다: ${task_id}`);
+    if (!task) throw Object.assign(new Error(`작업을 찾을 수 없습니다: ${task_id}`), { code: 'NOT_FOUND' });
 
     const oldStatus = task.status;
     task.transitionTo(new_status); // INV002는 Task 내부에서 throw

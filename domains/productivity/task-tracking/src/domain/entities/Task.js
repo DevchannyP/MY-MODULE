@@ -138,7 +138,10 @@ class Task {
    */
   reassign(newAssigneeId) {
     if (!newAssigneeId || String(newAssigneeId).trim() === '') {
-      throw new Error('[INV001] 새 담당자(new_assignee_id)는 필수입니다.');
+      throw Object.assign(
+        new Error('[INV001] 새 담당자(new_assignee_id)는 필수입니다.'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     const oldAssigneeId = this.#assignee_id;
     this.#assignee_id  = String(newAssigneeId).trim();

@@ -38,6 +38,14 @@ class GetTranscodeJobUseCase {
       );
     }
 
+    // INV-V003: PRIVATE 영상의 트랜스코드 잡도 소유자만 조회 가능
+    if (!caller.permissions.includes('video:admin') && !video.canRead(caller.userId || '')) {
+      throw Object.assign(
+        new Error('INV-V003: PRIVATE 영상은 업로더 본인만 접근 가능합니다'),
+        { code: 'FORBIDDEN' },
+      );
+    }
+
     const job = await this._jobRepo.findById(cmd.jobId);
     if (!job || job.videoId !== cmd.videoId) {
       throw Object.assign(

@@ -25,12 +25,20 @@ class ListVideosUseCase {
       );
     }
 
-    return this._videoRepo.findAll({
+    const result = await this._videoRepo.findAll({
       status:     cmd.status,
       uploaderId: cmd.uploaderId,
       page:       cmd.page     || 1,
       pageSize:   cmd.pageSize || 20,
     });
+
+    // INV-V003: video:admin이 아닌 경우 PRIVATE 영상은 본인 것만 노출
+    const isAdmin = caller.permissions.includes('video:admin');
+    if (!isAdmin) {
+      result.items = result.items.filter(v => v.canRead(caller.userId || ''));
+    }
+
+    return result;
   }
 }
 

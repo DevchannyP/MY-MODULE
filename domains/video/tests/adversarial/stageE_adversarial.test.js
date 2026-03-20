@@ -112,8 +112,9 @@ describe('[Stage E] INV-V003: PRIVATE 영상 무단 접근 방어', () => {
     let v = Video.create({ videoId: 'v-arch', title: 'T', uploaderId: 'u', originalFileRef: 'r' });
     v = v.transitionTo('PROCESSING').transitionTo('READY').transitionTo('ARCHIVED');
     await videoRepo.save(v);
+    // 소유자 본인이 시도해도 ARCHIVED 상태라 CONFLICT (INV-V002)
     await assert.rejects(
-      () => changeUC.execute({ videoId: 'v-arch', accessPolicy: 'PUBLIC' }, { permissions: ['video:write'] }),
+      () => changeUC.execute({ videoId: 'v-arch', accessPolicy: 'PUBLIC' }, { permissions: ['video:write'], userId: 'u' }),
       err => { assert.equal(err.code, 'CONFLICT'); return true; }
     );
   });

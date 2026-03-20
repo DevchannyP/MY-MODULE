@@ -35,6 +35,15 @@ class ChangeAccessPolicyUseCase {
       );
     }
 
+    // INV-V003: video:admin이 아니면 본인 영상만 접근정책 변경 가능
+    const isAdmin = caller.permissions.includes('video:admin');
+    if (!isAdmin && video.uploaderId !== caller.userId) {
+      throw Object.assign(
+        new Error('INV-V003: 본인 영상만 접근정책을 변경할 수 있습니다'),
+        { code: 'FORBIDDEN' },
+      );
+    }
+
     const updated = video.changeAccessPolicy(cmd.accessPolicy);
     return this._videoRepo.save(updated);
   }
