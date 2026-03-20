@@ -35,8 +35,9 @@ class GetVideoUseCase {
       );
     }
 
-    // INV-V003: PRIVATE 영상은 uploaderId 본인만 접근 가능
-    if (!video.canRead(caller.userId || '')) {
+    // INV-V003: PRIVATE 영상은 uploaderId 본인 또는 video:admin만 접근 가능
+    const isAdmin = caller.permissions.includes('video:admin');
+    if (!isAdmin && !video.canRead(caller.userId || '')) {
       throw Object.assign(
         new Error('INV-V003: PRIVATE 영상은 업로더 본인만 접근 가능합니다'),
         { code: 'FORBIDDEN' },

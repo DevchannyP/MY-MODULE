@@ -65,4 +65,13 @@ describe('GetVideoUseCase', () => {
       { code: 'FORBIDDEN' },
     );
   });
+
+  test('[회귀] INV-V003: PRIVATE 영상 — video:admin은 조회 가능 (일관성)', async () => {
+    const { uc, videoRepository } = makeUseCase();
+    await seedVideo(videoRepository, { accessPolicy: 'PRIVATE' });
+    const adminCaller = { permissions: ['video:read', 'video:admin'], userId: 'admin-1' };
+    const video = await uc.execute({ videoId: 'vid-1' }, adminCaller);
+    assert.equal(video.videoId, 'vid-1');
+    assert.equal(video.accessPolicy, 'PRIVATE');
+  });
 });
