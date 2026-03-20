@@ -1,4 +1,9 @@
 as_of: "2026-03-20"
 selection_policy: "define a new work packet from the highest-ROI uncovered need when the queue is empty"
-next_wp: "NONE"
-queue: []
+next_wp: "WP-VIDEO-001"
+queue:
+  - id: "WP-VIDEO-001"
+    goal: "video 도메인 Stage A~E 전체 구현 — contract 생성, 플러그인 등록, 단위/적대적 테스트"
+    status: "in_progress"
+    tier: "domain"
+    depends_on: []

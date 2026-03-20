@@ -65,9 +65,12 @@ class BillingException {
    */
   approve({ approvedBy, reason }) {
     if (!this.isOpen()) {
-      throw new Error('INV-B005: 이미 처리된 예외 항목은 승인할 수 없다');
+      throw Object.assign(
+        new Error('INV-B005: 이미 처리된 예외 항목은 승인할 수 없다'),
+        { code: 'CONFLICT' },
+      );
     }
-    if (!approvedBy) throw new Error('approvedBy is required');
+    if (!approvedBy) throw Object.assign(new Error('approvedBy is required'), { code: 'VALIDATION_ERROR' });
     return new BillingException({
       ...this._snapshot(),
       status:      EXCEPTION_STATUSES.APPROVED,
@@ -83,7 +86,10 @@ class BillingException {
    */
   reject({ rejectedBy, reason }) {
     if (!this.isOpen()) {
-      throw new Error('이미 처리된 예외 항목은 거부할 수 없다');
+      throw Object.assign(
+        new Error('INV-B005: 이미 처리된 예외 항목은 거부할 수 없다'),
+        { code: 'CONFLICT' },
+      );
     }
     return new BillingException({
       ...this._snapshot(),

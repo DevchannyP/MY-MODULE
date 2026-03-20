@@ -1,0 +1,91 @@
+# Capability Contract - Video Domain
+# 코드 내부를 읽지 않고도 video 모듈의 기능 범위와 권한 요구를 파악하기 위한 선언.
+
+module_key: video
+version: "0.1.0"
+
+capabilities:
+  # 영상 업로드
+  - id: can.upload.video
+    description: "영상 파일 업로드 (title, uploader_id, original_file_ref 필수)"
+    required_permissions: [video:write]
+    screens: [video.upload]
+    http_operations: [uploadVideo]
+    invariants:
+      - INV-V001  # title, uploader_id, original_file_ref 필수
+
+  # 영상 목록/상세 조회
+  - id: can.read.video
+    description: "영상 목록 및 상세 조회"
+    required_permissions: [video:read]
+    screens: [video.home, video.detail]
+    http_operations: [listVideos, getVideo]
+
+  # 트랜스코딩 시작
+  - id: can.start.transcode
+    description: "트랜스코딩 작업 시작 (동시 RUNNING Job 1개 제한)"
+    required_permissions: [video:write]
+    screens: [video.transcode]
+    http_operations: [startTranscodeJob]
+    invariants:
+      - INV-V004  # 동시 RUNNING Job 1개 제한
+
+  # 트랜스코딩 상태 조회
+  - id: can.read.transcode.status
+    description: "트랜스코딩 Job 상태 조회"
+    required_permissions: [video:read]
+    screens: [video.transcode]
+    http_operations: [getTranscodeJob]
+
+  # 접근정책 변경
+  - id: can.change.access.policy
+    description: "영상 접근정책 변경 (PUBLIC/PRIVATE/INTERNAL)"
+    required_permissions: [video:write]
+    screens: [video.detail]
+    http_operations: [changeAccessPolicy]
+    invariants:
+      - INV-V003  # PRIVATE이면 uploader_id만 재생 가능
+
+  # 영상 아카이브
+  - id: can.archive.video
+    description: "영상 아카이브 (READY→ARCHIVED 상태 전이)"
+    required_permissions: [video:admin]
+    screens: [video.admin]
+    http_operations: [archiveVideo]
+    invariants:
+      - INV-V002  # 단방향 상태 전이만 허용
+
+  # 마운트
+  - id: can.mount.video
+    description: "마스터 UI에 video 플러그인 마운트"
+    required_permissions: [video:read]
+    screens: [video.home, video.detail, video.upload, video.transcode, video.admin]
+
+required_permissions:
+  - video:read
+  - video:write
+  - video:admin
+
+invariants:
+  - id: INV-V001
+    description: "Video는 title, uploader_id, original_file_ref를 반드시 가진다."
+  - id: INV-V002
+    description: "Video 상태는 UPLOADED→PROCESSING→READY→ARCHIVED 단방향 전이만 허용. FAILED는 UPLOADED에서만 진입 가능."
+  - id: INV-V003
+    description: "AccessPolicy가 PRIVATE이면 uploader_id만 재생 가능하다."
+  - id: INV-V004
+    description: "동시에 하나의 RUNNING 상태 TranscodeJob만 허용된다."
+  - id: INV-V005
+    description: "COMPLETED 상태의 TranscodeJob은 output_rendition_ref가 반드시 존재해야 한다."
+
+events_emitted:
+  - VideoUploaded
+  - VideoProcessingStarted
+  - VideoReady
+  - VideoAccessPolicyChanged
+  - VideoArchived
+  - TranscodeJobStarted
+  - TranscodeJobCompleted
+  - TranscodeJobFailed
+
+events_consumed: []

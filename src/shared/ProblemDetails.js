@@ -87,16 +87,31 @@ function fromError(err, req = {}) {
 
 /** 메시지에서 에러 코드를 추론한다 (message-based fallback). */
 function inferCode(message) {
+  // ── NOT_FOUND ────────────────────────────────────────────────────────────
   if (message.includes('찾을 수 없습니다'))       return 'NOT_FOUND';
+  // ── CONFLICT (상태 전이 / 불변조건 위반) ────────────────────────────────
   if (message.includes('[INV002]'))               return 'CONFLICT';
+  if (message.includes('INV-V002'))               return 'CONFLICT';  // video 상태 전이
+  if (message.includes('INV-V004'))               return 'CONFLICT';  // video RUNNING Job 중복
+  if (message.includes('INV-B002'))               return 'CONFLICT';  // billing terminal 상태
+  if (message.includes('INV-B005'))               return 'CONFLICT';  // billing 이중 승인/거부
   if (message.includes('역전이'))                 return 'CONFLICT';
   if (message.includes('DONE 상태 작업은'))        return 'CONFLICT';
+  if (message.includes('이미 처리된'))             return 'CONFLICT';  // billing exception 이중처리
+  if (message.includes('전이는 허용되지 않는다'))   return 'CONFLICT';  // 상태기계 위반
+  // ── VALIDATION_ERROR ────────────────────────────────────────────────────
   if (message.includes('[INV001]'))               return 'VALIDATION_ERROR';
   if (message.includes('[INV003]'))               return 'VALIDATION_ERROR';
+  if (message.includes('INV-V001'))               return 'VALIDATION_ERROR';  // video 필수 필드
+  if (message.includes('INV-V005'))               return 'VALIDATION_ERROR';  // video 렌디션 ref 필수
+  if (message.includes('INV-B004'))               return 'VALIDATION_ERROR';  // billing 금액 > 0
   if (message.includes('필수입니다'))              return 'VALIDATION_ERROR';
   if (message.includes('초과할 수 없습니다'))       return 'VALIDATION_ERROR';
   if (message.includes('이후여야 합니다'))          return 'VALIDATION_ERROR';
+  if (message.includes('유효하지 않은'))           return 'VALIDATION_ERROR';  // 무효 열거값
+  // ── FORBIDDEN ───────────────────────────────────────────────────────────
   if (message.includes('권한이 없습니다'))          return 'FORBIDDEN';
+  if (message.includes('INV-V003'))               return 'FORBIDDEN';  // video PRIVATE 접근
   return 'INTERNAL_ERROR';
 }
 

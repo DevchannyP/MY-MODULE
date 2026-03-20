@@ -1,0 +1,335 @@
+openapi: "3.0.3"
+info:
+  title: "영상관리 API"
+  version: "0.1.0"
+  description: |
+    video bounded context의 HTTP API 계약.
+    capability.yaml의 capability를 HTTP로 노출한다.
+    불변조건: Video 상태는 단방향 전이만 허용, 동시 RUNNING TranscodeJob 1개 제한.
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: videos
+    description: 영상 관리
+  - name: transcode-jobs
+    description: 트랜스코딩 작업
+
+paths:
+  # ── 영상 ───────────────────────────────────────────────────────────────────
+  /videos:
+    post:
+      summary: "영상 업로드"
+      description: "새 영상을 업로드한다. title, uploader_id, file은 필수이다 (INV-V001)."
+      operationId: "uploadVideo"
+      tags: [videos]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UploadVideoRequest" }
+      responses:
+        "201":
+          description: "영상 업로드 성공"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Video" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      security: [{ bearerAuth: [] }]
+
+    get:
+      summary: "영상 목록 조회"
+      operationId: "listVideos"
+      tags: [videos]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [UPLOADED, PROCESSING, READY, ARCHIVED, FAILED]
+        - name: uploader_id
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: "성공"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VideoListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      security: [{ bearerAuth: [] }]
+
+  /videos/{videoId}:
+    get:
+      summary: "영상 상세 조회"
+      operationId: "getVideo"
+      tags: [videos]
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: "성공"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Video" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      security: [{ bearerAuth: [] }]
+
+  # ── 트랜스코딩 ─────────────────────────────────────────────────────────────
+  /videos/{videoId}/transcode:
+    post:
+      summary: "트랜스코딩 시작"
+      description: "영상의 트랜스코딩 작업을 시작한다. 동시에 하나의 RUNNING Job만 허용된다 (INV-V004)."
+      operationId: "startTranscodeJob"
+      tags: [transcode-jobs]
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StartTranscodeRequest" }
+      responses:
+        "201":
+          description: "트랜스코딩 작업 시작 성공"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TranscodeJob" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+      security: [{ bearerAuth: [] }]
+
+  /videos/{videoId}/transcode-jobs/{jobId}:
+    get:
+      summary: "트랜스코딩 Job 상태 조회"
+      operationId: "getTranscodeJob"
+      tags: [transcode-jobs]
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: jobId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: "성공"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TranscodeJob" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      security: [{ bearerAuth: [] }]
+
+  # ── 접근정책 ───────────────────────────────────────────────────────────────
+  /videos/{videoId}/access-policy:
+    patch:
+      summary: "접근정책 변경"
+      description: "영상의 접근정책을 변경한다. PRIVATE이면 uploader_id만 재생 가능 (INV-V003)."
+      operationId: "changeAccessPolicy"
+      tags: [videos]
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangeAccessPolicyRequest" }
+      responses:
+        "200":
+          description: "접근정책 변경 성공"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Video" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      security: [{ bearerAuth: [] }]
+
+  # ── 아카이브 ───────────────────────────────────────────────────────────────
+  /videos/{videoId}/archive:
+    post:
+      summary: "영상 아카이브"
+      description: "영상을 ARCHIVED 상태로 전이한다. READY 상태에서만 가능 (INV-V002)."
+      operationId: "archiveVideo"
+      tags: [videos]
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: "아카이브 성공"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Video" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+      security: [{ bearerAuth: [] }]
+
+# ── 컴포넌트 ──────────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Video
+    Video:
+      type: object
+      required: [video_id, title, uploader_id, original_file_ref, status, access_policy, created_at, updated_at]
+      properties:
+        video_id:          { type: string }
+        title:             { type: string }
+        uploader_id:       { type: string }
+        original_file_ref: { type: string, description: "원본 파일 저장소 참조 URI" }
+        status:
+          type: string
+          enum: [UPLOADED, PROCESSING, READY, ARCHIVED, FAILED]
+        access_policy:
+          type: string
+          enum: [PUBLIC, PRIVATE, INTERNAL]
+          description: "영상 접근정책"
+        duration_seconds:  { type: number, nullable: true, description: "영상 길이 (초)" }
+        file_size_bytes:   { type: integer, nullable: true, description: "원본 파일 크기" }
+        renditions:
+          type: array
+          items: { $ref: "#/components/schemas/Rendition" }
+          description: "변환된 Rendition 목록"
+        created_at:        { type: string, format: date-time }
+        updated_at:        { type: string, format: date-time }
+
+    # Rendition
+    Rendition:
+      type: object
+      required: [rendition_id, format, resolution, file_ref]
+      properties:
+        rendition_id: { type: string }
+        format:       { type: string, enum: [MP4, HLS, DASH], description: "출력 포맷" }
+        resolution:   { type: string, example: "1080p", description: "해상도 (720p, 1080p 등)" }
+        file_ref:     { type: string, description: "변환본 저장소 참조 URI" }
+
+    # TranscodeJob
+    TranscodeJob:
+      type: object
+      required: [job_id, video_id, status, target_format, target_resolution, created_at]
+      properties:
+        job_id:               { type: string }
+        video_id:             { type: string }
+        status:
+          type: string
+          enum: [PENDING, RUNNING, COMPLETED, FAILED]
+        target_format:        { type: string, enum: [MP4, HLS, DASH] }
+        target_resolution:    { type: string, example: "1080p" }
+        output_rendition_ref: { type: string, nullable: true, description: "COMPLETED 시 필수 (INV-V005)" }
+        progress_percent:     { type: integer, minimum: 0, maximum: 100, nullable: true }
+        error_message:        { type: string, nullable: true }
+        created_at:           { type: string, format: date-time }
+        completed_at:         { type: string, format: date-time, nullable: true }
+
+    # List responses
+    VideoListResponse:
+      type: object
+      properties:
+        items:     { type: array, items: { $ref: "#/components/schemas/Video" } }
+        total:     { type: integer }
+        page:      { type: integer }
+        page_size: { type: integer }
+
+    # Request bodies
+    UploadVideoRequest:
+      type: object
+      required: [title, original_file_ref]
+      properties:
+        title:             { type: string, minLength: 1, maxLength: 500 }
+        original_file_ref: { type: string, description: "업로드된 원본 파일의 저장소 참조 URI" }
+        description:       { type: string, maxLength: 2000, nullable: true }
+        access_policy:
+          type: string
+          enum: [PUBLIC, PRIVATE, INTERNAL]
+          default: PRIVATE
+
+    StartTranscodeRequest:
+      type: object
+      required: [target_format, target_resolution]
+      properties:
+        target_format:     { type: string, enum: [MP4, HLS, DASH] }
+        target_resolution: { type: string, example: "1080p" }
+
+    ChangeAccessPolicyRequest:
+      type: object
+      required: [access_policy]
+      properties:
+        access_policy:
+          type: string
+          enum: [PUBLIC, PRIVATE, INTERNAL]
+
+    # Error
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:           { type: string }
+        message:        { type: string }
+        correlation_id: { type: string }
+
+  responses:
+    BadRequest:
+      description: "잘못된 요청 (불변조건 위반 포함)"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unauthorized:
+      description: "인증 필요"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Forbidden:
+      description: "권한 없음"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: "리소스를 찾을 수 없음"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: "상태 충돌 (허용되지 않은 상태 전이, 동시 Job 제한 등)"
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }

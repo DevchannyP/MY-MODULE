@@ -1,6 +1,6 @@
 # Master Shell - Observability 설정
 version: "0.2.0"
-last_updated: "2026-03-18"
+last_updated: "2026-03-20"
 
 dashboards:
   - id: "task-management-dashboard"
@@ -44,6 +44,31 @@ dashboards:
         type: "duration"
         source: "billing openapi approve/reject endpoint"
 
+  - id: "video-dashboard"
+    name: "비디오 관리 대시보드"
+    description: "영상 업로드·트랜스코딩·재생, 상태 전이 빈도, API 응답시간(RED 지표) 모니터링"
+    url: "dashboard://workflow-os/video-overview"
+    plugin_id: "video-plugin"
+    metrics:
+      - name: "영상 업로드 수 (일별)"
+        type: "rate"
+        source: "VideoUploaded 이벤트"
+      - name: "트랜스코딩 완료율 (%)"
+        type: "ratio"
+        source: "TranscodeJobCompleted / TranscodeJobStarted"
+      - name: "트랜스코딩 실패율 (%)"
+        type: "error"
+        source: "TranscodeJobFailed / TranscodeJobStarted"
+      - name: "API 응답시간 p99"
+        type: "duration"
+        source: "openapi.yaml 엔드포인트"
+      - name: "상태 전이 실패 수 (INV-V002)"
+        type: "count"
+        source: "video status transition 4xx 응답"
+      - name: "동시 RUNNING Job 충돌 수 (INV-V004)"
+        type: "count"
+        source: "startTranscodeJob 409 응답"
+
 alert_groups:
   - id: "task-management-alerts"
     name: "작업 관리 알림"
@@ -74,6 +99,27 @@ alert_groups:
       - name: "승인 권한 오류 발생"
         condition: "billing_authz_error_count > 0"
         severity: "critical"
+
+  - id: "video-alerts"
+    name: "비디오 관리 알림"
+    plugin_id: "video-plugin"
+    channel: "alert://workflow-os/video"
+    rules:
+      - name: "API 오류율 초과"
+        condition: "error_rate > 1% (5분 평균)"
+        severity: "warning"
+      - name: "트랜스코딩 실패율 초과"
+        condition: "transcode_failure_rate > 5% (15분 평균)"
+        severity: "warning"
+      - name: "INV-V004 동시 Job 충돌 발생"
+        condition: "concurrent_running_job_conflict_count > 0"
+        severity: "critical"
+      - name: "authz 오류 발생"
+        condition: "video_authz_error_count > 0"
+        severity: "critical"
+      - name: "p99 응답시간 초과"
+        condition: "latency_p99 > 500ms (nfr.yaml 기준)"
+        severity: "warning"
 
 global_settings:
   tracing_enabled: true

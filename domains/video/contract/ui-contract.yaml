@@ -1,0 +1,102 @@
+# UI Contract - Video Domain
+# 모든 video 화면의 마운트 계약을 한 파일에 정의한다.
+# 마스터 UI 쉘은 이 파일을 기준으로 라우팅과 플러그인 등록을 수행한다.
+
+screens:
+  - module_key: video.home
+    route: /videos
+    mount: VideoHomePage
+    title: 영상 목록
+    nav_group: 영상관리
+    permissions:
+      - video:read
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: video.enabled
+    observability_tags:
+      - domain:video
+      - screen:home
+
+  - module_key: video.detail
+    route: /videos/:videoId
+    mount: VideoDetailPage
+    title: 영상 상세
+    nav_group: null
+    permissions:
+      - video:read
+    shared_dependencies:
+      - react
+      - design-system
+      - video-player
+    error_boundary: default
+    feature_flag: video.enabled
+    observability_tags:
+      - domain:video
+      - screen:detail
+
+  - module_key: video.upload
+    route: /videos/upload
+    mount: VideoUploadPage
+    title: 영상 업로드
+    nav_group: 영상관리
+    permissions:
+      - video:write
+    shared_dependencies:
+      - react
+      - design-system
+      - file-uploader
+    error_boundary: default
+    feature_flag: video.upload.enabled
+    observability_tags:
+      - domain:video
+      - screen:upload
+
+  - module_key: video.transcode
+    route: /videos/transcode
+    mount: TranscodeStatusPage
+    title: 트랜스코딩 현황
+    nav_group: 영상관리
+    permissions:
+      - video:write
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: video.transcode.enabled
+    observability_tags:
+      - domain:video
+      - screen:transcode
+
+  - module_key: video.admin
+    route: /videos/admin
+    mount: VideoAdminPage
+    title: 영상 관리자
+    nav_group: 영상관리
+    permissions:
+      - video:admin
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: video.admin.enabled
+    observability_tags:
+      - domain:video
+      - screen:admin
+
+design_tokens:
+  color_scheme: video
+  accent: "#e53935"
+
+invariant_display:
+  # 상태 전이 위반 시 UI 배지 스타일
+  invalid_transition_badge:
+    color: error
+    label: "전이 불가"
+    tooltip: "현재 상태에서 허용되지 않는 전이입니다"
+  # 동시 Job 제한 위반 시 UI 배지 스타일
+  concurrent_job_badge:
+    color: warning
+    label: "진행 중인 Job 존재"
+    tooltip: "이미 RUNNING 상태의 트랜스코딩 작업이 있습니다"

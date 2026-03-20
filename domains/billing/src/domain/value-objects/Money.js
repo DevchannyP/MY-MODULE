@@ -40,6 +40,21 @@ class Money {
     return this._amount === other.amount && this._currency === other.currency;
   }
 
+  /**
+   * 금액 × 수량 (양의 배수) — 금융 표준 연산
+   * @param {number} factor 양수
+   * @returns {Money}
+   */
+  multiply(factor) {
+    if (typeof factor !== 'number' || !isFinite(factor) || factor <= 0) {
+      throw Object.assign(
+        new Error('Money.multiply: factor는 양수여야 합니다'),
+        { code: 'VALIDATION_ERROR' },
+      );
+    }
+    return new Money(Math.round(this._amount * factor), this._currency);
+  }
+
   /** 두 금액의 차이 (항상 양수) */
   delta(other) {
     this._assertSameCurrency(other);

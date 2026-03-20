@@ -3,7 +3,7 @@
 # Stage C에서만 수정한다.
 # 마스터 UI는 이 파일 → ui_contract → capability_contract 순서로 읽는다. 모듈 코드는 읽지 않는다.
 version: "0.2.0"
-last_updated: "2026-03-18"
+last_updated: "2026-03-20"
 
 plugins:
   - id: "task-management-plugin"
@@ -84,3 +84,46 @@ plugins:
       - billing.exception.enabled: false → 예외처리 화면 별도 제어 가능.
       - DISPUTED→PAID 전이는 billing.admin 권한 필요 (INV-B005).
       - Stage D PASS 후: status: active, internal 5% rollout 시작.
+
+  - id: "video-plugin"
+    name: "비디오 관리"
+    module_id: "video"
+    entry_point: "/videos"
+    navigation:
+      group: "content"
+      label: "비디오"
+      icon: "play_circle"
+      order: 3
+    ui_contract: "domains/video/contract/ui-contract.yaml"
+    capability_contract: "domains/video/contract/capability.yaml"
+    feature_flag: "video.enabled"
+    rollout:
+      strategy: "canary"
+      phases:
+        - phase: internal
+          percentage: 5
+          condition: "Stage D 품질 게이트 PASS 후"
+        - phase: beta
+          percentage: 20
+          condition: "internal 7일 이상 error_rate 기준 충족"
+        - phase: full
+          percentage: 100
+          condition: "beta 7일 이상 error_rate 기준 충족"
+    rollback:
+      strategy: "disable_flag"
+      flag: "video.enabled"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "INV-V002 상태 전이 위반 감지"
+    observability:
+      dashboard: "master-shell/observability/config.yaml#video-dashboard"
+      alert_group: "video-alerts"
+    status: "inactive"
+    registered_at: "2026-03-20"
+    owner: "video-team"
+    stage_b_memory_ref: "memory/stageB/video.yaml"
+    notes: |
+      - video.enabled: false → Stage D PASS 후 internal 5% 시작.
+      - INV-V004: 동시 RUNNING TranscodeJob 1개 제한.
+      - RISK-V002: 트랜스코딩은 비동기 — UseCase는 Job ID만 반환.

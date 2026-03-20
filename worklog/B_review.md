@@ -175,3 +175,68 @@
 #### 판정: **CONDITIONAL_PASS** — P0/P1 없음 (GAP-B001 P1 수정됨). P2/P3 ADR 유예.
 
 ---
+
+---
+
+### 2026-03-21 — billing Stage D/E B_review
+
+**대상**: domains/billing 전체 구현
+**리뷰어**: B (적대적 검증자) / Cross-Model
+**우선순위**: 계약변경여부: NO / 금전처리: YES / 동시성: YES
+
+#### ✅ 계약 정합성
+
+| 항목 | 결과 | 근거 |
+|------|------|------|
+| OpenAPI 스키마 ↔ BillingController 구현 | PASS | 11개 엔드포인트 1:1 매핑 확인 |
+| 이벤트 스키마 ↔ BillingEvents 페이로드 | PASS | InvoiceCreated/StatusChanged/ExceptionApproved/Rejected 4종 일치 |
+| 권한 선언 ↔ UseCase 강제 | PASS | billing.read/write/admin 각 UseCase에서 강제 |
+| UI contract ↔ 실제 라우트 | PASS | billing controller 11경로 매핑 |
+
+**billing B_review PASS** — 89/89 domain+application, 44/44 interface, 8건 Stage E 적대적 검증 통과.
+
+---
+
+### 2026-03-21 — productivity/task-tracking Stage D/E B_review
+
+**대상**: domains/productivity/task-tracking 전체 구현
+**리뷰어**: B (적대적 검증자) / Cross-Model
+**우선순위**: 계약변경여부: NO / 금전처리: NO / 동시성: LOW
+
+#### ✅ 계약 정합성
+
+| 항목 | 결과 | 근거 |
+|------|------|------|
+| OpenAPI 스키마 ↔ TaskController 구현 | PASS | 5개 엔드포인트 1:1 매핑 확인 |
+| 이벤트 스키마 ↔ TaskEvents 페이로드 | PASS | TaskCreated/StatusChanged/Reassigned 3종 일치 |
+| 권한 선언 ↔ UseCase 강제 | PASS | ADR-0002 패턴 적용, task:read/write/admin |
+| UI contract ↔ 실제 라우트 | PASS | TaskController authz regression 23/23 |
+
+**productivity/task-tracking B_review PASS** — 48/48 domain+application, 23/23 interface, Stage E 적대적 검증 통과.
+
+---
+
+### 2026-03-21 — video Stage D/E B_review
+
+**대상**: domains/video 전체 구현
+**리뷰어**: B (적대적 검증자) / Cross-Model
+**우선순위**: 계약변경여부: NO / 금전처리: NO / 동시성: HIGH (TranscodeJob INV-V004)
+
+#### ✅ 계약 정합성
+
+| 항목 | 결과 | 근거 |
+|------|------|------|
+| OpenAPI 스키마 ↔ VideoController 구현 | PASS | 7개 엔드포인트 1:1 매핑 확인 |
+| 이벤트 스키마 ↔ 발행 페이로드 | PASS | 8종 이벤트 모두 정의 |
+| 권한 선언 ↔ UseCase 강제 | PASS | video:read/write/admin 각 UseCase 강제 |
+| UI contract ↔ 실제 라우트 | PASS | VideoController authz 9건, smoke 21건 |
+
+#### ⚠️ 발견 갭
+
+| 불변조건 | 발견 | 조치 |
+|----------|------|------|
+| INV-V001 progressPercent null/undefined 혼용 | P1 | TranscodeJob.js nullish coalescing으로 수정 완료 |
+| INV-V004 GetTranscodeJobUseCase 테스트 누락 | P2 | 7개 테스트 추가 완료 |
+
+**video B_review PASS** — Stage E 적대적 7벡터 21케이스 통과, property-based 8케이스 통과. 버그 1건 수정.
+

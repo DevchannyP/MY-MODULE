@@ -33,6 +33,7 @@ ALLOWED_LICENSES = {
     "BlueOak-1.0.0",
     "ISC",
     "MIT",
+    "Python-2.0",   # PSF(Python Software Foundation) 오픈소스 — argparse(js-yaml 의존성) 허용
 }
 
 

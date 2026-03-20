@@ -5,3 +5,4 @@
 |--------|---------|--------|----|------------|--------|
 | billing | ✅ | ✅ | ✅ | ✅ | PASS |
 | productivity/task-tracking | ✅ | ✅ | ✅ | ✅ | PASS |
+| video | ✅ | ✅ | ✅ | ✅ | PASS |
