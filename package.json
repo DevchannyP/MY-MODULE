@@ -26,6 +26,7 @@
     "generate:sbom": "python3 scripts/generate_sbom.py",
     "generate:release-evidence": "python3 scripts/generate_release_evidence.py",
     "verify:provenance": "python3 scripts/verify_provenance.py",
+    "audit:verify": "node scripts/audit-chain.js verify",
     "test:rollback": "python3 scripts/validate_operations.py rollback",
     "check:observability": "python3 scripts/validate_operations.py observability",
     "smoke:deployment": "node scripts/run_deployment_smoke.js",
