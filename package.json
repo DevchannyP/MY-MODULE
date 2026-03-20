@@ -42,6 +42,8 @@
     "adr:new": "node scripts/generate-adr.js",
     "adr:index": "node scripts/generate-adr.js --index-only",
     "knowledge-graph:update": "node scripts/update-knowledge-graph.js",
+    "health": "node scripts/health-dashboard.js",
+    "health:json": "node scripts/health-dashboard.js --json",
     "project:status": "node scripts/project_status.js",
     "stage:a": "node scripts/run_stage.js A --dry-run",
     "stage:b": "node scripts/run_stage.js B --dry-run",
