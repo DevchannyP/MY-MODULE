@@ -1,0 +1,26 @@
+#!/bin/sh
+# C001: 도메인 간 직접 코드 참조 금지 (contracts/ 제외)
+VIOLATIONS=$(grep -rn "require.*['\"]\.\.\/\.\.\/domains\/[^/]*/src\/" domains/ 2>/dev/null || true)
+if [ -n "$VIOLATIONS" ]; then
+  echo "❌ C001 위반: 모듈 간 직접 코드 참조 감지"
+  echo "$VIOLATIONS"
+  exit 1
+fi
+
+# C002: 도메인 코어에서 UI/DB/프레임워크 import 금지
+CORE_VIOLATIONS=$(grep -rn "require.*['\"\(]express\|require.*['\"\(]mongodb\|require.*['\"\(]pg\b\|require.*['\"\(]mysql\|require.*['\"\(]sequelize" domains/*/src/domain/ 2>/dev/null || true)
+if [ -n "$CORE_VIOLATIONS" ]; then
+  echo "❌ C002 위반: 도메인 코어에서 외부 프레임워크 참조"
+  echo "$CORE_VIOLATIONS"
+  exit 1
+fi
+
+# 시크릿 스캔
+SECRETS=$(grep -rniE "(password|secret|api_key|private_key)\s*[:=]\s*['\"][^'\"]{8,}" domains/ scripts/ 2>/dev/null | grep -v "\.test\." | grep -v node_modules || true)
+if [ -n "$SECRETS" ]; then
+  echo "❌ 시크릿 감지: 커밋에 비밀값이 포함될 수 있습니다"
+  echo "$SECRETS"
+  exit 1
+fi
+
+echo "✅ pre-commit 검증 통과"

@@ -1,0 +1,19 @@
+version: "1.0.0"
+spec: conventional-commits-1.0.0
+type_mapping:
+  stageA:     { type: feat,  scope: "{domain}-spec" }
+  stageB:     { type: chore, scope: "{domain}-composition" }
+  stageC:     { type: chore, scope: master-shell }
+  stageD:     { type: test,  scope: "{domain}" }
+  stageE:     { type: test,  scope: "{domain}-adversarial" }
+  gate_fix:   { type: fix,   scope: "{domain}" }
+  report:     { type: report, scope: "{domain}" }
+  adr:        { type: docs,  scope: "adr-{number}" }
+  infra:      { type: chore, scope: infra }
+body_required_fields:
+  - "Gate: {PASS|PARTIAL_PASS|FAIL}"
+  - "Tests: {passed}/{total} PASS"
+  - "INV: {불변조건 ID 목록}"
+footer_required_fields:
+  - "Stage: {A|B|C|D|E}"
+  - "Risk: {LOW|MEDIUM|HIGH|CRITICAL}"
