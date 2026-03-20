@@ -8,6 +8,7 @@
     "test:contract": "python3 scripts/validate_contract_drift.py",
     "test:integration": "node --test 'domains/**/tests/application/**/*.test.js'",
     "test:e2e-smoke": "node --test 'domains/**/tests/smoke/**/*.test.js' 'src/tests/smoke/**/*.test.js'",
+    "test:property": "node --test 'domains/**/tests/property/**/*.test.js'",
     "lint": "npm run lint:syntax && npm run lint:eslint",
     "lint:syntax": "node scripts/check-syntax.js",
     "lint:eslint": "node_modules/.bin/eslint domains src scripts",
@@ -67,6 +68,7 @@
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.0.3",
+    "fast-check": "^4.6.0",
     "husky": "^9.1.7",
     "turbo": "^2.8.20"
   }
