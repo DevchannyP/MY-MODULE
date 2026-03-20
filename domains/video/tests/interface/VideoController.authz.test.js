@@ -158,6 +158,36 @@ describe('[VideoController authz] PATCH /videos/:videoId/access-policy', () => {
   });
 });
 
+// ── 6b. PATCH changeAccessPolicy — 소유권 검사 (GAP-V002 회귀) ────────────────
+describe('[VideoController authz] PATCH /videos/:videoId/access-policy 소유권', () => {
+  test('[회귀] 비소유자 video:write → 403 (INV-V003 소유권 강제)', async () => {
+    const { ctrl, videoRepository } = makeCtrl();
+    // 영상 소유자: user-1
+    const v = Video.create({ videoId: 'vid-1', title: '제목', uploaderId: 'user-1', originalFileRef: 'ref', accessPolicy: 'PRIVATE' });
+    await videoRepository.save(v);
+    // 비소유자 user-2가 변경 시도
+    const res = await ctrl.handle({
+      method: 'PATCH', path: '/videos/:videoId/access-policy',
+      params: { videoId: 'vid-1' }, body: { access_policy: 'PUBLIC' },
+      caller: { permissions: ['video:write'], userId: 'user-2' },
+    });
+    assert.equal(res.status, 403);
+  });
+
+  test('[회귀] video:admin은 타인 영상 정책 변경 가능 → 200', async () => {
+    const { ctrl, videoRepository } = makeCtrl();
+    const v = Video.create({ videoId: 'vid-1', title: '제목', uploaderId: 'user-1', originalFileRef: 'ref', accessPolicy: 'PRIVATE' });
+    await videoRepository.save(v);
+    const res = await ctrl.handle({
+      method: 'PATCH', path: '/videos/:videoId/access-policy',
+      params: { videoId: 'vid-1' }, body: { access_policy: 'PUBLIC' },
+      caller: { permissions: ['video:write', 'video:admin'], userId: 'admin-1' },
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.access_policy, 'PUBLIC');
+  });
+});
+
 // ── 7. POST /videos/:videoId/archive — archiveVideo ───────────────────────────
 describe('[VideoController authz] POST /videos/:videoId/archive', () => {
   test('권한 없음 → 403', async () => {

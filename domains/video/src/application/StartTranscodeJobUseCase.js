@@ -47,6 +47,14 @@ class StartTranscodeJobUseCase {
       );
     }
 
+    // ARCHIVED 영상은 트랜스코딩 불가 (terminal 상태 — INV-V002)
+    if (video.status === 'ARCHIVED') {
+      throw Object.assign(
+        new Error('INV-V002: ARCHIVED 영상은 트랜스코딩을 시작할 수 없습니다'),
+        { code: 'CONFLICT' },
+      );
+    }
+
     // INV-V004: 동시 RUNNING Job 확인
     const runningJob = await this._jobRepo.findRunningByVideoId(cmd.videoId);
     if (runningJob) {

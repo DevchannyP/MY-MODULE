@@ -7,10 +7,16 @@
 class Money {
   constructor(amount, currency) {
     if (typeof amount !== 'number' || !isFinite(amount)) {
-      throw new Error('Money amount must be a finite number');
+      throw Object.assign(
+        new Error('Money amount must be a finite number'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     if (typeof currency !== 'string' || currency.length !== 3) {
-      throw new Error('Money currency must be a 3-character string (e.g. KRW)');
+      throw Object.assign(
+        new Error('Money currency must be a 3-character string (e.g. KRW)'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     this._amount = amount;
     this._currency = currency.toUpperCase();

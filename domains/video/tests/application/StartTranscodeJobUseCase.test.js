@@ -70,6 +70,19 @@ describe('StartTranscodeJobUseCase', () => {
     );
   });
 
+  test('[회귀] ARCHIVED 영상 트랜스코딩 시도 → CONFLICT (INV-V002 terminal 상태)', async () => {
+    const { uc, videoRepository } = makeUseCase();
+    // ARCHIVED 영상 시드
+    let v = Video.create({ videoId: 'vid-arch', title: '제목', uploaderId: 'user-1', originalFileRef: 'ref' });
+    v = v.transitionTo('PROCESSING').transitionTo('READY').transitionTo('ARCHIVED');
+    await videoRepository.save(v);
+
+    await assert.rejects(
+      () => uc.execute({ videoId: 'vid-arch', targetFormat: 'MP4', targetResolution: '1080p' }, WRITE_CALLER),
+      { code: 'CONFLICT' },
+    );
+  });
+
   test('INV-V004: PENDING Job만 있으면 새 Job 시작 가능 (RUNNING 아님)', async () => {
     const { uc, videoRepository, transcodeJobRepository } = makeUseCase();
     await seedVideo(videoRepository);
