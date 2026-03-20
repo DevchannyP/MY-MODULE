@@ -1,0 +1,5 @@
+# 도메인별 게이트 실행 통계
+# first_pass_rate가 낮은 게이트를 먼저 실행
+version: "1.0.0"
+domains: {}
+global_recommendations: []

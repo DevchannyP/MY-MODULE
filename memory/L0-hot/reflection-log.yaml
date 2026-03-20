@@ -1,0 +1,3 @@
+# AI 에이전트 자기반성 로그 (Reflexion Pattern)
+# 매 Stage 실패/종료 시 에이전트가 직접 기록
+entries: []
