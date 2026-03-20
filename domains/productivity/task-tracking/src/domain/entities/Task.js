@@ -65,24 +65,36 @@ class Task {
   static create({ title, assignee_id, due_date, description }) {
     // INV001: 담당자 필수
     if (!assignee_id || String(assignee_id).trim() === '') {
-      throw new Error('[INV001] 담당자(assignee_id)는 필수입니다.');
+      throw Object.assign(
+        new Error('[INV001] 담당자(assignee_id)는 필수입니다.'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     // title 검증
     if (!title || String(title).trim() === '') {
-      throw new Error('제목(title)은 필수입니다.');
+      throw Object.assign(new Error('제목(title)은 필수입니다.'), { code: 'VALIDATION_ERROR' });
     }
     if (String(title).length > 200) {
-      throw new Error('제목(title)은 200자를 초과할 수 없습니다.');
+      throw Object.assign(
+        new Error('제목(title)은 200자를 초과할 수 없습니다.'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     // INV003: 마감일이 오늘 이전이면 불가
     if (due_date !== null && due_date !== undefined) {
       const today = new Date().toISOString().slice(0, 10);
       if (due_date < today) {
-        throw new Error(`[INV003] 마감일(${due_date})은 오늘(${today}) 이후여야 합니다.`);
+        throw Object.assign(
+          new Error(`[INV003] 마감일(${due_date})은 오늘(${today}) 이후여야 합니다.`),
+          { code: 'VALIDATION_ERROR' },
+        );
       }
     }
     if (description !== null && description !== undefined && String(description).length > 2000) {
-      throw new Error('설명(description)은 2000자를 초과할 수 없습니다.');
+      throw Object.assign(
+        new Error('설명(description)은 2000자를 초과할 수 없습니다.'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
 
     const task = new Task({

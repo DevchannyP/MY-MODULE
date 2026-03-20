@@ -30,7 +30,10 @@ const ALLOWED_TRANSITIONS = Object.freeze({
 class InvoiceStatus {
   constructor(value) {
     if (!Object.values(STATUSES).includes(value)) {
-      throw new Error(`Invalid InvoiceStatus: ${value}`);
+      throw Object.assign(
+        new Error(`Invalid InvoiceStatus: ${value}`),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     this._value = value;
     Object.freeze(this);

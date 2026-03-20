@@ -89,14 +89,22 @@ class Invoice {
    */
   addLineItem({ lineItemId, description, quantity, unitPrice }) {
     if (!this.status.equals('DRAFT')) {
-      throw new Error('INV-B002: 라인 항목은 DRAFT 상태에서만 추가할 수 있다');
+      throw Object.assign(
+        new Error('INV-B002: 라인 항목은 DRAFT 상태에서만 추가할 수 있다'),
+        { code: 'CONFLICT' },
+      );
     }
-    if (!(unitPrice instanceof Money)) throw new Error('unitPrice must be a Money instance');
+    if (!(unitPrice instanceof Money)) {
+      throw Object.assign(new Error('unitPrice must be a Money instance'), { code: 'VALIDATION_ERROR' });
+    }
     if (!unitPrice.isPositive()) {
-      throw new Error('INV-B004: 라인 항목 단가는 0 초과여야 한다');
+      throw Object.assign(
+        new Error('INV-B004: 라인 항목 단가는 0 초과여야 한다'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     if (typeof quantity !== 'number' || quantity < 1) {
-      throw new Error('quantity must be >= 1');
+      throw Object.assign(new Error('quantity must be >= 1'), { code: 'VALIDATION_ERROR' });
     }
 
     const amount = new Money(unitPrice.amount * quantity, unitPrice.currency);
@@ -117,8 +125,9 @@ class Invoice {
   transitionTo(nextStatus) {
     const next = nextStatus instanceof InvoiceStatus ? nextStatus : InvoiceStatus.of(nextStatus);
     if (!this.status.canTransitionTo(next)) {
-      throw new Error(
-        `INV-B002: ${this.status.value} → ${next.value} 전이는 허용되지 않는다`
+      throw Object.assign(
+        new Error(`INV-B002: ${this.status.value} → ${next.value} 전이는 허용되지 않는다`),
+        { code: 'CONFLICT' },
       );
     }
     return new Invoice({
@@ -174,7 +183,7 @@ class Invoice {
    * @returns {Invoice}
    */
   static create({ invoiceId, customerId, dueDate, notes }) {
-    if (!customerId) throw new Error('customerId is required');
+    if (!customerId) throw Object.assign(new Error('customerId is required'), { code: 'VALIDATION_ERROR' });
     const now = new Date().toISOString();
     return new Invoice({
       invoiceId,
