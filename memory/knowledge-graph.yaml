@@ -1,0 +1,18 @@
+# 도메인 간 관계 추적 그래프
+# 자동 갱신: 2026-03-20T11:10:18.457Z
+entities:
+  domains:
+    "billing":
+      contracts: { openapi: true, events: true, ui: true, capability: true }
+      test_files: 10
+      src_files: 21
+      related_adrs: []
+    "productivity/task-tracking":
+      contracts: { openapi: true, events: true, ui: true, capability: true }
+      test_files: 8
+      src_files: 13
+      related_adrs: []
+  invariants: {}
+  learnings:
+    recent_patterns: []
+    recent_anti_patterns: []
