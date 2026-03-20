@@ -55,3 +55,24 @@ description: Stage D 품질 게이트 구현. Clean Architecture 안쪽→바깥
 - PASS = 필수(1~12) 전부 PASS
 - PARTIAL_PASS = 필수 PASS + Phase2 NOT_CONFIGURED
 - FAIL = 필수 1개 이상 FAIL → reflection-loop skill 호출
+
+## Chain-of-Verification (게이트 15가지 PASS 후 자기검증)
+
+검증 질문 (각 INV에 대해):
+1. "테스트 {test_name}은 정말 INV-{XXX}를 검증하는가?"
+2. "이 테스트가 PASS해도 INV가 위반될 수 있는 입력이 존재하는가?"
+3. "enforcement 레이어가 domain-entity인데, use-case에서도 확인하는가?"
+
+불일치 발견 시:
+- 테스트 보완 → 재검증
+- 경계값 테스트 추가
+- enforcement 레이어 누락 → 해당 레이어에 검증 코드 추가
+
+결과 기록: memory/stageD/[domain]-cove.yaml
+```yaml
+cove_results:
+  timestamp: "ISO-8601"
+  questions_generated: N
+  mismatches_found: N
+  corrections_made: []
+```
