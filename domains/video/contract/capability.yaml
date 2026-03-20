@@ -16,35 +16,41 @@ capabilities:
 
   # 영상 목록/상세 조회
   - id: can.read.video
-    description: "영상 목록 및 상세 조회"
+    description: "영상 목록 및 상세 조회 (PRIVATE 영상은 업로더 본인 또는 video:admin만 접근)"
     required_permissions: [video:read]
     screens: [video.home, video.detail]
     http_operations: [listVideos, getVideo]
+    invariants:
+      - INV-V003  # PRIVATE 영상은 업로더·admin만 목록/상세 조회 가능
 
   # 트랜스코딩 시작
   - id: can.start.transcode
-    description: "트랜스코딩 작업 시작 (동시 RUNNING Job 1개 제한)"
+    description: "트랜스코딩 작업 시작 (동시 RUNNING Job 1개 제한, ARCHIVED 영상 불가)"
     required_permissions: [video:write]
     screens: [video.transcode]
     http_operations: [startTranscodeJob]
     invariants:
+      - INV-V002  # ARCHIVED 영상은 트랜스코딩 불가 (terminal 상태)
       - INV-V004  # 동시 RUNNING Job 1개 제한
 
   # 트랜스코딩 상태 조회
   - id: can.read.transcode.status
-    description: "트랜스코딩 Job 상태 조회"
+    description: "트랜스코딩 Job 상태 조회 (PRIVATE 영상의 Job은 업로더·admin만 접근)"
     required_permissions: [video:read]
     screens: [video.transcode]
     http_operations: [getTranscodeJob]
+    invariants:
+      - INV-V003  # PRIVATE 영상의 Job은 업로더·admin만 조회 가능
 
   # 접근정책 변경
   - id: can.change.access.policy
-    description: "영상 접근정책 변경 (PUBLIC/PRIVATE/INTERNAL)"
+    description: "영상 접근정책 변경 (업로더 본인 또는 video:admin만 가능)"
     required_permissions: [video:write]
     screens: [video.detail]
     http_operations: [changeAccessPolicy]
     invariants:
-      - INV-V003  # PRIVATE이면 uploader_id만 재생 가능
+      - INV-V002  # ARCHIVED 영상은 접근정책 변경 불가
+      - INV-V003  # 접근정책 변경은 업로더 본인 또는 video:admin만 허용
 
   # 영상 아카이브
   - id: can.archive.video
