@@ -7,6 +7,11 @@ domains:
   - id: "productivity"
     name: "생산성 관리"
     description: "업무 효율화를 위한 작업·일정·협업 관련 도메인 영역"
+    version: "0.1.0"
+    status: active
+    ejection_ready: false
+    ejected_to: null
+    migration_status: monolith
     bounded_contexts:
       - id: "task-tracking"
         name: "작업 추적"

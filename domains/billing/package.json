@@ -1,0 +1,7 @@
+{
+  "name": "@my-module/billing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "billing 도메인 모듈",
+  "workflowOS": { "domain_id": "billing", "ejection_ready": false }
+}

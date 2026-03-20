@@ -1,3 +1,29 @@
 # AI 에이전트 자기반성 로그 (Reflexion Pattern)
 # 매 Stage 실패/종료 시 에이전트가 직접 기록
-entries: []
+entries:
+  - stage: "D(4차)"
+    domain: "billing"
+    date: "2026-03-20"
+    sequence: 1
+    what_went_well:
+      - "기존 구현이 요구사항 명세대로 완성됨"
+    what_went_wrong:
+      - "Phase 0~4 적용 전이라 새 프로토콜 미적용 상태였음"
+    root_cause:
+      - "인프라 부재"
+    improvement_for_next:
+      - "Phase 5 CLAUDE.md 재작성부터 새 프로토콜 적용"
+    confidence_score: 0.7
+  - stage: "D(4차)"
+    domain: "productivity"
+    date: "2026-03-20"
+    sequence: 1
+    what_went_well:
+      - "기존 구현이 요구사항 명세대로 완성됨"
+    what_went_wrong:
+      - "Phase 0~4 적용 전이라 새 프로토콜 미적용 상태였음"
+    root_cause:
+      - "인프라 부재"
+    improvement_for_next:
+      - "Phase 5 CLAUDE.md 재작성부터 새 프로토콜 적용"
+    confidence_score: 0.7
