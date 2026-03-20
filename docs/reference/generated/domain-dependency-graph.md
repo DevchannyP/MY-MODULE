@@ -4,6 +4,7 @@
 ```mermaid
 graph LR
   productivity[productivity]
+  billing[billing]
 ```
 
 ## 범례

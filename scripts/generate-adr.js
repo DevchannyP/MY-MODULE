@@ -78,10 +78,51 @@ function rebuildIndex() {
   for (const file of files.sort()) {
     const content = fs.readFileSync(path.join(adrDir, file), 'utf-8');
     const adrId = file.match(/^(\d{4})/)?.[1] || '0000';
-    const titleMatch = content.match(/^# \d+\. (.+)$/m);
-    yaml += `  - id: "${adrId}"\n    file: "${file}"\n    title: "${titleMatch ? titleMatch[1] : ''}"\n`;
+    const frontmatter = parseFrontmatter(content);
+    const title =
+      frontmatter.title
+      || content.match(/^# ADR \d+:\s+(.+)$/m)?.[1]
+      || content.match(/^# \d+\.\s+(.+)$/m)?.[1]
+      || file.replace(/^\d{4}-/, '').replace(/\.md$/, '');
+
+    yaml += `  - id: "${adrId}"\n    file: "${file}"\n    title: "${title}"\n`;
+
+    if (frontmatter.domain) {
+      yaml += `    domain: "${frontmatter.domain}"\n`;
+    }
+
+    if (frontmatter.stage) {
+      yaml += `    stage: "${frontmatter.stage}"\n`;
+    }
+
+    if (frontmatter.date) {
+      yaml += `    date: "${frontmatter.date}"\n`;
+    }
+
+    if (frontmatter.status) {
+      yaml += `    status: ${frontmatter.status}\n`;
+    }
   }
 
   fs.writeFileSync(indexFile, yaml, 'utf-8');
   process.stdout.write(`✅ ADR 인덱스 재생성: ${files.length}개\n`);
+}
+
+function parseFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) {
+    return {};
+  }
+
+  const result = {};
+  for (const line of match[1].split('\n')) {
+    const kv = line.match(/^([a-zA-Z_][\w-]*):\s*(.+)$/);
+    if (!kv) {
+      continue;
+    }
+
+    result[kv[1]] = kv[2].trim().replace(/^"(.*)"$/, '$1');
+  }
+
+  return result;
 }

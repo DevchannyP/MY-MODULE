@@ -2,7 +2,7 @@
 # STATUS: legacy detail surface
 # 실제 다음 Work Packet 선택은 root memory/wp-queue.yaml 과 memory/current-wp.yaml 이 기준이다.
 # 이 파일은 legacy 코어 업그레이드 히스토리와 상세 우선순위 참고용이다.
-as_of: "2026-03-19"
+as_of: "2026-03-20"
 current_phase: "core-platform-upgrade-for-video-era"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"
 
@@ -17,8 +17,9 @@ execution_policy:
 
 queue:
   - priority: 0
-    action: "Phase 5 CLAUDE.md 재작성 실행"
+    action: "root memory/wp-queue.yaml 기준으로 다음 Work Packet 정의"
     done: false
+    note: "Workflow OS v3.0 업그레이드는 완료 상태다. legacy queue는 신규 Work Packet 정의 전까지 참고용으로만 유지한다."
   - priority: 1
     id: "Q-101"
     track: "CORE-QUALITY"
@@ -150,8 +151,9 @@ queue:
     id: "Q-114"
     track: "CORE-QUALITY"
     action: "실제 서버 기동 smoke 기준선 강화"
-    done: false
+    done: true
     goal: "controller-level smoke 다음 단계로 transport/runtime wiring 을 검증하는 최소 서버 기동 smoke 전략을 정리한다."
+    result: "PASS — server wiring smoke와 deployment environment smoke runner를 도입해 transport/runtime wiring 검증 경로를 확보했다."
     success_criteria:
       - "서버 기동 smoke 범위와 최소 엔드포인트가 정의된다"
       - "현재 controller-level smoke 와 역할 분리가 문서화된다"
@@ -171,9 +173,10 @@ queue:
     id: "Q-107"
     track: "DOMAIN-VIDEO"
     action: "첫 확장 도메인 video 청사진 작성"
-    done: false
+    done: true
     goal: "video 도메인 온보딩을 위한 requirements/glossary/domain-map/contract 전략 초안을 만든다."
     dependencies: ["Q-101", "Q-106"]
+    result: "PASS — memory/stageA/video.yaml에 bounded context, invariants, permissions, risk profile, contract skeleton이 정리됐다."
     success_criteria:
       - "video 도메인 요구사항 초안이 존재한다"
       - "Stage A 진입 조건과 위험도가 명확하다"
