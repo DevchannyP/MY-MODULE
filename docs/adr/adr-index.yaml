@@ -26,6 +26,11 @@ adrs:
   - id: "0009"
     file: "0009-github-branch-protection-baseline.md"
     title: ""
+
   - id: "0010"
+    title: "통합검증 ADR"
+    domain: "__test__"
+    stage: "A"
+    date: "2026-03-20"
     file: "0010-통합검증-ADR.md"
-    title: "[test] 통합검증 ADR"
+    status: proposed
