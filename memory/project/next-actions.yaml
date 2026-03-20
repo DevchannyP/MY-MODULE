@@ -18,8 +18,8 @@ execution_policy:
 queue:
   - priority: 0
     action: "root memory/wp-queue.yaml 기준으로 다음 Work Packet 정의"
-    done: false
-    note: "Workflow OS v3.0 업그레이드는 완료 상태다. legacy queue는 신규 Work Packet 정의 전까지 참고용으로만 유지한다."
+    done: true
+    note: "2026-03-20 기준 root queue 가 비어 있으므로 현재 미완료 packet 은 없다. 신규 Work Packet 이 필요해질 때만 root memory/wp-queue.yaml 에서 새로 정의한다."
   - priority: 1
     id: "Q-101"
     track: "CORE-QUALITY"

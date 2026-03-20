@@ -34,8 +34,12 @@ if (!domain || !title) {
   process.exit(1);
 }
 
-const existing = fs.existsSync(adrDir) ? fs.readdirSync(adrDir).filter((file) => /^\d{4}-/.test(file)).length : 0;
-const id = String(existing + 1).padStart(4, '0');
+if (isReservedPlaceholder(domain) || isReservedPlaceholder(title)) {
+  process.stderr.write('Reserved placeholder values are not allowed for ADR domain/title.\n');
+  process.exit(1);
+}
+
+const id = String(getNextAdrNumber()).padStart(4, '0');
 const date = new Date().toISOString().split('T')[0];
 const slug = title.replace(/[^a-zA-Z0-9가-힣]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 50) || 'adr';
 const filename = `${id}-${slug}.md`;
@@ -65,6 +69,19 @@ function appendToIndex(adrId, adrTitle, adrDomain, adrStage, adrDate, file) {
     yaml += entry;
   }
   fs.writeFileSync(indexFile, yaml, 'utf-8');
+}
+
+function getNextAdrNumber() {
+  if (!fs.existsSync(adrDir)) {
+    return 1;
+  }
+
+  const ids = fs.readdirSync(adrDir)
+    .map((file) => file.match(/^(\d{4})-/)?.[1])
+    .filter(Boolean)
+    .map((value) => Number.parseInt(value, 10));
+
+  return ids.length === 0 ? 1 : Math.max(...ids) + 1;
 }
 
 function rebuildIndex() {
@@ -106,6 +123,17 @@ function rebuildIndex() {
 
   fs.writeFileSync(indexFile, yaml, 'utf-8');
   process.stdout.write(`✅ ADR 인덱스 재생성: ${files.length}개\n`);
+}
+
+function isReservedPlaceholder(value) {
+  const normalized = String(value).trim().toLowerCase();
+  return [
+    '__test__',
+    'test',
+    'placeholder',
+    'domain-id',
+    '[도메인] 결정 제목',
+  ].includes(normalized);
 }
 
 function parseFrontmatter(content) {

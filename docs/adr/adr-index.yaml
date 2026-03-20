@@ -28,8 +28,15 @@ adrs:
     title: "GitHub Branch Protection 기준선"
   - id: "0010"
     file: "0010-통합검증-ADR.md"
-    title: "[__test__] 통합검증 ADR"
-    domain: "__test__"
+    title: "[placeholder] test artifact ADR"
+    domain: "placeholder"
     stage: "A"
     date: "2026-03-20"
-    status: proposed
+    status: archived
+  - id: "0011"
+    file: "0011-canonical-truthfulness-for-legacy-and-placeholder-surfaces.md"
+    title: "Canonical truthfulness for legacy and placeholder surfaces"
+    domain: "core-platform"
+    stage: "E"
+    date: "2026-03-20"
+    status: accepted
