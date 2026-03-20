@@ -34,6 +34,7 @@
     "validate:requirements": "python3 scripts/validate_requirements.py",
     "validate:fitness": "node scripts/architecture-fitness.js",
     "boundary:check": "node scripts/architecture-fitness.js",
+    "validate:contracts": "node scripts/validate-contracts.js",
     "project:status": "node scripts/project_status.js",
     "stage:a": "node scripts/run_stage.js A --dry-run",
     "stage:b": "node scripts/run_stage.js B --dry-run",
