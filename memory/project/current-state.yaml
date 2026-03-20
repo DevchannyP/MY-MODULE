@@ -3,13 +3,13 @@
 # root memory/current-state.yaml 이 canonical state 이며, 이 파일은 legacy stage-era 상세 기록이다.
 # 갱신 시점: root current-state 와 충돌하지 않는 범위에서만 상세 히스토리를 보강한다.
 
-as_of: "2026-03-20"
+as_of: "2026-03-21"
 schema_version: "0.1.0"
 
 repository:
   name: "my-module"
   purpose: "Workflow OS 코어 플랫폼 - 격리 모듈 생성·조합·검증 엔진"
-  phase: "core-platform-upgrade-for-video-era"
+  phase: "continuous-self-improvement"
   scm_governance: "PASS (main baseline commit + working branch workflow activated)"
 
 stage_states:
@@ -88,10 +88,10 @@ active_modules:
         status: "FIXED"
         fix: "null로 명시 반환"
 
-quality_gate_last_run: "2026-03-19"
+quality_gate_last_run: "2026-03-21"
 quality_gate_result: "PASS"
 quality_gate_detail:
-  unit_tests: "PASS (247/247)"        # task-management 91+23 + billing 89+44 = 247
+  unit_tests: "PASS (500/500)"        # 478 (이전) + 22 신규 회귀/보안 테스트
   integration_tests: "PASS (유스케이스 수준)"
   adversarial_tests: "PASS (43/43, Stage E)"
   contract_tests: "PASS (test:contract — task-management+billing drift validator)"
@@ -170,6 +170,18 @@ notes: |
   2026-03-20: Workflow OS v3.0 최종 통합 검증 재실행 - npm test, npm run lint, validate-contracts, architecture-fitness PASS.
   Phase 2 잔여 조건: 실제 서버 기동 smoke, dependency scan 실검증, CI/CD release evidence 연동.
   기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.
+  2026-03-21: video Stage A~E 완료 + 전 도메인 자가개선 4라운드 (478 tests PASS)
+  2026-03-21: 자가개선 5라운드 - 보안/에러코드/일관성 수정 (500 tests PASS)
+    - GAP-V001: ListVideosUseCase PRIVATE 영상 비소유자 노출 차단
+    - GAP-V002: ChangeAccessPolicyUseCase 소유권 검사 추가
+    - GAP-V003: GetTranscodeJobUseCase PRIVATE 영상 접근 차단
+    - GetVideoUseCase admin bypass 일관성 추가
+    - StartTranscodeJobUseCase ARCHIVED 영상 트랜스코딩 차단
+    - task-tracking 전체 use case + entity error code 추가
+    - billing Invoice/InvoiceStatus/BillingDomainService/Money error code 추가
+    - SQLiteTaskRepository due_before 필터 누락 수정
+    - video capability.yaml 계약 INV-V002/V003 적용범위 정확화
+    - 회귀 테스트 22개 추가
 
 upgrade_v3:
   status: completed
