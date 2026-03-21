@@ -22,6 +22,9 @@ const { TransitionInvoiceStatusUseCase } = require('../application/TransitionInv
 const { GetBillingSummaryUseCase }       = require('../application/GetBillingSummaryUseCase');
 const { ApproveBillingExceptionUseCase } = require('../application/ApproveBillingExceptionUseCase');
 const { RejectBillingExceptionUseCase }  = require('../application/RejectBillingExceptionUseCase');
+const { ListPaymentsUseCase }            = require('../application/ListPaymentsUseCase');
+const { GetPaymentUseCase }             = require('../application/GetPaymentUseCase');
+const { RetryPaymentSyncUseCase }        = require('../application/RetryPaymentSyncUseCase');
 
 const { fromError } = require('../../../../src/shared/ProblemDetails');
 
@@ -40,13 +43,16 @@ class BillingController {
     this._exceptionRepo = exceptionRepo;
 
     // ── 유스케이스 바인딩 (ADR-0002: 권한 강제는 유스케이스에서) ──────────────
-    this._createInvoice    = new CreateInvoiceUseCase(invoiceRepo, eventPublisher);
-    this._listInvoices     = new GetInvoiceListUseCase(invoiceRepo);
-    this._addLineItem      = new AddLineItemUseCase(invoiceRepo);
-    this._transitionStatus = new TransitionInvoiceStatusUseCase(invoiceRepo, eventPublisher);
-    this._getSummary       = new GetBillingSummaryUseCase(invoiceRepo, exceptionRepo);
-    this._approveException = new ApproveBillingExceptionUseCase(invoiceRepo, exceptionRepo, eventPublisher);
-    this._rejectException  = new RejectBillingExceptionUseCase(exceptionRepo, eventPublisher);
+    this._createInvoice      = new CreateInvoiceUseCase(invoiceRepo, eventPublisher);
+    this._listInvoices       = new GetInvoiceListUseCase(invoiceRepo);
+    this._addLineItem        = new AddLineItemUseCase(invoiceRepo);
+    this._transitionStatus   = new TransitionInvoiceStatusUseCase(invoiceRepo, eventPublisher);
+    this._getSummary         = new GetBillingSummaryUseCase(invoiceRepo, exceptionRepo);
+    this._approveException   = new ApproveBillingExceptionUseCase(invoiceRepo, exceptionRepo, eventPublisher);
+    this._rejectException    = new RejectBillingExceptionUseCase(exceptionRepo, eventPublisher);
+    this._listPayments       = new ListPaymentsUseCase(paymentRepo);
+    this._getPayment         = new GetPaymentUseCase(paymentRepo);
+    this._retryPaymentSync   = new RetryPaymentSyncUseCase(paymentRepo);
   }
 
   /**
@@ -138,35 +144,33 @@ class BillingController {
 
     // GET /billing/payments
     if (method === 'GET' && path === '/billing/payments') {
-      this._requirePermission(caller, 'billing.read');
-      const result = await this._paymentRepo.findAll({
-        invoiceId: query.invoice_id,
-        status:    query.status,
-        page:      query.page      ? Number(query.page)      : 1,
-        pageSize:  query.page_size ? Number(query.page_size) : 20,
-      });
+      const result = await this._listPayments.execute(
+        {
+          invoiceId: query.invoice_id,
+          status:    query.status,
+          page:      query.page      ? Number(query.page)      : 1,
+          pageSize:  query.page_size ? Number(query.page_size) : 20,
+        },
+        caller,
+      );
       return { status: 200, body: this._pageOf(result, this._serializePayment) };
     }
 
     // GET /billing/payments/:payment_id
     if (method === 'GET' && path === '/billing/payments/:payment_id') {
-      this._requirePermission(caller, 'billing.read');
-      const payment = await this._paymentRepo.findById(params.payment_id);
-      if (!payment) {
-        throw Object.assign(new Error(`Payment not found: ${params.payment_id}`), { code: 'NOT_FOUND' });
-      }
+      const payment = await this._getPayment.execute(
+        { paymentId: params.payment_id },
+        caller,
+      );
       return { status: 200, body: this._serializePayment(payment) };
     }
 
     // POST /billing/payments/:payment_id/sync
     if (method === 'POST' && path === '/billing/payments/:payment_id/sync') {
-      this._requirePermission(caller, 'billing.write');
-      const payment = await this._paymentRepo.findById(params.payment_id);
-      if (!payment) {
-        throw Object.assign(new Error(`Payment not found: ${params.payment_id}`), { code: 'NOT_FOUND' });
-      }
-      // ADR-0006: 실제 재시도 정책(최대 3회, exponential backoff)은 Phase 2에서 구현.
-      // 현재 InMemory 구현에서는 결제를 조회 후 반환한다.
+      const payment = await this._retryPaymentSync.execute(
+        { paymentId: params.payment_id },
+        caller,
+      );
       return { status: 200, body: this._serializePayment(payment) };
     }
 

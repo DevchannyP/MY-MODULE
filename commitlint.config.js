@@ -5,7 +5,6 @@ module.exports = {
     'type-enum': [2, 'always', [
       'feat', 'fix', 'docs', 'style', 'refactor', 'perf',
       'test', 'chore', 'ci', 'build', 'revert',
-      'stage',
       'report',
     ]],
     'scope-empty': [1, 'never'],
