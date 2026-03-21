@@ -3,7 +3,7 @@
 # 기본값은 반드시 false (안전한 쪽).
 # 변경은 Stage C 범위. 활성화는 Stage D PASS 후.
 version: "0.2.0"
-last_updated: "2026-03-18"
+last_updated: "2026-03-21"
 
 global_flags:
   enable_experimental_features: false
@@ -21,6 +21,10 @@ plugin_flags:
   billing.invoice.enabled: false       # true: 인보이스 목록·상세 활성화
   billing.payment.enabled: false       # true: 결제상태 추적 화면 활성화
   billing.exception.enabled: false     # true: 정산 예외처리 화면 활성화 (billing.admin 전용)
+
+  # video 플러그인
+  video.enabled: false                 # true: 비디오 도메인 전체 활성화 (영상 목록·업로드 노출)
+  video.transcode.enabled: false       # true: 트랜스코딩 기능 활성화 (내부 환경 전용)
 
 # ── 활성화 절차 ──────────────────────────────────────────────────────────
 # 1. Stage D 품질 게이트 전체 PASS

@@ -15,7 +15,7 @@
     "type-check": "python3 scripts/check_type_boundaries.py",
     "static-analysis": "npm run lint:eslint",
     "validate:composition": "python3 scripts/validate_master_shell.py",
-    "scan:secrets": "git log --all --full-history -- '*.env' | head -5 && grep -rn 'password\\|secret\\|token\\|api_key' domains/productivity/task-tracking/src/ --include='*.js' | grep -v test || echo 'secret scan: 의심 패턴 없음'",
+    "scan:secrets": "git log --all --full-history -- '*.env' | head -5 && grep -rn 'password\\|secret\\|token\\|api_key' domains/ src/ --include='*.js' | grep -v test | grep -v node_modules || echo 'secret scan: 의심 패턴 없음'",
     "scan:dependencies": "python3 scripts/validate_dependency_baseline.py",
     "check:advisory-policy": "python3 scripts/validate_advisory_policy.py",
     "check:branch-protection-policy": "python3 scripts/validate_branch_protection_policy.py",

@@ -67,9 +67,35 @@ composition_safety:
     status: "SAFE"
     notes: "task-management 도메인과 라우트(/tasks/*), 이벤트(Task*), 권한(task:*) 모두 네임스페이스 분리됨"
 
-# ── 5. 결론 ──────────────────────────────────────────────────────────────────
+# ── 5. 라우트 기준선 ─────────────────────────────────────────────────────────
+routes:
+  base: /videos
+  pages:
+    - path: /videos
+      module_key: video.list
+      feature_flag: video.enabled
+    - path: /videos/upload
+      module_key: video.upload
+      feature_flag: video.enabled
+    - path: /videos/:video_id
+      module_key: video.detail
+      feature_flag: video.enabled
+    - path: /videos/:video_id/transcode
+      module_key: video.transcode
+      feature_flag: video.transcode.enabled
+
+navigation_flow:
+  entry: /videos
+  primary_actions:
+    - label: "영상 업로드"
+      route: /videos/upload
+    - label: "영상 목록"
+      route: /videos
+
+# ── 6. 결론 ──────────────────────────────────────────────────────────────────
 result: "PASS"
 summary: |
+
   video 도메인은 독립 bounded context로서 기존 도메인(billing, task-management)과
   라우트, 이벤트, 권한, 스키마 이름 충돌이 없다.
   4종 계약(capability, openapi, ui-contract, events) 간 교차 검증 통과.

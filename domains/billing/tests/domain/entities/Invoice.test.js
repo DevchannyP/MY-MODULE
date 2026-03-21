@@ -106,6 +106,37 @@ describe('Invoice Entity', () => {
     });
   });
 
+  describe('에러 코드 회귀 테스트', () => {
+    test('[회귀] INV-B002 라인항목 DRAFT 외 → code=CONFLICT', () => {
+      const inv = validCreate().transitionTo('PENDING');
+      assert.throws(
+        () => inv.addLineItem({ lineItemId: 'li-1', description: 'A', quantity: 1, unitPrice: new Money(100, 'KRW') }),
+        err => { assert.equal(err.code, 'CONFLICT'); return true; },
+      );
+    });
+
+    test('[회귀] INV-B004 음수 단가 → code=VALIDATION_ERROR', () => {
+      assert.throws(
+        () => validCreate().addLineItem({ lineItemId: 'li-1', description: 'A', quantity: 1, unitPrice: new Money(-100, 'KRW') }),
+        err => { assert.equal(err.code, 'VALIDATION_ERROR'); return true; },
+      );
+    });
+
+    test('[회귀] INV-B002 허용되지 않은 전이 → code=CONFLICT', () => {
+      assert.throws(
+        () => validCreate().transitionTo('PAID'),
+        err => { assert.equal(err.code, 'CONFLICT'); return true; },
+      );
+    });
+
+    test('[회귀] quantity < 1 → code=VALIDATION_ERROR', () => {
+      assert.throws(
+        () => validCreate().addLineItem({ lineItemId: 'li-1', description: 'A', quantity: 0, unitPrice: new Money(100, 'KRW') }),
+        err => { assert.equal(err.code, 'VALIDATION_ERROR'); return true; },
+      );
+    });
+  });
+
   describe('불변 패턴 검증', () => {
     test('addLineItem은 새 Invoice를 반환한다', () => {
       const inv1 = validCreate();

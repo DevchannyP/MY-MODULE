@@ -1,7 +1,7 @@
 # Master Shell - 도메인 카탈로그
 # 마스터 UI 포털에서 탐색 가능한 도메인 목록
 version: "0.2.0"
-last_updated: "2026-03-18"
+last_updated: "2026-03-21"
 
 domains:
   - id: "productivity"
@@ -19,6 +19,22 @@ domains:
     status: "active"
     registered_at: "2026-03-17"
     note: "task-management 플러그인은 feature_flag=false 상태. Stage D PASS 후 활성화 예정."
+
+  - id: "video"
+    name: "콘텐츠 관리"
+    description: "영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역."
+    bounded_contexts:
+      - id: "video-content"
+        name: "비디오 콘텐츠"
+        description: "Video 생애주기(UPLOADED→READY→ARCHIVED) 관리와 TranscodeJob 비동기 처리."
+        stage_a_memory: "memory/stageA/video.yaml"
+    stage_b_memory: "memory/stageB/video.yaml"
+    plugins:
+      - "video-plugin"
+    domain_map_ref: "requirements/domain-map.yaml"
+    status: "inactive"
+    registered_at: "2026-03-20"
+    note: "video 플러그인은 feature_flag=false 상태. Stage D PASS 후 internal 5% rollout 시작."
 
   - id: "billing"
     name: "정산관리"

@@ -2,7 +2,7 @@
 # 마스터 UI 포털의 메뉴 구조
 # 기술 용어 금지. 도메인 언어만 사용.
 version: "0.2.0"
-last_updated: "2026-03-18"
+last_updated: "2026-03-21"
 
 navigation_groups:
   - id: "productivity"
@@ -39,6 +39,18 @@ navigation_groups:
         route: "/billing/exceptions"
         feature_flag: "billing.exception.enabled"
         required_permission: "billing.admin"
+
+  - id: "content"
+    label: "콘텐츠 관리"
+    icon: "video_library"
+    order: 3
+    items:
+      - plugin_id: "video-plugin"
+        label: "비디오 관리"
+        route: "/videos"
+        feature_flag: "video.enabled"
+        # feature_flag: false → 메뉴 미노출.
+        # Stage D PASS + flag: true 전환 후 노출.
 
 # ── 탐색 구조 설명 ──────────────────────────────────────────────────────
 # 생산성 관리
