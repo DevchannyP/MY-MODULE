@@ -56,6 +56,7 @@ describe('ListVideosUseCase', () => {
     // user-2가 목록 조회 → 비공개 영상 보이면 안 됨
     const result = await listUC.execute({}, OTHER_CALLER);
     assert.equal(result.items.length, 0, 'PRIVATE 영상이 비소유자에게 노출됨 (GAP-V001 재발)');
+    assert.equal(result.total, 0, 'total이 필터링 전 값을 반환함 (페이지네이션 오판 버그)');
   });
 
   test('[회귀] PRIVATE 영상은 소유자 본인에게는 노출', async () => {

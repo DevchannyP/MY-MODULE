@@ -36,6 +36,7 @@ class ListVideosUseCase {
     const isAdmin = caller.permissions.includes('video:admin');
     if (!isAdmin) {
       result.items = result.items.filter(v => v.canRead(caller.userId || ''));
+      result.total = result.items.length;
     }
 
     return result;
