@@ -51,6 +51,14 @@ test('[deployment smoke runner] executes the deployed-environment checklist and 
     assert.equal(report.steps.find((step) => step.id === 'video-upload').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'video-list').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'flag-off-route').status, 'SKIPPED');
+    assert.match(
+      String(report.steps.find((step) => step.id === 'billing-permission-denied').response.headers['content-type'] || ''),
+      /^application\/problem\+json/
+    );
+    assert.equal(
+      report.steps.find((step) => step.id === 'billing-permission-denied').response.body.instance,
+      '/billing/invoices'
+    );
     assert.ok(Array.isArray(report.pending_manual_checks));
   } finally {
     fs.rmSync(outputPath, { force: true });

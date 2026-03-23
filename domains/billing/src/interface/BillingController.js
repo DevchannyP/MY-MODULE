@@ -73,7 +73,7 @@ class BillingController {
     try {
       return await this._route(req);
     } catch (err) {
-      return this._errorResponse(err, req.correlationId);
+      return this._errorResponse(err, req.path, req.correlationId);
     }
   }
 
@@ -225,7 +225,7 @@ class BillingController {
 
     return fromError(
       Object.assign(new Error(`Route not found: ${method} ${path}`), { code: 'NOT_FOUND' }),
-      { correlationId },
+      { path, correlationId },
     );
   }
 
@@ -241,7 +241,7 @@ class BillingController {
   }
 
   /** RFC 7807 Problem Details 에러 응답 (IETF 표준) */
-  _errorResponse(err, correlationId) {
+  _errorResponse(err, path, correlationId) {
     // 도메인 불변조건 코드 매핑 (code 미첨부 케이스 대비)
     if (!err.code && err.message) {
       const m = err.message;
@@ -250,7 +250,7 @@ class BillingController {
       else if (m.includes('INV-B004') || m.includes('Currency mismatch'))
         err.code = 'VALIDATION_ERROR';
     }
-    return fromError(err, { correlationId });
+    return fromError(err, { path, correlationId });
   }
 
   _pageOf(result, serializer) {

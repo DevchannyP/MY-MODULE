@@ -61,7 +61,7 @@ class VideoController {
     try {
       return await this._route(req);
     } catch (err) {
-      return this._errorResponse(err, req.correlationId);
+      return this._errorResponse(err, req.path, req.correlationId);
     }
   }
 
@@ -164,7 +164,7 @@ class VideoController {
 
     return fromError(
       Object.assign(new Error(`Route not found: ${method} ${path}`), { code: 'NOT_FOUND' }),
-      { correlationId },
+      { path, correlationId },
     );
   }
 
@@ -203,8 +203,8 @@ class VideoController {
 
   // ── 에러 응답 ────────────────────────────────────────────────────────────────
 
-  _errorResponse(err, correlationId) {
-    return fromError(err, { correlationId });
+  _errorResponse(err, path, correlationId) {
+    return fromError(err, { path, correlationId });
   }
 }
 

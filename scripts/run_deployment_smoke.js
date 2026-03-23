@@ -185,7 +185,7 @@ async function requestJson(baseUrl, {
 }) {
   const url = new URL(routePath, baseUrl).toString();
   const headers = {
-    accept: 'application/json',
+    accept: 'application/json, application/problem+json',
     'x-user-id': userId,
     'x-correlation-id': 'deployment-smoke',
   };
@@ -222,6 +222,7 @@ async function requestJson(baseUrl, {
     return {
       url,
       status: response.status,
+      headers: Object.fromEntries(response.headers.entries()),
       body: parsedBody,
       durationMs: Date.now() - startedAt,
     };
@@ -257,6 +258,44 @@ function assertResponse(result, { status, code, bodyCheck, message }) {
 
   if (typeof bodyCheck === 'function') {
     bodyCheck(result.body);
+  }
+}
+
+function assertProblemResponse(result, { status, code, instance, message }) {
+  assertResponse(result, { status, code, message });
+
+  const contentType = String(result.headers?.['content-type'] || '');
+  if (!/^application\/problem\+json\b/i.test(contentType)) {
+    throw new SmokeAssertionError('Expected application/problem+json error response', {
+      expectedContentType: 'application/problem+json',
+      actualContentType: contentType,
+      body: sanitizeBody(result.body),
+    });
+  }
+
+  if (!result.body || typeof result.body !== 'object') {
+    throw new SmokeAssertionError('Problem Details body must be a JSON object', {
+      body: sanitizeBody(result.body),
+    });
+  }
+  if (result.body.status !== status) {
+    throw new SmokeAssertionError(`Problem Details status must be ${status}`, {
+      expectedStatus: status,
+      actualStatus: result.body.status,
+      body: sanitizeBody(result.body),
+    });
+  }
+  if (typeof result.body.type !== 'string' || typeof result.body.title !== 'string') {
+    throw new SmokeAssertionError('Problem Details body must include string type and title fields', {
+      body: sanitizeBody(result.body),
+    });
+  }
+  if (instance !== undefined && result.body.instance !== instance) {
+    throw new SmokeAssertionError(`Problem Details instance must equal ${instance}`, {
+      expectedInstance: instance,
+      actualInstance: result.body.instance,
+      body: sanitizeBody(result.body),
+    });
   }
 }
 
@@ -355,7 +394,7 @@ async function run(options) {
 
       return {
         request: { method: 'GET', path: options.healthPath },
-        response: { status: result.status, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
       };
     });
 
@@ -389,7 +428,7 @@ async function run(options) {
 
       return {
         request: { method: 'POST', path: options.tasksPath },
-        response: { status: result.status, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
         task_id: result.body.task_id,
         health_trace_id: health.response.body.traceId,
       };
@@ -421,7 +460,7 @@ async function run(options) {
 
       return {
         request: { method: 'GET', path: `${options.tasksPath}/${createdTask.task_id}` },
-        response: { status: result.status, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
       };
     });
 
@@ -438,14 +477,15 @@ async function run(options) {
         body: { customer_id: 'deployment-smoke-customer' },
       });
 
-      assertResponse(result, {
+      assertProblemResponse(result, {
         status: 403,
         code: 'FORBIDDEN',
+        instance: options.billingInvoicesPath,
       });
 
       return {
         request: { method: 'POST', path: options.billingInvoicesPath },
-        response: { status: result.status, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
       };
     });
 
@@ -484,7 +524,7 @@ async function run(options) {
 
       return {
         request: { method: 'POST', path: options.videosPath },
-        response: { status: result.status, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
         video_id: result.body.video_id,
       };
     });
@@ -523,7 +563,7 @@ async function run(options) {
 
       return {
         request: { method: 'GET', path: options.videosPath },
-        response: { status: result.status, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
       };
     });
 
@@ -540,14 +580,15 @@ async function run(options) {
           timeoutMs: options.timeoutMs,
         });
 
-        assertResponse(result, {
+        assertProblemResponse(result, {
           status: 404,
           code: 'NOT_FOUND',
+          instance: options.flagOffPath,
         });
 
         return {
           request: { method: 'GET', path: options.flagOffPath },
-          response: { status: result.status, body: sanitizeBody(result.body) },
+          response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
         };
       });
     } else {
