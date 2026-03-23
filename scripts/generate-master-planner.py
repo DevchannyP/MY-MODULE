@@ -133,7 +133,10 @@ registry     = load_yaml("master-shell/plugin-registry/registry.yaml")
 adapter_registry = load_yaml("master-shell/catalog/adapter-registry.yaml")
 adapter_scorecards = load_yaml("master-shell/catalog/adapter-scorecards.yaml")
 project_blueprints = load_yaml("master-shell/catalog/project-blueprints.yaml")
+project_intake_canvas = load_yaml("master-shell/catalog/project-intake-canvas.yaml")
+adapter_compatibility = load_yaml("master-shell/catalog/adapter-compatibility-matrix.yaml")
 ai_learning_map = load_yaml("master-shell/catalog/ai-learning-map.yaml")
+learning_mastery_map = load_yaml("master-shell/catalog/learning-mastery-map.yaml")
 ai_runtime_recipes = load_yaml("master-shell/catalog/ai-runtime-recipes.yaml")
 master_os_relations = load_yaml("master-shell/catalog/master-os-relations.yaml")
 reflect_log   = load_yaml("memory/L0-hot/reflection-log.yaml")
@@ -378,7 +381,13 @@ data = {
     },
     "adapter_scorecards": adapter_scorecards.get("scorecards", []),
     "project_blueprints": project_blueprints.get("blueprints", []),
+    "project_intake_canvas": {
+        "questions": project_intake_canvas.get("questions", []),
+        "defaults": project_intake_canvas.get("defaults", {}),
+    },
+    "adapter_compatibility": adapter_compatibility.get("profiles", []),
     "ai_learning_tracks": ai_learning_map.get("tracks", []),
+    "learning_mastery_map": learning_mastery_map.get("milestones", []),
     "ai_runtime_recipes": ai_runtime_recipes.get("recipes", []),
     "master_os_relations": master_os_relations.get("relations", []),
     "flags": {
@@ -1188,6 +1197,52 @@ const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 const pct = (n,t) => t>0?Math.round(n/t*100):0;
 const sc  = s => typeof s==='number'?(s>=85?'sc-hi':s>=70?'sc-md':'sc-lo'):'';
 function toast(m) { const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500); }
+function intakeAnswers() {
+  const defaults=window.D.project_intake_canvas?.defaults||{};
+  let saved={};
+  try { saved=JSON.parse(localStorage.getItem('wfos-intake-answers')||'{}')||{}; } catch(_) { saved={}; }
+  return {...defaults,...saved};
+}
+function storeIntakeAnswer(questionId, optionId){
+  const next=intakeAnswers();
+  next[questionId]=optionId;
+  localStorage.setItem('wfos-intake-answers', JSON.stringify(next));
+}
+function applyBoosts(bucket, boosts){
+  Object.entries(boosts||{}).forEach(([id, weight])=>{
+    if(!id) return;
+    const numeric=Number(weight)||0;
+    bucket[id]=(bucket[id]||0)+numeric;
+  });
+}
+function topScore(scores, fallbackId=''){
+  const entries=Object.entries(scores||{});
+  if(!entries.length) return fallbackId;
+  entries.sort((a,b)=> b[1]===a[1] ? String(a[0]).localeCompare(String(b[0])) : b[1]-a[1]);
+  return entries[0][0]||fallbackId;
+}
+function computeIntakeRecommendation(){
+  const canvas=window.D.project_intake_canvas||{};
+  const answers=intakeAnswers();
+  const scores={blueprints:{},profiles:{},recipes:{}};
+  (canvas.questions||[]).forEach(question=>{
+    const options=question.options||[];
+    const selectedId=answers[question.id]||canvas.defaults?.[question.id];
+    const selected=options.find(option=>option.id===selectedId)||options[0]||null;
+    if(!selected) return;
+    const boosts=selected.boosts||{};
+    applyBoosts(scores.blueprints, boosts.blueprints||{});
+    applyBoosts(scores.profiles, boosts.profiles||{});
+    applyBoosts(scores.recipes, boosts.recipes||{});
+  });
+  return {
+    answers,
+    scores,
+    blueprintId: topScore(scores.blueprints, window.D.project_blueprints?.[0]?.id||''),
+    profileId: topScore(scores.profiles, window.D.adapter_catalog?.profiles?.[0]?.id||''),
+    recipeId: topScore(scores.recipes, window.D.ai_runtime_recipes?.[0]?.id||''),
+  };
+}
 
 // ────────────────────────────────────────────────────────────────
 // TABS
@@ -2029,8 +2084,13 @@ function renderReq(){
   const hc=req.hard_constraints||[], sc=req.soft_constraints||[];
   const doms=req.domain_map_domains||[];
   const blueprints=window.D.project_blueprints||[];
+  const intakeCanvas=window.D.project_intake_canvas||{};
+  const intakeQuestions=intakeCanvas.questions||[];
+  const intakeSummary=computeIntakeRecommendation();
   const tracks=window.D.ai_learning_tracks||[];
+  const masteryMilestones=window.D.learning_mastery_map||[];
   const profiles=window.D.adapter_catalog?.profiles||[];
+  const compatibilityProfiles=window.D.adapter_compatibility||[];
   const recipes=window.D.ai_runtime_recipes||[];
   const relations=window.D.master_os_relations||[];
 
@@ -2161,6 +2221,81 @@ function renderReq(){
     <div class="wg">${esc(rel.relation)} → ${esc(rel.target_type)}:${esc(rel.target_id)}</div>
   </div>`).join('');
 
+  const intakeBlueprint=blueprints.find(bp=>bp.id===intakeSummary.blueprintId)||null;
+  const intakeProfile=profiles.find(profile=>profile.id===intakeSummary.profileId)||null;
+  const intakeRecipe=recipes.find(recipe=>recipe.id===intakeSummary.recipeId)||null;
+  const intakeH=intakeQuestions.map(question=>{
+    const selectedId=intakeSummary.answers[question.id]||intakeCanvas.defaults?.[question.id];
+    const options=question.options||[];
+    const selected=options.find(option=>option.id===selectedId)||options[0]||{};
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="card-h">
+        <div class="card-ic">📝</div>
+        <div>
+          <div class="card-tit">${esc(question.title||question.id)}</div>
+          <div class="card-sub">${esc(question.prompt||'')}</div>
+        </div>
+      </div>
+      <div class="kv">
+        <span class="kk">선택</span>
+        <span>
+          <select onchange="storeIntakeAnswer('${esc(question.id)}', this.value); renderReq();" style="background:var(--sf2);color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:6px 8px;min-width:220px">
+            ${options.map(option=>`<option value="${esc(option.id)}" ${option.id===selectedId?'selected':''}>${esc(option.label||option.id)}</option>`).join('')}
+          </select>
+        </span>
+      </div>
+      <div style="font-size:12px;color:var(--tx2);line-height:1.6">${esc(selected.description||'')}</div>
+    </div>`;
+  }).join('');
+
+  const intakeScoreRows=(scores)=>Object.entries(scores||{})
+    .sort((a,b)=> b[1]===a[1] ? String(a[0]).localeCompare(String(b[0])) : b[1]-a[1])
+    .slice(0,3)
+    .map(([id,score])=>`<div class="kv"><span class="kk">${esc(id)}</span><span class="${score>=4?'kv-ok':''}">${esc(score)}</span></div>`)
+    .join('')||'<div style="color:var(--dm);font-size:12px">점수 없음</div>';
+
+  const compatibilityH=compatibilityProfiles.map(rule=>{
+    const profile=profiles.find(item=>item.id===rule.profile_id)||null;
+    const declared=new Set(profile?.adapter_refs||[]);
+    const required=(rule.required_adapters||[]);
+    const recommended=(rule.recommended_adapters||[]);
+    const forbidden=(rule.forbidden_adapters||[]);
+    const missing=required.filter(adapterId=>!declared.has(adapterId));
+    const invalid=forbidden.filter(adapterId=>declared.has(adapterId));
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="card-h">
+        <div class="card-ic">🧩</div>
+        <div>
+          <div class="card-tit">${esc(profile?.name||rule.profile_id)}</div>
+          <div class="card-sub">${esc(rule.profile_id)} · 추천 레시피: ${esc((rule.recommended_recipes||[]).join(', ')||'—')}</div>
+        </div>
+      </div>
+      <div class="kv"><span class="kk">필수 어댑터</span><span class="${missing.length?'':'kv-ok'}">${esc(required.join(', ')||'—')}</span></div>
+      <div class="kv"><span class="kk">권장 어댑터</span><span>${esc(recommended.join(', ')||'—')}</span></div>
+      <div class="kv"><span class="kk">금지 어댑터</span><span>${esc(forbidden.join(', ')||'—')}</span></div>
+      <div class="kv"><span class="kk">현재 profile 선언</span><span>${esc((profile?.adapter_refs||[]).join(', ')||'—')}</span></div>
+      <div class="kv"><span class="kk">정합성</span><span class="${!missing.length && !invalid.length ? 'kv-ok' : ''}">${!missing.length && !invalid.length ? 'OK' : `보정 필요: missing ${missing.length}, forbidden ${invalid.length}`}</span></div>
+      ${(rule.notes||[]).length?`<div style="margin-top:8px;font-size:11px;color:var(--tx2);line-height:1.6">${(rule.notes||[]).map(note=>`• ${esc(note)}`).join('<br>')}</div>`:''}
+    </div>`;
+  }).join('');
+
+  const masteryLevels={foundation:'기초',apprentice:'입문 확장',practitioner:'운영 실전',mastery:'설계 숙련'};
+  const masteryH=masteryMilestones.map(milestone=>`<div class="card" style="margin-bottom:10px">
+    <div class="card-h">
+      <div class="card-ic">🎓</div>
+      <div>
+        <div class="card-tit">${esc(milestone.title||milestone.id)}</div>
+        <div class="card-sub">${esc(masteryLevels[milestone.level]||milestone.level||'—')} · track: ${esc(milestone.track_ref||'—')}</div>
+      </div>
+    </div>
+    <div class="kv"><span class="kk">목표</span><span>${esc(milestone.objective||'')}</span></div>
+    <div class="kv"><span class="kk">선행 단계</span><span>${esc((milestone.prerequisites||[]).join(', ')||'없음')}</span></div>
+    <div style="margin-top:8px">
+      <div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">완료 증거</div>
+      ${(milestone.proof||[]).map(item=>`<div class="wi" style="margin-bottom:5px"><div class="wd d-pass"></div><div class="wg">${esc(item)}</div></div>`).join('')}
+    </div>
+  </div>`).join('');
+
   $('c-req').innerHTML=`
     <div class="sec-tit">📋 요구사항 & 제약조건</div>
 
@@ -2208,8 +2343,42 @@ function renderReq(){
     </div>
 
     <div class="req-sec">
+      <div class="req-sec-h">🧭 프로젝트 시작 질문지</div>
+      <div class="card" style="margin-bottom:10px">
+        <div class="card-h">
+          <div class="card-ic">🎯</div>
+          <div>
+            <div class="card-tit">추천 조합</div>
+            <div class="card-sub">질문 답변을 기준으로 blueprint/profile/recipe를 계산한다.</div>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="mc"><div class="mc-l">Blueprint</div><div class="mc-v" style="font-size:14px">${esc(intakeBlueprint?.name||intakeSummary.blueprintId||'—')}</div><div class="mc-s">${esc(intakeBlueprint?.summary||'')}</div></div>
+          <div class="mc"><div class="mc-l">Profile</div><div class="mc-v" style="font-size:14px">${esc(intakeProfile?.name||intakeSummary.profileId||'—')}</div><div class="mc-s">${esc(intakeProfile?.description||'')}</div></div>
+          <div class="mc"><div class="mc-l">Recipe</div><div class="mc-v" style="font-size:14px">${esc(intakeRecipe?.name||intakeSummary.recipeId||'—')}</div><div class="mc-s">${esc(intakeRecipe?.objective||'')}</div></div>
+        </div>
+        <div class="g3" style="margin-top:10px">
+          <div class="card" style="margin:0"><div class="card-tit" style="margin-bottom:6px">Blueprint 점수</div>${intakeScoreRows(intakeSummary.scores.blueprints)}</div>
+          <div class="card" style="margin:0"><div class="card-tit" style="margin-bottom:6px">Profile 점수</div>${intakeScoreRows(intakeSummary.scores.profiles)}</div>
+          <div class="card" style="margin:0"><div class="card-tit" style="margin-bottom:6px">Recipe 점수</div>${intakeScoreRows(intakeSummary.scores.recipes)}</div>
+        </div>
+      </div>
+      ${intakeH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
       <div class="req-sec-h">🧠 AI 학습 플로우</div>
       ${trackH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🧱 어댑터 호환성 매트릭스</div>
+      ${compatibilityH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🎓 학습 숙련도 로드맵</div>
+      ${masteryH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
     </div>
 
     <div class="req-sec">
@@ -2385,6 +2554,18 @@ function runSearch(q){
   (d.ai_runtime_recipes||[]).filter(recipe=>(recipe.id+recipe.name+recipe.objective+(recipe.tool_stack||[]).join(' ')).toLowerCase().includes(ql)).slice(0,4).forEach(recipe=>{
     results.push({tag:'레시피',text:recipe.name,sub:recipe.objective,action:`sw('req')`});
   });
+  // Intake questions
+  ((d.project_intake_canvas||{}).questions||[]).filter(qn=>(qn.id+qn.title+qn.prompt).toLowerCase().includes(ql)).slice(0,4).forEach(qn=>{
+    results.push({tag:'질문지',text:qn.title,sub:qn.prompt,action:`sw('req')`});
+  });
+  // Compatibility
+  (d.adapter_compatibility||[]).filter(rule=>(rule.profile_id+(rule.notes||[]).join(' ')).toLowerCase().includes(ql)).slice(0,4).forEach(rule=>{
+    results.push({tag:'호환성',text:rule.profile_id,sub:(rule.recommended_recipes||[]).join(', ')||'recipe 없음',action:`sw('req')`});
+  });
+  // Mastery
+  (d.learning_mastery_map||[]).filter(ms=>(ms.id+ms.title+ms.objective+ms.track_ref).toLowerCase().includes(ql)).slice(0,4).forEach(ms=>{
+    results.push({tag:'숙련도',text:ms.title,sub:ms.objective,action:`sw('req')`});
+  });
   if(!results.length){$('gsResults').innerHTML='<div class="gs-empty">검색 결과 없음: "'+esc(q)+'"</div>';return;}
   $('gsResults').innerHTML=results.map((r,i)=>`<div class="gs-item" style="${i===0?'background:var(--sf2)':''}"
     onclick="${r.action};closeSearch()">
@@ -2454,7 +2635,11 @@ function buildSB(tab){
   } else if(tab==='req'){
     const req=window.D.requirements||{};
     const hc=(req.hard_constraints||[]).length, sc=(req.soft_constraints||[]).length;
-    const bp=(window.D.project_blueprints||[]).length, lt=(window.D.ai_learning_tracks||[]).length;
+    const bp=(window.D.project_blueprints||[]).length;
+    const lt=(window.D.ai_learning_tracks||[]).length;
+    const iq=((window.D.project_intake_canvas||{}).questions||[]).length;
+    const ac=(window.D.adapter_compatibility||[]).length;
+    const lm=(window.D.learning_mastery_map||[]).length;
     sb.innerHTML=`<div class="sb-lbl">요구사항</div>
       <div class="nl"><span class="dot d-pass"></span>모듈 정의</div>
       <div class="nl"><span class="dot d-act"></span>NFR 비기능 요구사항</div>
@@ -2463,7 +2648,10 @@ function buildSB(tab){
       <div class="nl"><span class="dot d-off"></span>소프트 제약 (${sc}개)</div>
       <div class="nl"><span class="dot d-act"></span>도메인 맵</div>
       <div class="nl"><span class="dot d-pass"></span>블루프린트 (${bp}개)</div>
-      <div class="nl"><span class="dot d-pass"></span>AI 학습 플로우 (${lt}개)</div>`;
+      <div class="nl"><span class="dot d-pass"></span>프로젝트 질문지 (${iq}개)</div>
+      <div class="nl"><span class="dot d-pass"></span>AI 학습 플로우 (${lt}개)</div>
+      <div class="nl"><span class="dot d-pass"></span>호환성 매트릭스 (${ac}개)</div>
+      <div class="nl"><span class="dot d-pass"></span>숙련도 로드맵 (${lm}개)</div>`;
   } else if(tab==='adr'){
     sb.innerHTML=`<div class="sb-lbl">ADR (${d.adrs.length})</div>`+
       d.adrs.map(a=>`<div class="nl">

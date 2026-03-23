@@ -81,8 +81,11 @@ def main() -> int:
     catalog = load_yaml("master-shell/catalog/domains.yaml")
     adapter_registry = load_yaml("master-shell/catalog/adapter-registry.yaml")
     adapter_scorecards = load_yaml("master-shell/catalog/adapter-scorecards.yaml")
+    adapter_compatibility = load_yaml("master-shell/catalog/adapter-compatibility-matrix.yaml")
     project_blueprints = load_yaml("master-shell/catalog/project-blueprints.yaml")
+    project_intake = load_yaml("master-shell/catalog/project-intake-canvas.yaml")
     ai_learning_map = load_yaml("master-shell/catalog/ai-learning-map.yaml")
+    learning_mastery = load_yaml("master-shell/catalog/learning-mastery-map.yaml")
     ai_runtime_recipes = load_yaml("master-shell/catalog/ai-runtime-recipes.yaml")
     relations_graph = load_yaml("master-shell/catalog/master-os-relations.yaml")
     flags = load_yaml("master-shell/feature-flags/flags.yaml")
@@ -96,9 +99,12 @@ def main() -> int:
     adapters = adapter_registry.get("adapters", [])
     adapter_profiles = adapter_registry.get("adapter_profiles", [])
     blueprints = project_blueprints.get("blueprints", [])
+    intake_questions = project_intake.get("questions", [])
     learning_tracks = ai_learning_map.get("tracks", [])
+    mastery_milestones = learning_mastery.get("milestones", [])
     runtime_recipes = ai_runtime_recipes.get("recipes", [])
     relation_items = relations_graph.get("relations", [])
+    compatibility_profiles = adapter_compatibility.get("profiles", [])
     plugin_map = {}
     for plugin in plugins:
         plugin_id = plugin.get("id")
@@ -345,38 +351,6 @@ def main() -> int:
         if not isinstance(starter_sequence, list) or len(starter_sequence) < 2:
             errors.append(f"project-blueprints: {blueprint_id} must define at least 2 starter_sequence steps")
 
-    scorecards = adapter_scorecards.get("scorecards", [])
-    scorecard_map = {}
-    score_min = ((adapter_scorecards.get("score_scale") or {}).get("min"))
-    score_max = ((adapter_scorecards.get("score_scale") or {}).get("max"))
-    if not isinstance(score_min, int) or not isinstance(score_max, int):
-        errors.append("adapter-scorecards: score_scale.min/max must be integers")
-    for scorecard in scorecards:
-        adapter_id = scorecard.get("adapter_id")
-        if adapter_id in scorecard_map:
-            errors.append(f"adapter-scorecards: duplicate adapter_id -> {adapter_id}")
-        if adapter_id not in adapter_map:
-            errors.append(f"adapter-scorecards: unknown adapter_id -> {adapter_id}")
-            continue
-        scorecard_map[adapter_id] = scorecard
-        metrics = scorecard.get("metrics", {})
-        required_metrics = {"extensibility", "performance", "learning_clarity", "ai_compatibility", "swap_safety"}
-        if set(metrics.keys()) != required_metrics:
-            errors.append(f"adapter-scorecards: {adapter_id} metrics must match {sorted(required_metrics)}")
-        for metric_name, metric_value in metrics.items():
-            if not isinstance(metric_value, int) or metric_value < score_min or metric_value > score_max:
-                errors.append(
-                    f"adapter-scorecards: {adapter_id}.{metric_name} must be integer within [{score_min}, {score_max}]"
-                )
-        if not ensure_list_of_strings(scorecard.get("strengths")):
-            errors.append(f"adapter-scorecards: {adapter_id} strengths required")
-        if not ensure_list_of_strings(scorecard.get("best_for")):
-            errors.append(f"adapter-scorecards: {adapter_id} best_for required")
-
-    for adapter_id in adapter_map:
-        if adapter_id not in scorecard_map:
-            errors.append(f"adapter-scorecards: missing scorecard for adapter -> {adapter_id}")
-
     recipe_ids: set[str] = set()
     for recipe in runtime_recipes:
         recipe_id = recipe.get("id")
@@ -412,6 +386,137 @@ def main() -> int:
         for learning_ref in ensure_list_of_strings(recipe.get("learning_track_refs")):
             if learning_ref not in learning_track_ids:
                 errors.append(f"ai-runtime-recipes: {recipe_id} unknown learning track -> {learning_ref}")
+
+    intake_default_ids = project_intake.get("defaults", {}) if isinstance(project_intake.get("defaults", {}), dict) else {}
+    seen_question_ids: set[str] = set()
+    for question in intake_questions:
+        question_id = question.get("id")
+        if question_id in seen_question_ids:
+            errors.append(f"project-intake-canvas: duplicate question id -> {question_id}")
+        if not isinstance(question_id, str) or not question_id:
+            errors.append("project-intake-canvas: questions[].id must be non-empty")
+            continue
+        seen_question_ids.add(question_id)
+        options = question.get("options", [])
+        if not isinstance(options, list) or len(options) < 2:
+            errors.append(f"project-intake-canvas: {question_id} must define at least 2 options")
+            continue
+        option_ids: set[str] = set()
+        for option in options:
+            option_id = option.get("id")
+            if option_id in option_ids:
+                errors.append(f"project-intake-canvas: {question_id} duplicate option -> {option_id}")
+            if not isinstance(option_id, str) or not option_id:
+                errors.append(f"project-intake-canvas: {question_id} option id missing")
+                continue
+            option_ids.add(option_id)
+            boosts = option.get("boosts", {}) if isinstance(option.get("boosts", {}), dict) else {}
+            for blueprint_ref in (boosts.get("blueprints", {}) or {}).keys():
+                if blueprint_ref not in blueprint_ids:
+                    errors.append(f"project-intake-canvas: {question_id}/{option_id} unknown blueprint boost -> {blueprint_ref}")
+            for profile_ref in (boosts.get("profiles", {}) or {}).keys():
+                if profile_ref not in profile_map:
+                    errors.append(f"project-intake-canvas: {question_id}/{option_id} unknown profile boost -> {profile_ref}")
+            for recipe_ref in (boosts.get("recipes", {}) or {}).keys():
+                if recipe_ref not in recipe_ids and recipe_ids:
+                    errors.append(f"project-intake-canvas: {question_id}/{option_id} unknown recipe boost -> {recipe_ref}")
+        default_option = intake_default_ids.get(question_id)
+        if default_option not in option_ids:
+            errors.append(f"project-intake-canvas: default for {question_id} must reference an option in the same question")
+
+    scorecards = adapter_scorecards.get("scorecards", [])
+    scorecard_map = {}
+    score_min = ((adapter_scorecards.get("score_scale") or {}).get("min"))
+    score_max = ((adapter_scorecards.get("score_scale") or {}).get("max"))
+    if not isinstance(score_min, int) or not isinstance(score_max, int):
+        errors.append("adapter-scorecards: score_scale.min/max must be integers")
+    for scorecard in scorecards:
+        adapter_id = scorecard.get("adapter_id")
+        if adapter_id in scorecard_map:
+            errors.append(f"adapter-scorecards: duplicate adapter_id -> {adapter_id}")
+        if adapter_id not in adapter_map:
+            errors.append(f"adapter-scorecards: unknown adapter_id -> {adapter_id}")
+            continue
+        scorecard_map[adapter_id] = scorecard
+        metrics = scorecard.get("metrics", {})
+        required_metrics = {"extensibility", "performance", "learning_clarity", "ai_compatibility", "swap_safety"}
+        if set(metrics.keys()) != required_metrics:
+            errors.append(f"adapter-scorecards: {adapter_id} metrics must match {sorted(required_metrics)}")
+        for metric_name, metric_value in metrics.items():
+            if not isinstance(metric_value, int) or metric_value < score_min or metric_value > score_max:
+                errors.append(
+                    f"adapter-scorecards: {adapter_id}.{metric_name} must be integer within [{score_min}, {score_max}]"
+                )
+        if not ensure_list_of_strings(scorecard.get("strengths")):
+            errors.append(f"adapter-scorecards: {adapter_id} strengths required")
+        if not ensure_list_of_strings(scorecard.get("best_for")):
+            errors.append(f"adapter-scorecards: {adapter_id} best_for required")
+
+    for adapter_id in adapter_map:
+        if adapter_id not in scorecard_map:
+            errors.append(f"adapter-scorecards: missing scorecard for adapter -> {adapter_id}")
+
+    compatibility_map = {}
+    for compatibility in compatibility_profiles:
+        profile_id = compatibility.get("profile_id")
+        if profile_id in compatibility_map:
+            errors.append(f"adapter-compatibility-matrix: duplicate profile_id -> {profile_id}")
+        if profile_id not in profile_map:
+            errors.append(f"adapter-compatibility-matrix: unknown profile -> {profile_id}")
+            continue
+        compatibility_map[profile_id] = compatibility
+        required_adapters = set(ensure_list_of_strings(compatibility.get("required_adapters")))
+        recommended_adapters = set(ensure_list_of_strings(compatibility.get("recommended_adapters")))
+        forbidden_adapters = set(ensure_list_of_strings(compatibility.get("forbidden_adapters")))
+        for adapter_ref in required_adapters | recommended_adapters | forbidden_adapters:
+            if adapter_ref not in adapter_map:
+                errors.append(f"adapter-compatibility-matrix: {profile_id} unknown adapter -> {adapter_ref}")
+        if required_adapters & forbidden_adapters:
+            errors.append(f"adapter-compatibility-matrix: {profile_id} adapter cannot be both required and forbidden")
+        for recipe_ref in ensure_list_of_strings(compatibility.get("recommended_recipes")):
+            if recipe_ref not in recipe_ids:
+                errors.append(f"adapter-compatibility-matrix: {profile_id} unknown recipe -> {recipe_ref}")
+
+    for profile_id, profile in profile_map.items():
+        if profile_id not in compatibility_map:
+            errors.append(f"adapter-compatibility-matrix: missing compatibility profile -> {profile_id}")
+            continue
+        declared = set(ensure_list_of_strings(profile.get("adapter_refs")))
+        rules = compatibility_map[profile_id]
+        required = set(ensure_list_of_strings(rules.get("required_adapters")))
+        forbidden = set(ensure_list_of_strings(rules.get("forbidden_adapters")))
+        if not required.issubset(declared):
+            errors.append(
+                f"adapter-compatibility-matrix: {profile_id} missing required adapters -> {sorted(required - declared)}"
+            )
+        invalid = declared & forbidden
+        if invalid:
+            errors.append(f"adapter-compatibility-matrix: {profile_id} contains forbidden adapters -> {sorted(invalid)}")
+
+    milestone_ids: set[str] = set()
+    for milestone in mastery_milestones:
+        milestone_id = milestone.get("id")
+        if milestone_id in milestone_ids:
+            errors.append(f"learning-mastery-map: duplicate milestone id -> {milestone_id}")
+        if not isinstance(milestone_id, str) or not milestone_id:
+            errors.append("learning-mastery-map: milestones[].id must be non-empty")
+            continue
+        milestone_ids.add(milestone_id)
+        track_ref = milestone.get("track_ref")
+        if track_ref not in learning_track_ids:
+            errors.append(f"learning-mastery-map: {milestone_id} unknown track_ref -> {track_ref}")
+        if milestone.get("level") not in {"foundation", "apprentice", "practitioner", "mastery"}:
+            errors.append(f"learning-mastery-map: {milestone_id} invalid level -> {milestone.get('level')}")
+        if not isinstance(milestone.get("objective"), str) or not milestone.get("objective"):
+            errors.append(f"learning-mastery-map: {milestone_id} objective required")
+        if len(ensure_list_of_strings(milestone.get("proof"))) < 1:
+            errors.append(f"learning-mastery-map: {milestone_id} proof required")
+
+    for milestone in mastery_milestones:
+        milestone_id = milestone.get("id")
+        for prerequisite in ensure_list_of_strings(milestone.get("prerequisites")):
+            if prerequisite not in milestone_ids:
+                errors.append(f"learning-mastery-map: {milestone_id} unknown prerequisite -> {prerequisite}")
 
     allowed_relation_types = {"uses-profile", "teaches", "implements", "fits-profile"}
     allowed_source_types = {"blueprint", "recipe", "module"}
