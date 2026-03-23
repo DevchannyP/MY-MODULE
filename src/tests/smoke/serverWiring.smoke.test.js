@@ -45,6 +45,7 @@ function jsonRequest(baseUrl, { method, path, body, permissions = [], userId = '
         const raw = Buffer.concat(chunks).toString('utf8');
         resolve({
           status: res.statusCode,
+          headers: res.headers,
           body: raw ? JSON.parse(raw) : {},
         });
       });
@@ -203,6 +204,23 @@ test('[server wiring smoke] disabled video transcode flag returns 404 over HTTP 
     });
     assert.equal(response.status, 404);
     assert.equal(response.body.code, 'NOT_FOUND');
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
+test('[server wiring smoke] unknown route returns RFC 9457 content type over HTTP transport', async () => {
+  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+
+  try {
+    const response = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: '/unknown-route',
+    });
+    assert.equal(response.status, 404);
+    assert.equal(response.body.status, 404);
+    assert.equal(response.body.title, 'Not Found');
+    assert.match(String(response.headers['content-type'] || ''), /^application\/problem\+json/);
   } finally {
     await closeServer(runtime.server);
   }

@@ -190,8 +190,15 @@ function resolveVideoFeatureFlag(routePath, method) {
 
 function sendJson(res, status, body) {
   const payload = JSON.stringify(body, null, 2);
+  const isProblemDetails = body
+    && typeof body === 'object'
+    && typeof body.type === 'string'
+    && typeof body.title === 'string'
+    && typeof body.status === 'number';
   res.writeHead(status, {
-    'content-type': 'application/json; charset=utf-8',
+    'content-type': isProblemDetails
+      ? 'application/problem+json; charset=utf-8'
+      : 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(payload),
   });
   res.end(payload);
@@ -320,7 +327,10 @@ function createAppHandler({
       metrics.httpRequestsTotal.add(1, { route: url.pathname, method, status: 404 });
       metrics.httpDurationMs.record(Date.now() - startMs, { route: url.pathname });
       span.setAttribute('http.status_code', 404).setStatus('error').end();
-      sendJson(res, 404, { code: 'NOT_FOUND', message: `Route not found: ${method} ${url.pathname}` });
+      sendJson(res, 404, fromError(
+        Object.assign(new Error(`Route not found: ${method} ${url.pathname}`), { code: 'NOT_FOUND' }),
+        { path: url.pathname, traceId: span.traceId },
+      ).body);
     } catch (error) {
       // RFC 7807 Problem Details at transport layer
       const { status, body } = fromError(error, {

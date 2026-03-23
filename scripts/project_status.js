@@ -49,34 +49,79 @@ function buildStageSummary(requirements, currentState, currentWp, legacyStageSta
   });
 }
 
-function extractNextWp(nextActions) {
-  if (typeof nextActions.next_wp === 'string') {
-    return nextActions.next_wp;
-  }
+function collectCanonicalWps(wpQueue) {
+  const capabilities = Array.isArray(wpQueue.capabilities) ? wpQueue.capabilities : [];
+  const wps = [];
 
-  const queue = Array.isArray(nextActions.queue) ? nextActions.queue : [];
-  if (queue.length > 0 && typeof queue[0]?.id === 'string') {
-    return queue[0].id;
-  }
+  capabilities.forEach((capability) => {
+    const workPackets = Array.isArray(capability.work_packets) ? capability.work_packets : [];
+    workPackets.forEach((wp) => {
+      wps.push({
+        id: typeof wp.id === 'string' ? wp.id : 'UNKNOWN',
+        status: typeof wp.status === 'string' ? wp.status : 'unknown',
+        tierPriority: ({
+          infra: 0,
+          arch: 1,
+          governance: 2,
+          domain: 3,
+          meta: 4,
+        })[wp.tier] ?? 99,
+        capPriority: typeof capability.priority === 'number' ? capability.priority : 99,
+        dependsOn: Array.isArray(wp.depends_on) ? wp.depends_on : [],
+      });
+    });
+  });
 
-  return 'UNKNOWN';
+  return wps;
 }
 
-function main() {
+function extractNextWp(nextActions, wpQueue) {
+  const canonicalWps = collectCanonicalWps(wpQueue);
+  if (canonicalWps.length === 0) {
+    return typeof nextActions.next_wp === 'string' ? nextActions.next_wp : 'UNKNOWN';
+  }
+
+  const doneIds = new Set(
+    canonicalWps
+      .filter((wp) => wp.status === 'done')
+      .map((wp) => wp.id)
+  );
+
+  const ready = canonicalWps
+    .filter((wp) => wp.status === 'pending' && wp.dependsOn.every((dependency) => doneIds.has(dependency)))
+    .sort((left, right) => {
+      if (left.tierPriority !== right.tierPriority) {
+        return left.tierPriority - right.tierPriority;
+      }
+      if (left.capPriority !== right.capPriority) {
+        return left.capPriority - right.capPriority;
+      }
+      return left.id.localeCompare(right.id);
+    });
+
+  if (ready.length > 0) {
+    return ready[0].id;
+  }
+
+  return 'NONE';
+}
+
+function buildReport() {
   const requirements = readYaml('requirements/requirements.yaml');
   const currentState = readYaml('memory/current-state.yaml');
   const currentWp = readYaml('memory/current-wp.yaml');
   const nextActions = readYaml('memory/next-actions.yaml');
+  const wpQueue = readYaml('memory/wp-queue.yaml');
   const legacyProjectState = readYaml('memory/project/current-state.yaml');
   const legacyStageStates = getLegacyStageStates();
 
-  const report = {
+  return {
     execution_mode: 'read-only-status',
     repository: 'my-module',
     requirements_stage: typeof requirements.stage === 'string' ? requirements.stage : 'UNKNOWN',
     current_wp: typeof currentWp.id === 'string' ? currentWp.id : 'UNKNOWN',
     last_completed_wp: currentState.last_completed_wp?.id || 'UNKNOWN',
-    next_wp: extractNextWp(nextActions),
+    next_wp: extractNextWp(nextActions, wpQueue),
     legacy_last_completed_stage: legacyProjectState.last_completed_stage || 'UNKNOWN',
     stage_summary: buildStageSummary(requirements, currentState, currentWp, legacyStageStates),
     capabilities: summarizeCapabilities(currentState),
@@ -89,8 +134,16 @@ function main() {
       legacy_project_state: 'memory/project/current-state.yaml',
     },
   };
-
-  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 }
 
-main();
+function main() {
+  process.stdout.write(`${JSON.stringify(buildReport(), null, 2)}\n`);
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  buildReport,
+};

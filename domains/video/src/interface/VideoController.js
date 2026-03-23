@@ -160,7 +160,10 @@ class VideoController {
       return { status: 200, body: this._serializeVideo(video) };
     }
 
-    return { status: 404, body: { code: 'NOT_FOUND', message: `Route not found: ${method} ${path}` } };
+    return fromError(
+      Object.assign(new Error(`Route not found: ${method} ${path}`), { code: 'NOT_FOUND' }),
+      { correlationId },
+    );
   }
 
   // ── 직렬화 ───────────────────────────────────────────────────────────────────
@@ -188,11 +191,11 @@ class VideoController {
       status:               job.status,
       target_format:        job.targetFormat,
       target_resolution:    job.targetResolution,
-      output_rendition_ref: job.outputRenditionRef || null,
+      output_rendition_ref: job.outputRenditionRef ?? null,
       progress_percent:     job.progressPercent !== null ? job.progressPercent : null,
-      error_message:        job.errorMessage       || null,
+      error_message:        job.errorMessage ?? null,
       created_at:           job.createdAt,
-      completed_at:         job.completedAt        || null,
+      completed_at:         job.completedAt ?? null,
     };
   }
 

@@ -214,7 +214,10 @@ class BillingController {
       return { status: 200, body: summary };
     }
 
-    return { status: 404, body: { code: 'NOT_FOUND', message: `Route not found: ${method} ${path}` } };
+    return fromError(
+      Object.assign(new Error(`Route not found: ${method} ${path}`), { code: 'NOT_FOUND' }),
+      { correlationId },
+    );
   }
 
   // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
@@ -279,8 +282,8 @@ class BillingController {
       invoice_id:     payment.invoiceId,
       amount:         this._serializeMoney(payment.amount),
       status:         payment.status,
-      synced_at:      payment.syncedAt      || null,
-      mismatch_delta: payment.mismatchDelta ? this._serializeMoney(payment.mismatchDelta) : null,
+      synced_at:      payment.syncedAt ?? null,
+      mismatch_delta: payment.mismatchDelta !== null ? this._serializeMoney(payment.mismatchDelta) : null,
       created_at:     payment.createdAt,
     };
   }

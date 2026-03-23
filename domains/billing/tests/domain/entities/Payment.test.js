@@ -93,6 +93,20 @@ describe('Payment Entity', () => {
     assert.equal(json.mismatch_delta.amount, 100);
   });
 
+  test('[회귀] mismatchDelta JSON 스냅샷도 Money 인스턴스로 재구성된다', () => {
+    const p = new Payment({
+      paymentId: 'pay-json',
+      invoiceId: 'inv-json',
+      amount: { amount: 900, currency: 'KRW' },
+      status: PAYMENT_STATUSES.MISMATCH,
+      mismatchDelta: { amount: 0, currency: 'KRW' },
+      createdAt: new Date().toISOString(),
+    });
+    assert.ok(p.mismatchDelta instanceof Money);
+    assert.equal(p.mismatchDelta.amount, 0);
+    assert.deepEqual(p.toJSON().mismatch_delta, { amount: 0, currency: 'KRW' });
+  });
+
   test('모든 유효한 PAYMENT_STATUSES 값으로 Payment 생성 가능', () => {
     for (const status of Object.values(PAYMENT_STATUSES)) {
       const p = new Payment({

@@ -66,6 +66,15 @@ describe('[BillingController] 알 수 없는 라우트', () => {
     const res = await ctrl.handle({ method: 'DELETE', path: '/billing/unknown', caller: FULL_CALLER });
     assert.equal(res.status, 404);
   });
+
+  test('[회귀] 404 응답은 RFC 9457 Problem Details 구조를 따른다', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({ method: 'DELETE', path: '/billing/unknown', caller: FULL_CALLER });
+    assert.equal(res.status, 404);
+    assert.equal(res.body.status, 404);
+    assert.equal(res.body.title, 'Not Found');
+    assert.ok(typeof res.body.type === 'string');
+  });
 });
 
 // ── 2. GET /billing/invoices ──────────────────────────────────────────────────

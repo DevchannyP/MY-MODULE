@@ -49,6 +49,15 @@ describe('[VideoController smoke] 알 수 없는 라우트', () => {
     assert.ok(res.body.code);
     assert.ok(res.body.message);
   });
+
+  test('[회귀] 404 응답은 RFC 9457 Problem Details 구조를 따른다', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({ method: 'DELETE', path: '/videos/unknown/action', caller: FULL_CALLER });
+    assert.equal(res.status, 404);
+    assert.equal(res.body.status, 404);
+    assert.equal(res.body.title, 'Not Found');
+    assert.ok(typeof res.body.type === 'string');
+  });
 });
 
 // ── POST /videos — uploadVideo ────────────────────────────────────────────────

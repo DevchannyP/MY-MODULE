@@ -42,8 +42,12 @@ class Payment {
     this.invoiceId     = invoiceId;
     this.amount        = amount instanceof Money ? amount : Money.fromJSON(amount);
     this.status        = status;
-    this.syncedAt      = syncedAt      || null;
-    this.mismatchDelta = mismatchDelta || null;
+    this.syncedAt      = syncedAt ?? null;
+    this.mismatchDelta = mismatchDelta === null || mismatchDelta === undefined
+      ? null
+      : mismatchDelta instanceof Money
+        ? mismatchDelta
+        : Money.fromJSON(mismatchDelta);
     this.createdAt     = createdAt;
 
     if (!Object.values(PAYMENT_STATUSES).includes(status)) {
@@ -64,7 +68,7 @@ class Payment {
       amount:          this.amount.toJSON(),
       status:          this.status,
       synced_at:       this.syncedAt,
-      mismatch_delta:  this.mismatchDelta ? this.mismatchDelta.toJSON() : null,
+      mismatch_delta:  this.mismatchDelta !== null ? this.mismatchDelta.toJSON() : null,
       created_at:      this.createdAt,
     };
   }
