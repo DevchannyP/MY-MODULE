@@ -3,8 +3,13 @@
 const { TaskDomainService } = require('../domain/services/TaskDomainService');
 
 class ReassignTaskUseCase {
-  constructor(taskRepository) {
-    this._repo = taskRepository;
+  /**
+   * @param {import('./ports/TaskRepository').TaskRepository} taskRepository
+   * @param {import('../../../../../src/shared/EventPublisher').EventPublisher} [eventPublisher]
+   */
+  constructor(taskRepository, eventPublisher = null) {
+    this._repo      = taskRepository;
+    this._publisher = eventPublisher;
   }
 
   async execute({ task_id, new_assignee_id }, caller) {
@@ -23,7 +28,10 @@ class ReassignTaskUseCase {
 
     task.reassign(new_assignee_id); // INV001은 Task 내부에서 throw
     await this._repo.save(task);
-    task.pullDomainEvents(); // [확인 필요] 이벤트 버스 연동 필요
+    const events = task.pullDomainEvents();
+    if (this._publisher && events.length > 0) {
+      await this._publisher.publish(events);
+    }
 
     return task.toSnapshot();
   }

@@ -1,8 +1,13 @@
 'use strict';
 
 class TransitionTaskStatusUseCase {
-  constructor(taskRepository) {
-    this._repo = taskRepository;
+  /**
+   * @param {import('./ports/TaskRepository').TaskRepository} taskRepository
+   * @param {import('../../../../../src/shared/EventPublisher').EventPublisher} [eventPublisher]
+   */
+  constructor(taskRepository, eventPublisher = null) {
+    this._repo      = taskRepository;
+    this._publisher = eventPublisher;
   }
 
   async execute({ task_id, new_status }, caller) {
@@ -15,7 +20,10 @@ class TransitionTaskStatusUseCase {
     const oldStatus = task.status;
     task.transitionTo(new_status); // INV002는 Task 내부에서 throw
     await this._repo.save(task);
-    task.pullDomainEvents(); // [확인 필요] 이벤트 버스 연동 필요
+    const events = task.pullDomainEvents();
+    if (this._publisher && events.length > 0) {
+      await this._publisher.publish(events);
+    }
 
     return { task_id, old_status: oldStatus, new_status: task.status };
   }

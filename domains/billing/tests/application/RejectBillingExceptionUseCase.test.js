@@ -61,6 +61,18 @@ describe('RejectBillingExceptionUseCase', () => {
     await assert.rejects(() => rejectUC.execute({ exceptionId: 'nonexistent', reason: '사유' }, ADMIN_CALLER), { code: 'NOT_FOUND' });
   });
 
+  test('이미 처리된 예외 항목 거부 → CONFLICT', async () => {
+    const { repo, rejectUC } = makeSetup();
+    const exc = await seedException(repo);
+    // 먼저 한 번 거부
+    await rejectUC.execute({ exceptionId: exc.exceptionId, reason: '1차 거부' }, ADMIN_CALLER);
+    // 이미 REJECTED 상태에서 재거부 시도
+    await assert.rejects(
+      () => rejectUC.execute({ exceptionId: exc.exceptionId, reason: '2차 거부' }, ADMIN_CALLER),
+      { code: 'CONFLICT' },
+    );
+  });
+
   test('correlationId가 이벤트 페이로드에 포함됨', async () => {
     const { repo, events, rejectUC } = makeSetup();
     await seedException(repo);
