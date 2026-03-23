@@ -50,6 +50,11 @@ reflect_log  = load_yaml("memory/L0-hot/reflection-log.yaml")
 audit_chain  = load_json("worklog/audit-chain.json")
 adr_index    = load_yaml("docs/adr/adr-index.yaml")
 contract_mat = read_md("worklog/contract-matrix.md", 20)
+# ── Requirements / Constraints / Domain-Map ───────────────────────
+req_yaml     = load_yaml("requirements/requirements.yaml")
+constraints  = load_yaml("requirements/constraints.yaml")
+domain_map   = load_yaml("requirements/domain-map.yaml")
+nfr_yaml     = load_yaml("requirements/nfr.yaml")
 stage_a_mems = {}
 for p in glob.glob(os.path.join(ROOT, "memory/stageA/*.yaml")):
     name = os.path.basename(p).replace(".yaml","")
@@ -255,6 +260,18 @@ data = {
     "audit_entries": audit_entries,
     "learning_reports": learning_reports,
     "contract_matrix": contract_mat,
+    "requirements": {
+        "module":         req_yaml.get("module", {}),
+        "stage":          req_yaml.get("stage", "D"),
+        "nfr":            req_yaml.get("nfr", {}),
+        "quality_gates":  req_yaml.get("quality_gates", {}),
+        "contracts":      req_yaml.get("contracts", {}),
+        "composition":    req_yaml.get("composition", {}),
+        "hard_constraints": (constraints or {}).get("hard_constraints", []),
+        "soft_constraints": (constraints or {}).get("soft_constraints", []),
+        "domain_map_domains": (domain_map or {}).get("domains", []),
+        "nfr_global":     nfr_yaml if nfr_yaml else {},
+    },
 }
 
 DATA_JSON = json.dumps(data, ensure_ascii=False, indent=2)
@@ -489,6 +506,51 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
 .sec-tit{font-size:19px;font-weight:700;color:var(--br);margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .divider{border:none;border-top:1px solid var(--bd);margin:14px 0}
 
+/* ── related WPs widget ── */
+.swp{margin-top:10px;border:1px solid rgba(31,111,235,.18);border-radius:var(--r);overflow:hidden}
+.swp-h{display:flex;align-items:center;gap:7px;padding:7px 10px;background:rgba(31,111,235,.05);
+  cursor:pointer;font-size:11px;color:var(--ac2)}
+.swp-h:hover{background:rgba(31,111,235,.1)}
+.swp-body{display:none;padding:6px 8px;border-top:1px solid rgba(31,111,235,.12)}
+.swp-body.open{display:block}
+.swp-item{display:flex;align-items:flex-start;gap:7px;padding:4px 3px;font-size:10px}
+.swp-stat{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600}
+
+/* ── section controls ── */
+.sec-ctrl{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.ts-info{font-size:10px;color:var(--dm);flex:1}
+.done-badge{display:none;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;
+  background:rgba(35,134,54,.12);color:#3fb950;border:1px solid rgba(35,134,54,.25)}
+.done-badge.show{display:inline-flex;align-items:center;gap:3px}
+
+/* ── sub-tabs (archive) ── */
+.stab{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:14px}
+.stab-it{padding:8px 14px;font-size:12px;font-weight:500;color:var(--dm);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .13s}
+.stab-it.on{color:var(--br);border-bottom-color:var(--ac)}
+.stab-pn{display:none}.stab-pn.on{display:block}
+
+/* ── requirement card ── */
+.req-sec{margin-bottom:20px}
+.req-sec-h{font-size:13px;font-weight:700;color:var(--br);margin-bottom:8px;
+  display:flex;align-items:center;gap:7px;padding-bottom:6px;border-bottom:1px solid var(--bd)}
+.constraint{display:flex;gap:8px;padding:8px 10px;border:1px solid var(--bd);
+  border-radius:var(--r);margin-bottom:5px;background:var(--sf)}
+.constraint:hover{border-color:#3a4149}
+.c-id{font-size:9px;font-family:var(--mo);font-weight:700;color:var(--pu);min-width:38px;flex-shrink:0;margin-top:2px}
+.c-rule{font-size:12px;color:var(--tx);flex:1}
+.c-rat{font-size:10px;color:var(--dm);margin-top:2px}
+.nfr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.nfr-item{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:10px}
+.nfr-k{font-size:10px;color:var(--dm);margin-bottom:3px}
+.nfr-v{font-size:16px;font-weight:700;color:var(--br)}
+.qg-cat{margin-bottom:10px}
+.qg-cat-h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--dm);margin-bottom:5px}
+.qg-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;
+  border-radius:99px;border:1px solid rgba(35,134,54,.25);background:rgba(35,134,54,.07);
+  color:#3fb950;margin:2px}
+
 /* ── progress ring mini ── */
 .prog-text{font-size:11px;color:var(--dm)}
 
@@ -537,8 +599,11 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   <div class="tab" onclick="sw('dom')" id="tab-dom">
     🗺 도메인 <span class="tc" id="tc-dom"></span>
   </div>
+  <div class="tab" onclick="sw('req')" id="tab-req">
+    📋 요구사항
+  </div>
   <div class="tab" onclick="sw('adr')" id="tab-adr">
-    📋 ADR <span class="tc" id="tc-adr"></span>
+    🏛 ADR <span class="tc" id="tc-adr"></span>
   </div>
   <div class="tab" onclick="sw('log')" id="tab-log">
     🔍 감사·학습
@@ -553,6 +618,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
     <div class="tab-panel" id="p-wps"><div id="c-wps"></div></div>
     <div class="tab-panel" id="p-arc"><div id="c-arc"></div></div>
     <div class="tab-panel" id="p-dom"><div id="c-dom"></div></div>
+    <div class="tab-panel" id="p-req"><div id="c-req"></div></div>
     <div class="tab-panel" id="p-adr"><div id="c-adr"></div></div>
     <div class="tab-panel" id="p-log"><div id="c-log"></div></div>
   </main>
@@ -575,6 +641,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
 // ────────────────────────────────────────────────────────────────
 const SECTIONS = [
   { id:"s01", ic:"🎯", num:"SECTION 01", tag:"Vision",
+    related_caps:["CAP-01","CAP-02"],
     title:"프로젝트 비전 & 목표",
     desc:"Workflow OS의 핵심 가치, 해결할 문제, 성공 지표를 정의합니다.",
     init(d) {
@@ -593,6 +660,7 @@ const SECTIONS = [
     ]
   },
   { id:"s02", ic:"🗺", num:"SECTION 02", tag:"Stage A",
+    related_caps:["CAP-03","CAP-06","CAP-07"],
     title:"도메인 설계 & 경계 컨텍스트",
     desc:"DDD 바운디드 컨텍스트 정의, 유비쿼터스 언어, 불변조건(INV) 목록.",
     init(d) {
@@ -623,6 +691,7 @@ const SECTIONS = [
     ]
   },
   { id:"s03", ic:"📜", num:"SECTION 03", tag:"Stage B",
+    related_caps:["CAP-04","CAP-05"],
     title:"계약 설계 & 도메인 조합",
     desc:"도메인 간 인터페이스 계약(contracts/), 조합 전략, 충돌 감지 방법론.",
     init(d) {
@@ -642,6 +711,7 @@ const SECTIONS = [
     ]
   },
   { id:"s04", ic:"🐚", num:"SECTION 04", tag:"Stage C",
+    related_caps:["CAP-08","CAP-09"],
     title:"마스터 쉘 & 플러그인 아키텍처",
     desc:"plugin-registry, feature-flags, navigation, observability 구성 전략.",
     init(d) {
@@ -668,6 +738,7 @@ const SECTIONS = [
     ]
   },
   { id:"s05", ic:"⚙️", num:"SECTION 05", tag:"Stage D",
+    related_caps:["CAP-10","CAP-14","CAP-15"],
     title:"구현 전략 & 품질 게이트",
     desc:"Clean Architecture 레이어 구조, 테스트 피라미드, 품질 게이트 기준.",
     init(d) {
@@ -689,6 +760,7 @@ const SECTIONS = [
     ]
   },
   { id:"s06", ic:"🛡", num:"SECTION 06", tag:"Stage E",
+    related_caps:["CAP-11"],
     title:"적대적 검증 & 보안 전략",
     desc:"레드팀 시나리오, OWASP 대응, 불변조건 공격 벡터, 침투 테스트 체크리스트.",
     init(d) {
@@ -711,6 +783,7 @@ const SECTIONS = [
     ]
   },
   { id:"s07", ic:"🚀", num:"SECTION 07", tag:"Ops",
+    related_caps:["CAP-12","CAP-13"],
     title:"배포 & 운영 전략",
     desc:"배포 환경 구성, 롤백 플레이북, 모니터링, SLO/SLA 정의.",
     init(d) {
@@ -731,6 +804,7 @@ const SECTIONS = [
     ]
   },
   { id:"s08", ic:"📈", num:"SECTION 08", tag:"Roadmap",
+    related_caps:[],
     title:"성장 로드맵 & 자기개선 사이클",
     desc:"다음 Work Packet 계획, Reflexion Loop, Knowledge Graph 확장, 팀 역량 성장.",
     init(d) {
@@ -890,12 +964,47 @@ function renderDash() {
 // ────────────────────────────────────────────────────────────────
 // PLANNING
 // ────────────────────────────────────────────────────────────────
+function secWPsHTML(sec) {
+  const caps = sec.related_caps || [];
+  if(!caps.length) return '';
+  const all = window.D.wps.all;
+  const relWPs = all.filter(w => caps.includes(w.cap_id));
+  if(!relWPs.length) return '';
+  const done = relWPs.filter(w=>w.status==='done').length;
+  const inprog = relWPs.filter(w=>w.status==='in_progress').length;
+  const pct2 = relWPs.length>0 ? Math.round(done/relWPs.length*100) : 0;
+  const items = relWPs.slice(0,10).map(w=>`
+    <div class="swp-item">
+      <div class="wd ${w.status==='done'?'w-ok':w.status==='in_progress'?'w-ac':'w-nd'}" style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px"></div>
+      <div style="font-size:9px;font-weight:700;color:var(--dm);min-width:100px;flex-shrink:0">${esc(w.id)}</div>
+      <div style="font-size:10px;color:${w.status==='done'?'var(--dm)':'var(--tx)'};flex:1">${esc(w.goal.substring(0,70))}${w.goal.length>70?'…':''}</div>
+      ${w.status==='done'?`<span class="st s-ok" style="font-size:8px;flex-shrink:0">✓</span>`:(w.status==='in_progress'?`<span class="st s-ac" style="font-size:8px;flex-shrink:0">진행중</span>`:'')}
+    </div>`).join('');
+  return `<div class="swp">
+    <div class="swp-h" onclick="this.nextElementSibling.classList.toggle('open')">
+      <span>🔗 관련 Work Packets — ${done}/${relWPs.length} 완료 (${pct2}%)</span>
+      <div style="flex:1"></div>
+      <span style="font-size:9px;opacity:.6">▾ 클릭해 펼치기</span>
+    </div>
+    <div class="swp-body">
+      <div style="margin-bottom:5px;display:flex;gap:8px">
+        <span style="font-size:10px;color:var(--ac)">✓ 완료 ${done}</span>
+        ${inprog?`<span style="font-size:10px;color:var(--ac2)">🔄 진행 ${inprog}</span>`:''}
+        <span style="font-size:10px;color:var(--dm)">관련 CAP: ${caps.join(', ')}</span>
+      </div>
+      ${items}
+    </div>
+  </div>`;
+}
+
 function renderPlan() {
   const c=$('c-plan'); c.innerHTML='';
   const d=window.D;
   SECTIONS.forEach(sec=>{
     const key='wfos-'+sec.id;
+    const tsKey='wfos-ts-'+sec.id;
     const saved=localStorage.getItem(key);
+    const ts=localStorage.getItem(tsKey)||'';
     const val=saved!==null?saved:sec.init(d);
     if(saved&&saved.trim().length>20) ST.planDone[sec.id]=true;
     ST.planC[sec.id]=val;
@@ -924,11 +1033,17 @@ function renderPlan() {
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
           <span class="ptag">${esc(sec.tag)}</span>
-          <span class="dnb${ST.planDone[sec.id]?' show':''}" id="dn-${sec.id}">✓ 작성완료</span>
+          <span class="done-badge${ST.planDone[sec.id]?' show':''}" id="dn-${sec.id}">✓ 작성완료</span>
         </div>
       </div>
       <div class="pb">
         <textarea class="ea" id="ea-${sec.id}" oninput="onPI('${sec.id}',this.value)">${esc(val)}</textarea>
+        <div class="sec-ctrl">
+          <span class="ts-info" id="ts-${sec.id}">${ts?'마지막 저장: '+ts:''}</span>
+          <button class="btn btn-s" style="font-size:10px" onclick="resetSec('${sec.id}')">🔄 초기화</button>
+          <button class="btn btn-p" style="font-size:10px" onclick="markDone('${sec.id}')">✓ 완료로 표시</button>
+        </div>
+        ${secWPsHTML(sec)}
         <div class="ip">
           <div class="ih">
             <div class="il">💡 벤치마킹 아이디어 — 국내외 최고 사례 3가지</div>
@@ -946,8 +1061,29 @@ function renderPlan() {
 
 function onPI(id,val){
   ST.planC[id]=val; localStorage.setItem('wfos-'+id,val);
-  const done=val.trim().length>20; ST.planDone[id]=done;
-  const b=$('dn-'+id); if(b) done?b.classList.add('show'):b.classList.remove('show');
+  const now=new Date().toLocaleTimeString('ko-KR');
+  localStorage.setItem('wfos-ts-'+id,now);
+  const ts=$('ts-'+id); if(ts) ts.textContent='마지막 저장: '+now;
+  updPlanProg();
+}
+function markDone(id){
+  ST.planDone[id]=true;
+  const b=$('dn-'+id); if(b) b.classList.add('show');
+  localStorage.setItem('wfos-done-'+id,'1');
+  toast('섹션 완료로 표시됨 — 완료 아카이브에 저장됨');
+  buildSB('plan');
+  updPlanProg();
+}
+function resetSec(id){
+  if(!confirm('이 섹션의 내용을 프로젝트 데이터로 초기화합니까? 현재 내용은 사라집니다.')) return;
+  const sec=SECTIONS.find(s=>s.id===id);
+  const val=sec.init(window.D);
+  const a=$('ea-'+id); if(a) a.value=val;
+  ST.planC[id]=val; localStorage.setItem('wfos-'+id,val);
+  ST.planDone[id]=false; localStorage.removeItem('wfos-done-'+id);
+  const b=$('dn-'+id); if(b) b.classList.remove('show');
+  const ts=$('ts-'+id); if(ts) ts.textContent='프로젝트 데이터로 초기화됨';
+  toast('섹션이 프로젝트 데이터로 초기화됨');
   updPlanProg();
 }
 function togIdeas(id){ $('ig-'+id).classList.toggle('open'); $('pb-'+id).classList.toggle('open'); }
@@ -965,8 +1101,11 @@ function cpPrompt(id){
   navigator.clipboard.writeText(`"${s.title}" 구간에 대해 Claude Skills, GitHub ⭐ 높은 라이브러리, 카카오·네이버·토스·Google·Spotify·Netflix 국내외 최고 사례를 벤치마킹하여 실제 적용 가능한 최적 안 3가지를 제시해주세요. 각 안: ①방법론명 ②핵심설명 ③출처/레퍼런스 ④장단점`).then(()=>toast('프롬프트 복사됨'));
 }
 function updPlanProg(){
-  const done=Object.values(ST.planDone).filter(Boolean).length;
+  let done=0;
+  SECTIONS.forEach(s=>{ if(ST.planDone[s.id]||localStorage.getItem('wfos-done-'+s.id)) done++; });
   $('tc-plan').textContent=`${done}/${SECTIONS.length}`;
+  const arcDone=done+window.D.wps.done_count;
+  $('tc-arc').textContent=arcDone;
 }
 function copyAll(){
   let md=`# Workflow OS 마스터 기획서\n생성: ${new Date().toLocaleDateString('ko-KR')}\n\n---\n\n`;
@@ -1053,51 +1192,94 @@ function renderWPL(){
 // ARCHIVE (완료 계획 아카이브)
 // ────────────────────────────────────────────────────────────────
 function renderArc(){
-  const d=window.D; $('tc-arc').textContent=d.wps.done_count;
+  const d=window.D;
+  const doneSecs=SECTIONS.filter(s=>ST.planDone[s.id]||localStorage.getItem('wfos-done-'+s.id));
+  const totalArc=d.wps.done_count+doneSecs.length;
+  $('tc-arc').textContent=totalArc;
   const dp=pct(d.wps.done_count,d.wps.total), ver=d.wps.verification;
+
+  // 기획 섹션 완료 목록
+  let secArcH='';
+  if(doneSecs.length){
+    doneSecs.forEach((sec,i)=>{
+      const cont=(ST.planC[sec.id]||'').trim();
+      const uid='arcs-'+sec.id;
+      secArcH+=`<div class="arc-it">
+        <div class="arc-h" onclick="togArc('${uid}')">
+          <span style="font-size:16px;flex-shrink:0">${sec.ic}</span>
+          <div style="font-size:10px;font-weight:700;color:var(--dm);min-width:80px;flex-shrink:0">${esc(sec.num)}</div>
+          <div style="font-size:12px;color:var(--tx);flex:1">${esc(sec.title)}</div>
+          <span class="ptag" style="flex-shrink:0;font-size:9px">${esc(sec.tag)}</span>
+          <span class="st s-ok" style="margin-left:8px;flex-shrink:0;font-size:9px">✓ 완료</span>
+          <span style="color:var(--dm);margin-left:6px;font-size:12px">▾</span>
+        </div>
+        <div class="arc-b" id="${uid}">
+          <div style="margin-bottom:8px;font-size:10px;color:var(--dm)">
+            관련 CAP: ${(sec.related_caps||[]).join(', ')||'—'} |
+            <button class="btn btn-s" style="font-size:9px;padding:1px 7px;margin-left:4px"
+              onclick="sw('plan');setTimeout(()=>document.getElementById('ps-${sec.id}')?.scrollIntoView({behavior:'smooth'}),100)">편집 바로가기</button>
+          </div>
+          <div class="arc-res" style="white-space:pre-wrap;max-height:200px;overflow-y:auto">${esc(cont.substring(0,800))}${cont.length>800?'\n…(이하 생략)':''}</div>
+        </div>
+      </div>`;
+    });
+  } else {
+    secArcH='<div style="color:var(--dm);font-size:12px;padding:20px;text-align:center">아직 완료된 기획 섹션이 없습니다.<br><small>기획서 탭에서 각 섹션을 작성 후 "완료로 표시" 버튼을 클릭하세요.</small></div>';
+  }
+
   $('c-arc').innerHTML=`
-    <div class="sec-tit">✅ 완료 계획 아카이브</div>
+    <div class="sec-tit">✅ 완료 아카이브</div>
     <div class="g3" style="margin-bottom:14px">
+      <div class="mc"><div class="mc-l">완료 기획 섹션</div>
+        <div class="mc-v sc-hi">${doneSecs.length}</div>
+        <div class="mc-s">${SECTIONS.length}개 중</div></div>
       <div class="mc"><div class="mc-l">완료 WP</div>
         <div class="mc-v sc-hi">${d.wps.done_count}</div>
         <div class="pb2"><div class="pb2-f" style="width:${dp}%"></div></div></div>
       <div class="mc"><div class="mc-l">검증 실행</div>
         <div class="mc-v">${ver.total_commands_run||0}</div>
         <div class="mc-s">PASS ${ver.passed||0} / FAIL ${ver.failed||0}</div></div>
-      <div class="mc"><div class="mc-l">완료율</div>
-        <div class="mc-v">${dp}%</div>
-        <div class="pb2"><div class="pb2-f" style="width:${dp}%"></div></div></div>
     </div>
-    <div class="sw"><span class="sic">🔍</span>
-      <input class="si" placeholder="완료 WP 검색..." oninput="arcQ(this.value)"></div>
-    <div id="arcl"></div>`;
+
+    <div class="stab">
+      <div class="stab-it on" onclick="arcTab(0,this)">📝 완료된 기획 섹션 <span class="tc">${doneSecs.length}</span></div>
+      <div class="stab-it" onclick="arcTab(1,this)">📦 완료된 Work Packets <span class="tc">${d.wps.done_count}</span></div>
+    </div>
+
+    <div class="stab-pn on" id="arc-secpn">${secArcH}</div>
+
+    <div class="stab-pn" id="arc-wppn">
+      <div class="sw"><span class="sic">🔍</span>
+        <input class="si" placeholder="완료 WP 검색..." oninput="arcQ(this.value)"></div>
+      <div id="arcl"></div>
+    </div>`;
   renderArcL('');
+}
+function arcTab(i,el){
+  document.querySelectorAll('.stab-it').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.stab-pn').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  [$('arc-secpn'),$('arc-wppn')][i].classList.add('on');
 }
 function arcQ(q){renderArcL(q.toLowerCase());}
 function renderArcL(q){
   const d=window.D;
-  // CAP별 그룹화, 날짜 역순
-  const caps=d.caps;
   let wps=[...d.wps.done].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||''));
   if(q) wps=wps.filter(w=>(w.id+w.goal+w.result+w.cap_name).toLowerCase().includes(q));
-
-  // CAP 그룹
   const grp={};
   wps.forEach(w=>{
     const k=w.cap_id||'OTHER';
     if(!grp[k]) grp[k]={cid:w.cap_id,cn:w.cap_name,wps:[]};
     grp[k].wps.push(w);
   });
-
   let html='';
   Object.values(grp).forEach(g=>{
     html+=`<div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;
       letter-spacing:.08em;margin:14px 0 5px;display:flex;align-items:center;gap:6px">
       <span class="st s-ok" style="font-size:9px">✓</span> ${esc(g.cid)} — ${esc(g.cn)}
-      <span style="color:var(--ac);margin-left:auto">${g.wps.length}건</span>
-    </div>`;
-    g.wps.forEach((w,i)=>{
-      const uid=`arc-${g.cid}-${i}`;
+      <span style="color:var(--ac);margin-left:auto">${g.wps.length}건</span></div>`;
+    g.wps.forEach((w,i2)=>{
+      const uid=`arc-${g.cid}-${i2}`;
       html+=`<div class="arc-it">
         <div class="arc-h" onclick="togArc('${uid}')">
           <div class="wd w-ok" style="flex-shrink:0;margin-top:3px"></div>
@@ -1304,6 +1486,102 @@ function renderLog(){
 }
 
 // ────────────────────────────────────────────────────────────────
+// REQUIREMENTS (요구사항 탭)
+// ────────────────────────────────────────────────────────────────
+function renderReq(){
+  const req=window.D.requirements||{};
+  const mod=req.module||{}, nfr=req.nfr||{}, qg=req.quality_gates||{};
+  const hc=req.hard_constraints||[], sc=req.soft_constraints||[];
+  const doms=req.domain_map_domains||[];
+
+  // NFR
+  const nfrH=Object.entries(nfr).map(([k,v])=>`
+    <div class="nfr-item"><div class="nfr-k">${esc(k)}</div><div class="nfr-v">${esc(String(v))}</div></div>`).join('');
+
+  // Quality Gates
+  const qgH=Object.entries(qg).map(([cat,items])=>`
+    <div class="qg-cat"><div class="qg-cat-h">${esc(cat)}</div>
+      ${(items||[]).map(it=>`<span class="qg-item">✓ ${esc(it)}</span>`).join('')}
+    </div>`).join('');
+
+  // Hard constraints
+  const hcH=hc.map(c=>`<div class="constraint">
+    <div class="c-id">${esc(c.id||'')}</div>
+    <div style="flex:1">
+      <div class="c-rule">${esc(c.rule||'')}</div>
+      <div class="c-rat">${esc(c.rationale||'')} ${c.violation_action?`→ <em>${esc(c.violation_action)}</em>`:''}</div>
+    </div>
+  </div>`).join('');
+
+  // Soft constraints
+  const scH=sc.map(c=>`<div class="constraint" style="border-color:rgba(137,87,229,.2)">
+    <div class="c-id" style="color:var(--pu)">${esc(c.id||'')}</div>
+    <div style="flex:1">
+      <div class="c-rule">${esc(c.rule||'')}</div>
+      <div class="c-rat">${esc(c.rationale||'')}</div>
+    </div>
+  </div>`).join('');
+
+  // Domain map
+  const dmH=doms.map(dom=>`<div class="card" style="margin-bottom:10px">
+    <div class="card-h">
+      <div class="card-ic">🏛</div>
+      <div>
+        <div class="card-tit">${esc(dom.name||dom.id)}</div>
+        <div class="card-sub">${esc(dom.description||'')} · 상태: ${esc(dom.status||'')} · 마이그레이션: ${esc(dom.migration_status||'')}</div>
+      </div>
+    </div>
+    ${(dom.bounded_contexts||[]).map(bc=>`
+      <div style="margin:6px 0;padding:8px;background:var(--sf2);border-radius:5px">
+        <div style="font-size:12px;font-weight:600;color:var(--br);margin-bottom:4px">${esc(bc.name||bc.id)}</div>
+        <div style="font-size:10px;color:var(--dm)">모듈: ${esc((bc.modules||[]).join(', '))}</div>
+        ${(bc.invariants||[]).length?`<div style="margin-top:4px">${bc.invariants.map(inv=>`<div style="font-size:10px;color:var(--ac);margin:1px 0">✓ ${esc(inv)}</div>`).join('')}</div>`:''}
+      </div>`).join('')}
+  </div>`).join('');
+
+  $('c-req').innerHTML=`
+    <div class="sec-tit">📋 요구사항 & 제약조건</div>
+
+    <div class="card req-sec">
+      <div class="req-sec-h">📦 모듈 정의 (requirements/requirements.yaml)</div>
+      <div class="g2">
+        <div><div class="kv"><span class="kk">모듈 ID</span><span style="color:var(--br);font-weight:600">${esc(mod.id||'')}</span></div>
+          <div class="kv"><span class="kk">이름</span><span>${esc(mod.name||'')}</span></div>
+          <div class="kv"><span class="kk">도메인</span><span>${esc(mod.domain||'')}</span></div>
+          <div class="kv"><span class="kk">바운디드 컨텍스트</span><span>${esc(mod.bounded_context||'')}</span></div></div>
+        <div><div class="kv"><span class="kk">현재 Stage</span><span class="st s-ok">${esc(req.stage||'')}</span></div>
+          <div class="kv"><span class="kk">소유팀</span><span>${esc(mod.owner||'')}</span></div></div>
+      </div>
+      ${mod.description?`<div style="font-size:12px;color:var(--dm);margin-top:8px;padding:8px;background:var(--sf2);border-radius:5px;line-height:1.6">${esc(mod.description)}</div>`:''}
+    </div>
+
+    <div class="card req-sec">
+      <div class="req-sec-h">⚡ NFR (비기능 요구사항)</div>
+      <div class="nfr-grid">${nfrH}</div>
+    </div>
+
+    <div class="card req-sec">
+      <div class="req-sec-h">✅ 품질 게이트 체크리스트</div>
+      ${qgH}
+    </div>
+
+    <div class="card req-sec">
+      <div class="req-sec-h">🔒 하드 제약 (Hard Constraints) — 위반 시 Stage 재실행</div>
+      ${hcH||'<div style="color:var(--dm);font-size:12px">없음</div>'}
+    </div>
+
+    <div class="card req-sec">
+      <div class="req-sec-h" style="color:var(--pu)">💡 소프트 제약 (Soft Constraints)</div>
+      ${scH||'<div style="color:var(--dm);font-size:12px">없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🗺 도메인 맵 (requirements/domain-map.yaml)</div>
+      ${dmH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>`;
+}
+
+// ────────────────────────────────────────────────────────────────
 // SIDEBAR
 // ────────────────────────────────────────────────────────────────
 function buildSB(tab){
@@ -1314,13 +1592,16 @@ function buildSB(tab){
       ['핵심 지표','Stage 상태','도메인 헬스','진행 중 WP','Feature Flags','품질 게이트','Known Issues']
       .map(s=>`<div class="nl"><span class="dot d-pass"></span>${s}</div>`).join('');
   } else if(tab==='plan'){
-    sb.innerHTML=`<div class="sb-lbl">목차</div>`+
-      SECTIONS.map(s=>`<div class="nl${ST.planDone[s.id]?' on':''}"
-        onclick="document.getElementById('ps-${s.id}')?.scrollIntoView({behavior:'smooth'})">
-        <span class="dot ${ST.planDone[s.id]?'d-pass':'d-off'}"></span>
-        <span style="flex:1;font-size:11px">${s.title}</span>
-        <span style="font-size:9px;color:var(--dm)">${s.tag}</span>
-      </div>`).join('');
+    sb.innerHTML=`<div class="sb-lbl">목차 (${SECTIONS.filter(s=>ST.planDone[s.id]||localStorage.getItem('wfos-done-'+s.id)).length}/${SECTIONS.length} 완료)</div>`+
+      SECTIONS.map(s=>{
+        const done=ST.planDone[s.id]||localStorage.getItem('wfos-done-'+s.id);
+        return `<div class="nl${done?' on':''}"
+          onclick="document.getElementById('ps-${s.id}')?.scrollIntoView({behavior:'smooth'})">
+          <span class="dot ${done?'d-pass':'d-off'}"></span>
+          <span style="flex:1;font-size:11px">${s.title}</span>
+          <span style="font-size:9px;color:${done?'var(--ac)':'var(--dm)'}">${done?'✓':s.tag}</span>
+        </div>`;
+      }).join('');
   } else if(tab==='wps'){
     const bs={done:0,in_progress:0,pending:0};
     d.wps.all.forEach(w=>{if(bs[w.status]!==undefined)bs[w.status]++;});
@@ -1353,6 +1634,16 @@ function buildSB(tab){
         <span class="dot ${p.status==='active'?'d-pass':'d-off'}"></span>
         <span style="font-size:11px">${esc(p.name)}</span>
       </div>`).join('');
+  } else if(tab==='req'){
+    const req=window.D.requirements||{};
+    const hc=(req.hard_constraints||[]).length, sc=(req.soft_constraints||[]).length;
+    sb.innerHTML=`<div class="sb-lbl">요구사항</div>
+      <div class="nl"><span class="dot d-pass"></span>모듈 정의</div>
+      <div class="nl"><span class="dot d-act"></span>NFR 비기능 요구사항</div>
+      <div class="nl"><span class="dot d-pass"></span>품질 게이트</div>
+      <div class="nl"><span class="dot d-warn"></span>하드 제약 (${hc}개)</div>
+      <div class="nl"><span class="dot d-off"></span>소프트 제약 (${sc}개)</div>
+      <div class="nl"><span class="dot d-act"></span>도메인 맵</div>`;
   } else if(tab==='adr'){
     sb.innerHTML=`<div class="sb-lbl">ADR (${d.adrs.length})</div>`+
       d.adrs.map(a=>`<div class="nl">
@@ -1383,7 +1674,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const d=window.D;
   $('hbadge').textContent=d.project.health_rating;
   $('gentime').textContent='생성: '+new Date(d.generated_at).toLocaleString('ko-KR');
-  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderADR(); renderLog();
+  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderLog();
   buildSB('dash');
   setInterval(()=>{
     SECTIONS.forEach(s=>{ const a=$('ea-'+s.id); if(a) localStorage.setItem('wfos-'+s.id,a.value); });
