@@ -68,9 +68,14 @@ class Money {
   }
 
   _assertSameCurrency(other) {
-    if (!(other instanceof Money)) throw new Error('Expected a Money instance');
+    if (!(other instanceof Money)) {
+      throw Object.assign(new Error('Expected a Money instance'), { code: 'VALIDATION_ERROR' });
+    }
     if (this._currency !== other.currency) {
-      throw new Error(`Currency mismatch: ${this._currency} vs ${other.currency}`);
+      throw Object.assign(
+        new Error(`Currency mismatch: ${this._currency} vs ${other.currency}`),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
   }
 

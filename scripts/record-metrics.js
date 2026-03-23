@@ -18,13 +18,21 @@ if (!domain || !stage || !gate) {
 const metricsFile = path.join(__dirname, '..', 'memory', 'project', 'metrics.yaml');
 let content = fs.existsSync(metricsFile) ? fs.readFileSync(metricsFile, 'utf-8') : 'executions: []\n';
 
-const entry = `\n  - date: "${new Date().toISOString().split('T')[0]}"\n    domain: "${domain}"\n    stage: "${stage}"\n    duration_seconds: ${duration || 0}\n    tests_passed: ${passed || 0}\n    tests_total: ${total || 0}\n    gate_result: "${gate}"\n    timestamp: "${new Date().toISOString()}"`;
+const now    = new Date();
+const indent = '  ';
+const entry  = [
+  `${indent}- date: "${now.toISOString().split('T')[0]}"`,
+  `${indent}  domain: "${domain}"`,
+  `${indent}  stage: "${stage}"`,
+  `${indent}  duration_seconds: ${duration || 0}`,
+  `${indent}  tests_passed: ${passed || 0}`,
+  `${indent}  tests_total: ${total || 0}`,
+  `${indent}  gate_result: "${gate}"`,
+  `${indent}  timestamp: "${now.toISOString()}"`,
+];
 
-content = content.replace(/executions:\s*\[\]/, 'executions:' + entry)
-  .replace(/^(executions:.+)$/m, (match) => match.endsWith('[]') ? match : match + entry);
-
-if (content.includes('executions: []')) {
-  content = 'executions:\n' + entry + '\n';
+if (content.includes('executions: []') || content.trim() === 'executions:') {
+  content = 'executions:\n' + entry.join('\n') + '\n';
 } else {
   const lines = content.split('\n');
   const lastIndex = lines
@@ -33,20 +41,10 @@ if (content.includes('executions: []')) {
     .pop();
 
   if (lastIndex !== undefined) {
-    const indent = '  ';
-    lines.splice(
-      lastIndex + 1,
-      0,
-      `${indent}- date: "${new Date().toISOString().split('T')[0]}"`,
-      `${indent}  domain: "${domain}"`,
-      `${indent}  stage: "${stage}"`,
-      `${indent}  duration_seconds: ${duration || 0}`,
-      `${indent}  tests_passed: ${passed || 0}`,
-      `${indent}  tests_total: ${total || 0}`,
-      `${indent}  gate_result: "${gate}"`,
-      `${indent}  timestamp: "${new Date().toISOString()}"`
-    );
+    lines.splice(lastIndex + 1, 0, ...entry);
     content = lines.join('\n');
+  } else {
+    content = 'executions:\n' + entry.join('\n') + '\n';
   }
 }
 
