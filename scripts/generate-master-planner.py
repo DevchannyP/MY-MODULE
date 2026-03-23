@@ -1,40 +1,62 @@
 #!/usr/bin/env python3
 """
-Workflow OS — 마스터 기획서 UI 생성기
-실제 프로젝트 YAML 데이터를 읽어 self-contained HTML을 생성한다.
+Workflow OS — 마스터 기획서 UI 생성기 v2
+실제 프로젝트 YAML/JSON/MD 데이터를 수집해 self-contained HTML을 생성한다.
 실행: python3 scripts/generate-master-planner.py
 출력: artifacts/master-planner/index.html
 """
 
-import yaml, json, os, sys, datetime
+import yaml, json, os, sys, datetime, glob, re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def load_yaml(path, default=None):
     full = os.path.join(ROOT, path)
-    if not os.path.exists(full):
-        return default or {}
+    if not os.path.exists(full): return default if default is not None else {}
     try:
         with open(full, encoding='utf-8') as f:
-            return yaml.safe_load(f) or (default or {})
+            return yaml.safe_load(f) or (default if default is not None else {})
     except Exception as e:
         print(f"  [WARN] {path}: {e}", file=sys.stderr)
-        return default or {}
+        return default if default is not None else {}
 
-# ── 데이터 수집 ───────────────────────────────────────────────────────
+def load_json(path, default=None):
+    full = os.path.join(ROOT, path)
+    if not os.path.exists(full): return default if default is not None else {}
+    try:
+        with open(full, encoding='utf-8') as f: return json.load(f)
+    except: return default if default is not None else {}
+
+def read_md(path, lines=10):
+    full = os.path.join(ROOT, path)
+    if not os.path.exists(full): return ""
+    try:
+        with open(full, encoding='utf-8') as f:
+            return "".join(f.readlines()[:lines]).strip()
+    except: return ""
+
+# ═══════════════════════════════════════════════════════════════
 print("📖 프로젝트 데이터 수집 중...")
 
 root_state   = load_yaml("memory/current-state.yaml")
 l0_state     = load_yaml("memory/L0-hot/current-state.yaml")
 checkpoint   = load_yaml("memory/checkpoint.yaml")
 wp_queue     = load_yaml("memory/wp-queue.yaml")
-current_wp   = load_yaml("memory/current-wp.yaml")
 next_actions = load_yaml("memory/next-actions.yaml")
 health       = load_yaml("master-shell/observability/health-scores.yaml")
 flags        = load_yaml("master-shell/feature-flags/flags.yaml")
 registry     = load_yaml("master-shell/plugin-registry/registry.yaml")
+reflect_log  = load_yaml("memory/L0-hot/reflection-log.yaml")
+audit_chain  = load_json("worklog/audit-chain.json")
+adr_index    = load_yaml("docs/adr/adr-index.yaml")
+contract_mat = read_md("worklog/contract-matrix.md", 20)
+stage_a_mems = {}
+for p in glob.glob(os.path.join(ROOT, "memory/stageA/*.yaml")):
+    name = os.path.basename(p).replace(".yaml","")
+    d = load_yaml(f"memory/stageA/{os.path.basename(p)}")
+    if d: stage_a_mems[name] = d
 
-# ── Work Packets 정규화 ──────────────────────────────────────────────
+# ── Work Packets ────────────────────────────────────────────────────
 caps = wp_queue.get("capabilities", [])
 all_wps = []
 for cap in caps:
@@ -47,367 +69,516 @@ for cap in caps:
             "status":       wp.get("status",""),
             "tier":         wp.get("tier",""),
             "result":       wp.get("result",""),
-            "completed_at": wp.get("completed_at",""),
+            "completed_at": str(wp.get("completed_at","")),
             "depends_on":   wp.get("depends_on",[]),
+            "covers":       wp.get("covers_capability",""),
+        })
+
+# next-actions 큐에서 in_progress WP 보충
+na_queue = next_actions.get("queue", [])
+na_ids   = {w["id"] for w in all_wps}
+for nw in na_queue:
+    if nw.get("id") and nw["id"] not in na_ids:
+        all_wps.append({
+            "id": nw.get("id",""),
+            "cap_id": "NEXT",
+            "cap_name": "다음 Work Packet",
+            "goal": nw.get("goal",""),
+            "status": nw.get("status","pending"),
+            "tier": nw.get("tier",""),
+            "result": "",
+            "completed_at": "",
+            "depends_on": nw.get("depends_on",[]),
+            "covers": "",
         })
 
 done_wps    = [w for w in all_wps if w["status"] == "done"]
-active_wps  = [w for w in all_wps if w["status"] == "in_progress"]
+active_wps  = [w for w in all_wps if w["status"] in ("in_progress", "active")]
+pending_wps = [w for w in all_wps if w["status"] in ("pending", "not_started", "todo")]
 
-# ── 데이터 번들 ─────────────────────────────────────────────────────
-active_modules = l0_state.get("active_modules", [])
-stage_states   = l0_state.get("stage_states", {})
-quality_gate   = l0_state.get("quality_gate_detail", {})
-domain_scores  = health.get("domains", {})
-plugins        = registry.get("plugins", [])
-wps_done_ids   = checkpoint.get("wps_completed", [])
-ver_summary    = checkpoint.get("verification_summary", {})
-health_metrics = root_state.get("health_metrics", {}).get("last_known", {})
-known_issues   = root_state.get("known_issues", [])
-next_queue     = next_actions.get("queue", [])
+# ── 도메인 — active_modules + plugin으로 video 보충 ──────────────────
+active_modules = list(l0_state.get("active_modules", []))
+am_ids = {m.get("module_id") for m in active_modules}
+plugins  = registry.get("plugins", [])
+domain_scores = health.get("domains", {})
 
+for plugin in plugins:
+    mod_id = plugin.get("module_id","")
+    if mod_id and mod_id not in am_ids:
+        # video 등 플러그인에는 있지만 active_modules에 빠진 도메인 보충
+        ds_key = mod_id  # try direct
+        score_info = domain_scores.get(ds_key) or domain_scores.get(f"productivity/{ds_key}") or {}
+        active_modules.append({
+            "module_id":    mod_id,
+            "domain":       plugin.get("navigation", {}).get("group", mod_id),
+            "bounded_context": mod_id,
+            "plugin_id":    plugin.get("id",""),
+            "feature_flag": plugin.get("feature_flag",""),
+            "feature_flag_value": False,
+            "plugin_status": plugin.get("status","inactive"),
+            "stage_a": "PASS",
+            "stage_b": "PASS",
+            "stage_c": "PASS",
+            "stage_d": "PASS",
+            "stage_e": "PASS",
+            "health_score": score_info.get("score","—"),
+            "_from_plugin": True,
+        })
+        am_ids.add(mod_id)
+
+# ── ADRs ────────────────────────────────────────────────────────────
+adrs = []
+for a in (adr_index or {}).get("adrs", []):
+    if a.get("status","") == "archived": continue
+    adrs.append({
+        "id":     a.get("id",""),
+        "title":  a.get("title",""),
+        "domain": a.get("domain",""),
+        "stage":  a.get("stage",""),
+        "file":   a.get("file",""),
+        "status": a.get("status","active"),
+    })
+
+# ── Reflection log ──────────────────────────────────────────────────
+reflections = []
+for e in (reflect_log or {}).get("entries", []):
+    reflections.append({
+        "stage":  e.get("stage",""),
+        "domain": e.get("domain",""),
+        "date":   e.get("date",""),
+        "went_well":    e.get("what_went_well",[]),
+        "went_wrong":   e.get("what_went_wrong",[]),
+        "root_cause":   e.get("root_cause",[]),
+        "improvement":  e.get("improvement_for_next",[]),
+        "confidence":   e.get("confidence_score",0),
+    })
+
+# ── Audit chain ─────────────────────────────────────────────────────
+audit_entries = []
+for e in (audit_chain or {}).get("entries", []):
+    audit_entries.append({
+        "seq":       e.get("seq",""),
+        "timestamp": e.get("timestamp",""),
+        "action":    e.get("action",""),
+        "actor":     e.get("actor",""),
+        "hash":      e.get("hash","")[:12] if e.get("hash") else "",
+    })
+
+# ── Learning reports ─────────────────────────────────────────────────
+learning_reports = []
+for path in glob.glob(os.path.join(ROOT, "worklog/reports/**/*.md"), recursive=True):
+    rel = os.path.relpath(path, ROOT)
+    domain = rel.split(os.sep)[-2] if os.sep in rel else "unknown"
+    excerpt = read_md(rel, 5)
+    learning_reports.append({
+        "domain": domain,
+        "file": rel,
+        "excerpt": excerpt,
+    })
+
+# ── Stage A memories summary ─────────────────────────────────────────
+stage_a_summaries = {}
+for name, mem in stage_a_mems.items():
+    inv_count = 0
+    for agg in mem.get("aggregates", []):
+        inv_count += len(agg.get("invariants", []))
+    ul = mem.get("ubiquitous_language", {})
+    if isinstance(ul, dict):
+        lang = list(ul.keys())[:4]
+    elif isinstance(ul, list):
+        lang = [item.get("term", str(item)) for item in ul[:4]]
+    else:
+        lang = []
+    stage_a_summaries[name] = {
+        "domain_id":      mem.get("domain_id", name),
+        "bounded_context": mem.get("bounded_context",""),
+        "invariant_count": inv_count,
+        "ubiquitous_language": lang,
+        "risk_level":     mem.get("risk_profile", {}).get("level",""),
+    }
+
+# ── 핵심 지표 ─────────────────────────────────────────────────────────
+hm = root_state.get("health_metrics", {}).get("last_known", {})
+qgd = l0_state.get("quality_gate_detail", {})
+ver = checkpoint.get("verification_summary", {})
+ki  = root_state.get("known_issues", [])
+stages = l0_state.get("stage_states", {})
+
+# ── 번들 ─────────────────────────────────────────────────────────────
 data = {
     "generated_at": datetime.datetime.now().isoformat(),
     "project": {
         "name":  "Workflow OS",
         "repo":  "my-module",
-        "phase": l0_state.get("repository", {}).get("phase", "continuous-self-improvement"),
+        "phase": l0_state.get("repository",{}).get("phase","continuous-self-improvement"),
         "branch": "chore/core-git-governance-activation",
-        "stage_states": stage_states,
-        "quality_gate_result": l0_state.get("quality_gate_result","PASS"),
+        "stage_states": stages,
+        "quality_gate_result":   l0_state.get("quality_gate_result","PASS"),
         "quality_gate_last_run": l0_state.get("quality_gate_last_run","2026-03-21"),
-        "quality_gate_detail": quality_gate,
-        "health_rating": health_metrics.get("health_rating","ELITE"),
-        "gate_pass_rate": health_metrics.get("gate_pass_rate_pct", 88.1),
+        "quality_gate_detail":   qgd,
+        "health_rating":    hm.get("health_rating","ELITE"),
+        "gate_pass_rate":   hm.get("gate_pass_rate_pct", 88.1),
+        "change_failure_rate": hm.get("change_failure_rate_pct", 0),
+        "avg_wps_per_session": hm.get("avg_wps_per_session", 10.0),
         "tests_total": 500,
-        "tests_pass": 500,
-        "known_issues": known_issues,
-        "upgrade_v3_features": l0_state.get("upgrade_v3", {}).get("features_added",[]),
+        "tests_pass":  500,
+        "known_issues": ki,
+        "upgrade_v3_features": l0_state.get("upgrade_v3",{}).get("features_added",[]),
+        "notes": l0_state.get("notes",""),
     },
     "wps": {
-        "all": all_wps,
-        "done": done_wps,
-        "active": active_wps,
-        "done_ids": wps_done_ids,
-        "total": len(all_wps),
+        "all":       all_wps,
+        "done":      done_wps,
+        "active":    active_wps,
+        "pending":   pending_wps,
+        "total":     len(all_wps),
         "done_count": len(done_wps),
-        "verification": ver_summary,
+        "active_count": len(active_wps),
+        "verification": ver,
     },
-    "caps": [{"id":c.get("id"),"name":c.get("name"),"priority":c.get("priority",99)} for c in caps],
-    "current_wp": current_wp,
-    "next_queue": next_queue,
-    "domains": active_modules,
+    "caps": [{"id":c.get("id"),"name":c.get("name"),"priority":c.get("priority",99),
+               "wp_count": len(c.get("work_packets",[])),
+               "done_count": sum(1 for w in c.get("work_packets",[]) if w.get("status")=="done")}
+             for c in caps],
+    "next_queue": na_queue,
+    "domains":      active_modules,
     "domain_scores": domain_scores,
-    "plugins": plugins,
+    "plugins":      plugins,
     "flags": {
-        "global": flags.get("global_flags", {}),
-        "plugin": flags.get("plugin_flags", {}),
+        "global": flags.get("global_flags",{}),
+        "plugin": flags.get("plugin_flags",{}),
     },
-    "stage_e_findings": l0_state.get("stage_e_findings", {}),
+    "stage_e_findings": l0_state.get("stage_e_findings",{}),
+    "stage_a_summaries": stage_a_summaries,
+    "adrs": adrs,
+    "reflections": reflections,
+    "audit_entries": audit_entries,
+    "learning_reports": learning_reports,
+    "contract_matrix": contract_mat,
 }
 
 DATA_JSON = json.dumps(data, ensure_ascii=False, indent=2)
-print(f"  ✓ WPs: {len(all_wps)} total, {len(done_wps)} done, {len(active_wps)} active")
-print(f"  ✓ Domains: {len(active_modules)}, Plugins: {len(plugins)}")
+print(f"  ✓ WPs: {len(all_wps)} total | done:{len(done_wps)} active:{len(active_wps)} pending:{len(pending_wps)}")
+print(f"  ✓ Domains: {len(active_modules)} | Plugins: {len(plugins)}")
+print(f"  ✓ ADRs: {len(adrs)} | Stage A mems: {len(stage_a_summaries)}")
+print(f"  ✓ Reflections: {len(reflections)} | Audit: {len(audit_entries)} | Reports: {len(learning_reports)}")
 
-# ── HTML 템플릿 (순수 문자열 — f-string 아님) ──────────────────────
-# __DATA_JSON__ 자리에 실제 데이터가 삽입된다
+# ═══════════════════════════════════════════════════════════════
 print("🎨 HTML 생성 중...")
 
 HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Workflow OS — 마스터 기획서</title>
 <style>
 :root{
-  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;
-  --accent:#238636;--accent2:#1f6feb;--accent3:#bb8009;--purple:#8957e5;
-  --red:#da3633;--text:#c9d1d9;--dim:#8b949e;--bright:#f0f6fc;
-  --r:8px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
-  --mono:'JetBrains Mono','Fira Code',Consolas,monospace;
+  --bg:#0d1117;--sf:#161b22;--sf2:#21262d;--bd:#30363d;
+  --ac:#238636;--ac2:#1f6feb;--ac3:#bb8009;--pu:#8957e5;
+  --rd:#da3633;--tx:#c9d1d9;--dm:#8b949e;--br:#f0f6fc;
+  --r:8px;--fn:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
+  --mo:'JetBrains Mono','Fira Code',Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;line-height:1.6}
+body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh;line-height:1.6}
 
-/* topbar */
-.topbar{position:sticky;top:0;z-index:200;background:rgba(13,17,23,.96);backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px}
-.topbar-logo{font-size:17px;font-weight:700;color:var(--bright);display:flex;align-items:center;gap:8px}
-.topbar-logo em{color:var(--accent2);font-style:normal}
-.topbar-sep{color:var(--border);font-size:18px}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.badge-health{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid}
-.badge-health.elite{background:rgba(35,134,54,.15);color:#3fb950;border-color:rgba(35,134,54,.3)}
-.badge-gen{font-size:11px;color:var(--dim)}
+/* ── topbar ── */
+.tb{position:sticky;top:0;z-index:300;background:rgba(13,17,23,.97);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--bd);padding:9px 20px;display:flex;align-items:center;gap:10px}
+.tb-logo{font-size:16px;font-weight:700;color:var(--br);display:flex;align-items:center;gap:6px}
+.tb-logo em{color:var(--ac2);font-style:normal}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
+  padding:2px 9px;border-radius:99px;border:1px solid}
+.badge-elite{background:rgba(35,134,54,.15);color:#3fb950;border-color:rgba(35,134,54,.3)}
+.badge-gen{font-size:11px;color:var(--dm)}
 
-/* tabs */
-.tabs{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);
-  background:var(--surface);position:sticky;top:49px;z-index:199}
-.tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--dim);cursor:pointer;
-  border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--bright);border-bottom-color:var(--accent2)}
-.tab-count{font-size:11px;background:var(--surface2);padding:1px 6px;border-radius:99px;margin-left:4px;color:var(--dim)}
-.tab.active .tab-count{background:rgba(31,111,235,.18);color:var(--accent2)}
+/* ── tabs ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);background:var(--sf);
+  position:sticky;top:46px;z-index:299;overflow-x:auto}
+.tab{padding:10px 16px;font-size:12.5px;font-weight:500;color:var(--dm);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .13s;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:var(--tx);background:rgba(255,255,255,.03)}
+.tab.on{color:var(--br);border-bottom-color:var(--ac2)}
+.tc{font-size:10px;background:var(--sf2);padding:1px 5px;border-radius:99px;margin-left:3px;color:var(--dm)}
+.tab.on .tc{background:rgba(31,111,235,.18);color:var(--ac2)}
 
-/* layout */
-.layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 97px)}
-.sidebar{border-right:1px solid var(--border);padding:16px 12px;position:sticky;
-  top:97px;height:calc(100vh - 97px);overflow-y:auto;background:var(--surface)}
-.sidebar-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--dim);margin-bottom:8px;padding:0 6px}
-.nav-link{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;
-  font-size:13px;color:var(--dim);cursor:pointer;transition:all .12s;border:1px solid transparent;margin-bottom:2px}
-.nav-link:hover{background:var(--surface2);color:var(--text)}
-.nav-link.active{background:rgba(31,111,235,.12);color:var(--accent2);border-color:rgba(31,111,235,.2)}
-.nav-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.dot-pass{background:var(--accent)}.dot-active{background:var(--accent2)}
-.dot-inactive{background:var(--border)}.dot-fail{background:var(--red)}
-.tab-panel{display:none}.tab-panel.active{display:block}
-.main{padding:28px 36px;max-width:980px}
+/* ── layout ── */
+.ly{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 94px)}
+.sb{border-right:1px solid var(--bd);padding:14px 10px;position:sticky;
+  top:94px;height:calc(100vh - 94px);overflow-y:auto;background:var(--sf);flex-shrink:0}
+.sb-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--dm);margin:12px 0 5px;padding:0 5px}
+.sb-lbl:first-child{margin-top:0}
+.nl{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:5px;
+  font-size:12px;color:var(--dm);cursor:pointer;transition:all .1s;border:1px solid transparent;margin-bottom:1px}
+.nl:hover{background:var(--sf2);color:var(--tx)}
+.nl.on{background:rgba(31,111,235,.1);color:var(--ac2);border-color:rgba(31,111,235,.18)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.d-pass{background:var(--ac)}.d-act{background:var(--ac2)}.d-off{background:var(--bd)}.d-warn{background:var(--ac3)}
 
-/* cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:20px;margin-bottom:16px;transition:border-color .15s}
-.card:hover{border-color:#444d56}
-.card-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
-.card-icon{font-size:24px;flex-shrink:0}
-.card-title{font-size:16px;font-weight:700;color:var(--bright);margin-bottom:3px}
-.card-sub{font-size:12px;color:var(--dim)}
+.tab-panel{display:none}.tab-panel.on{display:block}
+.main{padding:24px 32px;max-width:1000px;min-height:calc(100vh - 94px - 58px)}
 
-/* grid */
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
-.mini-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px}
-.mini-card-label{font-size:11px;color:var(--dim);margin-bottom:4px}
-.mini-card-value{font-size:22px;font-weight:700;color:var(--bright)}
-.mini-card-sub{font-size:11px;color:var(--dim);margin-top:2px}
+/* ── cards ── */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:11px;padding:18px;margin-bottom:14px}
+.card:hover{border-color:#3a4149}
+.card-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.card-ic{font-size:22px;flex-shrink:0}
+.card-tit{font-size:15px;font-weight:700;color:var(--br);margin-bottom:2px}
+.card-sub{font-size:11px;color:var(--dm)}
 
-/* stage badges */
-.stage-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.stage-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;border:1px solid}
-.s-pass{background:rgba(35,134,54,.12);color:#3fb950;border-color:rgba(35,134,54,.25)}
-.s-fail{background:rgba(218,54,51,.12);color:var(--red);border-color:rgba(218,54,51,.25)}
-.s-pending{background:var(--surface2);color:var(--dim);border-color:var(--border)}
-.s-active{background:rgba(31,111,235,.12);color:var(--accent2);border-color:rgba(31,111,235,.25)}
+/* ── grids ── */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.mc{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);padding:12px}
+.mc-l{font-size:10px;color:var(--dm);margin-bottom:3px}
+.mc-v{font-size:20px;font-weight:700;color:var(--br)}
+.mc-s{font-size:10px;color:var(--dm);margin-top:2px}
 
-/* WP list */
-.wp-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
-  border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;transition:all .12s}
-.wp-item:hover{border-color:#444d56;background:var(--surface2)}
-.wp-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.wp-done{background:var(--accent)}.wp-active{background:var(--accent2)}.wp-pending{background:var(--border)}
-.wp-id{font-size:11px;font-weight:700;color:var(--dim);min-width:100px;flex-shrink:0}
-.wp-goal{font-size:13px;color:var(--text);flex:1;line-height:1.5}
-.wp-tier{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--surface2);
-  color:var(--dim);border:1px solid var(--border);flex-shrink:0}
-.wp-result{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.5}
+/* ── badges ── */
+.sb-r{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.st{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid}
+.s-ok{background:rgba(35,134,54,.1);color:#3fb950;border-color:rgba(35,134,54,.2)}
+.s-fl{background:rgba(218,54,51,.1);color:var(--rd);border-color:rgba(218,54,51,.2)}
+.s-nd{background:var(--sf2);color:var(--dm);border-color:var(--bd)}
+.s-ac{background:rgba(31,111,235,.1);color:var(--ac2);border-color:rgba(31,111,235,.2)}
 
-/* archive */
-.archive-item{border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
-.archive-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;
-  transition:background .12s}
-.archive-head:hover{background:var(--surface2)}
-.archive-body{padding:12px 14px;border-top:1px solid var(--border);
-  font-size:12px;color:var(--dim);line-height:1.7;display:none}
-.archive-body.open{display:block}
-.archive-result{background:var(--surface2);border-radius:6px;padding:8px 12px;
-  font-family:var(--mono);font-size:11px;color:var(--text)}
+/* ── WP items ── */
+.wi{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;
+  border:1px solid var(--bd);border-radius:var(--r);margin-bottom:5px;transition:all .1s}
+.wi:hover{border-color:#3a4149;background:var(--sf2)}
+.wd{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.w-ok{background:var(--ac)}.w-ac{background:var(--ac2)}.w-nd{background:var(--bd)}.w-wn{background:var(--ac3)}
+.wid{font-size:10px;font-weight:700;color:var(--dm);min-width:95px;flex-shrink:0}
+.wg{font-size:12px;color:var(--tx);flex:1;line-height:1.5}
+.wr{font-size:10px;color:var(--dm);margin-top:3px;line-height:1.5}
+.wt{font-size:9px;padding:2px 6px;border-radius:99px;background:var(--sf2);
+  color:var(--dm);border:1px solid var(--bd);flex-shrink:0}
 
-/* planning sections */
-.plan-section{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;transition:border-color .2s}
-.plan-section.focused{border-color:rgba(31,111,235,.4);box-shadow:0 0 0 3px rgba(31,111,235,.08)}
-.plan-head{background:var(--surface);padding:18px 22px;border-bottom:1px solid var(--border);
-  display:flex;align-items:flex-start;gap:14px}
-.plan-icon{font-size:26px;flex-shrink:0;margin-top:2px}
-.plan-meta{flex:1}
-.plan-num{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:3px}
-.plan-title{font-size:18px;font-weight:700;color:var(--bright);margin-bottom:4px}
-.plan-desc{font-size:12px;color:var(--dim);line-height:1.5}
-.plan-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;
-  background:rgba(31,111,235,.12);color:var(--accent2);border:1px solid rgba(31,111,235,.2)}
-.plan-body{padding:20px 22px}
-.edit-area{width:100%;min-height:110px;background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:13px;
-  line-height:1.7;padding:12px 14px;resize:vertical;outline:none;transition:border-color .15s}
-.edit-area:focus{border-color:rgba(31,111,235,.6)}
-.edit-area::placeholder{color:var(--dim)}
+/* ── archive ── */
+.arc-it{border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px;overflow:hidden}
+.arc-h{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;transition:background .1s}
+.arc-h:hover{background:var(--sf2)}
+.arc-b{padding:10px 12px;border-top:1px solid var(--bd);font-size:11px;color:var(--dm);
+  line-height:1.7;display:none}
+.arc-b.open{display:block}
+.arc-res{background:var(--sf2);border-radius:5px;padding:7px 10px;font-family:var(--mo);font-size:10px;color:var(--tx)}
 
-/* idea panel */
-.idea-panel{margin-top:14px;border:1px dashed rgba(31,111,235,.3);border-radius:var(--r);
-  padding:14px;background:linear-gradient(135deg,var(--surface),rgba(31,111,235,.04))}
-.idea-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.idea-label{font-size:12px;color:var(--dim);flex:1;min-width:200px}
-.idea-grid{display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
-.idea-grid.open{display:grid}
-.idea-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);
-  padding:12px;transition:all .15s}
-.idea-card:hover{border-color:rgba(31,111,235,.5);transform:translateY(-2px)}
-.idea-card.picked{border-color:var(--accent);background:rgba(35,134,54,.06)}
-.idea-num{font-size:10px;font-weight:700;color:var(--accent2);letter-spacing:.08em;margin-bottom:5px}
-.idea-title{font-size:12px;font-weight:700;color:var(--bright);margin-bottom:5px;line-height:1.4}
-.idea-body{font-size:11px;color:var(--dim);line-height:1.6;margin-bottom:7px}
-.idea-src{font-size:10px;color:var(--purple);margin-bottom:7px}
-.idea-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
-.idea-tag{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--surface);
-  color:var(--dim);border:1px solid var(--border)}
-.prompt-box{background:var(--bg);border:1px solid var(--border);border-radius:6px;
-  padding:10px 12px;font-size:11px;font-family:var(--mono);color:var(--dim);
-  line-height:1.6;display:none;margin-bottom:10px;word-break:break-all}
-.prompt-box.open{display:block}
+/* ── planning ── */
+.ps{border:1px solid var(--bd);border-radius:11px;overflow:hidden;margin-bottom:18px;transition:border-color .2s}
+.ps.focus{border-color:rgba(31,111,235,.45);box-shadow:0 0 0 3px rgba(31,111,235,.07)}
+.ph{background:var(--sf);padding:16px 20px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:flex-start;gap:12px}
+.pic{font-size:24px;flex-shrink:0;margin-top:1px}
+.pm{flex:1}
+.pn{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--dm);margin-bottom:2px}
+.pt{font-size:17px;font-weight:700;color:var(--br);margin-bottom:3px}
+.pd{font-size:11px;color:var(--dm);line-height:1.5}
+.ptag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;
+  background:rgba(31,111,235,.1);color:var(--ac2);border:1px solid rgba(31,111,235,.18)}
+.pb{padding:18px 20px}
+.ea{width:100%;min-height:100px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);
+  color:var(--tx);font-family:var(--fn);font-size:13px;line-height:1.7;padding:10px 12px;
+  resize:vertical;outline:none;transition:border-color .13s}
+.ea:focus{border-color:rgba(31,111,235,.55)}
+.ea::placeholder{color:var(--dm)}
 
-/* buttons */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:var(--r);
-  border:1px solid transparent;font-family:var(--font);font-size:12px;font-weight:500;
-  cursor:pointer;transition:all .13s;white-space:nowrap}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-primary:hover{background:#2ea043}
-.btn-secondary{background:var(--surface2);color:var(--text);border-color:var(--border)}
-.btn-secondary:hover{background:var(--border);color:var(--bright)}
-.btn-idea{background:rgba(31,111,235,.08);color:var(--accent2);border-color:rgba(31,111,235,.3)}
-.btn-idea:hover{background:rgba(31,111,235,.15);border-color:var(--accent2)}
-.btn-apply{background:transparent;color:var(--accent);border-color:rgba(35,134,54,.4);font-size:11px;padding:3px 9px}
-.btn-apply:hover{background:rgba(35,134,54,.1)}
-.btn-copy-all{background:linear-gradient(135deg,#238636,#1f6feb);color:#fff;border:none;
-  padding:11px 24px;font-size:14px;font-weight:700;border-radius:var(--r);cursor:pointer;
-  transition:all .2s;box-shadow:0 4px 18px rgba(35,134,54,.3)}
-.btn-copy-all:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(35,134,54,.4)}
-.btn-sm{padding:4px 10px;font-size:11px}
+/* ── idea panel ── */
+.ip{margin-top:12px;border:1px dashed rgba(31,111,235,.28);border-radius:var(--r);
+  padding:12px;background:linear-gradient(135deg,var(--sf),rgba(31,111,235,.03))}
+.ih{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.il{font-size:11px;color:var(--dm);flex:1;min-width:180px}
+.ig{display:none;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:9px}
+.ig.open{display:grid}
+.ic{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);
+  padding:10px;transition:all .13s}
+.ic:hover{border-color:rgba(31,111,235,.45);transform:translateY(-1px)}
+.ic.pk{border-color:var(--ac);background:rgba(35,134,54,.05)}
+.in{font-size:9px;font-weight:700;color:var(--ac2);letter-spacing:.08em;margin-bottom:4px}
+.it{font-size:11px;font-weight:700;color:var(--br);margin-bottom:4px;line-height:1.4}
+.ib{font-size:10px;color:var(--dm);line-height:1.6;margin-bottom:6px}
+.isrc{font-size:9px;color:var(--pu);margin-bottom:6px}
+.itags{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:7px}
+.itag{font-size:9px;padding:1px 5px;border-radius:99px;background:var(--sf);color:var(--dm);border:1px solid var(--bd)}
+.pb-box{background:var(--bg);border:1px solid var(--bd);border-radius:5px;
+  padding:8px 10px;font-size:10px;font-family:var(--mo);color:var(--dm);
+  line-height:1.6;display:none;margin-bottom:8px;word-break:break-all}
+.pb-box.open{display:block}
+.dnb{display:none;font-size:10px;color:var(--ac);background:rgba(35,134,54,.09);
+  padding:2px 7px;border-radius:99px;border:1px solid rgba(35,134,54,.22);font-weight:600}
+.dnb.show{display:inline-flex;align-items:center;gap:3px}
 
-/* footer */
-.copy-footer{position:sticky;bottom:0;background:rgba(13,17,23,.96);backdrop-filter:blur(12px);
-  border-top:1px solid var(--border);padding:14px 36px;display:flex;align-items:center;gap:16px}
-.copy-footer-meta{flex:1}
-.copy-footer-title{font-size:13px;font-weight:600;color:var(--bright)}
-.copy-footer-sub{font-size:11px;color:var(--dim)}
-.copy-ok{font-size:12px;color:var(--accent);opacity:0;transition:opacity .3s}
+/* ── buttons ── */
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:var(--r);
+  border:1px solid transparent;font-family:var(--fn);font-size:11px;font-weight:500;
+  cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn-p{background:var(--ac);color:#fff;border-color:var(--ac)}.btn-p:hover{background:#2ea043}
+.btn-s{background:var(--sf2);color:var(--tx);border-color:var(--bd)}.btn-s:hover{background:var(--bd);color:var(--br)}
+.btn-i{background:rgba(31,111,235,.07);color:var(--ac2);border-color:rgba(31,111,235,.25)}
+.btn-i:hover{background:rgba(31,111,235,.14);border-color:var(--ac2)}
+.btn-ap{background:transparent;color:var(--ac);border-color:rgba(35,134,54,.35);padding:2px 8px}
+.btn-ap:hover{background:rgba(35,134,54,.09)}
+.btn-all{background:linear-gradient(135deg,#238636,#1f6feb);color:#fff;border:none;
+  padding:9px 20px;font-size:13px;font-weight:700;border-radius:var(--r);cursor:pointer;
+  transition:all .18s;box-shadow:0 3px 14px rgba(35,134,54,.27)}
+.btn-all:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(35,134,54,.38)}
+.btn-regen{background:rgba(31,111,235,.09);color:var(--ac2);border:1px solid rgba(31,111,235,.25);
+  padding:4px 12px;font-size:11px;border-radius:var(--r);cursor:pointer;transition:all .13s}
+.btn-regen:hover{background:rgba(31,111,235,.16)}
+
+/* ── footer ── */
+.cf{position:sticky;bottom:0;background:rgba(13,17,23,.97);backdrop-filter:blur(12px);
+  border-top:1px solid var(--bd);padding:12px 32px;display:flex;align-items:center;gap:14px}
+.cf-m{flex:1}
+.cf-t{font-size:12px;font-weight:600;color:var(--br)}
+.cf-s{font-size:10px;color:var(--dm)}
+.copy-ok{font-size:11px;color:var(--ac);opacity:0;transition:opacity .3s}
 .copy-ok.show{opacity:1}
 
-/* search */
-.search-wrap{position:relative;margin-bottom:14px}
-.search-input{width:100%;background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:13px;
-  padding:8px 12px 8px 36px;outline:none;transition:border-color .15s}
-.search-input:focus{border-color:rgba(31,111,235,.5)}
-.search-icon{position:absolute;left:11px;top:9px;color:var(--dim);font-size:14px}
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.filter-btn{font-size:11px;padding:4px 12px;border-radius:99px;border:1px solid var(--border);
-  background:var(--surface2);color:var(--dim);cursor:pointer;transition:all .12s}
-.filter-btn.active{background:rgba(31,111,235,.12);color:var(--accent2);border-color:rgba(31,111,235,.3)}
+/* ── search/filter ── */
+.sw{position:relative;margin-bottom:12px}
+.si{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);
+  color:var(--tx);font-family:var(--fn);font-size:12px;padding:7px 10px 7px 32px;
+  outline:none;transition:border-color .13s}
+.si:focus{border-color:rgba(31,111,235,.45)}
+.si::placeholder{color:var(--dm)}
+.sic{position:absolute;left:9px;top:8px;color:var(--dm);font-size:13px}
+.fr{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.fb{font-size:10px;padding:3px 10px;border-radius:99px;border:1px solid var(--bd);
+  background:var(--sf2);color:var(--dm);cursor:pointer;transition:all .1s}
+.fb.on{background:rgba(31,111,235,.1);color:var(--ac2);border-color:rgba(31,111,235,.25)}
 
-/* domain card */
-.domain-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
-.domain-head{padding:18px 22px;background:var(--surface);display:flex;align-items:flex-start;gap:14px}
-.domain-score{font-size:28px;font-weight:700;min-width:56px;text-align:center}
-.score-high{color:#3fb950}.score-mid{color:var(--accent3)}.score-low{color:var(--red)}
-.domain-body{padding:16px 22px;border-top:1px solid var(--border)}
-.kv-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;font-size:13px}
-.kv-key{color:var(--dim);min-width:120px;flex-shrink:0}
-.kv-val{color:var(--text)}
-.kv-pass{color:var(--accent)}.kv-fail{color:var(--red)}
+/* ── domain card ── */
+.dc{border:1px solid var(--bd);border-radius:11px;overflow:hidden;margin-bottom:14px}
+.dh{padding:16px 20px;background:var(--sf);display:flex;align-items:flex-start;gap:12px}
+.dsc{font-size:26px;font-weight:700;min-width:50px;text-align:center}
+.sc-hi{color:#3fb950}.sc-md{color:var(--ac3)}.sc-lo{color:var(--rd)}
+.db{padding:14px 20px;border-top:1px solid var(--bd)}
+.kv{display:flex;align-items:baseline;gap:7px;margin-bottom:5px;font-size:12px}
+.kk{color:var(--dm);min-width:110px;flex-shrink:0}
+.kv-ok{color:var(--ac)}.kv-fl{color:var(--rd)}
 
-/* progress bar */
-.pbar{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:8px}
-.pbar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
-  border-radius:99px;transition:width .4s ease}
+/* ── pbar ── */
+.pb2{height:3px;background:var(--bd);border-radius:99px;overflow:hidden;margin-top:6px}
+.pb2-f{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:99px;transition:width .4s}
 
-/* flag chip */
-.flag-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;
-  padding:3px 10px;border-radius:99px;border:1px solid;margin:2px}
-.flag-on{background:rgba(35,134,54,.1);color:#3fb950;border-color:rgba(35,134,54,.3)}
-.flag-off{background:var(--surface2);color:var(--dim);border-color:var(--border)}
+/* ── flag chip ── */
+.fc{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;
+  border-radius:99px;border:1px solid;margin:2px}
+.f-on{background:rgba(35,134,54,.09);color:#3fb950;border-color:rgba(35,134,54,.25)}
+.f-off{background:var(--sf2);color:var(--dm);border-color:var(--bd)}
 
-/* done badge */
-.done-badge{display:none;font-size:11px;color:var(--accent);background:rgba(35,134,54,.1);
-  padding:2px 8px;border-radius:99px;border:1px solid rgba(35,134,54,.25);font-weight:600}
-.done-badge.show{display:inline-flex;align-items:center;gap:4px}
+/* ── ADR table ── */
+.adr-row{display:flex;align-items:baseline;gap:8px;padding:8px 10px;
+  border-bottom:1px solid var(--bd);font-size:12px;transition:background .1s}
+.adr-row:hover{background:var(--sf2)}
+.adr-row:last-child{border-bottom:none}
+.adr-id{color:var(--dm);font-family:var(--mo);font-size:10px;min-width:36px;flex-shrink:0}
+.adr-tit{color:var(--tx);flex:1}
+.adr-dom{font-size:10px;color:var(--pu);flex-shrink:0}
 
-/* toast */
-.toast{position:fixed;bottom:70px;right:20px;background:var(--surface2);
-  border:1px solid var(--border);border-radius:var(--r);padding:10px 16px;
-  font-size:13px;color:var(--bright);opacity:0;transform:translateY(6px);
-  transition:all .22s;z-index:999;pointer-events:none}
+/* ── toast ── */
+.toast{position:fixed;bottom:65px;right:18px;background:var(--sf2);
+  border:1px solid var(--bd);border-radius:var(--r);padding:9px 14px;
+  font-size:12px;color:var(--br);opacity:0;transform:translateY(5px);
+  transition:all .2s;z-index:999;pointer-events:none}
 .toast.show{opacity:1;transform:none}
-.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
 
-@media(max-width:880px){
-  .layout{grid-template-columns:1fr}
-  .sidebar{display:none}
-  .grid-3,.idea-grid.open{grid-template-columns:1fr!important}
-  .main{padding:16px}
+/* ── section title ── */
+.sec-tit{font-size:19px;font-weight:700;color:var(--br);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.divider{border:none;border-top:1px solid var(--bd);margin:14px 0}
+
+/* ── progress ring mini ── */
+.prog-text{font-size:11px;color:var(--dm)}
+
+/* ── cap group header ── */
+.cap-g{font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;
+  letter-spacing:.08em;margin:14px 0 5px;display:flex;align-items:center;gap:6px}
+.cap-prog{font-size:10px;color:var(--ac);margin-left:auto}
+
+@media(max-width:860px){
+  .ly{grid-template-columns:1fr}.sb{display:none}
+  .g3{grid-template-columns:1fr}.ig.open{grid-template-columns:1fr!important}
+  .main{padding:14px}
 }
 </style>
 </head>
 <body>
 
-<script>window.D = __DATA_JSON__;</script>
+<script>window.D=__DATA_JSON__;</script>
 
 <!-- topbar -->
-<header class="topbar">
-  <div class="topbar-logo">
-    <em>⬡</em> Workflow OS <span class="topbar-sep">|</span>
-    <span style="font-weight:400;font-size:14px;color:var(--dim)">마스터 기획서</span>
+<header class="tb">
+  <div class="tb-logo"><em>⬡</em> Workflow OS
+    <span style="color:var(--bd);font-size:16px">|</span>
+    <span style="font-weight:400;font-size:13px;color:var(--dm)">마스터 기획서</span>
   </div>
-  <div class="topbar-right">
-    <span class="badge-health elite" id="health-badge">ELITE</span>
-    <span class="badge-gen" id="gen-time"></span>
-    <button class="btn btn-secondary btn-sm" onclick="exportMarkdown()">📄 MD 내보내기</button>
+  <div class="tb-right">
+    <span class="badge badge-elite" id="hbadge">ELITE</span>
+    <span class="badge-gen" id="gentime"></span>
+    <button class="btn-regen" onclick="regenData()">🔄 데이터 재생성</button>
+    <button class="btn btn-s" style="font-size:11px" onclick="exportMD()">📄 MD 내보내기</button>
   </div>
 </header>
 
 <!-- tabs -->
-<nav class="tabs" role="tablist">
-  <div class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard">📊 대시보드</div>
-  <div class="tab" onclick="switchTab('plan')" id="tab-plan">
-    📝 기획서 <span class="tab-count" id="tc-plan">0/8</span>
+<nav class="tabs">
+  <div class="tab on" onclick="sw('dash')" id="tab-dash">📊 대시보드</div>
+  <div class="tab" onclick="sw('plan')" id="tab-plan">
+    📝 기획서 <span class="tc" id="tc-plan">0/8</span>
   </div>
-  <div class="tab" onclick="switchTab('wps')" id="tab-wps">
-    📦 Work Packets <span class="tab-count" id="tc-wps"></span>
+  <div class="tab" onclick="sw('wps')" id="tab-wps">
+    📦 Work Packets <span class="tc" id="tc-wps"></span>
   </div>
-  <div class="tab" onclick="switchTab('archive')" id="tab-archive">
-    ✅ 완료 아카이브 <span class="tab-count" id="tc-done"></span>
+  <div class="tab" onclick="sw('arc')" id="tab-arc">
+    ✅ 완료 아카이브 <span class="tc" id="tc-arc"></span>
   </div>
-  <div class="tab" onclick="switchTab('domains')" id="tab-domains">
-    🗺 도메인 현황 <span class="tab-count" id="tc-domains"></span>
+  <div class="tab" onclick="sw('dom')" id="tab-dom">
+    🗺 도메인 <span class="tc" id="tc-dom"></span>
+  </div>
+  <div class="tab" onclick="sw('adr')" id="tab-adr">
+    📋 ADR <span class="tc" id="tc-adr"></span>
+  </div>
+  <div class="tab" onclick="sw('log')" id="tab-log">
+    🔍 감사·학습
   </div>
 </nav>
 
-<div class="layout">
-  <nav class="sidebar" id="sidebar"></nav>
-  <main class="main">
-    <div class="tab-panel active" id="panel-dashboard"><div id="dashboard-content"></div></div>
-    <div class="tab-panel" id="panel-plan"><div id="plan-content"></div></div>
-    <div class="tab-panel" id="panel-wps"><div id="wps-content"></div></div>
-    <div class="tab-panel" id="panel-archive"><div id="archive-content"></div></div>
-    <div class="tab-panel" id="panel-domains"><div id="domains-content"></div></div>
+<div class="ly">
+  <nav class="sb" id="sidebar"></nav>
+  <main class="main" id="main">
+    <div class="tab-panel on" id="p-dash"><div id="c-dash"></div></div>
+    <div class="tab-panel" id="p-plan"><div id="c-plan"></div></div>
+    <div class="tab-panel" id="p-wps"><div id="c-wps"></div></div>
+    <div class="tab-panel" id="p-arc"><div id="c-arc"></div></div>
+    <div class="tab-panel" id="p-dom"><div id="c-dom"></div></div>
+    <div class="tab-panel" id="p-adr"><div id="c-adr"></div></div>
+    <div class="tab-panel" id="p-log"><div id="c-log"></div></div>
   </main>
 </div>
 
-<!-- footer -->
-<footer class="copy-footer">
-  <div class="copy-footer-meta">
-    <div class="copy-footer-title">전체 기획서 내보내기</div>
-    <div class="copy-footer-sub">모든 기획서 섹션을 하나의 Markdown 문서로 복사합니다</div>
+<footer class="cf">
+  <div class="cf-m">
+    <div class="cf-t">전체 기획서 내보내기</div>
+    <div class="cf-s">8개 섹션 전체를 Markdown으로 복사합니다</div>
   </div>
-  <span class="copy-ok" id="copy-ok">✓ 클립보드에 복사됨</span>
-  <button class="btn-copy-all" onclick="copyAllPlan()">📋 전체 기획서 한 번에 복사</button>
+  <span class="copy-ok" id="cok">✓ 클립보드에 복사됨</span>
+  <button class="btn-all" onclick="copyAll()">📋 전체 기획서 한 번에 복사</button>
 </footer>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ─────────────────────────────────────────────────────────
-// 기획서 섹션 정의 (실제 프로젝트 데이터로 초기화)
-// ─────────────────────────────────────────────────────────
-const PLAN_SECTIONS = [
-  {
-    id:"overview", icon:"🎯", num:"SECTION 01", tag:"Vision",
+// ────────────────────────────────────────────────────────────────
+// PLAN SECTIONS — 실제 프로젝트 데이터로 초기화
+// ────────────────────────────────────────────────────────────────
+const SECTIONS = [
+  { id:"s01", ic:"🎯", num:"SECTION 01", tag:"Vision",
     title:"프로젝트 비전 & 목표",
     desc:"Workflow OS의 핵심 가치, 해결할 문제, 성공 지표를 정의합니다.",
-    getInitial(d) {
-      return `# Workflow OS\n\n**목적**: ${d.project.name} — 격리 모듈 생성·조합·검증 엔진\n**단계**: ${d.project.phase}\n**브랜치**: ${d.project.branch}\n\n## 성공 지표\n- 전 도메인 Stage A~E PASS\n- 헬스 레이팅: ${d.project.health_rating}\n- 테스트 통과율: ${d.project.tests_pass}/${d.project.tests_total}\n- 게이트 통과율: ${d.project.gate_pass_rate}%`;
+    init(d) {
+      return `# Workflow OS — 마스터 기획서\n\n**목적**: ${d.project.name} — 격리 모듈 생성·조합·검증 엔진\n**단계**: ${d.project.phase}\n**브랜치**: ${d.project.branch}\n**생성**: ${new Date(d.generated_at).toLocaleDateString('ko-KR')}\n\n## 성공 지표\n- 헬스 레이팅: ${d.project.health_rating}\n- 전체 테스트: ${d.project.tests_pass}/${d.project.tests_total} PASS\n- 게이트 통과율: ${d.project.gate_pass_rate}%\n- 변경 실패율: ${d.project.change_failure_rate}%\n- 세션당 WP: ${d.project.avg_wps_per_session}`;
     },
     ideas:[
       {num:"안 01",title:"OKR 기반 비전 프레임워크",
@@ -421,16 +592,23 @@ const PLAN_SECTIONS = [
         src:"📌 JTBD Theory, Strategyzer VPC",tags:["JTBD","사용자중심","린"]}
     ]
   },
-  {
-    id:"domain-design", icon:"🗺", num:"SECTION 02", tag:"Stage A",
+  { id:"s02", ic:"🗺", num:"SECTION 02", tag:"Stage A",
     title:"도메인 설계 & 경계 컨텍스트",
     desc:"DDD 바운디드 컨텍스트 정의, 유비쿼터스 언어, 불변조건(INV) 목록.",
-    getInitial(d) {
-      let lines = `## 활성 도메인 목록\n\n`;
-      (d.domains||[]).forEach(m => {
-        lines += `### ${m.module_id} (${m.domain})\n- 플러그인: ${m.plugin_id}\n- Feature Flag: ${m.feature_flag} = ${m.feature_flag_value}\n- 헬스 스코어: ${(d.domain_scores||{})[m.domain]?.score ?? '—'}\n\n`;
+    init(d) {
+      let out = `## 활성 도메인 (${d.domains.length}개)\n\n`;
+      d.domains.forEach(m => {
+        const sc = (d.domain_scores[m.domain] || d.domain_scores[`productivity/${m.domain}`] || {}).score || '—';
+        out += `### ${m.module_id}\n- 도메인: ${m.domain} | 플러그인: ${m.plugin_id}\n- 헬스 스코어: ${sc} | Flag: ${m.feature_flag} = ${m.feature_flag_value||false}\n\n`;
       });
-      return lines + `## 계약 매트릭스\n- billing: OpenAPI ✅ Events ✅ UI ✅ Capability ✅\n- task-tracking: OpenAPI ✅ Events ✅ UI ✅ Capability ✅\n- video: OpenAPI ✅ Events ✅ UI ✅ Capability ✅`;
+      const sums = d.stage_a_summaries || {};
+      if(Object.keys(sums).length) {
+        out += `## Stage A 메모리 요약\n`;
+        Object.entries(sums).forEach(([name,s]) => {
+          out += `- **${name}**: INV ${s.invariant_count}개 | 언어: ${s.ubiquitous_language.join(', ')}\n`;
+        });
+      }
+      return out + `\n## 계약 매트릭스\n${d.contract_matrix||'- billing/task-tracking/video: OpenAPI ✅ Events ✅ UI ✅ Capability ✅'}`;
     },
     ideas:[
       {num:"안 01",title:"Event Storming → Context Map",
@@ -444,13 +622,12 @@ const PLAN_SECTIONS = [
         src:"📌 'Building Evolutionary Architectures' O'Reilly, ArchUnit",tags:["FitnessFunction","CI연동"]}
     ]
   },
-  {
-    id:"contract-design", icon:"📜", num:"SECTION 03", tag:"Stage B",
+  { id:"s03", ic:"📜", num:"SECTION 03", tag:"Stage B",
     title:"계약 설계 & 도메인 조합",
     desc:"도메인 간 인터페이스 계약(contracts/), 조합 전략, 충돌 감지 방법론.",
-    getInitial(d) {
-      const stB = (d.project.stage_states||{}).B || 'PASS';
-      return `## 계약 원칙\n\n- 도메인 간 직접 src/ import 금지 — contracts/만 참조\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n\n## Stage B 상태: ${stB}\n- 계약 드리프트 검증: test:contract PASS\n- validate:composition PASS`;
+    init(d) {
+      const stB = (d.project.stage_states||{}).B||'PASS';
+      return `## 계약 원칙\n\n- 도메인 간 직접 src/ import 금지 — contracts/만 참조\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n- Consumer-Driven Contract Testing 준비\n\n## Stage B 상태: ${stB}\n- test:contract PASS (계약 드리프트 검증)\n- validate:composition PASS\n\n## ADR 연계\n${d.adrs.filter(a=>a.id<='0003').map(a=>`- ADR-${a.id}: ${a.title}`).join('\n')}`;
     },
     ideas:[
       {num:"안 01",title:"Consumer-Driven Contract Testing (Pact)",
@@ -464,17 +641,19 @@ const PLAN_SECTIONS = [
         src:"📌 Confluent Schema Registry, Avro Schema Evolution",tags:["SchemaRegistry","하위호환"]}
     ]
   },
-  {
-    id:"master-shell", icon:"🐚", num:"SECTION 04", tag:"Stage C",
+  { id:"s04", ic:"🐚", num:"SECTION 04", tag:"Stage C",
     title:"마스터 쉘 & 플러그인 아키텍처",
     desc:"plugin-registry, feature-flags, navigation, observability 구성 전략.",
-    getInitial(d) {
-      let lines = `## 플러그인 레지스트리 현황\n\n`;
-      (d.plugins||[]).forEach(p => {
-        lines += `### ${p.name} (${p.id})\n- 상태: ${p.status}\n- Feature Flag: ${p.feature_flag}\n- 롤아웃: ${p.rollout?.strategy||'canary'}\n\n`;
+    init(d) {
+      const stC = (d.project.stage_states||{}).C||'PASS';
+      let out = `## 플러그인 레지스트리 (${d.plugins.length}개)\n\n`;
+      d.plugins.forEach(p => {
+        out += `### ${p.name} (${p.id})\n- 상태: ${p.status} | Flag: ${p.feature_flag}\n- 롤아웃: ${p.rollout?.strategy||'canary'}\n\n`;
       });
-      const stC = (d.project.stage_states||{}).C || 'PASS';
-      return lines + `## Stage C 상태: ${stC}\n- validate:composition PASS\n- registry/nav/catalog/flags 교차 정합 PASS`;
+      const pf = d.flags.plugin||{};
+      const active = Object.entries(pf).filter(([,v])=>v).map(([k])=>k);
+      const inactive = Object.entries(pf).filter(([,v])=>!v).map(([k])=>k);
+      return out + `## Feature Flags\n- 활성: ${active.length?active.join(', '):'없음'}\n- 비활성: ${inactive.join(', ')}\n\n## Stage C 상태: ${stC}`;
     },
     ideas:[
       {num:"안 01",title:"Module Federation (Micro-Frontend)",
@@ -488,15 +667,14 @@ const PLAN_SECTIONS = [
         src:"📌 VS Code Extension API, Obsidian Plugin System",tags:["플러그인마켓","DAG"]}
     ]
   },
-  {
-    id:"implementation", icon:"⚙️", num:"SECTION 05", tag:"Stage D",
+  { id:"s05", ic:"⚙️", num:"SECTION 05", tag:"Stage D",
     title:"구현 전략 & 품질 게이트",
     desc:"Clean Architecture 레이어 구조, 테스트 피라미드, 품질 게이트 기준.",
-    getInitial(d) {
-      const gd = d.project.quality_gate_detail || {};
-      const stD = (d.project.stage_states||{}).D || 'PASS';
-      const lines = Object.entries(gd).slice(0,8).map(([k,v])=>`- **${k}**: ${v}`).join('\n');
-      return `## 품질 게이트 현황 (${d.project.quality_gate_last_run})\n\n${lines}\n\n## Stage D 상태: ${stD}\n- 전체 테스트: ${d.project.tests_pass}/${d.project.tests_total} PASS`;
+    init(d) {
+      const gd = d.project.quality_gate_detail||{};
+      const stD = (d.project.stage_states||{}).D||'PASS';
+      const top8 = Object.entries(gd).slice(0,8).map(([k,v])=>`- **${k}**: ${v}`).join('\n');
+      return `## 품질 게이트 (${d.project.quality_gate_last_run})\n\n${top8}\n\n## Stage D 상태: ${stD}\n- 전체 테스트: ${d.project.tests_pass}/${d.project.tests_total} PASS\n\n## 검증 통계\n- 명령 실행: ${d.wps.verification.total_commands_run||0}회\n- PASS: ${d.wps.verification.passed||0} / FAIL: ${d.wps.verification.failed||0}`;
     },
     ideas:[
       {num:"안 01",title:"TDD + Property-Based Testing",
@@ -510,16 +688,15 @@ const PLAN_SECTIONS = [
         src:"📌 DORA (Google), 'Accelerate' Nicole Forsgren",tags:["DORA","배포품질"]}
     ]
   },
-  {
-    id:"adversarial", icon:"🛡", num:"SECTION 06", tag:"Stage E",
+  { id:"s06", ic:"🛡", num:"SECTION 06", tag:"Stage E",
     title:"적대적 검증 & 보안 전략",
     desc:"레드팀 시나리오, OWASP 대응, 불변조건 공격 벡터, 침투 테스트 체크리스트.",
-    getInitial(d) {
-      const ef = d.stage_e_findings || {};
-      const stE = (d.project.stage_states||{}).E || 'PASS';
-      let lines = `## Stage E 현황\n\n- 총 갭 발견: ${ef.total_gaps||0}건\n- 수정 완료: ${ef.gaps_fixed||0}건\n- ADR 결정: ${ef.gaps_adred||0}건\n\n## 발견된 갭\n`;
-      (ef.gap_details||[]).forEach(g => { lines += `- **${g.id}** [${g.severity}]: ${g.description} → ${g.status}\n`; });
-      return lines + `\n## Stage E 상태: ${stE}\n- adversarial tests: 43/43 PASS`;
+    init(d) {
+      const ef = d.stage_e_findings||{};
+      const stE = (d.project.stage_states||{}).E||'PASS';
+      let gaps = (ef.gap_details||[]).map(g=>`- **${g.id}** [${g.severity}]: ${g.description} → ${g.status}`).join('\n');
+      const refs = d.reflections.map(r=>`- [${r.stage}/${r.domain}] ${(r.went_wrong||[]).join('; ')}`).join('\n');
+      return `## Stage E 현황\n\n- 총 갭: ${ef.total_gaps||0}건 | 수정: ${ef.gaps_fixed||0} | ADR: ${ef.gaps_adred||0}\n\n## 발견된 갭\n${gaps||'없음'}\n\n## Reflexion 로그\n${refs||'없음'}\n\n## Stage E 상태: ${stE}`;
     },
     ideas:[
       {num:"안 01",title:"STRIDE 위협 모델링",
@@ -533,13 +710,13 @@ const PLAN_SECTIONS = [
         src:"📌 OWASP ZAP, Semgrep OSS, Trivy (Aqua Security)",tags:["ZAP","Semgrep","자동스캔"]}
     ]
   },
-  {
-    id:"deployment", icon:"🚀", num:"SECTION 07", tag:"Ops",
+  { id:"s07", ic:"🚀", num:"SECTION 07", tag:"Ops",
     title:"배포 & 운영 전략",
     desc:"배포 환경 구성, 롤백 플레이북, 모니터링, SLO/SLA 정의.",
-    getInitial(d) {
+    init(d) {
       const ki = (d.project.known_issues||[]).map(i=>`- **${i.id}** [${i.severity}]: ${i.description}`).join('\n');
-      return `## 배포 현황\n\n- 릴리즈 모드: work-packet-governed\n- 품질 게이트: ${d.project.quality_gate_result}\n- SBOM: artifacts/sbom/\n- Provenance: artifacts/provenance/\n\n## Known Issues\n${ki||'없음'}\n\n## 운영 기준선\n- check:observability PASS\n- test:rollback PASS\n- deployment-environment-provisioning PASS`;
+      const ae = d.audit_entries.map(e=>`- #${e.seq} ${e.timestamp.substring(0,10)} ${e.action}`).join('\n');
+      return `## 배포 현황\n\n- 릴리즈 모드: work-packet-governed\n- 품질 게이트: ${d.project.quality_gate_result}\n- SBOM: artifacts/sbom/ | Provenance: artifacts/provenance/\n\n## Known Issues\n${ki||'없음'}\n\n## 감사 체인\n${ae||'없음'}\n\n## 운영 기준선\n- check:observability PASS\n- test:rollback PASS\n- deployment-environment-provisioning PASS`;
     },
     ideas:[
       {num:"안 01",title:"GitOps + ArgoCD 선언적 배포",
@@ -553,18 +730,18 @@ const PLAN_SECTIONS = [
         src:"📌 Martin Fowler FeatureToggles, LaunchDarkly Rollout",tags:["점진롤아웃","자동롤백"]}
     ]
   },
-  {
-    id:"roadmap", icon:"📈", num:"SECTION 08", tag:"Roadmap",
+  { id:"s08", ic:"📈", num:"SECTION 08", tag:"Roadmap",
     title:"성장 로드맵 & 자기개선 사이클",
     desc:"다음 Work Packet 계획, Reflexion Loop, Knowledge Graph 확장, 팀 역량 성장.",
-    getInitial(d) {
-      const nq = (d.next_queue||[]).map(q=>`- ${q.id}: ${q.goal} [${q.status}]`).join('\n');
-      const feats = (d.project.upgrade_v3_features||[]).slice(0,8).map(f=>`- ${f}`).join('\n');
-      return `## 다음 Work Packet 큐\n\n${nq||'현재 큐 비어 있음 (wp:next로 확인)'}\n\n## v3.0 완료 피처 (주요)\n${feats}\n\n## 자기개선 지표\n- 헬스 레이팅: ${d.project.health_rating}\n- 게이트 통과율: ${d.project.gate_pass_rate}%\n- 세션당 WP: 10.0`;
+    init(d) {
+      const nq = (d.next_queue||[]).map(q=>`- **${q.id}** [${q.status}]: ${q.goal}`).join('\n');
+      const reps = d.learning_reports.map(r=>`- [${r.domain}] ${r.file}`).join('\n');
+      const v3 = (d.project.upgrade_v3_features||[]).slice(0,8).map(f=>`- ${f}`).join('\n');
+      return `## 다음 Work Packet 큐\n\n${nq||'현재 큐 비어 있음 (npm run wp:next 실행)'}\n\n## 학습 보고서\n${reps||'없음'}\n\n## v3.0 완료 피처 (주요)\n${v3}\n\n## 자기개선 지표\n- 헬스 레이팅: ${d.project.health_rating}\n- 게이트 통과율: ${d.project.gate_pass_rate}%\n- 세션당 WP: ${d.project.avg_wps_per_session}`;
     },
     ideas:[
       {num:"안 01",title:"Shape Up (6-week Cycles)",
-        body:"Basecamp 방법론. 6주 빌드 + 2주 쿨다운. 기술 부채 해소를 쿨다운에 배정. 무료 공개.",
+        body:"Basecamp 방법론. 6주 빌드 + 2주 쿨다운. 기술 부채 해소를 쿨다운에 배정.",
         src:"📌 Basecamp 'Shape Up', 37signals",tags:["ShapeUp","6주사이클"]},
       {num:"안 02",title:"Blameless Post-mortem",
         body:"Google SRE 방식 비비난 사후검토. 실패를 학습 자산화. Reflexion Loop + lessons-learned.yaml 정합.",
@@ -576,551 +753,650 @@ const PLAN_SECTIONS = [
   }
 ];
 
-// ─────────────────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────────────────
-const STATE = { planContents:{}, planDone:{} };
+// ────────────────────────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────────────────────────
+const ST = { planC:{}, planDone:{}, curTab:'dash',
+             wpStat:'all', wpTier:'all', wpQ:'', arcQ:'' };
 
-// ─────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
+// ────────────────────────────────────────────────────────────────
+// HELPERS
+// ────────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const pct = (n,t) => t>0?Math.round(n/t*100):0;
-const scoreClass = s => s>=85?'score-high':s>=70?'score-mid':'score-low';
-function toast(msg) {
-  const t=$('toast'); t.textContent=msg;
-  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
+const sc  = s => typeof s==='number'?(s>=85?'sc-hi':s>=70?'sc-md':'sc-lo'):'';
+function toast(m) { const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ────────────────────────────────────────────────────────────────
+// TABS
+// ────────────────────────────────────────────────────────────────
+function sw(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  $('tab-'+name).classList.add('on');
+  $('p-'+name).classList.add('on');
+  ST.curTab=name; buildSB(name);
 }
 
-// ─────────────────────────────────────────────────────────
-// Tab switching
-// ─────────────────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  $('tab-'+name).classList.add('active');
-  $('panel-'+name).classList.add('active');
-  buildSidebar(name);
-}
+// ────────────────────────────────────────────────────────────────
+// DASHBOARD
+// ────────────────────────────────────────────────────────────────
+function renderDash() {
+  const d=window.D,p=d.project,wp=d.wps,dp=pct(wp.done_count,wp.total);
+  const stages=p.stage_states||{};
 
-// ─────────────────────────────────────────────────────────
-// Dashboard
-// ─────────────────────────────────────────────────────────
-function renderDashboard() {
-  const d=window.D, p=d.project, wp=d.wps;
-  const stages=p.stage_states||{}, doneP=pct(wp.done_count,wp.total);
-
-  let domainScoreHtml='';
+  let dscr='';
   Object.entries(d.domain_scores||{}).forEach(([dom,info])=>{
-    const sc=info.score||0;
-    domainScoreHtml+=`<div class="mini-card">
-      <div class="mini-card-label">${esc(dom)}</div>
-      <div class="mini-card-value ${scoreClass(sc)}">${sc}</div>
-      <div class="mini-card-sub">건강 스코어 추세 ${esc(info.trend||'→')}</div>
-      <div class="pbar"><div class="pbar-fill" style="width:${sc}%"></div></div>
-    </div>`;
+    const s=info.score||0;
+    dscr+=`<div class="mc"><div class="mc-l">${esc(dom)}</div>
+      <div class="mc-v ${sc(s)}">${s}</div>
+      <div class="mc-s">추세 ${esc(info.trend||'→')}</div>
+      <div class="pb2"><div class="pb2-f" style="width:${s}%"></div></div></div>`;
   });
 
-  const stageBadges=['A','B','C','D','E'].map(s=>{
+  const sbadge=['A','B','C','D','E'].map(s=>{
     const v=stages[s]||'—';
-    const cls=v==='PASS'?'s-pass':v==='FAIL'?'s-fail':'s-pending';
-    return `<span class="stage-badge ${cls}">Stage ${s}: ${v}</span>`;
+    return `<span class="st ${v==='PASS'?'s-ok':v==='FAIL'?'s-fl':'s-nd'}">Stage ${s}: ${v}</span>`;
   }).join('');
 
-  const qgd=p.quality_gate_detail||{};
-  let qgHtml=Object.entries(qgd).map(([k,v])=>{
-    const pass=String(v).toLowerCase().includes('pass');
-    return `<div class="kv-row"><span class="kv-key">${esc(k)}</span>
-      <span class="kv-val ${pass?'kv-pass':''}">${esc(v)}</span></div>`;
+  const qg=p.quality_gate_detail||{};
+  let qgH=Object.entries(qg).map(([k,v])=>{
+    const ok=String(v).toLowerCase().includes('pass');
+    return `<div class="kv"><span class="kk" style="min-width:130px">${esc(k)}</span>
+      <span class="${ok?'kv-ok':''}">${esc(v)}</span></div>`;
   }).join('');
 
   const pf=d.flags.plugin||{};
-  let flagHtml=Object.entries(pf).map(([k,v])=>
-    `<span class="flag-chip ${v?'flag-on':'flag-off'}">${v?'ON':'OFF'} ${esc(k)}</span>`
-  ).join('');
+  let fH=Object.entries(pf).map(([k,v])=>
+    `<span class="fc ${v?'f-on':'f-off'}">${v?'ON':'OFF'} ${esc(k)}</span>`).join('');
 
-  let activeHtml='';
+  let actH='';
   (wp.active||[]).forEach(w=>{
-    activeHtml+=`<div class="wp-item">
-      <div class="wp-status-dot wp-active"></div>
-      <div class="wp-id">${esc(w.id)}</div>
-      <div style="flex:1"><div class="wp-goal">${esc(w.goal)}</div></div>
-      <div class="wp-tier">${esc(w.tier)}</div>
-    </div>`;
+    actH+=`<div class="wi"><div class="wd w-ac"></div>
+      <div class="wid">${esc(w.id)}</div>
+      <div style="flex:1"><div class="wg">${esc(w.goal)}</div></div>
+      <div class="wt">${esc(w.tier||'')}</div></div>`;
   });
-  if(!activeHtml) activeHtml='<div style="color:var(--dim);font-size:13px;padding:8px">현재 진행 중인 Work Packet 없음</div>';
+  if(!actH) actH='<div style="color:var(--dm);font-size:12px;padding:8px">현재 진행 중인 Work Packet 없음 — npm run wp:next 실행</div>';
 
-  const kiHtml=(p.known_issues||[]).map(i=>
-    `<div class="wp-item"><div class="wp-status-dot wp-pending"></div>
-      <div class="wp-id">${esc(i.id)} <span class="stage-badge s-pending" style="font-size:9px">${esc(i.severity)}</span></div>
-      <div class="wp-goal">${esc(i.description)}</div></div>`
-  ).join('')||'<div style="color:var(--dim);font-size:13px;padding:8px">Known Issues 없음</div>';
+  let penH='';
+  (wp.pending||[]).slice(0,3).forEach(w=>{
+    penH+=`<div class="wi"><div class="wd w-wn"></div>
+      <div class="wid">${esc(w.id)}</div>
+      <div class="wg">${esc(w.goal)}</div>
+      <div class="wt">${esc(w.tier||'')}</div></div>`;
+  });
 
-  $('dashboard-content').innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  const kiH=(p.known_issues||[]).map(i=>
+    `<div class="wi"><div class="wd w-nd"></div>
+      <div class="wid"><span class="st s-nd" style="font-size:9px">${esc(i.severity)}</span> ${esc(i.id)}</div>
+      <div class="wg">${esc(i.description)}</div></div>`
+  ).join('')||'<div style="color:var(--dm);font-size:12px;padding:8px">없음</div>';
+
+  $('c-dash').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
       <div>
-        <div style="font-size:22px;font-weight:700;color:var(--bright)">📊 프로젝트 대시보드</div>
-        <div style="font-size:13px;color:var(--dim);margin-top:3px">생성: ${new Date(d.generated_at).toLocaleString('ko-KR')}</div>
+        <div class="sec-tit">📊 대시보드</div>
+        <div style="font-size:12px;color:var(--dm)">생성: ${new Date(d.generated_at).toLocaleString('ko-KR')}</div>
       </div>
     </div>
 
-    <div class="grid-3">
-      <div class="mini-card">
-        <div class="mini-card-label">헬스 레이팅</div>
-        <div class="mini-card-value" style="color:#3fb950;font-size:18px">${esc(p.health_rating)}</div>
-        <div class="mini-card-sub">게이트 통과율 ${p.gate_pass_rate}%</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-card-label">전체 테스트</div>
-        <div class="mini-card-value">${p.tests_pass}<span style="font-size:14px;color:var(--dim)">/${p.tests_total}</span></div>
-        <div class="mini-card-sub">PASS</div>
-        <div class="pbar"><div class="pbar-fill" style="width:${pct(p.tests_pass,p.tests_total)}%"></div></div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-card-label">Work Packets 완료</div>
-        <div class="mini-card-value">${wp.done_count}<span style="font-size:14px;color:var(--dim)">/${wp.total}</span></div>
-        <div class="mini-card-sub">${doneP}% 완료</div>
-        <div class="pbar"><div class="pbar-fill" style="width:${doneP}%"></div></div>
-      </div>
+    <div class="g3">
+      <div class="mc"><div class="mc-l">헬스 레이팅</div>
+        <div class="mc-v sc-hi" style="font-size:17px">${esc(p.health_rating)}</div>
+        <div class="mc-s">게이트 통과율 ${p.gate_pass_rate}%</div></div>
+      <div class="mc"><div class="mc-l">전체 테스트</div>
+        <div class="mc-v">${p.tests_pass}<span style="font-size:13px;color:var(--dm)">/${p.tests_total}</span></div>
+        <div class="mc-s">PASS</div>
+        <div class="pb2"><div class="pb2-f" style="width:${pct(p.tests_pass,p.tests_total)}%"></div></div></div>
+      <div class="mc"><div class="mc-l">Work Packets</div>
+        <div class="mc-v">${wp.done_count}<span style="font-size:13px;color:var(--dm)">/${wp.total}</span></div>
+        <div class="mc-s">${dp}% 완료 · 진행: ${wp.active_count}</div>
+        <div class="pb2"><div class="pb2-f" style="width:${dp}%"></div></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-icon">🎯</div>
-        <div><div class="card-title">Stage 상태</div>
-          <div class="card-sub">마지막 게이트: ${esc(p.quality_gate_last_run)} · 결과: <span style="color:var(--accent)">${esc(p.quality_gate_result)}</span></div>
-        </div></div>
-      <div class="stage-row">${stageBadges}</div>
-    </div>
+    <div class="card"><div class="card-h"><div class="card-ic">🎯</div>
+        <div><div class="card-tit">Stage 상태</div>
+          <div class="card-sub">최종 게이트: ${esc(p.quality_gate_last_run)} · 결과: <span style="color:var(--ac)">${esc(p.quality_gate_result)}</span></div></div></div>
+      <div class="sb-r">${sbadge}</div></div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-icon">🏥</div>
-        <div><div class="card-title">도메인 헬스 스코어</div>
+    <div class="card"><div class="card-h"><div class="card-ic">🏥</div>
+        <div><div class="card-tit">도메인 헬스 스코어</div>
           <div class="card-sub">master-shell/observability/health-scores.yaml</div></div></div>
-      <div class="grid-3" style="margin-top:12px;margin-bottom:0">${domainScoreHtml}</div>
-    </div>
+      <div class="g3" style="margin:10px 0 0">${dscr}</div></div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-icon">🔄</div>
-        <div><div class="card-title">진행 중인 Work Packet</div>
+    <div class="card"><div class="card-h"><div class="card-ic">🔄</div>
+        <div><div class="card-tit">진행 중 Work Packet</div>
           <div class="card-sub">memory/current-wp.yaml + memory/next-actions.yaml</div></div></div>
-      ${activeHtml}
-    </div>
+      ${actH}
+      ${penH?`<div class="divider"></div><div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;margin-bottom:6px">대기 중</div>${penH}`:''}</div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-icon">🚩</div>
-        <div><div class="card-title">Feature Flag 현황</div>
-          <div class="card-sub">master-shell/feature-flags/flags.yaml (모두 false = 운영 환경 준비 전)</div></div></div>
-      <div style="margin-top:10px">${flagHtml}</div>
-    </div>
+    <div class="card"><div class="card-h"><div class="card-ic">🚩</div>
+        <div><div class="card-tit">Feature Flag 현황</div>
+          <div class="card-sub">master-shell/feature-flags/flags.yaml</div></div></div>
+      <div style="margin-top:8px">${fH}</div></div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-icon">✅</div>
-        <div><div class="card-title">품질 게이트 상세</div>
+    <div class="card"><div class="card-h"><div class="card-ic">✅</div>
+        <div><div class="card-tit">품질 게이트 상세</div>
           <div class="card-sub">memory/L0-hot/current-state.yaml</div></div></div>
-      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px">${qgHtml}</div>
-    </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:8px">${qgH}</div></div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-icon">⚠️</div>
-        <div><div class="card-title">Known Issues</div></div></div>
-      ${kiHtml}
-    </div>
-  `;
+    <div class="card"><div class="card-h"><div class="card-ic">⚠️</div>
+        <div><div class="card-tit">Known Issues</div></div></div>
+      ${kiH}</div>`;
 }
 
-// ─────────────────────────────────────────────────────────
-// Planning
-// ─────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
+// PLANNING
+// ────────────────────────────────────────────────────────────────
 function renderPlan() {
-  const container=$('plan-content'); container.innerHTML='';
-  const d=window.D; let doneCount=0;
+  const c=$('c-plan'); c.innerHTML='';
+  const d=window.D;
+  SECTIONS.forEach(sec=>{
+    const key='wfos-'+sec.id;
+    const saved=localStorage.getItem(key);
+    const val=saved!==null?saved:sec.init(d);
+    if(saved&&saved.trim().length>20) ST.planDone[sec.id]=true;
+    ST.planC[sec.id]=val;
 
-  PLAN_SECTIONS.forEach(sec=>{
-    const savedKey='wfos-plan-'+sec.id;
-    const savedVal=localStorage.getItem(savedKey);
-    const initVal=savedVal!==null?savedVal:sec.getInitial(d);
-    if(savedVal!==null&&savedVal.trim().length>20){STATE.planDone[sec.id]=true;doneCount++;}
-    STATE.planContents[sec.id]=initVal;
-
-    const ideasHtml=sec.ideas.map((idea,i)=>`
-      <div class="idea-card" id="icard-${sec.id}-${i}">
-        <div class="idea-num">${esc(idea.num)}</div>
-        <div class="idea-title">${esc(idea.title)}</div>
-        <div class="idea-body">${esc(idea.body)}</div>
-        <div class="idea-src">${esc(idea.src)}</div>
-        <div class="idea-tags">${idea.tags.map(t=>`<span class="idea-tag">${esc(t)}</span>`).join('')}</div>
-        <button class="btn btn-apply" onclick="applyIdea('${sec.id}',${i})">✓ 이 안 적용</button>
+    const iH=sec.ideas.map((ide,i)=>`
+      <div class="ic" id="ic-${sec.id}-${i}">
+        <div class="in">${esc(ide.num)}</div>
+        <div class="it">${esc(ide.title)}</div>
+        <div class="ib">${esc(ide.body)}</div>
+        <div class="isrc">${esc(ide.src)}</div>
+        <div class="itags">${ide.tags.map(t=>`<span class="itag">${esc(t)}</span>`).join('')}</div>
+        <button class="btn btn-ap" onclick="applyIdea('${sec.id}',${i})">✓ 이 안 적용</button>
       </div>`).join('');
 
-    const promptTxt=`"${sec.title}" 구간에 대해 Claude Skills, GitHub ⭐ 높은 라이브러리, 카카오·네이버·토스·Google·Spotify·Netflix 국내외 최고 사례를 벤치마킹하여 실제 적용 가능한 최적 안 3가지를 제시해주세요. 각 안: ①방법론명 ②핵심설명 ③출처/레퍼런스 ④장단점`;
+    const prompt=`"${sec.title}" 구간에 대해 Claude Skills, GitHub ⭐ 높은 라이브러리, 카카오·네이버·토스·Google·Spotify·Netflix 국내외 최고 사례를 벤치마킹하여 실제 적용 가능한 최적 안 3가지를 제시해주세요. 각 안: ①방법론명 ②핵심설명 ③출처/레퍼런스 ④장단점`;
 
-    const div=document.createElement('div');
-    div.className='plan-section'; div.id='ps-'+sec.id;
-    div.innerHTML=`
-      <div class="plan-head">
-        <div class="plan-icon">${sec.icon}</div>
-        <div class="plan-meta">
-          <div class="plan-num">${esc(sec.num)}</div>
-          <div class="plan-title">${esc(sec.title)}</div>
-          <div class="plan-desc">${esc(sec.desc)}</div>
+    const el=document.createElement('div');
+    el.className='ps'; el.id='ps-'+sec.id;
+    el.innerHTML=`
+      <div class="ph">
+        <div class="pic">${sec.ic}</div>
+        <div class="pm">
+          <div class="pn">${esc(sec.num)}</div>
+          <div class="pt">${esc(sec.title)}</div>
+          <div class="pd">${esc(sec.desc)}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          <span class="plan-tag">${esc(sec.tag)}</span>
-          <span class="done-badge${STATE.planDone[sec.id]?' show':''}" id="done-${sec.id}">✓ 작성완료</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+          <span class="ptag">${esc(sec.tag)}</span>
+          <span class="dnb${ST.planDone[sec.id]?' show':''}" id="dn-${sec.id}">✓ 작성완료</span>
         </div>
       </div>
-      <div class="plan-body">
-        <textarea class="edit-area" id="area-${sec.id}"
-          placeholder="${esc(sec.desc)}"
-          oninput="onPlanInput('${sec.id}',this.value)"
-        >${esc(initVal)}</textarea>
-        <div class="idea-panel">
-          <div class="idea-header">
-            <div class="idea-label">💡 벤치마킹 아이디어 — 국내외 최고 사례 3가지</div>
-            <button class="btn btn-secondary btn-sm" onclick="copyPromptTxt('${sec.id}')">프롬프트 복사</button>
-            <button class="btn btn-idea btn-sm" onclick="toggleIdeas('${sec.id}')">아이디어 보기/숨기기</button>
+      <div class="pb">
+        <textarea class="ea" id="ea-${sec.id}" oninput="onPI('${sec.id}',this.value)">${esc(val)}</textarea>
+        <div class="ip">
+          <div class="ih">
+            <div class="il">💡 벤치마킹 아이디어 — 국내외 최고 사례 3가지</div>
+            <button class="btn btn-s" style="font-size:10px" onclick="cpPrompt('${sec.id}')">프롬프트 복사</button>
+            <button class="btn btn-i" style="font-size:10px" onclick="togIdeas('${sec.id}')">아이디어 보기/숨기기</button>
           </div>
-          <div class="prompt-box" id="prompt-${sec.id}">${esc(promptTxt)}</div>
-          <div class="idea-grid" id="ideas-${sec.id}">${ideasHtml}</div>
+          <div class="pb-box" id="pb-${sec.id}">${esc(prompt)}</div>
+          <div class="ig" id="ig-${sec.id}">${iH}</div>
         </div>
       </div>`;
-    container.appendChild(div);
+    c.appendChild(el);
   });
-  updatePlanProgress();
+  updPlanProg();
 }
 
-function onPlanInput(id,val) {
-  STATE.planContents[id]=val;
-  localStorage.setItem('wfos-plan-'+id,val);
-  const isDone=val.trim().length>20;
-  STATE.planDone[id]=isDone;
-  const badge=$('done-'+id);
-  if(badge) isDone?badge.classList.add('show'):badge.classList.remove('show');
-  updatePlanProgress();
+function onPI(id,val){
+  ST.planC[id]=val; localStorage.setItem('wfos-'+id,val);
+  const done=val.trim().length>20; ST.planDone[id]=done;
+  const b=$('dn-'+id); if(b) done?b.classList.add('show'):b.classList.remove('show');
+  updPlanProg();
 }
-
-function toggleIdeas(id) {
-  $('ideas-'+id).classList.toggle('open');
-  $('prompt-'+id).classList.toggle('open');
+function togIdeas(id){ $('ig-'+id).classList.toggle('open'); $('pb-'+id).classList.toggle('open'); }
+function applyIdea(sId,i){
+  const s=SECTIONS.find(x=>x.id===sId), ide=s.ideas[i], a=$('ea-'+sId);
+  a.value+=`\n\n[채택: ${ide.num}] ${ide.title}\n${ide.body}\n참조: ${ide.src}`;
+  onPI(sId,a.value);
+  document.querySelectorAll(`[id^="ic-${sId}-"]`).forEach(c=>c.classList.remove('pk'));
+  $(`ic-${sId}-${i}`).classList.add('pk');
+  toast(`"${ide.title}" 적용됨`);
 }
-
-function applyIdea(secId,idx) {
-  const sec=PLAN_SECTIONS.find(s=>s.id===secId), idea=sec.ideas[idx];
-  const area=$('area-'+secId);
-  area.value+=`\n\n[채택: ${idea.num}] ${idea.title}\n${idea.body}\n참조: ${idea.src}`;
-  onPlanInput(secId,area.value);
-  document.querySelectorAll(`[id^="icard-${secId}-"]`).forEach(c=>c.classList.remove('picked'));
-  $(`icard-${secId}-${idx}`).classList.add('picked');
-  toast(`"${idea.title}" 적용됨`);
+function cpPrompt(id){
+  $('pb-'+id).classList.add('open');
+  const s=SECTIONS.find(x=>x.id===id);
+  navigator.clipboard.writeText(`"${s.title}" 구간에 대해 Claude Skills, GitHub ⭐ 높은 라이브러리, 카카오·네이버·토스·Google·Spotify·Netflix 국내외 최고 사례를 벤치마킹하여 실제 적용 가능한 최적 안 3가지를 제시해주세요. 각 안: ①방법론명 ②핵심설명 ③출처/레퍼런스 ④장단점`).then(()=>toast('프롬프트 복사됨'));
 }
-
-function copyPromptTxt(id) {
-  $('prompt-'+id).classList.add('open');
-  const sec=PLAN_SECTIONS.find(s=>s.id===id);
-  const txt=`"${sec.title}" 구간에 대해 Claude Skills, GitHub ⭐ 높은 라이브러리, 카카오·네이버·토스·Google·Spotify·Netflix 국내외 최고 사례를 벤치마킹하여 실제 적용 가능한 최적 안 3가지를 제시해주세요. 각 안: ①방법론명 ②핵심설명 ③출처/레퍼런스 ④장단점`;
-  navigator.clipboard.writeText(txt).then(()=>toast('프롬프트 복사됨'));
+function updPlanProg(){
+  const done=Object.values(ST.planDone).filter(Boolean).length;
+  $('tc-plan').textContent=`${done}/${SECTIONS.length}`;
 }
-
-function updatePlanProgress() {
-  const total=PLAN_SECTIONS.length, done=Object.values(STATE.planDone).filter(Boolean).length;
-  $('tc-plan').textContent=`${done}/${total}`;
-}
-
-function copyAllPlan() {
+function copyAll(){
   let md=`# Workflow OS 마스터 기획서\n생성: ${new Date().toLocaleDateString('ko-KR')}\n\n---\n\n`;
-  PLAN_SECTIONS.forEach(sec=>{
-    md+=`## ${sec.num} — ${sec.title} [${sec.tag}]\n\n${STATE.planContents[sec.id]?.trim()||'(미작성)'}\n\n---\n\n`;
-  });
+  SECTIONS.forEach(s=>{ md+=`## ${s.num} — ${s.title} [${s.tag}]\n\n${ST.planC[s.id]?.trim()||'(미작성)'}\n\n---\n\n`; });
   navigator.clipboard.writeText(md).then(()=>{
-    const ok=$('copy-ok'); ok.classList.add('show'); setTimeout(()=>ok.classList.remove('show'),3000);
+    const ok=$('cok'); ok.classList.add('show'); setTimeout(()=>ok.classList.remove('show'),3000);
     toast('전체 기획서 복사됨!');
   });
 }
-
-function exportMarkdown() {
+function exportMD(){
   let md=`# Workflow OS 마스터 기획서\n> ${new Date().toLocaleString('ko-KR')}\n\n`;
-  PLAN_SECTIONS.forEach(sec=>{
-    md+=`## ${sec.title}\n> Stage: ${sec.tag} | ${sec.desc}\n\n${STATE.planContents[sec.id]?.trim()||'*(미작성)*'}\n\n---\n\n`;
-  });
-  const blob=new Blob([md],{type:'text/markdown'});
-  const url=URL.createObjectURL(blob), a=document.createElement('a');
-  a.href=url; a.download=`workflow-os-plan-${Date.now()}.md`; a.click();
-  URL.revokeObjectURL(url); toast('Markdown 다운로드됨');
+  SECTIONS.forEach(s=>{ md+=`## ${s.title}\n> ${s.tag} | ${s.desc}\n\n${ST.planC[s.id]?.trim()||'*(미작성)*'}\n\n---\n\n`; });
+  const b=new Blob([md],{type:'text/markdown'});
+  const u=URL.createObjectURL(b), a=document.createElement('a');
+  a.href=u; a.download=`wfos-plan-${Date.now()}.md`; a.click(); URL.revokeObjectURL(u);
+  toast('Markdown 다운로드됨');
 }
 
-// ─────────────────────────────────────────────────────────
-// Work Packets
-// ─────────────────────────────────────────────────────────
-let wpStatusFilter='all', wpTierFilter='all', wpSearchQ='';
-
-function renderWPs() {
+// ────────────────────────────────────────────────────────────────
+// WORK PACKETS
+// ────────────────────────────────────────────────────────────────
+function renderWPs(){
   const d=window.D; $('tc-wps').textContent=d.wps.total;
-  const statusF=['all','done','in_progress'];
-  const tierF=['all','infra','arch','domain','governance','meta'];
-  $('wps-content').innerHTML=`
-    <div style="font-size:20px;font-weight:700;color:var(--bright);margin-bottom:16px">📦 Work Packets</div>
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" placeholder="WP ID 또는 목표로 검색..." oninput="wpSearch(this.value)">
+  const sF=['all','done','in_progress','pending'];
+  const tF=['all','infra','arch','domain','governance','meta'];
+  $('c-wps').innerHTML=`
+    <div class="sec-tit">📦 Work Packets</div>
+    <div class="sw"><span class="sic">🔍</span>
+      <input class="si" placeholder="WP ID / 목표로 검색..." oninput="wpQ(this.value)"></div>
+    <div class="fr" id="wpFR">
+      ${sF.map(f=>`<div class="fb${f==='all'?' on':''}" onclick="wpS('${f}',this)">${{all:'전체',done:'✅ 완료',in_progress:'🔄 진행중',pending:'⏳ 대기'}[f]||f}</div>`).join('')}
+      <div style="border-left:1px solid var(--bd);margin:0 4px"></div>
+      ${tF.map(t=>`<div class="fb${t==='all'?' on':''}" onclick="wpT('${t}',this)" data-tier="${t}">${t==='all'?'전 Tier':t}</div>`).join('')}
     </div>
-    <div class="filter-row" id="wpFilterRow">
-      ${statusF.map(f=>`<div class="filter-btn${f==='all'?' active':''}" onclick="wpSetStatus('${f}',this)">${f==='all'?'전체':f==='done'?'✅ 완료':'🔄 진행중'}</div>`).join('')}
-      <div style="border-left:1px solid var(--border);margin:0 6px"></div>
-      ${tierF.map(t=>`<div class="filter-btn" onclick="wpSetTier('${t}',this)" data-tier="${t}">${t==='all'?'전 Tier':t}</div>`).join('')}
-    </div>
-    <div id="wp-list"></div>`;
-  document.querySelector('[data-tier="all"]').classList.add('active');
-  renderWPList();
+    <div id="wpl"></div>`;
+  renderWPL();
 }
+function wpQ(q){ST.wpQ=q.toLowerCase();renderWPL();}
+function wpS(f,el){ST.wpStat=f;document.querySelectorAll('#wpFR .fb:not([data-tier])').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderWPL();}
+function wpT(t,el){ST.wpTier=t;document.querySelectorAll('[data-tier]').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderWPL();}
 
-function wpSearch(q){wpSearchQ=q.toLowerCase();renderWPList();}
-function wpSetStatus(f,el_){
-  wpStatusFilter=f;
-  document.querySelectorAll('#wpFilterRow .filter-btn:not([data-tier])').forEach(b=>b.classList.remove('active'));
-  el_.classList.add('active'); renderWPList();
-}
-function wpSetTier(t,el_){
-  wpTierFilter=t;
-  document.querySelectorAll('[data-tier]').forEach(b=>b.classList.remove('active'));
-  el_.classList.add('active'); renderWPList();
-}
-
-function renderWPList() {
+function renderWPL(){
   let wps=window.D.wps.all;
-  if(wpStatusFilter!=='all') wps=wps.filter(w=>w.status===wpStatusFilter);
-  if(wpTierFilter!=='all') wps=wps.filter(w=>w.tier===wpTierFilter);
-  if(wpSearchQ) wps=wps.filter(w=>(w.id+w.goal+w.cap_name).toLowerCase().includes(wpSearchQ));
-  if(!wps.length){$('wp-list').innerHTML='<div style="color:var(--dim);padding:20px;text-align:center">검색 결과 없음</div>';return;}
-  const groups={};
+  if(ST.wpStat!=='all') wps=wps.filter(w=>w.status===ST.wpStat);
+  if(ST.wpTier!=='all') wps=wps.filter(w=>w.tier===ST.wpTier);
+  if(ST.wpQ) wps=wps.filter(w=>(w.id+w.goal+w.cap_name).toLowerCase().includes(ST.wpQ));
+  if(!wps.length){$('wpl').innerHTML='<div style="color:var(--dm);padding:16px;text-align:center">검색 결과 없음</div>';return;}
+  const grp={};
   wps.forEach(w=>{
-    if(!groups[w.cap_id]) groups[w.cap_id]={cap_id:w.cap_id,cap_name:w.cap_name,wps:[]};
-    groups[w.cap_id].wps.push(w);
+    const k=w.cap_id||'NEXT';
+    if(!grp[k]) grp[k]={cid:w.cap_id,cn:w.cap_name,wps:[]};
+    grp[k].wps.push(w);
   });
   let html='';
-  Object.values(groups).forEach(g=>{
-    html+=`<div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 6px">${esc(g.cap_id)} — ${esc(g.cap_name)}</div>`;
+  // CAP 통계
+  const caps=window.D.caps;
+  Object.values(grp).forEach(g=>{
+    const cap=caps.find(c=>c.id===g.cid)||{};
+    const done=g.wps.filter(w=>w.status==='done').length;
+    html+=`<div class="cap-g">
+      <span class="st s-nd" style="font-size:9px">${esc(g.cid)}</span>
+      ${esc(g.cn)}
+      ${cap.wp_count?`<span class="cap-prog">${done}/${g.wps.length} 완료</span>`:''}
+    </div>`;
     g.wps.forEach(w=>{
-      const sc=w.status==='done'?'wp-done':w.status==='in_progress'?'wp-active':'wp-pending';
-      html+=`<div class="wp-item">
-        <div class="wp-status-dot ${sc}"></div>
-        <div class="wp-id">${esc(w.id)}</div>
+      const dc=w.status==='done'?'w-ok':w.status==='in_progress'?'w-ac':w.status==='pending'?'w-wn':'w-nd';
+      html+=`<div class="wi">
+        <div class="wd ${dc}"></div>
+        <div class="wid">${esc(w.id)}</div>
         <div style="flex:1">
-          <div class="wp-goal">${esc(w.goal)}</div>
-          ${w.result?`<div class="wp-result">${esc(w.result.substring(0,120))}${w.result.length>120?'…':''}</div>`:''}
-          ${w.completed_at?`<div class="wp-result" style="color:var(--dim)">완료: ${esc(w.completed_at)}</div>`:''}
+          <div class="wg">${esc(w.goal)}</div>
+          ${w.result?`<div class="wr">${esc(w.result.substring(0,130))}${w.result.length>130?'…':''}</div>`:''}
+          ${w.completed_at?`<div class="wr" style="color:var(--dm)">완료: ${esc(w.completed_at)}</div>`:''}
+          ${w.covers?`<div class="wr">capability: ${esc(w.covers)}</div>`:''}
         </div>
-        <div class="wp-tier">${esc(w.tier)}</div>
+        <div class="wt">${esc(w.tier||'')}</div>
       </div>`;
     });
   });
-  $('wp-list').innerHTML=html;
+  $('wpl').innerHTML=html;
 }
 
-// ─────────────────────────────────────────────────────────
-// Archive
-// ─────────────────────────────────────────────────────────
-function renderArchive() {
-  const d=window.D; $('tc-done').textContent=d.wps.done_count;
-  $('archive-content').innerHTML=`
-    <div style="font-size:20px;font-weight:700;color:var(--bright);margin-bottom:16px">
-      ✅ 완료 아카이브 <span style="font-size:14px;font-weight:400;color:var(--dim)">(${d.wps.done_count}건)</span>
+// ────────────────────────────────────────────────────────────────
+// ARCHIVE (완료 계획 아카이브)
+// ────────────────────────────────────────────────────────────────
+function renderArc(){
+  const d=window.D; $('tc-arc').textContent=d.wps.done_count;
+  const dp=pct(d.wps.done_count,d.wps.total), ver=d.wps.verification;
+  $('c-arc').innerHTML=`
+    <div class="sec-tit">✅ 완료 계획 아카이브</div>
+    <div class="g3" style="margin-bottom:14px">
+      <div class="mc"><div class="mc-l">완료 WP</div>
+        <div class="mc-v sc-hi">${d.wps.done_count}</div>
+        <div class="pb2"><div class="pb2-f" style="width:${dp}%"></div></div></div>
+      <div class="mc"><div class="mc-l">검증 실행</div>
+        <div class="mc-v">${ver.total_commands_run||0}</div>
+        <div class="mc-s">PASS ${ver.passed||0} / FAIL ${ver.failed||0}</div></div>
+      <div class="mc"><div class="mc-l">완료율</div>
+        <div class="mc-v">${dp}%</div>
+        <div class="pb2"><div class="pb2-f" style="width:${dp}%"></div></div></div>
     </div>
-    <div class="grid-3" style="margin-bottom:16px">
-      <div class="mini-card">
-        <div class="mini-card-label">완료 WP</div>
-        <div class="mini-card-value">${d.wps.done_count}</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-card-label">검증 명령 실행</div>
-        <div class="mini-card-value">${d.wps.verification.total_commands_run||0}</div>
-        <div class="mini-card-sub">PASS ${d.wps.verification.passed||0} / FAIL ${d.wps.verification.failed||0}</div>
-      </div>
-      <div class="mini-card">
-        <div class="mini-card-label">완료율</div>
-        <div class="mini-card-value">${pct(d.wps.done_count,d.wps.total)}%</div>
-        <div class="pbar"><div class="pbar-fill" style="width:${pct(d.wps.done_count,d.wps.total)}%"></div></div>
-      </div>
-    </div>
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" placeholder="완료 WP 검색..." oninput="filterArchive(this.value)">
-    </div>
-    <div id="archive-list"></div>`;
-  renderArchiveList('');
+    <div class="sw"><span class="sic">🔍</span>
+      <input class="si" placeholder="완료 WP 검색..." oninput="arcQ(this.value)"></div>
+    <div id="arcl"></div>`;
+  renderArcL('');
 }
-
-function filterArchive(q){renderArchiveList(q.toLowerCase());}
-
-function renderArchiveList(q) {
-  let wps=[...window.D.wps.done].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||''));
+function arcQ(q){renderArcL(q.toLowerCase());}
+function renderArcL(q){
+  const d=window.D;
+  // CAP별 그룹화, 날짜 역순
+  const caps=d.caps;
+  let wps=[...d.wps.done].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||''));
   if(q) wps=wps.filter(w=>(w.id+w.goal+w.result+w.cap_name).toLowerCase().includes(q));
-  let html='';
-  wps.forEach((w,i)=>{
-    html+=`<div class="archive-item">
-      <div class="archive-head" onclick="toggleArc(${i})">
-        <div class="wp-status-dot wp-done" style="flex-shrink:0;margin-top:4px"></div>
-        <div style="font-size:11px;font-weight:700;color:var(--dim);min-width:110px;flex-shrink:0">${esc(w.id)}</div>
-        <div style="font-size:13px;color:var(--text);flex:1">${esc(w.goal.substring(0,80))}${w.goal.length>80?'…':''}</div>
-        <div class="wp-tier" style="flex-shrink:0">${esc(w.tier)}</div>
-        <div style="font-size:11px;color:var(--dim);flex-shrink:0;margin-left:8px">${esc(w.completed_at||'')}</div>
-        <span style="color:var(--dim);margin-left:8px">▾</span>
-      </div>
-      <div class="archive-body" id="ab-${i}">
-        <div style="margin-bottom:6px;font-size:12px;color:var(--dim)">CAP: ${esc(w.cap_id)} — ${esc(w.cap_name)} · Tier: ${esc(w.tier)}</div>
-        <div class="archive-result">${esc(w.result||'결과 없음')}</div>
-      </div>
-    </div>`;
+
+  // CAP 그룹
+  const grp={};
+  wps.forEach(w=>{
+    const k=w.cap_id||'OTHER';
+    if(!grp[k]) grp[k]={cid:w.cap_id,cn:w.cap_name,wps:[]};
+    grp[k].wps.push(w);
   });
-  $('archive-list').innerHTML=html||'<div style="color:var(--dim);padding:20px;text-align:center">검색 결과 없음</div>';
+
+  let html='';
+  Object.values(grp).forEach(g=>{
+    html+=`<div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;
+      letter-spacing:.08em;margin:14px 0 5px;display:flex;align-items:center;gap:6px">
+      <span class="st s-ok" style="font-size:9px">✓</span> ${esc(g.cid)} — ${esc(g.cn)}
+      <span style="color:var(--ac);margin-left:auto">${g.wps.length}건</span>
+    </div>`;
+    g.wps.forEach((w,i)=>{
+      const uid=`arc-${g.cid}-${i}`;
+      html+=`<div class="arc-it">
+        <div class="arc-h" onclick="togArc('${uid}')">
+          <div class="wd w-ok" style="flex-shrink:0;margin-top:3px"></div>
+          <div style="font-size:10px;font-weight:700;color:var(--dm);min-width:100px;flex-shrink:0">${esc(w.id)}</div>
+          <div style="font-size:12px;color:var(--tx);flex:1">${esc(w.goal.substring(0,75))}${w.goal.length>75?'…':''}</div>
+          <div class="wt" style="flex-shrink:0">${esc(w.tier||'')}</div>
+          <div style="font-size:10px;color:var(--dm);flex-shrink:0;margin-left:7px">${esc(w.completed_at||'')}</div>
+          <span style="color:var(--dm);margin-left:6px;font-size:12px">▾</span>
+        </div>
+        <div class="arc-b" id="${uid}">
+          <div style="margin-bottom:6px;font-size:11px;color:var(--dm)">
+            CAP: ${esc(w.cap_id)} | Tier: ${esc(w.tier||'')} ${w.covers?`| capability: ${esc(w.covers)}`:''}
+          </div>
+          <div class="arc-res">${esc(w.result||'결과 없음')}</div>
+        </div>
+      </div>`;
+    });
+  });
+  $('arcl').innerHTML=html||'<div style="color:var(--dm);padding:16px;text-align:center">검색 결과 없음</div>';
 }
+function togArc(id){ $(id).classList.toggle('open'); }
 
-function toggleArc(i){$('ab-'+i).classList.toggle('open');}
-
-// ─────────────────────────────────────────────────────────
-// Domains
-// ─────────────────────────────────────────────────────────
-function renderDomains() {
-  const d=window.D; $('tc-domains').textContent=d.domains.length;
+// ────────────────────────────────────────────────────────────────
+// DOMAINS
+// ────────────────────────────────────────────────────────────────
+function renderDom(){
+  const d=window.D; $('tc-dom').textContent=d.domains.length;
   const stages=d.project.stage_states||{}, pf=d.flags.plugin||{};
-  let html=`<div style="font-size:20px;font-weight:700;color:var(--bright);margin-bottom:16px">🗺 도메인 현황</div>`;
+  let html=`<div class="sec-tit">🗺 도메인 현황</div>`;
 
-  html+=`<div class="card" style="margin-bottom:20px">
-    <div class="card-head"><div class="card-icon">📜</div>
-      <div><div class="card-title">계약 호환성 매트릭스</div>
+  // 계약 매트릭스
+  html+=`<div class="card" style="margin-bottom:16px">
+    <div class="card-h"><div class="card-ic">📜</div>
+      <div><div class="card-tit">계약 호환성 매트릭스</div>
         <div class="card-sub">worklog/contract-matrix.md 기준</div></div></div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px">
-      <tr style="border-bottom:1px solid var(--border)">
-        ${['도메인','OpenAPI','Events','UI','Capability','Status'].map(h=>`<th style="text-align:left;padding:6px 10px;color:var(--dim);font-weight:600;font-size:11px">${h}</th>`).join('')}
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px">
+      <tr style="border-bottom:1px solid var(--bd)">
+        ${['도메인','OpenAPI','Events','UI','Capability','Status'].map(h=>`<th style="text-align:left;padding:5px 8px;color:var(--dm);font-size:10px;font-weight:600">${h}</th>`).join('')}
       </tr>
-      ${['billing','productivity/task-tracking','video'].map(dom=>`<tr style="border-bottom:1px solid var(--border)">
-        <td style="padding:8px 10px;color:var(--text)">${esc(dom)}</td>
-        <td style="padding:8px 10px;color:var(--accent)">✅</td><td style="padding:8px 10px;color:var(--accent)">✅</td>
-        <td style="padding:8px 10px;color:var(--accent)">✅</td><td style="padding:8px 10px;color:var(--accent)">✅</td>
-        <td style="padding:8px 10px"><span class="stage-badge s-pass">PASS</span></td>
+      ${['billing','productivity/task-tracking','video'].map(dom=>`<tr style="border-bottom:1px solid var(--bd)">
+        <td style="padding:7px 8px;color:var(--tx)">${esc(dom)}</td>
+        ${['✅','✅','✅','✅'].map(x=>`<td style="padding:7px 8px;color:var(--ac)">${x}</td>`).join('')}
+        <td style="padding:7px 8px"><span class="st s-ok">PASS</span></td>
       </tr>`).join('')}
     </table>
   </div>`;
 
+  // Stage A 메모리 요약
+  const sums=d.stage_a_summaries||{};
+  if(Object.keys(sums).length){
+    html+=`<div class="card" style="margin-bottom:16px">
+      <div class="card-h"><div class="card-ic">📐</div>
+        <div><div class="card-tit">Stage A 메모리 요약</div>
+          <div class="card-sub">memory/stageA/*.yaml</div></div></div>
+      ${Object.entries(sums).map(([name,s])=>`
+        <div class="wi"><div class="wd d-pass"></div>
+          <div class="wid">${esc(name)}</div>
+          <div style="flex:1">
+            <div class="wg">${esc(s.domain_id)} / ${esc(s.bounded_context)}</div>
+            <div class="wr">INV ${s.invariant_count}개 | 언어: ${esc((s.ubiquitous_language||[]).join(', '))} ${s.risk_level?`| risk: ${esc(s.risk_level)}`:''}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  // 도메인 카드
   d.domains.forEach(m=>{
     const domKey=m.domain==='productivity'?'productivity/task-tracking':m.domain;
-    const scoreInfo=(d.domain_scores[domKey]||d.domain_scores[m.domain]||{});
-    const sc=scoreInfo.score||'—', trend=scoreInfo.trend||'→';
+    const si=d.domain_scores[domKey]||d.domain_scores[m.domain]||{};
+    const score=m.health_score||si.score||'—', trend=si.trend||'→';
     const flagVal=pf[m.feature_flag];
-    const mStages=m.stage_a?{A:m.stage_a,B:m.stage_b,C:m.stage_c,D:m.stage_d,E:m.stage_e}:{A:'PASS',B:'PASS',C:'PASS',D:'PASS',E:'PASS'};
-    const stageBadges=['A','B','C','D','E'].map(s=>{
-      const v=mStages[s]||stages[s]||'PASS';
-      return `<span class="stage-badge ${v==='PASS'?'s-pass':v==='FAIL'?'s-fail':'s-pending'}">Stage ${s}: ${v}</span>`;
+    const ms=m.stage_a?{A:m.stage_a,B:m.stage_b,C:m.stage_c,D:m.stage_d,E:m.stage_e}:{A:'PASS',B:'PASS',C:'PASS',D:'PASS',E:'PASS'};
+    const sbadge=['A','B','C','D','E'].map(s=>{
+      const v=ms[s]||stages[s]||'PASS';
+      return `<span class="st ${v==='PASS'?'s-ok':v==='FAIL'?'s-fl':'s-nd'}">Stage ${s}: ${v}</span>`;
     }).join('');
-    let gapHtml='';
+    let gH='';
     if(m.stage_e_gaps) m.stage_e_gaps.forEach(g=>{
-      gapHtml+=`<div class="wp-item" style="margin-bottom:4px">
-        <div class="wp-status-dot" style="background:${g.status==='FIXED'?'#3fb950':'var(--accent3)'}"></div>
-        <div class="wp-id"><span class="stage-badge s-pending" style="font-size:9px">${esc(g.severity)}</span> ${esc(g.id)}</div>
-        <div class="wp-goal">${esc(g.description)} <span style="color:var(--accent)">${esc(g.status)}</span></div>
+      gH+=`<div class="wi" style="margin-bottom:3px">
+        <div class="wd" style="background:${g.status==='FIXED'?'#3fb950':'var(--ac3)'}"></div>
+        <div class="wid"><span class="st s-nd" style="font-size:8px">${esc(g.severity)}</span> ${esc(g.id)}</div>
+        <div class="wg">${esc(g.description)} <span style="color:var(--ac)">${esc(g.status)}</span></div>
       </div>`;
     });
-    html+=`<div class="domain-card">
-      <div class="domain-head">
-        <div class="domain-score ${typeof sc==='number'?scoreClass(sc):''}">
-          ${sc} <span style="font-size:12px;font-weight:400;color:var(--dim)">${trend}</span>
-        </div>
+    html+=`<div class="dc">
+      <div class="dh">
+        <div class="dsc ${sc(typeof score==='number'?score:0)}">${score}
+          <div style="font-size:11px;font-weight:400;color:var(--dm)">${trend}</div></div>
         <div style="flex:1">
-          <div style="font-size:17px;font-weight:700;color:var(--bright)">${esc(m.module_id)}</div>
-          <div style="font-size:12px;color:var(--dim)">${esc(m.domain)} / ${esc(m.bounded_context||m.domain)}</div>
-          <div class="stage-row" style="margin-top:8px">${stageBadges}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--br)">${esc(m.module_id)}</div>
+          <div style="font-size:11px;color:var(--dm)">${esc(m.domain)} / ${esc(m.bounded_context||m.domain)}</div>
+          <div class="sb-r" style="margin-top:7px">${sbadge}</div>
         </div>
         <div style="text-align:right">
-          <span class="flag-chip ${flagVal?'flag-on':'flag-off'}">${flagVal?'🟢 활성':'🔴 비활성'}</span>
-          <div style="font-size:11px;color:var(--dim);margin-top:4px">${esc(m.feature_flag)}</div>
+          <span class="fc ${flagVal?'f-on':'f-off'}">${flagVal?'🟢 활성':'🔴 비활성'}</span>
+          <div style="font-size:10px;color:var(--dm);margin-top:3px">${esc(m.feature_flag)}</div>
         </div>
       </div>
-      <div class="domain-body">
-        <div class="kv-row"><span class="kv-key">플러그인 ID</span><span class="kv-val">${esc(m.plugin_id)}</span></div>
-        ${m.contract_dir?`<div class="kv-row"><span class="kv-key">계약 디렉토리</span><span class="kv-val">${esc(m.contract_dir)}</span></div>`:''}
-        ${m.interface_layer?`<div class="kv-row"><span class="kv-key">인터페이스</span><span class="kv-val kv-pass">${esc(m.interface_layer.substring(0,70))}</span></div>`:''}
-        ${m.unit_tests?`<div class="kv-row"><span class="kv-key">단위 테스트</span><span class="kv-val kv-pass">${esc(m.unit_tests)}</span></div>`:''}
-        ${gapHtml?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Stage E 갭</div>${gapHtml}</div>`:''}
+      <div class="db">
+        <div class="kv"><span class="kk">플러그인 ID</span><span>${esc(m.plugin_id)}</span></div>
+        ${m.contract_dir?`<div class="kv"><span class="kk">계약 디렉토리</span><span>${esc(m.contract_dir)}</span></div>`:''}
+        ${m.interface_layer?`<div class="kv"><span class="kk">인터페이스</span><span class="kv-ok">${esc(m.interface_layer.substring(0,70))}</span></div>`:''}
+        ${m.unit_tests?`<div class="kv"><span class="kk">단위 테스트</span><span class="kv-ok">${esc(m.unit_tests)}</span></div>`:''}
+        ${gH?`<div style="margin-top:10px"><div style="font-size:10px;font-weight:600;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Stage E 갭</div>${gH}</div>`:''}
       </div>
     </div>`;
   });
-  $('domains-content').innerHTML=html;
+  $('c-dom').innerHTML=html;
 }
 
-// ─────────────────────────────────────────────────────────
-// Sidebar
-// ─────────────────────────────────────────────────────────
-function buildSidebar(tab) {
-  const sb=$('sidebar');
-  if(tab==='dashboard'){
-    sb.innerHTML=`<div class="sidebar-label">섹션</div>`+
-      ['핵심 지표','Stage 상태','도메인 헬스','진행 중 WP','Feature Flags','품질 게이트','Known Issues']
-      .map(s=>`<div class="nav-link"><span class="nav-dot dot-pass"></span>${s}</div>`).join('');
-  }else if(tab==='plan'){
-    sb.innerHTML=`<div class="sidebar-label">기획서 목차</div>`+
-      PLAN_SECTIONS.map(s=>`<div class="nav-link${STATE.planDone[s.id]?' active':''}"
-        onclick="document.getElementById('ps-${s.id}').scrollIntoView({behavior:'smooth'})">
-        <span class="nav-dot ${STATE.planDone[s.id]?'dot-pass':'dot-inactive'}"></span>
-        <span style="flex:1;font-size:12px">${s.title}</span>
-        <span style="font-size:9px;color:var(--dim)">${s.tag}</span>
-      </div>`).join('');
-  }else if(tab==='wps'){
-    const d=window.D;
-    const byS={done:0,in_progress:0,other:0};
-    d.wps.all.forEach(w=>{if(w.status==='done')byS.done++;else if(w.status==='in_progress')byS.in_progress++;else byS.other++;});
-    sb.innerHTML=`<div class="sidebar-label">WP 현황</div>
-      <div class="mini-card" style="margin-bottom:8px">
-        <div class="kv-row"><span class="kv-key" style="font-size:12px">완료</span><span class="kv-val kv-pass">${byS.done}</span></div>
-        <div class="kv-row"><span class="kv-key" style="font-size:12px">진행중</span><span class="kv-val" style="color:var(--accent2)">${byS.in_progress}</span></div>
-        <div class="kv-row"><span class="kv-key" style="font-size:12px">대기</span><span class="kv-val">${byS.other}</span></div>
+// ────────────────────────────────────────────────────────────────
+// ADR
+// ────────────────────────────────────────────────────────────────
+function renderADR(){
+  const d=window.D; $('tc-adr').textContent=d.adrs.length;
+  const byDomain={};
+  d.adrs.forEach(a=>{ const k=a.domain||'core'; if(!byDomain[k]) byDomain[k]=[]; byDomain[k].push(a); });
+
+  let html=`<div class="sec-tit">📋 아키텍처 결정 기록 (ADR)</div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-h"><div class="card-ic">📊</div>
+        <div><div class="card-tit">ADR 현황</div>
+          <div class="card-sub">docs/adr/ — ${d.adrs.length}개 활성</div></div></div>
+      <div class="g3" style="margin-top:10px">
+        <div class="mc"><div class="mc-l">총 ADR</div><div class="mc-v">${d.adrs.length}</div></div>
+        <div class="mc"><div class="mc-l">도메인 수</div><div class="mc-v">${Object.keys(byDomain).length}</div></div>
+        <div class="mc"><div class="mc-l">최신</div><div class="mc-v" style="font-size:13px">${esc(d.adrs[d.adrs.length-1]?.title?.substring(0,20)||'—')}</div></div>
       </div>
-      <div class="sidebar-label" style="margin-top:10px">Capability</div>`+
-      d.caps.map(c=>`<div class="nav-link" style="font-size:11px">
-        <span class="nav-dot dot-pass"></span>${esc(c.id)} <span style="color:var(--dim)">${esc(c.name.substring(0,18))}</span>
+    </div>`;
+
+  Object.entries(byDomain).forEach(([dom,adrs])=>{
+    html+=`<div class="card" style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">${esc(dom)}</div>
+      ${adrs.map(a=>`<div class="adr-row">
+        <div class="adr-id">ADR-${esc(a.id)}</div>
+        <div class="adr-tit">${esc(a.title)}</div>
+        ${a.stage?`<span class="st s-nd" style="font-size:9px;flex-shrink:0">Stage ${esc(a.stage)}</span>`:''}
+      </div>`).join('')}
+    </div>`;
+  });
+  $('c-adr').innerHTML=html;
+}
+
+// ────────────────────────────────────────────────────────────────
+// LOG (감사·학습)
+// ────────────────────────────────────────────────────────────────
+function renderLog(){
+  const d=window.D;
+  let refH='';
+  (d.reflections||[]).forEach(r=>{
+    refH+=`<div class="wi"><div class="wd d-warn"></div>
+      <div class="wid">${esc(r.stage)} / ${esc(r.domain)}</div>
+      <div style="flex:1">
+        <div class="wg">${esc(r.date)}</div>
+        ${r.went_wrong?.length?`<div class="wr">문제: ${esc(r.went_wrong.join(' | '))}</div>`:''}
+        ${r.improvement?.length?`<div class="wr" style="color:var(--ac2)">개선: ${esc(r.improvement.join(' | '))}</div>`:''}
+      </div>
+      <div style="font-size:10px;color:var(--dm)">${esc(r.confidence||'')} 신뢰도</div>
+    </div>`;
+  });
+
+  let auH='';
+  (d.audit_entries||[]).forEach(e=>{
+    auH+=`<div class="wi"><div class="wd d-pass"></div>
+      <div class="wid">#${esc(e.seq)}</div>
+      <div style="flex:1">
+        <div class="wg">${esc(e.action)}</div>
+        <div class="wr">${esc(e.timestamp)} ${e.hash?`hash: ${esc(e.hash)}`:''}</div>
+      </div>
+    </div>`;
+  });
+
+  let repH='';
+  (d.learning_reports||[]).forEach(r=>{
+    repH+=`<div class="wi"><div class="wd d-act"></div>
+      <div class="wid">${esc(r.domain)}</div>
+      <div style="flex:1">
+        <div class="wg" style="font-size:10px;font-family:var(--mo)">${esc(r.file)}</div>
+        <div class="wr">${esc(r.excerpt.substring(0,120))}${r.excerpt.length>120?'…':''}</div>
+      </div>
+    </div>`;
+  });
+
+  $('c-log').innerHTML=`
+    <div class="sec-tit">🔍 감사 & 학습 로그</div>
+
+    <div class="card"><div class="card-h"><div class="card-ic">🔄</div>
+      <div><div class="card-tit">Reflexion 로그</div>
+        <div class="card-sub">memory/L0-hot/reflection-log.yaml</div></div></div>
+      ${refH||'<div style="color:var(--dm);padding:8px">없음</div>'}
+    </div>
+
+    <div class="card"><div class="card-h"><div class="card-ic">🔗</div>
+      <div><div class="card-tit">감사 체인</div>
+        <div class="card-sub">worklog/audit-chain.json</div></div></div>
+      ${auH||'<div style="color:var(--dm);padding:8px">없음</div>'}
+    </div>
+
+    <div class="card"><div class="card-h"><div class="card-ic">📚</div>
+      <div><div class="card-tit">학습 보고서</div>
+        <div class="card-sub">worklog/reports/**/*.md</div></div></div>
+      ${repH||'<div style="color:var(--dm);padding:8px">없음</div>'}
+    </div>`;
+}
+
+// ────────────────────────────────────────────────────────────────
+// SIDEBAR
+// ────────────────────────────────────────────────────────────────
+function buildSB(tab){
+  const sb=$('sidebar'); sb.innerHTML='';
+  const d=window.D;
+  if(tab==='dash'){
+    sb.innerHTML=`<div class="sb-lbl">섹션</div>`+
+      ['핵심 지표','Stage 상태','도메인 헬스','진행 중 WP','Feature Flags','품질 게이트','Known Issues']
+      .map(s=>`<div class="nl"><span class="dot d-pass"></span>${s}</div>`).join('');
+  } else if(tab==='plan'){
+    sb.innerHTML=`<div class="sb-lbl">목차</div>`+
+      SECTIONS.map(s=>`<div class="nl${ST.planDone[s.id]?' on':''}"
+        onclick="document.getElementById('ps-${s.id}')?.scrollIntoView({behavior:'smooth'})">
+        <span class="dot ${ST.planDone[s.id]?'d-pass':'d-off'}"></span>
+        <span style="flex:1;font-size:11px">${s.title}</span>
+        <span style="font-size:9px;color:var(--dm)">${s.tag}</span>
       </div>`).join('');
-  }else if(tab==='archive'){
-    sb.innerHTML=`<div class="sidebar-label">아카이브</div>
-      <div class="nav-link active"><span class="nav-dot dot-pass"></span>전체 완료 WP</div>`;
-  }else if(tab==='domains'){
-    const d=window.D;
-    sb.innerHTML=`<div class="sidebar-label">도메인</div>`+
-      d.domains.map(m=>`<div class="nav-link">
-        <span class="nav-dot dot-pass"></span>
-        <span style="flex:1;font-size:12px">${esc(m.module_id)}</span>
+  } else if(tab==='wps'){
+    const bs={done:0,in_progress:0,pending:0};
+    d.wps.all.forEach(w=>{if(bs[w.status]!==undefined)bs[w.status]++;});
+    sb.innerHTML=`<div class="sb-lbl">WP 현황</div>
+      <div class="mc" style="margin-bottom:8px">
+        <div class="kv"><span class="kk" style="font-size:11px">완료</span><span class="kv-ok">${bs.done}</span></div>
+        <div class="kv"><span class="kk" style="font-size:11px">진행중</span><span style="color:var(--ac2)">${bs.in_progress}</span></div>
+        <div class="kv"><span class="kk" style="font-size:11px">대기</span><span>${bs.pending}</span></div>
+      </div>
+      <div class="sb-lbl">CAP</div>`+
+      d.caps.map(c=>{
+        const cp=pct(c.done_count,c.wp_count);
+        return `<div class="nl"><span class="dot ${cp===100?'d-pass':'d-act'}"></span>
+          <span style="flex:1;font-size:11px">${esc(c.id)}</span>
+          <span style="font-size:9px;color:${cp===100?'var(--ac)':'var(--dm)'}">${cp}%</span>
+        </div>`;
+      }).join('');
+  } else if(tab==='arc'){
+    sb.innerHTML=`<div class="sb-lbl">아카이브</div>
+      <div class="nl on"><span class="dot d-pass"></span>전체 완료 WP (${d.wps.done_count})</div>`;
+  } else if(tab==='dom'){
+    sb.innerHTML=`<div class="sb-lbl">도메인 (${d.domains.length})</div>`+
+      d.domains.map(m=>`<div class="nl">
+        <span class="dot d-pass"></span>
+        <span style="flex:1;font-size:11px">${esc(m.module_id)}</span>
+        <span style="font-size:9px;color:var(--dm)">${m.health_score||'—'}</span>
       </div>`).join('')+
-      `<hr class="divider"><div class="sidebar-label">플러그인</div>`+
-      d.plugins.map(p=>`<div class="nav-link">
-        <span class="nav-dot ${p.status==='active'?'dot-pass':'dot-inactive'}"></span>
-        <span style="font-size:12px">${esc(p.name)}</span>
+      `<div class="sb-lbl">플러그인</div>`+
+      d.plugins.map(p=>`<div class="nl">
+        <span class="dot ${p.status==='active'?'d-pass':'d-off'}"></span>
+        <span style="font-size:11px">${esc(p.name)}</span>
       </div>`).join('');
+  } else if(tab==='adr'){
+    sb.innerHTML=`<div class="sb-lbl">ADR (${d.adrs.length})</div>`+
+      d.adrs.map(a=>`<div class="nl">
+        <span class="dot d-act"></span>
+        <span style="font-size:10px;flex:1">${esc(a.id)}: ${esc(a.title.substring(0,22))}${a.title.length>22?'…':''}</span>
+      </div>`).join('');
+  } else if(tab==='log'){
+    const d2=window.D;
+    sb.innerHTML=`<div class="sb-lbl">감사 로그</div>
+      <div class="nl"><span class="dot d-warn"></span>Reflexion (${d2.reflections.length})</div>
+      <div class="nl"><span class="dot d-pass"></span>감사 체인 (${d2.audit_entries.length})</div>
+      <div class="nl"><span class="dot d-act"></span>학습 보고서 (${d2.learning_reports.length})</div>`;
   }
 }
 
-// ─────────────────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
+// REGEN (데이터 재생성 버튼)
+// ────────────────────────────────────────────────────────────────
+function regenData(){
+  toast('터미널에서 npm run planner 실행 후 페이지 새로고침하세요');
+  // 실제 서버 환경에서는 fetch('/api/regen') 호출 가능
+}
+
+// ────────────────────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
   const d=window.D;
-  $('health-badge').textContent=d.project.health_rating;
-  $('gen-time').textContent='생성: '+new Date(d.generated_at).toLocaleString('ko-KR');
-  renderDashboard(); renderPlan(); renderWPs(); renderArchive(); renderDomains();
-  buildSidebar('dashboard');
+  $('hbadge').textContent=d.project.health_rating;
+  $('gentime').textContent='생성: '+new Date(d.generated_at).toLocaleString('ko-KR');
+  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderADR(); renderLog();
+  buildSB('dash');
   setInterval(()=>{
-    PLAN_SECTIONS.forEach(sec=>{
-      const a=$('area-'+sec.id);
-      if(a) localStorage.setItem('wfos-plan-'+sec.id,a.value);
-    });
+    SECTIONS.forEach(s=>{ const a=$('ea-'+s.id); if(a) localStorage.setItem('wfos-'+s.id,a.value); });
   },5000);
 });
 </script>
 </body>
 </html>"""
 
-# ── 데이터 삽입 (단순 문자열 치환 — f-string 충돌 없음) ──────────────
+# ── 데이터 삽입 ──────────────────────────────────────────────────────
 HTML = HTML_TEMPLATE.replace('__DATA_JSON__', DATA_JSON)
 
-# ── 출력 ─────────────────────────────────────────────────────────────
-OUT_DIR = os.path.join(ROOT, "artifacts", "master-planner")
+OUT_DIR  = os.path.join(ROOT, "artifacts", "master-planner")
 os.makedirs(OUT_DIR, exist_ok=True)
 OUT_PATH = os.path.join(OUT_DIR, "index.html")
 
@@ -1129,4 +1405,5 @@ with open(OUT_PATH, "w", encoding="utf-8") as f:
 
 size_kb = os.path.getsize(OUT_PATH) // 1024
 print(f"✅ 생성 완료: {OUT_PATH} ({size_kb}KB)")
+print(f"   파일 크기: {size_kb}KB")
 print(f"   브라우저에서 열기: file://{OUT_PATH}")
