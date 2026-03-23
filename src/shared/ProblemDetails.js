@@ -31,6 +31,8 @@ const ERROR_MAP = Object.freeze({
   INVALID_IDEMPOTENCY_KEY: { status: 400, slug: 'invalid-idempotency-key', title: 'Validation Error' },
   RATE_LIMITED: { status: 429, slug: 'rate-limited', title: 'Too Many Requests' },
   CONTENT_TOO_LARGE: { status: 413, slug: 'content-too-large', title: 'Content Too Large' },
+  REQUEST_TIMEOUT: { status: 408, slug: 'request-timeout', title: 'Request Timeout' },
+  SERVICE_UNAVAILABLE: { status: 503, slug: 'service-unavailable', title: 'Service Unavailable' },
   INTERNAL_ERROR:   { status: 500, slug: 'internal-error',    title: 'Internal Server Error' },
 });
 

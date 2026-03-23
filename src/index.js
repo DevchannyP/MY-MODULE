@@ -7,6 +7,28 @@ async function main() {
   const host = process.env.HOST || '127.0.0.1';
   const runtime = await startServer({ port, host });
   process.stdout.write(`my-module started on ${runtime.url}\n`);
+
+  let stopping = false;
+  const handleSignal = (signal) => {
+    if (stopping) {
+      return;
+    }
+    stopping = true;
+    runtime.shutdown({ reason: signal })
+      .then(() => {
+        process.stdout.write(`my-module drained and stopped after ${signal}\n`);
+      })
+      .catch((error) => {
+        process.stderr.write(`${error.message}\n`);
+        process.exitCode = 1;
+      })
+      .finally(() => {
+        process.exit();
+      });
+  };
+
+  process.once('SIGTERM', () => handleSignal('SIGTERM'));
+  process.once('SIGINT', () => handleSignal('SIGINT'));
 }
 
 if (require.main === module) {

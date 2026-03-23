@@ -69,20 +69,81 @@ function getCaller(headers) {
   };
 }
 
-function readRequestBody(req, maxBytes = 1024 * 1024) {
+function normalizeHeaderValue(value) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null;
+  }
+  return value.trim();
+}
+
+function resolveRequestIdentity(headers) {
+  const incomingCorrelationId = normalizeHeaderValue(headers['x-correlation-id']);
+  const requestId = normalizeHeaderValue(headers['x-request-id']) || incomingCorrelationId || crypto.randomUUID();
+  const correlationId = incomingCorrelationId || requestId;
+  return { requestId, correlationId };
+}
+
+function createLifecycleState() {
+  return {
+    bootedAt: new Date().toISOString(),
+    draining: false,
+    drainStartedAt: null,
+    shutdownReason: null,
+  };
+}
+
+function enterDrainMode(lifecycleState, reason = 'manual') {
+  if (!lifecycleState.draining) {
+    lifecycleState.draining = true;
+    lifecycleState.drainStartedAt = new Date().toISOString();
+    lifecycleState.shutdownReason = reason;
+    logger.warn('server.draining', {
+      reason,
+      drain_started_at: lifecycleState.drainStartedAt,
+    });
+  }
+}
+
+function readRequestBody(req, { maxBytes = 1024 * 1024, timeoutMs = 5000 } = {}) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let totalBytes = 0;
-    let tooLarge = false;
+    let settled = false;
+    let timeoutHandle = null;
+
+    const finish = (callback) => (value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+      callback(value);
+    };
+    const succeed = finish(resolve);
+    const fail = finish(reject);
+
+    const declaredLength = Number.parseInt(String(req.headers['content-length'] || ''), 10);
+    if (Number.isInteger(declaredLength) && declaredLength > maxBytes) {
+      fail(Object.assign(new Error(`Request body exceeds ${maxBytes} bytes`), { code: 'CONTENT_TOO_LARGE' }));
+      req.resume();
+      return;
+    }
+
+    timeoutHandle = setTimeout(() => {
+      fail(Object.assign(new Error(`Request body was not fully received within ${timeoutMs}ms`), { code: 'REQUEST_TIMEOUT' }));
+      req.resume();
+    }, timeoutMs);
+    timeoutHandle.unref?.();
 
     req.on('data', (chunk) => {
-      if (tooLarge) {
+      if (settled) {
         return;
       }
       totalBytes += chunk.length;
       if (totalBytes > maxBytes) {
-        tooLarge = true;
-        reject(Object.assign(new Error(`Request body exceeds ${maxBytes} bytes`), { code: 'CONTENT_TOO_LARGE' }));
+        fail(Object.assign(new Error(`Request body exceeds ${maxBytes} bytes`), { code: 'CONTENT_TOO_LARGE' }));
         req.resume();
         return;
       }
@@ -90,23 +151,23 @@ function readRequestBody(req, maxBytes = 1024 * 1024) {
     });
 
     req.on('end', () => {
-      if (tooLarge) {
+      if (settled) {
         return;
       }
       if (chunks.length === 0) {
-        resolve({});
+        succeed({});
         return;
       }
 
       try {
         const raw = Buffer.concat(chunks).toString('utf8');
-        resolve(JSON.parse(raw));
+        succeed(JSON.parse(raw));
       } catch {
-        reject(Object.assign(new Error('Invalid JSON body'), { code: 'VALIDATION_ERROR' }));
+        fail(Object.assign(new Error('Invalid JSON body'), { code: 'VALIDATION_ERROR' }));
       }
     });
 
-    req.on('error', reject);
+    req.on('error', fail);
   });
 }
 
@@ -262,6 +323,26 @@ function rateLimitHeaders(result) {
   };
 }
 
+function createResponseBaseHeaders({ correlationId, requestId, span, lifecycleState }) {
+  const headers = {
+    'x-correlation-id': correlationId,
+    'x-request-id': requestId,
+    'x-trace-id': span.traceId,
+    traceparent: span.traceparent,
+  };
+  if (lifecycleState.draining) {
+    headers.connection = 'close';
+  }
+  return headers;
+}
+
+function mergeHeaders(baseHeaders, extraHeaders = {}) {
+  return {
+    ...baseHeaders,
+    ...extraHeaders,
+  };
+}
+
 function sendJson(res, status, body, extraHeaders = {}) {
   const payload = JSON.stringify(body, null, 2);
   const isProblemDetails = body
@@ -318,16 +399,17 @@ function createAppHandler({
   rateLimiter = new InMemoryRateLimiter(),
   rateLimitPolicy = { readLimit: 120, writeLimit: 30, windowMs: 60 * 1000 },
   maxRequestBodyBytes = 1024 * 1024,
+  requestBodyReadTimeoutMs = 5000,
+  lifecycleState = createLifecycleState(),
   flags = null,  // null → 파일 기반 provider 사용 (프로덕션 기본값)
 } = {}) {
-  const bootedAt = new Date().toISOString();
   return async function appHandler(req, res) {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
     const method = req.method || 'GET';
     const caller = getCaller(req.headers);
-    const correlationId = typeof req.headers['x-correlation-id'] === 'string'
-      ? req.headers['x-correlation-id']
-      : undefined;
+    const requestIdentity = resolveRequestIdentity(req.headers);
+    const correlationId = requestIdentity.correlationId;
+    const requestId = requestIdentity.requestId;
 
     // ── OpenTelemetry 호환 계측 (W3C Trace Context 전파) ─────────────────
     const parentCtx = tracer.extractContext(
@@ -340,6 +422,12 @@ function createAppHandler({
     });
     const startMs = Date.now();
     let idempotencyScope = null;
+    const responseBaseHeaders = createResponseBaseHeaders({
+      correlationId,
+      requestId,
+      span,
+      lifecycleState,
+    });
 
     try {
       const resolvedFlags = flags || getFeatureFlags();
@@ -356,7 +444,7 @@ function createAppHandler({
       if (url.pathname === '/livez') {
         metrics.httpRequestsTotal.add(1, { route: '/livez', method });
         span.setStatus('ok').end();
-        sendResponse(req, res, 200, { status: 'alive', service: 'my-module', transport: 'http', traceId: span.traceId }, responseHeaders);
+        sendResponse(req, res, 200, { status: 'alive', service: 'my-module', transport: 'http', traceId: span.traceId }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
@@ -365,15 +453,23 @@ function createAppHandler({
         span.setStatus('ok').end();
         sendResponse(req, res, 200, {
           status: 'started',
-          started_at: bootedAt,
+          started_at: lifecycleState.bootedAt,
           service: 'my-module',
           traceId: span.traceId,
-        }, responseHeaders);
+          lifecycle: {
+            phase: lifecycleState.draining ? 'draining' : 'serving',
+            drain_started_at: lifecycleState.drainStartedAt,
+            shutdown_reason: lifecycleState.shutdownReason,
+          },
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
       if (url.pathname === '/readyz') {
-        const ready = runtimeStatus.flagsLoaded && runtimeStatus.metadataLoaded && runtimeStatus.errors.length === 0;
+        const ready = !lifecycleState.draining
+          && runtimeStatus.flagsLoaded
+          && runtimeStatus.metadataLoaded
+          && runtimeStatus.errors.length === 0;
         metrics.httpRequestsTotal.add(1, { route: '/readyz', method, status: ready ? 200 : 503 });
         span.setAttribute('http.status_code', ready ? 200 : 503).setStatus(ready ? 'ok' : 'error').end();
         sendResponse(req, res, ready ? 200 : 503, {
@@ -381,7 +477,12 @@ function createAppHandler({
           service: 'my-module',
           feature_flags: runtimeStatus,
           traceId: span.traceId,
-        }, responseHeaders);
+          lifecycle: {
+            phase: lifecycleState.draining ? 'draining' : 'serving',
+            drain_started_at: lifecycleState.drainStartedAt,
+            shutdown_reason: lifecycleState.shutdownReason,
+          },
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
@@ -394,8 +495,20 @@ function createAppHandler({
           transport: 'http',
           feature_flags: runtimeStatus,
           traceId: span.traceId,
-        }, responseHeaders);
+          lifecycle: {
+            phase: lifecycleState.draining ? 'draining' : 'serving',
+            drain_started_at: lifecycleState.drainStartedAt,
+            shutdown_reason: lifecycleState.shutdownReason,
+          },
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
+      }
+
+      if (lifecycleState.draining) {
+        throw Object.assign(new Error('Server is draining and not accepting new requests'), {
+          code: 'SERVICE_UNAVAILABLE',
+          retryAfterSeconds: 5,
+        });
       }
 
       if (!rateLimitResult.allowed) {
@@ -406,7 +519,12 @@ function createAppHandler({
         });
       }
 
-      const body = method === 'GET' || method === 'HEAD' ? {} : await readRequestBody(req, maxRequestBodyBytes);
+      const body = method === 'GET' || method === 'HEAD'
+        ? {}
+        : await readRequestBody(req, {
+          maxBytes: maxRequestBodyBytes,
+          timeoutMs: requestBodyReadTimeoutMs,
+        });
       const query = Object.fromEntries(url.searchParams.entries());
       const idempotencyKey = method === 'POST'
         ? validateIdempotencyKey(typeof req.headers['idempotency-key'] === 'string' ? req.headers['idempotency-key'] : null)
@@ -420,10 +538,10 @@ function createAppHandler({
           body,
         });
         if (claim.outcome === 'replay' && claim.response) {
-          sendResponse(req, res, claim.response.status, claim.response.body, {
+          sendResponse(req, res, claim.response.status, claim.response.body, mergeHeaders(responseBaseHeaders, {
             'idempotency-replayed': 'true',
             ...responseHeaders,
-          });
+          }));
           return;
         }
         if (claim.outcome === 'in_progress') {
@@ -452,7 +570,7 @@ function createAppHandler({
           sendResponse(req, res, 404, fromError(
             Object.assign(new Error('task-management 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body, responseHeaders);
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
           return;
         }
         const response = await taskController.handle({
@@ -471,7 +589,7 @@ function createAppHandler({
             idempotencyStore.abort(idempotencyScope);
           }
         }
-        sendResponse(req, res, response.status, response.body, responseHeaders);
+        sendResponse(req, res, response.status, response.body, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
@@ -490,7 +608,7 @@ function createAppHandler({
           sendResponse(req, res, 404, fromError(
             Object.assign(new Error('billing 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body, responseHeaders);
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
           return;
         }
         const route = findBillingRoute(url.pathname);
@@ -510,7 +628,7 @@ function createAppHandler({
             idempotencyStore.abort(idempotencyScope);
           }
         }
-        sendResponse(req, res, response.status, response.body, responseHeaders);
+        sendResponse(req, res, response.status, response.body, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
@@ -529,7 +647,7 @@ function createAppHandler({
           sendResponse(req, res, 404, fromError(
             Object.assign(new Error('video 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body, responseHeaders);
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
           return;
         }
 
@@ -551,7 +669,7 @@ function createAppHandler({
           sendResponse(req, res, 404, fromError(
             Object.assign(new Error(`video 세부 기능이 비활성화 상태입니다: ${scopedFlag}`), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body, responseHeaders);
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
           return;
         }
 
@@ -571,7 +689,7 @@ function createAppHandler({
             idempotencyStore.abort(idempotencyScope);
           }
         }
-        sendResponse(req, res, response.status, response.body, responseHeaders);
+        sendResponse(req, res, response.status, response.body, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
@@ -584,7 +702,7 @@ function createAppHandler({
       sendResponse(req, res, 404, fromError(
         Object.assign(new Error(`Route not found: ${method} ${url.pathname}`), { code: 'NOT_FOUND' }),
         { path: url.pathname, traceId: span.traceId },
-      ).body, responseHeaders);
+      ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
     } catch (error) {
       if (idempotencyScope) {
         idempotencyStore.abort(idempotencyScope);
@@ -592,15 +710,21 @@ function createAppHandler({
       // RFC 7807 Problem Details at transport layer
       const { status, body } = fromError(error, {
         path: req.url,
-        correlationId: typeof req.headers['x-correlation-id'] === 'string'
-          ? req.headers['x-correlation-id'] : undefined,
+        correlationId,
         traceId: span.traceId,
       });
       metrics.httpErrorsTotal.add(1, { route: url.pathname, method, status });
       metrics.httpDurationMs.record(Date.now() - startMs, { route: url.pathname, error: true });
       span.setAttribute('http.status_code', status).recordException(error).end();
-      logger.error('http.error', { trace_id: span.traceId, route: url.pathname, status, message: error.message });
+      logger.error('http.error', {
+        trace_id: span.traceId,
+        correlation_id: correlationId,
+        route: url.pathname,
+        status,
+        message: error.message,
+      });
       const errorHeaders = {
+        ...responseBaseHeaders,
         ...(error.rateLimitHeaders || {}),
       };
       if (error.retryAfterSeconds) {
@@ -623,8 +747,25 @@ function startServer({
   rateLimiter = undefined,
   rateLimitPolicy = undefined,
   maxRequestBodyBytes = undefined,
+  requestBodyReadTimeoutMs = undefined,
 } = {}) {
-  const server = createServer({ flags, idempotencyStore, rateLimiter, rateLimitPolicy, maxRequestBodyBytes });
+  const lifecycleState = createLifecycleState();
+  const server = createServer({
+    flags,
+    idempotencyStore,
+    rateLimiter,
+    rateLimitPolicy,
+    maxRequestBodyBytes,
+    requestBodyReadTimeoutMs,
+    lifecycleState,
+  });
+  const sockets = new Set();
+  let shutdownPromise = null;
+
+  server.on('connection', (socket) => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+  });
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);
@@ -640,6 +781,33 @@ function startServer({
         port: address.port,
         host: address.address,
         url: `http://${host}:${address.port}`,
+        enterDrainMode(reason = 'manual') {
+          enterDrainMode(lifecycleState, reason);
+        },
+        async shutdown({ reason = 'manual', graceMs = 5000 } = {}) {
+          if (shutdownPromise) {
+            return shutdownPromise;
+          }
+          enterDrainMode(lifecycleState, reason);
+          shutdownPromise = new Promise((resolveShutdown, rejectShutdown) => {
+            const forceCloseTimer = setTimeout(() => {
+              for (const socket of sockets) {
+                socket.destroy();
+              }
+            }, graceMs);
+            forceCloseTimer.unref?.();
+
+            server.close((error) => {
+              clearTimeout(forceCloseTimer);
+              if (error) {
+                rejectShutdown(error);
+                return;
+              }
+              resolveShutdown();
+            });
+          });
+          return shutdownPromise;
+        },
       });
     });
   });

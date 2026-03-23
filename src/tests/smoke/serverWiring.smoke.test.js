@@ -60,16 +60,58 @@ function jsonRequest(baseUrl, { method, path, body, permissions = [], userId = '
   });
 }
 
+function partialBodyRequest(baseUrl, { path, payload, initialBytes, permissions = [], userId = 'smoke-user', headers = {} }) {
+  const url = new URL(path, baseUrl);
+  const declaredLength = Buffer.byteLength(payload);
+
+  return new Promise((resolve, reject) => {
+    const req = http.request(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'content-length': String(declaredLength),
+        'x-user-id': userId,
+        'x-permissions': permissions.join(','),
+        ...headers,
+      },
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        req.destroy();
+        resolve({
+          status: res.statusCode,
+          headers: res.headers,
+          body: raw ? JSON.parse(raw) : {},
+        });
+      });
+    });
+
+    req.on('error', reject);
+    req.write(payload.slice(0, initialBytes));
+  });
+}
+
 test('[server wiring smoke] probe endpoints and task flow succeed over HTTP transport', async () => {
   const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+  const traceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
 
   try {
     const live = await jsonRequest(runtime.url, {
       method: 'GET',
       path: '/livez',
+      headers: {
+        'x-correlation-id': 'smoke-correlation',
+        traceparent,
+      },
     });
     assert.equal(live.status, 200);
     assert.equal(live.body.status, 'alive');
+    assert.equal(live.headers['x-correlation-id'], 'smoke-correlation');
+    assert.equal(live.headers['x-request-id'], 'smoke-correlation');
+    assert.match(String(live.headers.traceparent || ''), /^00-4bf92f3577b34da6a3ce929d0e0e4736-/);
+    assert.equal(live.headers['x-trace-id'], '4bf92f3577b34da6a3ce929d0e0e4736');
 
     const startup = await jsonRequest(runtime.url, {
       method: 'GET',
@@ -127,6 +169,35 @@ test('[server wiring smoke] probe endpoints and task flow succeed over HTTP tran
   }
 });
 
+test('[server wiring smoke] drain mode flips readiness and rejects business traffic', async () => {
+  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+
+  try {
+    runtime.enterDrainMode('smoke-test');
+
+    const ready = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: '/readyz',
+    });
+    assert.equal(ready.status, 503);
+    assert.equal(ready.body.status, 'not_ready');
+    assert.equal(ready.body.lifecycle.phase, 'draining');
+    assert.equal(ready.body.lifecycle.shutdown_reason, 'smoke-test');
+
+    const rejected = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: '/tasks',
+      permissions: ['task:read'],
+    });
+    assert.equal(rejected.status, 503);
+    assert.equal(rejected.body.code, 'SERVICE_UNAVAILABLE');
+    assert.equal(rejected.headers['retry-after'], '5');
+    assert.equal(rejected.headers.connection, 'close');
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
 test('[server wiring smoke] body limit returns 413 over HTTP transport', async () => {
   const runtime = await startServer({
     port: 0,
@@ -146,6 +217,32 @@ test('[server wiring smoke] body limit returns 413 over HTTP transport', async (
     });
     assert.equal(oversized.status, 413);
     assert.equal(oversized.body.code, 'CONTENT_TOO_LARGE');
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
+test('[server wiring smoke] slow request body returns 408 over HTTP transport', async () => {
+  const runtime = await startServer({
+    port: 0,
+    flags: createAllEnabledFlags(),
+    requestBodyReadTimeoutMs: 20,
+  });
+
+  try {
+    const timedOut = await partialBodyRequest(runtime.url, {
+      path: '/tasks',
+      permissions: ['task:read', 'task:write'],
+      payload: JSON.stringify({
+        title: 'slow-body',
+        assignee_id: 'user-1',
+        due_date: futureDate(),
+      }),
+      initialBytes: 8,
+    });
+
+    assert.equal(timedOut.status, 408);
+    assert.equal(timedOut.body.code, 'REQUEST_TIMEOUT');
   } finally {
     await closeServer(runtime.server);
   }
