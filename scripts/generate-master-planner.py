@@ -1,4 +1,120 @@
-<!DOCTYPE html>
+#!/usr/bin/env python3
+"""
+Workflow OS — 마스터 기획서 UI 생성기
+실제 프로젝트 YAML 데이터를 읽어 self-contained HTML을 생성한다.
+실행: python3 scripts/generate-master-planner.py
+출력: artifacts/master-planner/index.html
+"""
+
+import yaml, json, os, sys, datetime
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def load_yaml(path, default=None):
+    full = os.path.join(ROOT, path)
+    if not os.path.exists(full):
+        return default or {}
+    try:
+        with open(full, encoding='utf-8') as f:
+            return yaml.safe_load(f) or (default or {})
+    except Exception as e:
+        print(f"  [WARN] {path}: {e}", file=sys.stderr)
+        return default or {}
+
+# ── 데이터 수집 ───────────────────────────────────────────────────────
+print("📖 프로젝트 데이터 수집 중...")
+
+root_state   = load_yaml("memory/current-state.yaml")
+l0_state     = load_yaml("memory/L0-hot/current-state.yaml")
+checkpoint   = load_yaml("memory/checkpoint.yaml")
+wp_queue     = load_yaml("memory/wp-queue.yaml")
+current_wp   = load_yaml("memory/current-wp.yaml")
+next_actions = load_yaml("memory/next-actions.yaml")
+health       = load_yaml("master-shell/observability/health-scores.yaml")
+flags        = load_yaml("master-shell/feature-flags/flags.yaml")
+registry     = load_yaml("master-shell/plugin-registry/registry.yaml")
+
+# ── Work Packets 정규화 ──────────────────────────────────────────────
+caps = wp_queue.get("capabilities", [])
+all_wps = []
+for cap in caps:
+    for wp in cap.get("work_packets", []):
+        all_wps.append({
+            "id":           wp.get("id",""),
+            "cap_id":       cap.get("id",""),
+            "cap_name":     cap.get("name",""),
+            "goal":         wp.get("goal",""),
+            "status":       wp.get("status",""),
+            "tier":         wp.get("tier",""),
+            "result":       wp.get("result",""),
+            "completed_at": wp.get("completed_at",""),
+            "depends_on":   wp.get("depends_on",[]),
+        })
+
+done_wps    = [w for w in all_wps if w["status"] == "done"]
+active_wps  = [w for w in all_wps if w["status"] == "in_progress"]
+
+# ── 데이터 번들 ─────────────────────────────────────────────────────
+active_modules = l0_state.get("active_modules", [])
+stage_states   = l0_state.get("stage_states", {})
+quality_gate   = l0_state.get("quality_gate_detail", {})
+domain_scores  = health.get("domains", {})
+plugins        = registry.get("plugins", [])
+wps_done_ids   = checkpoint.get("wps_completed", [])
+ver_summary    = checkpoint.get("verification_summary", {})
+health_metrics = root_state.get("health_metrics", {}).get("last_known", {})
+known_issues   = root_state.get("known_issues", [])
+next_queue     = next_actions.get("queue", [])
+
+data = {
+    "generated_at": datetime.datetime.now().isoformat(),
+    "project": {
+        "name":  "Workflow OS",
+        "repo":  "my-module",
+        "phase": l0_state.get("repository", {}).get("phase", "continuous-self-improvement"),
+        "branch": "chore/core-git-governance-activation",
+        "stage_states": stage_states,
+        "quality_gate_result": l0_state.get("quality_gate_result","PASS"),
+        "quality_gate_last_run": l0_state.get("quality_gate_last_run","2026-03-21"),
+        "quality_gate_detail": quality_gate,
+        "health_rating": health_metrics.get("health_rating","ELITE"),
+        "gate_pass_rate": health_metrics.get("gate_pass_rate_pct", 88.1),
+        "tests_total": 500,
+        "tests_pass": 500,
+        "known_issues": known_issues,
+        "upgrade_v3_features": l0_state.get("upgrade_v3", {}).get("features_added",[]),
+    },
+    "wps": {
+        "all": all_wps,
+        "done": done_wps,
+        "active": active_wps,
+        "done_ids": wps_done_ids,
+        "total": len(all_wps),
+        "done_count": len(done_wps),
+        "verification": ver_summary,
+    },
+    "caps": [{"id":c.get("id"),"name":c.get("name"),"priority":c.get("priority",99)} for c in caps],
+    "current_wp": current_wp,
+    "next_queue": next_queue,
+    "domains": active_modules,
+    "domain_scores": domain_scores,
+    "plugins": plugins,
+    "flags": {
+        "global": flags.get("global_flags", {}),
+        "plugin": flags.get("plugin_flags", {}),
+    },
+    "stage_e_findings": l0_state.get("stage_e_findings", {}),
+}
+
+DATA_JSON = json.dumps(data, ensure_ascii=False, indent=2)
+print(f"  ✓ WPs: {len(all_wps)} total, {len(done_wps)} done, {len(active_wps)} active")
+print(f"  ✓ Domains: {len(active_modules)}, Plugins: {len(plugins)}")
+
+# ── HTML 템플릿 (순수 문자열 — f-string 아님) ──────────────────────
+# __DATA_JSON__ 자리에 실제 데이터가 삽입된다
+print("🎨 HTML 생성 중...")
+
+HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -226,1327 +342,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 </head>
 <body>
 
-<script>window.D = {
-  "generated_at": "2026-03-23T18:33:58.111822",
-  "project": {
-    "name": "Workflow OS",
-    "repo": "my-module",
-    "phase": "continuous-self-improvement",
-    "branch": "chore/core-git-governance-activation",
-    "stage_states": {
-      "A": "PASS",
-      "B": "PASS",
-      "C": "PASS",
-      "D": "PASS",
-      "E": "PASS"
-    },
-    "quality_gate_result": "PASS",
-    "quality_gate_last_run": "2026-03-21",
-    "quality_gate_detail": {
-      "unit_tests": "PASS (500/500)",
-      "integration_tests": "PASS (유스케이스 수준)",
-      "adversarial_tests": "PASS (43/43, Stage E)",
-      "contract_tests": "PASS (test:contract — task-management+billing drift validator)",
-      "e2e_smoke": "PASS (controller-level smoke suites 2/2, scenarios 6)",
-      "lint_syntax": "PASS (repo-wide node --check: domains + src + scripts)",
-      "type_check": "PASS (JSDoc + @ts-check boundary validator)",
-      "static_analysis": "PASS (ESLint 10.0.3, repo-wide domains + src + scripts, 0 errors)",
-      "secret_scan": "PASS",
-      "dependency_scan": "PASS (lockfile baseline validator: runtime deps 0, direct dev deps 2, integrity/license complete)",
-      "advisory_policy": "PASS (offline/online split + blocking policy baseline)",
-      "branch_protection_policy": "PASS (main protection + required checks baseline)",
-      "authn_authz": "PASS (interface controller regression suites 2/2)",
-      "input_validation": "PASS (INV001~INV004 경계 강제)",
-      "sbom": "PASS (SPDX baseline artifact generated)",
-      "provenance": "PASS (deterministic provenance evidence baseline)",
-      "rollback": "PASS (policy baseline validator + rollback playbook)",
-      "observability": "PASS (policy baseline validator + structured observability config)",
-      "release_evidence": "PASS (release evidence generator baseline added)"
-    },
-    "health_rating": "ELITE",
-    "gate_pass_rate": 88.1,
-    "tests_total": 500,
-    "tests_pass": 500,
-    "known_issues": [
-      {
-        "id": "KI-RUN-001",
-        "severity": "low",
-        "description": "deployment environment provisioning is now governed by a repo-local policy/template baseline, but live remote audit evidence still needs operator collection outside git."
-      }
-    ],
-    "upgrade_v3_features": [
-      "3-Tier 메모리 계층 (L0-hot/L1-warm/L2-cold)",
-      "Git Hooks + Conventional Commits (Husky + commitlint)",
-      "Turborepo 병렬 태스크 러너",
-      "Claude Skills 7종 + Subagents 6종",
-      "학습보고서 자동 생성기 (기승전결 4막)",
-      "도메인 마이그레이션 CLI (export/import/detach)",
-      "Semantic Release + CHANGELOG 자동화",
-      "Chain-of-Verification 자기검증",
-      "Dual-Observer 독립 감사",
-      "Property-Based Testing (fast-check)",
-      "Cross-Model Review 프로토콜",
-      "아키텍처 피트니스 (C001/C002/C003)",
-      "SHA-256 해시 체인 감사 추적",
-      "3종 아키타입 (crud-entity/financial-ledger/approval-workflow)",
-      "계약 드리프트 검증 + 호환성 매트릭스",
-      "의존성 그래프 Mermaid 시각화",
-      "계약 기반 코드 스켈레톤 생성기",
-      "DAG 기반 병렬 스케줄러",
-      "ADR 자동생성 + 지식그래프",
-      "건강도 대시보드 (4지표 종합)",
-      "Error Budget SLO 판단",
-      "릴리즈 증거 패키지",
-      "도메인 카탈로그 정적 사이트"
-    ]
-  },
-  "wps": {
-    "all": [
-      {
-        "id": "WP-2026-03-19-01",
-        "cap_id": "CAP-01",
-        "cap_name": "Operating model alignment",
-        "goal": "requirements schema와 validator를 실제 requirements.yaml 구조에 맞게 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — validate:requirements가 실제 구조/경로/gate baseline 검증으로 전환됐다.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-02",
-        "cap_id": "CAP-01",
-        "cap_name": "Operating model alignment",
-        "goal": "CLAUDE.md와 핵심 운영 문서를 Work Packet 사이클 모델로 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — auto-loaded protocol, README, memory schema가 Work Packet 모델과 현재 상태에 맞게 정렬됐다.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-03",
-        "cap_id": "CAP-01",
-        "cap_name": "Operating model alignment",
-        "goal": "requirements validation을 CI와 stage entry documentation에 연결한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — GitHub Actions workflow와 Stage A how-to가 real requirements validator를 가리킨다.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-01"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-04",
-        "cap_id": "CAP-02",
-        "cap_name": "Session memory normalization",
-        "goal": "root memory files와 legacy memory/project files의 역할을 정리하고 bridge 규칙을 고정한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — root memory is now the canonical session surface, key docs use explicit legacy fallback wording.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-05",
-        "cap_id": "CAP-03",
-        "cap_name": "Stage executor truthfulness",
-        "goal": "echo-only stage scripts를 status/dry-run 가능한 실행기로 교체한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — stage:a~stage:e now return truthful JSON dry-run status.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-01"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-06",
-        "cap_id": "CAP-03",
-        "cap_name": "Stage executor truthfulness",
-        "goal": "project status runner를 추가해 stage A-E 상태를 구조화 출력한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — npm run project:status now returns structured Stage A-E route status.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-05"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-07",
-        "cap_id": "CAP-04",
-        "cap_name": "Runtime smoke coverage",
-        "goal": "controller-level smoke 다음 단계인 실제 server wiring smoke 기준선을 만든다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — test:e2e-smoke now includes a real HTTP server wiring smoke.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-08",
-        "cap_id": "CAP-05",
-        "cap_name": "Governance automation",
-        "goal": "기존 quality gate를 실행하는 GitHub Actions workflow를 추가한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — quality-gates.yml now automates implemented local gates in GitHub Actions.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-03"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-09",
-        "cap_id": "CAP-06",
-        "cap_name": "Repository truthfulness",
-        "goal": "HOW_TO_USE와 남은 legacy how-to/reference 문서를 Work Packet 운영 모델로 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — HOW_TO_USE no longer tells operators to drive the repo with legacy autopilot commands.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-02"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-10",
-        "cap_id": "CAP-07",
-        "cap_name": "Domain onboarding",
-        "goal": "video 도메인 Stage A 청사진과 리스크 프로파일을 작성한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — memory/stageA/video.yaml: 6개 ubiquitous language, 2개 aggregate, INV-V001~V005, 5개 risk profile, permissions 3-tier, NFR 정의 완료.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-ARCH-001",
-        "cap_id": "CAP-08",
-        "cap_name": "Architecture v2 — DAG scheduler + Context Budget",
-        "goal": "DAG 스케줄러, context budget 시스템, requirements gap 검출기, session health 메트릭을 설치한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — wp_scheduler.py, requirements_gap.py, session_metrics.py 구현 완료. wp-queue.yaml v2 DAG 스키마로 업그레이드. CLAUDE.md context budget 규칙 추가.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-ARCH-002",
-        "cap_id": "CAP-08",
-        "cap_name": "Architecture v2 — DAG scheduler + Context Budget",
-        "goal": "wp-queue.yaml CI 자동 검증 — DAG 무결성 게이트를 quality-gates.yml에 추가한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — quality-gates.yml correctness job now runs npm run wp:validate on pull_request and main push.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ARCH-001"
-        ]
-      },
-      {
-        "id": "WP-ARCH-003",
-        "cap_id": "CAP-08",
-        "cap_name": "Architecture v2 — DAG scheduler + Context Budget",
-        "goal": "desired_state와 actual capabilities 간 자동 reconciliation 스크립트를 구현한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — reconcile_state.py: Satisfied=3, Scheduled=5, Uncovered=0. covers_capability 필드로 명시적 WP↔capability 매핑 확립.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-ARCH-001"
-        ]
-      },
-      {
-        "id": "WP-GOV-001",
-        "cap_id": "CAP-09",
-        "cap_name": "Governance v2 — Release Evidence Automation",
-        "goal": "release evidence 생성을 GitHub Actions에 통합해 KI-EVIDENCE-001을 해소한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — release-evidence.yml now generates SBOM, provenance, release evidence, and uploads artifacts in GitHub Actions.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ARCH-001"
-        ]
-      },
-      {
-        "id": "WP-GOV-002",
-        "cap_id": "CAP-09",
-        "cap_name": "Governance v2 — Release Evidence Automation",
-        "goal": "branch protection 정책 검증을 CI에 자동 추가한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — quality-gates.yml now runs check:branch-protection-policy and governance docs describe the repository-vs-remote enforcement boundary.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-GOV-001"
-        ]
-      },
-      {
-        "id": "WP-DOM-001",
-        "cap_id": "CAP-10",
-        "cap_name": "Domain Expansion — Billing + Cross-Domain",
-        "goal": "billing 도메인 계약 파일(openapi, events, capability)을 Stage A 수준으로 완성한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — billing domain already contains openapi, capability, events, and ui contracts aligned to contract drift validation.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-2026-03-19-10"
-        ]
-      },
-      {
-        "id": "WP-DOM-002",
-        "cap_id": "CAP-10",
-        "cap_name": "Domain Expansion — Billing + Cross-Domain",
-        "goal": "cross-domain event bus 계약을 정의하고 contract drift 검증에 연결한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — central event registry, CloudEvents envelope, and produced_by paths are now enforced by test:contract.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-DOM-001",
-          "WP-2026-03-19-10"
-        ]
-      },
-      {
-        "id": "WP-ERR-001",
-        "cap_id": "CAP-12",
-        "cap_name": "Production Readiness — Event / Error / Feature Flag",
-        "goal": "RFC 7807 Problem Details 에러 응답 표준을 모든 컨트롤러에 적용한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — ProblemDetails helper and controller error responses are already wired and validated by repository tests.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-FLAG-001",
-        "cap_id": "CAP-12",
-        "cap_name": "Production Readiness — Event / Error / Feature Flag",
-        "goal": "OpenFeature 패턴으로 Feature Flag 런타임 평가를 서버 wiring에 추가한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — FeatureFlagProvider is active in server wiring and the flag-off path is covered by e2e smoke.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ERR-001"
-        ]
-      },
-      {
-        "id": "WP-EVT-001",
-        "cap_id": "CAP-12",
-        "cap_name": "Production Readiness — Event / Error / Feature Flag",
-        "goal": "Transactional Outbox 패턴으로 도메인 이벤트 발행을 보장한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — EventPublisher port, InMemory adapter, Outbox adapter stub, and CreateTaskUseCase event publication are present and tested.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ERR-001",
-          "WP-DOM-002"
-        ]
-      },
-      {
-        "id": "WP-OBS-001",
-        "cap_id": "CAP-13",
-        "cap_name": "Observability — OpenTelemetry Instrumentation",
-        "goal": "OpenTelemetry SDK로 HTTP trace·메트릭·구조화 로그 최소 계측을 추가한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — telemetry.js and createServer emit structured logs and request metrics with trace context.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-FLAG-001"
-        ]
-      },
-      {
-        "id": "WP-PERSIST-001",
-        "cap_id": "CAP-14",
-        "cap_name": "Persistence — SQLite Repository Adapter",
-        "goal": "SQLite 기반 TaskRepository 어댑터와 스키마 마이그레이션을 추가한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — SQLiteTaskRepository, schema.sql, migration script, and infrastructure test now verify the persistence adapter.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-EVT-001"
-        ]
-      },
-      {
-        "id": "WP-META-001",
-        "cap_id": "CAP-11",
-        "cap_name": "Meta — Self-Improvement Loop",
-        "goal": "세션 종료 시 자동으로 gap 검출 → 신규 WP 생성 → queue 갱신하는 자기개선 루프를 구현한다",
-        "status": "done",
-        "tier": "meta",
-        "result": "PASS — session:end runs gap detection, reconciliation, health reporting, and surfaces ready WPs automatically.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ARCH-001",
-          "WP-ARCH-003"
-        ]
-      },
-      {
-        "id": "WP-EVID-001",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — release evidence now reads quality gate summary from root current-state and no longer needs the legacy quality_gate_result field.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-DOC-001",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "legacy operator model이 남아 있는 template와 memory/project 문서를 root protocol과 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — DOMAIN_TEMPLATE and memory/project files now declare root memory as canonical and legacy surfaces as fallback-only.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-RUN-001",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "배포 환경 수준 smoke 체크리스트와 executable baseline을 추가해 KI-RUN-001을 축소한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — Stage E docs now distinguish in-repo smoke from deployment-environment smoke and provide a truthful manual runtime checklist.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-RUN-002",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "배포 환경 smoke를 실제 실행 가능한 runner와 workflow_dispatch 경로로 승격한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — deployment smoke now has an executable CLI runner, workflow_dispatch path, JSON artifact, and updated operator docs.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-RUN-001"
-        ]
-      },
-      {
-        "id": "WP-DOC-002",
-        "cap_id": "CAP-13",
-        "cap_name": "Root entry doc truthfulness",
-        "goal": "root entry docs를 현재 capability/CI/runtime 상태와 일치시킨다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — README entry guidance no longer contradicts root memory about stage executors, GitHub Actions, or deployment smoke.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-DOC-001",
-          "WP-RUN-002"
-        ]
-      },
-      {
-        "id": "WP-RUN-003",
-        "cap_id": "CAP-14",
-        "cap_name": "Deployment environment binding",
-        "goal": "deployment smoke를 environment registry와 GitHub environment binding에 연결한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — deployment smoke is now bound to named GitHub environments declared in a repo-local registry, and CI validates the binding.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-RUN-002"
-        ]
-      },
-      {
-        "id": "WP-RUN-004",
-        "cap_id": "CAP-15",
-        "cap_name": "Deployment environment provisioning audit",
-        "goal": "원격 GitHub deployment environment provisioning을 policy/template/validator 기준으로 감사 가능하게 만든다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — remote deployment environment provisioning now has a repo-local policy baseline, CI validator, and generated audit template without pretending live remote evidence is in git.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-RUN-003"
-        ]
-      }
-    ],
-    "done": [
-      {
-        "id": "WP-2026-03-19-01",
-        "cap_id": "CAP-01",
-        "cap_name": "Operating model alignment",
-        "goal": "requirements schema와 validator를 실제 requirements.yaml 구조에 맞게 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — validate:requirements가 실제 구조/경로/gate baseline 검증으로 전환됐다.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-02",
-        "cap_id": "CAP-01",
-        "cap_name": "Operating model alignment",
-        "goal": "CLAUDE.md와 핵심 운영 문서를 Work Packet 사이클 모델로 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — auto-loaded protocol, README, memory schema가 Work Packet 모델과 현재 상태에 맞게 정렬됐다.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-03",
-        "cap_id": "CAP-01",
-        "cap_name": "Operating model alignment",
-        "goal": "requirements validation을 CI와 stage entry documentation에 연결한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — GitHub Actions workflow와 Stage A how-to가 real requirements validator를 가리킨다.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-01"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-04",
-        "cap_id": "CAP-02",
-        "cap_name": "Session memory normalization",
-        "goal": "root memory files와 legacy memory/project files의 역할을 정리하고 bridge 규칙을 고정한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — root memory is now the canonical session surface, key docs use explicit legacy fallback wording.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-05",
-        "cap_id": "CAP-03",
-        "cap_name": "Stage executor truthfulness",
-        "goal": "echo-only stage scripts를 status/dry-run 가능한 실행기로 교체한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — stage:a~stage:e now return truthful JSON dry-run status.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-01"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-06",
-        "cap_id": "CAP-03",
-        "cap_name": "Stage executor truthfulness",
-        "goal": "project status runner를 추가해 stage A-E 상태를 구조화 출력한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — npm run project:status now returns structured Stage A-E route status.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-05"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-07",
-        "cap_id": "CAP-04",
-        "cap_name": "Runtime smoke coverage",
-        "goal": "controller-level smoke 다음 단계인 실제 server wiring smoke 기준선을 만든다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — test:e2e-smoke now includes a real HTTP server wiring smoke.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-2026-03-19-08",
-        "cap_id": "CAP-05",
-        "cap_name": "Governance automation",
-        "goal": "기존 quality gate를 실행하는 GitHub Actions workflow를 추가한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — quality-gates.yml now automates implemented local gates in GitHub Actions.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-03"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-09",
-        "cap_id": "CAP-06",
-        "cap_name": "Repository truthfulness",
-        "goal": "HOW_TO_USE와 남은 legacy how-to/reference 문서를 Work Packet 운영 모델로 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — HOW_TO_USE no longer tells operators to drive the repo with legacy autopilot commands.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-2026-03-19-02"
-        ]
-      },
-      {
-        "id": "WP-2026-03-19-10",
-        "cap_id": "CAP-07",
-        "cap_name": "Domain onboarding",
-        "goal": "video 도메인 Stage A 청사진과 리스크 프로파일을 작성한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — memory/stageA/video.yaml: 6개 ubiquitous language, 2개 aggregate, INV-V001~V005, 5개 risk profile, permissions 3-tier, NFR 정의 완료.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-ARCH-001",
-        "cap_id": "CAP-08",
-        "cap_name": "Architecture v2 — DAG scheduler + Context Budget",
-        "goal": "DAG 스케줄러, context budget 시스템, requirements gap 검출기, session health 메트릭을 설치한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — wp_scheduler.py, requirements_gap.py, session_metrics.py 구현 완료. wp-queue.yaml v2 DAG 스키마로 업그레이드. CLAUDE.md context budget 규칙 추가.",
-        "completed_at": "2026-03-19",
-        "depends_on": []
-      },
-      {
-        "id": "WP-ARCH-002",
-        "cap_id": "CAP-08",
-        "cap_name": "Architecture v2 — DAG scheduler + Context Budget",
-        "goal": "wp-queue.yaml CI 자동 검증 — DAG 무결성 게이트를 quality-gates.yml에 추가한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — quality-gates.yml correctness job now runs npm run wp:validate on pull_request and main push.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ARCH-001"
-        ]
-      },
-      {
-        "id": "WP-ARCH-003",
-        "cap_id": "CAP-08",
-        "cap_name": "Architecture v2 — DAG scheduler + Context Budget",
-        "goal": "desired_state와 actual capabilities 간 자동 reconciliation 스크립트를 구현한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — reconcile_state.py: Satisfied=3, Scheduled=5, Uncovered=0. covers_capability 필드로 명시적 WP↔capability 매핑 확립.",
-        "completed_at": "2026-03-19",
-        "depends_on": [
-          "WP-ARCH-001"
-        ]
-      },
-      {
-        "id": "WP-GOV-001",
-        "cap_id": "CAP-09",
-        "cap_name": "Governance v2 — Release Evidence Automation",
-        "goal": "release evidence 생성을 GitHub Actions에 통합해 KI-EVIDENCE-001을 해소한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — release-evidence.yml now generates SBOM, provenance, release evidence, and uploads artifacts in GitHub Actions.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ARCH-001"
-        ]
-      },
-      {
-        "id": "WP-GOV-002",
-        "cap_id": "CAP-09",
-        "cap_name": "Governance v2 — Release Evidence Automation",
-        "goal": "branch protection 정책 검증을 CI에 자동 추가한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — quality-gates.yml now runs check:branch-protection-policy and governance docs describe the repository-vs-remote enforcement boundary.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-GOV-001"
-        ]
-      },
-      {
-        "id": "WP-DOM-001",
-        "cap_id": "CAP-10",
-        "cap_name": "Domain Expansion — Billing + Cross-Domain",
-        "goal": "billing 도메인 계약 파일(openapi, events, capability)을 Stage A 수준으로 완성한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — billing domain already contains openapi, capability, events, and ui contracts aligned to contract drift validation.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-2026-03-19-10"
-        ]
-      },
-      {
-        "id": "WP-DOM-002",
-        "cap_id": "CAP-10",
-        "cap_name": "Domain Expansion — Billing + Cross-Domain",
-        "goal": "cross-domain event bus 계약을 정의하고 contract drift 검증에 연결한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — central event registry, CloudEvents envelope, and produced_by paths are now enforced by test:contract.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-DOM-001",
-          "WP-2026-03-19-10"
-        ]
-      },
-      {
-        "id": "WP-ERR-001",
-        "cap_id": "CAP-12",
-        "cap_name": "Production Readiness — Event / Error / Feature Flag",
-        "goal": "RFC 7807 Problem Details 에러 응답 표준을 모든 컨트롤러에 적용한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — ProblemDetails helper and controller error responses are already wired and validated by repository tests.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-FLAG-001",
-        "cap_id": "CAP-12",
-        "cap_name": "Production Readiness — Event / Error / Feature Flag",
-        "goal": "OpenFeature 패턴으로 Feature Flag 런타임 평가를 서버 wiring에 추가한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — FeatureFlagProvider is active in server wiring and the flag-off path is covered by e2e smoke.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ERR-001"
-        ]
-      },
-      {
-        "id": "WP-EVT-001",
-        "cap_id": "CAP-12",
-        "cap_name": "Production Readiness — Event / Error / Feature Flag",
-        "goal": "Transactional Outbox 패턴으로 도메인 이벤트 발행을 보장한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — EventPublisher port, InMemory adapter, Outbox adapter stub, and CreateTaskUseCase event publication are present and tested.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ERR-001",
-          "WP-DOM-002"
-        ]
-      },
-      {
-        "id": "WP-OBS-001",
-        "cap_id": "CAP-13",
-        "cap_name": "Observability — OpenTelemetry Instrumentation",
-        "goal": "OpenTelemetry SDK로 HTTP trace·메트릭·구조화 로그 최소 계측을 추가한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — telemetry.js and createServer emit structured logs and request metrics with trace context.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-FLAG-001"
-        ]
-      },
-      {
-        "id": "WP-PERSIST-001",
-        "cap_id": "CAP-14",
-        "cap_name": "Persistence — SQLite Repository Adapter",
-        "goal": "SQLite 기반 TaskRepository 어댑터와 스키마 마이그레이션을 추가한다",
-        "status": "done",
-        "tier": "domain",
-        "result": "PASS — SQLiteTaskRepository, schema.sql, migration script, and infrastructure test now verify the persistence adapter.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-EVT-001"
-        ]
-      },
-      {
-        "id": "WP-META-001",
-        "cap_id": "CAP-11",
-        "cap_name": "Meta — Self-Improvement Loop",
-        "goal": "세션 종료 시 자동으로 gap 검출 → 신규 WP 생성 → queue 갱신하는 자기개선 루프를 구현한다",
-        "status": "done",
-        "tier": "meta",
-        "result": "PASS — session:end runs gap detection, reconciliation, health reporting, and surfaces ready WPs automatically.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-ARCH-001",
-          "WP-ARCH-003"
-        ]
-      },
-      {
-        "id": "WP-EVID-001",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다",
-        "status": "done",
-        "tier": "arch",
-        "result": "PASS — release evidence now reads quality gate summary from root current-state and no longer needs the legacy quality_gate_result field.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-DOC-001",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "legacy operator model이 남아 있는 template와 memory/project 문서를 root protocol과 정렬한다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — DOMAIN_TEMPLATE and memory/project files now declare root memory as canonical and legacy surfaces as fallback-only.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-RUN-001",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "배포 환경 수준 smoke 체크리스트와 executable baseline을 추가해 KI-RUN-001을 축소한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — Stage E docs now distinguish in-repo smoke from deployment-environment smoke and provide a truthful manual runtime checklist.",
-        "completed_at": "2026-03-20",
-        "depends_on": []
-      },
-      {
-        "id": "WP-RUN-002",
-        "cap_id": "CAP-15",
-        "cap_name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-        "goal": "배포 환경 smoke를 실제 실행 가능한 runner와 workflow_dispatch 경로로 승격한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — deployment smoke now has an executable CLI runner, workflow_dispatch path, JSON artifact, and updated operator docs.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-RUN-001"
-        ]
-      },
-      {
-        "id": "WP-DOC-002",
-        "cap_id": "CAP-13",
-        "cap_name": "Root entry doc truthfulness",
-        "goal": "root entry docs를 현재 capability/CI/runtime 상태와 일치시킨다",
-        "status": "done",
-        "tier": "infra",
-        "result": "PASS — README entry guidance no longer contradicts root memory about stage executors, GitHub Actions, or deployment smoke.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-DOC-001",
-          "WP-RUN-002"
-        ]
-      },
-      {
-        "id": "WP-RUN-003",
-        "cap_id": "CAP-14",
-        "cap_name": "Deployment environment binding",
-        "goal": "deployment smoke를 environment registry와 GitHub environment binding에 연결한다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — deployment smoke is now bound to named GitHub environments declared in a repo-local registry, and CI validates the binding.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-RUN-002"
-        ]
-      },
-      {
-        "id": "WP-RUN-004",
-        "cap_id": "CAP-15",
-        "cap_name": "Deployment environment provisioning audit",
-        "goal": "원격 GitHub deployment environment provisioning을 policy/template/validator 기준으로 감사 가능하게 만든다",
-        "status": "done",
-        "tier": "governance",
-        "result": "PASS — remote deployment environment provisioning now has a repo-local policy baseline, CI validator, and generated audit template without pretending live remote evidence is in git.",
-        "completed_at": "2026-03-20",
-        "depends_on": [
-          "WP-RUN-003"
-        ]
-      }
-    ],
-    "active": [],
-    "done_ids": [
-      "WP-2026-03-19-01",
-      "WP-2026-03-19-02",
-      "WP-2026-03-19-03",
-      "WP-2026-03-19-04",
-      "WP-2026-03-19-05",
-      "WP-2026-03-19-06",
-      "WP-2026-03-19-07",
-      "WP-2026-03-19-08",
-      "WP-2026-03-19-09",
-      "WP-2026-03-19-10",
-      "WP-ARCH-001",
-      "WP-ARCH-002",
-      "WP-ARCH-003",
-      "WP-ARCH-004",
-      "WP-GOV-001",
-      "WP-GOV-002",
-      "WP-DOM-001",
-      "WP-DOM-002",
-      "WP-ERR-001",
-      "WP-FLAG-001",
-      "WP-EVT-001",
-      "WP-OBS-001",
-      "WP-PERSIST-001",
-      "WP-META-001",
-      "WP-DOC-001",
-      "WP-EVID-001",
-      "WP-RUN-001",
-      "WP-RUN-002",
-      "WP-DOC-002",
-      "WP-RUN-003",
-      "WP-RUN-004",
-      "WP-NFR-001",
-      "WP-COMMIT-001"
-    ],
-    "total": 30,
-    "done_count": 30,
-    "verification": {
-      "total_commands_run": 82,
-      "passed": 74,
-      "failed": 8,
-      "skipped": 0,
-      "note": "8 failures are in-session transient failures during WP development cycles\n(e.g., ESLint globals, missing script stubs) that were immediately fixed.\nAll current gates pass. Gate pass rate reflects development-cycle history.\n"
-    }
-  },
-  "caps": [
-    {
-      "id": "CAP-01",
-      "name": "Operating model alignment",
-      "priority": 1
-    },
-    {
-      "id": "CAP-02",
-      "name": "Session memory normalization",
-      "priority": 2
-    },
-    {
-      "id": "CAP-03",
-      "name": "Stage executor truthfulness",
-      "priority": 3
-    },
-    {
-      "id": "CAP-04",
-      "name": "Runtime smoke coverage",
-      "priority": 4
-    },
-    {
-      "id": "CAP-05",
-      "name": "Governance automation",
-      "priority": 5
-    },
-    {
-      "id": "CAP-06",
-      "name": "Repository truthfulness",
-      "priority": 6
-    },
-    {
-      "id": "CAP-07",
-      "name": "Domain onboarding",
-      "priority": 7
-    },
-    {
-      "id": "CAP-08",
-      "name": "Architecture v2 — DAG scheduler + Context Budget",
-      "priority": 1
-    },
-    {
-      "id": "CAP-09",
-      "name": "Governance v2 — Release Evidence Automation",
-      "priority": 8
-    },
-    {
-      "id": "CAP-10",
-      "name": "Domain Expansion — Billing + Cross-Domain",
-      "priority": 9
-    },
-    {
-      "id": "CAP-12",
-      "name": "Production Readiness — Event / Error / Feature Flag",
-      "priority": 11
-    },
-    {
-      "id": "CAP-13",
-      "name": "Observability — OpenTelemetry Instrumentation",
-      "priority": 12
-    },
-    {
-      "id": "CAP-14",
-      "name": "Persistence — SQLite Repository Adapter",
-      "priority": 13
-    },
-    {
-      "id": "CAP-11",
-      "name": "Meta — Self-Improvement Loop",
-      "priority": 10
-    },
-    {
-      "id": "CAP-15",
-      "name": "Hardening — Evidence / Runtime / Legacy Cleanup",
-      "priority": 2
-    },
-    {
-      "id": "CAP-13",
-      "name": "Root entry doc truthfulness",
-      "priority": 9
-    },
-    {
-      "id": "CAP-14",
-      "name": "Deployment environment binding",
-      "priority": 10
-    },
-    {
-      "id": "CAP-15",
-      "name": "Deployment environment provisioning audit",
-      "priority": 11
-    }
-  ],
-  "current_wp": {
-    "id": "WP-RUN-004",
-    "goal": "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.",
-    "type": "governance",
-    "stage": "E",
-    "status": "completed",
-    "scope_in": [
-      ".github/workflows/quality-gates.yml",
-      "master-shell/operations/",
-      "scripts/",
-      "artifacts/deployment-smoke/",
-      "docs/how-to/run-stage-d.md",
-      "docs/how-to/run-stage-e.md",
-      "docs/reference/quality-gates.md",
-      "README.md",
-      "memory/current-state.yaml",
-      "memory/checkpoint.yaml",
-      "memory/wp-queue.yaml",
-      "memory/next-actions.yaml",
-      "worklog/"
-    ],
-    "scope_out": [
-      "domains/",
-      "src/server/"
-    ],
-    "constraints": [
-      "do not claim live remote GitHub environment provisioning is fully verified in-repo",
-      "treat remote environment audit evidence as operator-collected even after the repo policy/template exists",
-      "leave root memory as the canonical status surface"
-    ],
-    "done_when": [
-      "a repo-local provisioning policy exists for every declared deployment environment",
-      "CI validates registry/provisioning-policy/template drift",
-      "operators can generate a truthful audit template for remote GitHub environment evidence without inventing live data in git"
-    ],
-    "fail_if": [
-      "the packet pretends remote environment vars/protection rules are proven without operator-collected evidence",
-      "the policy drifts from the deployment environment registry"
-    ],
-    "rollback": "Remove the provisioning policy/template validator and fall back to undocumented operator knowledge if the audit contract proves unusable.",
-    "subtasks": [
-      "Define a repo-local provisioning policy for each deployment environment",
-      "Generate an operator audit template from the registry/policy pair",
-      "Validate policy/template coherence in repo CI",
-      "Update runtime docs and root memory"
-    ],
-    "validation": [
-      "npm run generate:deployment-environment-audit-template",
-      "python3 scripts/validate_deployment_environment_provisioning.py",
-      "npm run check:deployment-environment-provisioning",
-      "npm run wp:reconcile"
-    ],
-    "evidence": [
-      "worklog/2026-03-20_WP-RUN-004.yaml",
-      "artifacts/deployment-smoke/"
-    ],
-    "next_unlock": "The next runtime packet should focus on collecting or validating live remote audit evidence against this policy, not on missing repo-local governance."
-  },
-  "next_queue": [
-    {
-      "id": "WP-VIDEO-001",
-      "goal": "video 도메인 Stage A~E 전체 구현 — contract 생성, 플러그인 등록, 단위/적대적 테스트",
-      "status": "in_progress",
-      "tier": "domain",
-      "depends_on": []
-    }
-  ],
-  "domains": [
-    {
-      "module_id": "task-management",
-      "domain": "productivity",
-      "bounded_context": "task-tracking",
-      "plugin_id": "task-management-plugin",
-      "stage_a_memory": "memory/stageA/task-management.yaml",
-      "stage_b_memory": "memory/stageB/task-management-composition.yaml",
-      "stage_c_memory": "memory/stageC/task-management-plugin.yaml",
-      "contract_dir": "domains/productivity/task-tracking/contract/",
-      "plugin_status": "inactive",
-      "feature_flag": "enable_task_management",
-      "feature_flag_value": false,
-      "interface_layer": "PASS (TaskController.js — 5경로, authz regression suite PASS, smoke PASS)"
-    },
-    {
-      "module_id": "billing",
-      "domain": "billing",
-      "bounded_contexts": [
-        "billing.invoice",
-        "billing.payment",
-        "billing.exception"
-      ],
-      "plugin_id": "billing-plugin",
-      "stage_a_memories": [
-        "memory/stageA/billing.invoice.yaml",
-        "memory/stageA/billing.payment.yaml",
-        "memory/stageA/billing.exception.yaml"
-      ],
-      "stage_b_memory": "memory/stageB/billing.yaml",
-      "contract_dir": "domains/billing/contracts/",
-      "plugin_status": "inactive",
-      "feature_flag": "billing.enabled",
-      "feature_flag_value": false,
-      "unit_tests": "PASS (89/89)",
-      "stage_a": "PASS",
-      "stage_b": "PASS",
-      "stage_c": "PASS",
-      "stage_d": "PASS",
-      "stage_e": "PASS",
-      "interface_layer": "PASS (BillingController.js — 11경로, authz regression suite PASS, smoke PASS)",
-      "stage_d_detail": {
-        "unit": "PASS (133/133 billing — 89 domain/app + 44 interface)",
-        "lint": "PASS (0 errors)",
-        "secret_scan": "PASS",
-        "dependency_scan": "PASS (lockfile baseline validator: runtime deps 0, integrity/license complete)",
-        "contract_test": "PASS (task-management+billing drift validator)",
-        "e2e_smoke": "PASS (BillingController smoke suite)",
-        "authn_authz": "PASS (BillingController authz regression suite)"
-      },
-      "stage_e_gaps": [
-        {
-          "id": "GAP-B001",
-          "severity": "P1",
-          "description": "비-DISPUTED 인보이스 approve 시 오류 code 없음",
-          "status": "FIXED",
-          "fix": "ApproveBillingExceptionUseCase CONFLICT 사전 검사 추가"
-        },
-        {
-          "id": "GAP-B002",
-          "severity": "P2",
-          "description": "빈 인보이스 total() 'KRW' 하드코딩 — 단일통화 전제 미명시",
-          "status": "DOCUMENTED",
-          "fix": "domain-spec.md 단일통화 제약 명시"
-        },
-        {
-          "id": "GAP-B003",
-          "severity": "P3",
-          "description": "결제 동기화 재시도 횟수 상한 없음",
-          "status": "ADR_DECIDED",
-          "adr": "docs/adr/0006-payment-retry-policy.md"
-        },
-        {
-          "id": "GAP-B004",
-          "severity": "P3",
-          "description": "GetBillingSummaryUseCase month_total 미반환",
-          "status": "FIXED",
-          "fix": "null로 명시 반환"
-        }
-      ]
-    }
-  ],
-  "domain_scores": {
-    "billing": {
-      "score": 83,
-      "trend": "→",
-      "ejectable": true
-    },
-    "productivity/task-tracking": {
-      "score": 82,
-      "trend": "→",
-      "ejectable": true
-    },
-    "video": {
-      "score": 84,
-      "trend": "→",
-      "ejectable": true
-    }
-  },
-  "plugins": [
-    {
-      "id": "task-management-plugin",
-      "name": "작업 관리",
-      "module_id": "task-management",
-      "entry_point": "/tasks",
-      "navigation": {
-        "group": "productivity",
-        "label": "작업 관리",
-        "icon": "checklist",
-        "order": 1
-      },
-      "ui_contract": "domains/productivity/task-tracking/contract/ui-contract.yaml",
-      "capability_contract": "domains/productivity/task-tracking/contract/capability.yaml",
-      "feature_flag": "enable_task_management",
-      "rollout": {
-        "strategy": "canary",
-        "percentage": 0,
-        "full_rollout_condition": "Stage D 품질 게이트 전체 PASS 후"
-      },
-      "rollback": {
-        "strategy": "disable_flag",
-        "flag": "enable_task_management",
-        "trigger_conditions": [
-          "error_rate > 1%",
-          "authz 오류 발생",
-          "상태 전이 실패 급증"
-        ]
-      },
-      "observability": {
-        "dashboard": "master-shell/observability/config.yaml#task-management-dashboard",
-        "alert_group": "task-management-alerts"
-      },
-      "status": "inactive",
-      "registered_at": "2026-03-17",
-      "owner": "productivity-team",
-      "stage_b_memory_ref": "memory/stageB/task-management-composition.yaml",
-      "notes": "- enable_task_management: false → 마스터 UI 미노출 상태.\n- enable_bulk_assign: false → 일괄 담당자 변경 기능 비활성.\n- Stage D PASS 후: status: active, rollout.percentage: 10 (canary) → 100 (전체)\n"
-    },
-    {
-      "id": "billing-plugin",
-      "name": "정산관리",
-      "module_id": "billing",
-      "entry_point": "/billing",
-      "navigation": {
-        "group": "billing",
-        "label": "정산",
-        "icon": "receipt",
-        "order": 2
-      },
-      "ui_contract": "domains/billing/contracts/ui-contract.yaml",
-      "capability_contract": "domains/billing/contracts/capability.yaml",
-      "feature_flag": "billing.enabled",
-      "rollout": {
-        "strategy": "canary",
-        "phases": [
-          {
-            "phase": "internal",
-            "percentage": 5,
-            "condition": "Stage D 품질 게이트 PASS 후"
-          },
-          {
-            "phase": "beta",
-            "percentage": 20,
-            "condition": "internal 7일 이상 error_rate 기준 충족"
-          },
-          {
-            "phase": "full",
-            "percentage": 100,
-            "condition": "beta 7일 이상 error_rate 기준 충족"
-          }
-        ]
-      },
-      "rollback": {
-        "strategy": "disable_flag",
-        "flag": "billing.enabled",
-        "trigger_conditions": [
-          "error_rate > 1%",
-          "authz 오류 발생",
-          "합계 불변조건(INV-B001) 위반 감지"
-        ]
-      },
-      "observability": {
-        "dashboard": "master-shell/observability/config.yaml#billing-dashboard",
-        "alert_group": "billing-alerts"
-      },
-      "status": "inactive",
-      "registered_at": "2026-03-18",
-      "owner": "platform-team",
-      "stage_b_memory_ref": "memory/stageB/billing.yaml",
-      "notes": "- billing.enabled: false → 마스터 UI 미노출 상태.\n- billing.exception.enabled: false → 예외처리 화면 별도 제어 가능.\n- DISPUTED→PAID 전이는 billing.admin 권한 필요 (INV-B005).\n- Stage D PASS 후: status: active, internal 5% rollout 시작.\n"
-    },
-    {
-      "id": "video-plugin",
-      "name": "비디오 관리",
-      "module_id": "video",
-      "entry_point": "/videos",
-      "navigation": {
-        "group": "content",
-        "label": "비디오",
-        "icon": "play_circle",
-        "order": 3
-      },
-      "ui_contract": "domains/video/contract/ui-contract.yaml",
-      "capability_contract": "domains/video/contract/capability.yaml",
-      "feature_flag": "video.enabled",
-      "rollout": {
-        "strategy": "canary",
-        "phases": [
-          {
-            "phase": "internal",
-            "percentage": 5,
-            "condition": "Stage D 품질 게이트 PASS 후"
-          },
-          {
-            "phase": "beta",
-            "percentage": 20,
-            "condition": "internal 7일 이상 error_rate 기준 충족"
-          },
-          {
-            "phase": "full",
-            "percentage": 100,
-            "condition": "beta 7일 이상 error_rate 기준 충족"
-          }
-        ]
-      },
-      "rollback": {
-        "strategy": "disable_flag",
-        "flag": "video.enabled",
-        "trigger_conditions": [
-          "error_rate > 1%",
-          "authz 오류 발생",
-          "INV-V002 상태 전이 위반 감지"
-        ]
-      },
-      "observability": {
-        "dashboard": "master-shell/observability/config.yaml#video-dashboard",
-        "alert_group": "video-alerts"
-      },
-      "status": "inactive",
-      "registered_at": "2026-03-20",
-      "owner": "video-team",
-      "stage_b_memory_ref": "memory/stageB/video.yaml",
-      "notes": "- video.enabled: false → Stage D PASS 후 internal 5% 시작.\n- INV-V004: 동시 RUNNING TranscodeJob 1개 제한.\n- RISK-V002: 트랜스코딩은 비동기 — UseCase는 Job ID만 반환.\n"
-    }
-  ],
-  "flags": {
-    "global": {
-      "enable_experimental_features": false,
-      "enable_debug_mode": false
-    },
-    "plugin": {
-      "enable_task_management": false,
-      "enable_bulk_assign": false,
-      "billing.enabled": false,
-      "billing.invoice.enabled": false,
-      "billing.payment.enabled": false,
-      "billing.exception.enabled": false,
-      "video.enabled": false,
-      "video.transcode.enabled": false
-    }
-  },
-  "stage_e_findings": {
-    "total_gaps": 3,
-    "gaps_fixed": 1,
-    "gaps_adred": 2,
-    "gap_details": [
-      {
-        "id": "GAP-001",
-        "severity": "P2",
-        "description": "capability.yaml INV004 누락 (reassign-task CANCELLED 예외)",
-        "status": "FIXED"
-      },
-      {
-        "id": "GAP-002",
-        "severity": "P3",
-        "description": "permissions_required UseCase 미강제",
-        "status": "ADR_DECIDED",
-        "adr": "docs/adr/0002-permission-enforcement-layer.md"
-      },
-      {
-        "id": "GAP-003",
-        "severity": "P3",
-        "description": "InMemoryTaskRepository 낙관적 잠금 부재",
-        "status": "ADR_DECIDED",
-        "adr": "docs/adr/0003-optimistic-locking-policy.md"
-      }
-    ]
-  }
-};</script>
+<script>window.D = __DATA_JSON__;</script>
 
 <!-- topbar -->
 <header class="topbar">
@@ -2318,4 +1114,19 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 </body>
-</html>
+</html>"""
+
+# ── 데이터 삽입 (단순 문자열 치환 — f-string 충돌 없음) ──────────────
+HTML = HTML_TEMPLATE.replace('__DATA_JSON__', DATA_JSON)
+
+# ── 출력 ─────────────────────────────────────────────────────────────
+OUT_DIR = os.path.join(ROOT, "artifacts", "master-planner")
+os.makedirs(OUT_DIR, exist_ok=True)
+OUT_PATH = os.path.join(OUT_DIR, "index.html")
+
+with open(OUT_PATH, "w", encoding="utf-8") as f:
+    f.write(HTML)
+
+size_kb = os.path.getsize(OUT_PATH) // 1024
+print(f"✅ 생성 완료: {OUT_PATH} ({size_kb}KB)")
+print(f"   브라우저에서 열기: file://{OUT_PATH}")

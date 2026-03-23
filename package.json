@@ -47,6 +47,7 @@
     "error-budget": "node scripts/error-budget-check.js",
     "release:evidence": "node scripts/generate-release-evidence.js",
     "catalog": "node scripts/generate-catalog-site.js",
+    "planner": "python3 scripts/generate-master-planner.py",
     "project:status": "node scripts/project_status.js",
     "stage:a": "node scripts/run_stage.js A --dry-run",
     "stage:b": "node scripts/run_stage.js B --dry-run",
