@@ -26,14 +26,14 @@ class ReassignTaskUseCase {
       );
     }
 
-    task.reassign(new_assignee_id); // INV001은 Task 내부에서 throw
-    await this._repo.save(task);
-    const events = task.pullDomainEvents();
+    const updated = task.reassign(new_assignee_id); // INV001은 Task 내부에서 throw
+    await this._repo.save(updated);
+    const events = updated.pullDomainEvents();
     if (this._publisher && events.length > 0) {
       await this._publisher.publish(events);
     }
 
-    return task.toSnapshot();
+    return updated.toSnapshot();
   }
 }
 

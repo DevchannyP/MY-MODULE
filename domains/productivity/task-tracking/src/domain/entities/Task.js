@@ -129,24 +129,28 @@ class Task {
   // ── 상태 전이 (INV002 강제) ─────────────────────────────────────────────
   /**
    * @param {string} newStatusValue
-   * @returns {void}
+   * @returns {Task}
    */
   transitionTo(newStatusValue) {
-    const oldStatus = this.#status;
-    this.#status    = this.#status.transitionTo(newStatusValue); // INV002는 TaskStatus 내부에서 throw
-    this.#updated_at = new Date().toISOString();
-
-    this.#domainEvents.push(new TaskStatusChanged({
+    const oldStatus  = this.#status;
+    const nextStatus = this.#status.transitionTo(newStatusValue); // INV002는 TaskStatus 내부에서 throw
+    const updated = new Task({
+      ...this.toSnapshot(),
+      status:     nextStatus,
+      updated_at: new Date().toISOString(),
+    });
+    updated.#domainEvents.push(new TaskStatusChanged({
       task_id:    this.#id,
       old_status: oldStatus.value,
-      new_status: this.#status.value,
+      new_status: nextStatus.value,
     }));
+    return updated;
   }
 
   // ── 담당자 변경 (INV001 강제) ────────────────────────────────────────────
   /**
    * @param {string} newAssigneeId
-   * @returns {void}
+   * @returns {Task}
    */
   reassign(newAssigneeId) {
     if (!newAssigneeId || String(newAssigneeId).trim() === '') {
@@ -156,14 +160,18 @@ class Task {
       );
     }
     const oldAssigneeId = this.#assignee_id;
-    this.#assignee_id  = String(newAssigneeId).trim();
-    this.#updated_at   = new Date().toISOString();
-
-    this.#domainEvents.push(new TaskReassigned({
+    const trimmedId     = String(newAssigneeId).trim();
+    const updated = new Task({
+      ...this.toSnapshot(),
+      assignee_id: trimmedId,
+      updated_at:  new Date().toISOString(),
+    });
+    updated.#domainEvents.push(new TaskReassigned({
       task_id:         this.#id,
       old_assignee_id: oldAssigneeId,
-      new_assignee_id: this.#assignee_id,
+      new_assignee_id: trimmedId,
     }));
+    return updated;
   }
 
   // ── 도메인 이벤트 수집 및 클리어 ─────────────────────────────────────────

@@ -117,10 +117,10 @@ describe('[E-3] 이벤트 스키마 정합성 (계약 vs 구현)', () => {
   });
 
   test('TaskStatusChanged: payload required fields [task_id, old_status, new_status] 존재', () => {
-    const task = Task.create({ title: '상태 이벤트', assignee_id: 'u1' });
+    const task    = Task.create({ title: '상태 이벤트', assignee_id: 'u1' });
     task.pullDomainEvents();
-    task.transitionTo('IN_PROGRESS');
-    const [event] = task.pullDomainEvents();
+    const updated = task.transitionTo('IN_PROGRESS');
+    const [event] = updated.pullDomainEvents();
     assert.equal(event.event_type, 'TaskStatusChanged');
     assert.ok(event.payload.task_id,    'task_id 누락');
     assert.ok(event.payload.old_status, 'old_status 누락');
@@ -132,10 +132,10 @@ describe('[E-3] 이벤트 스키마 정합성 (계약 vs 구현)', () => {
   });
 
   test('TaskReassigned: payload required fields [task_id, old_assignee_id, new_assignee_id] 존재', () => {
-    const task = Task.create({ title: '재할당 이벤트', assignee_id: 'user-a' });
+    const task    = Task.create({ title: '재할당 이벤트', assignee_id: 'user-a' });
     task.pullDomainEvents();
-    task.reassign('user-b');
-    const [event] = task.pullDomainEvents();
+    const updated = task.reassign('user-b');
+    const [event] = updated.pullDomainEvents();
     assert.equal(event.event_type, 'TaskReassigned');
     assert.ok(event.payload.task_id,         'task_id 누락');
     assert.ok(event.payload.old_assignee_id, 'old_assignee_id 누락');

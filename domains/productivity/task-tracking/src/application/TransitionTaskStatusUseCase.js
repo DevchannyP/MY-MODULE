@@ -17,15 +17,15 @@ class TransitionTaskStatusUseCase {
     const task = await this._repo.findById(task_id);
     if (!task) throw Object.assign(new Error(`작업을 찾을 수 없습니다: ${task_id}`), { code: 'NOT_FOUND' });
 
-    const oldStatus = task.status;
-    task.transitionTo(new_status); // INV002는 Task 내부에서 throw
-    await this._repo.save(task);
-    const events = task.pullDomainEvents();
+    const oldStatus  = task.status;
+    const updated    = task.transitionTo(new_status); // INV002는 Task 내부에서 throw
+    await this._repo.save(updated);
+    const events = updated.pullDomainEvents();
     if (this._publisher && events.length > 0) {
       await this._publisher.publish(events);
     }
 
-    return { task_id, old_status: oldStatus, new_status: task.status };
+    return { task_id, old_status: oldStatus, new_status: updated.status };
   }
 }
 
