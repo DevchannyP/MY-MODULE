@@ -1,0 +1,84 @@
+# Master Shell - AI Runtime Recipes
+# 마스터 OS가 AI를 어떤 조합으로 다뤄야 하는지 프로젝트 시작 전에 읽히는 운영 레시피.
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+recipes:
+  - id: "planner-first-hybrid"
+    name: "Planner-First Hybrid"
+    objective: "기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피"
+    best_for:
+      - "새 프로젝트 시작"
+      - "요구사항 분석"
+      - "학습용 GUI 기반 탐색"
+    architecture_profile: "master-os-shell"
+    adapters:
+      - "planner-state-memory"
+      - "master-ui-static-planner"
+      - "openai-responses-agent"
+      - "remote-mcp-connector"
+    tool_stack:
+      - "file-search"
+      - "function-calling"
+      - "remote-mcp"
+      - "web-search"
+    operating_sequence:
+      - "requirements / memory / planner artifact를 먼저 읽는다"
+      - "부족한 지식만 MCP나 web search로 보강한다"
+      - "결과는 Work Packet과 planner guide로 다시 환원한다"
+    blueprint_refs:
+      - "master-os-ai-studio"
+    learning_track_refs:
+      - "master-os-foundation"
+      - "project-bootstrap"
+
+  - id: "contract-first-module-builder"
+    name: "Contract-First Module Builder"
+    objective: "새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피"
+    best_for:
+      - "새 bounded context 추가"
+      - "모듈 확장"
+    architecture_profile: "workflow-domain-module"
+    adapters:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
+    tool_stack:
+      - "file-search"
+      - "function-calling"
+    operating_sequence:
+      - "Stage A 설계 메모를 작성한다"
+      - "OpenAPI, ui-contract, capability를 먼저 만든다"
+      - "plugin-registry와 learning map에 연결한다"
+      - "feature flag와 smoke를 추가한다"
+    blueprint_refs:
+      - "domain-module-extension"
+    learning_track_refs:
+      - "module-extension-lab"
+
+  - id: "stateful-ops-guarded"
+    name: "Stateful Ops Guarded"
+    objective: "상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피"
+    best_for:
+      - "실서비스 운영"
+      - "배포 안정성"
+      - "영속 저장소 사용"
+    architecture_profile: "stateful-domain-module"
+    adapters:
+      - "http-problem-details"
+      - "repository-sqlite"
+      - "observability-otel"
+      - "feature-flag-provider"
+    tool_stack:
+      - "function-calling"
+      - "web-search"
+    operating_sequence:
+      - "idempotency, timeout, drain, readiness를 transport에 고정한다"
+      - "persistent adapter를 붙이되 repository port는 유지한다"
+      - "deployment smoke와 planner evidence를 함께 갱신한다"
+    blueprint_refs:
+      - "stateful-workflow-service"
+    learning_track_refs:
+      - "runtime-operations"

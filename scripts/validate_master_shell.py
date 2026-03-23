@@ -80,8 +80,11 @@ def main() -> int:
     navigation = load_yaml("master-shell/navigation/nav.yaml")
     catalog = load_yaml("master-shell/catalog/domains.yaml")
     adapter_registry = load_yaml("master-shell/catalog/adapter-registry.yaml")
+    adapter_scorecards = load_yaml("master-shell/catalog/adapter-scorecards.yaml")
     project_blueprints = load_yaml("master-shell/catalog/project-blueprints.yaml")
     ai_learning_map = load_yaml("master-shell/catalog/ai-learning-map.yaml")
+    ai_runtime_recipes = load_yaml("master-shell/catalog/ai-runtime-recipes.yaml")
+    relations_graph = load_yaml("master-shell/catalog/master-os-relations.yaml")
     flags = load_yaml("master-shell/feature-flags/flags.yaml")
     flag_metadata = load_json("master-shell/feature-flags/metadata.json")
     slo_policy = load_json("master-shell/observability/slo-policy.json")
@@ -94,6 +97,8 @@ def main() -> int:
     adapter_profiles = adapter_registry.get("adapter_profiles", [])
     blueprints = project_blueprints.get("blueprints", [])
     learning_tracks = ai_learning_map.get("tracks", [])
+    runtime_recipes = ai_runtime_recipes.get("recipes", [])
+    relation_items = relations_graph.get("relations", [])
     plugin_map = {}
     for plugin in plugins:
         plugin_id = plugin.get("id")
@@ -339,6 +344,108 @@ def main() -> int:
         starter_sequence = blueprint.get("starter_sequence", [])
         if not isinstance(starter_sequence, list) or len(starter_sequence) < 2:
             errors.append(f"project-blueprints: {blueprint_id} must define at least 2 starter_sequence steps")
+
+    scorecards = adapter_scorecards.get("scorecards", [])
+    scorecard_map = {}
+    score_min = ((adapter_scorecards.get("score_scale") or {}).get("min"))
+    score_max = ((adapter_scorecards.get("score_scale") or {}).get("max"))
+    if not isinstance(score_min, int) or not isinstance(score_max, int):
+        errors.append("adapter-scorecards: score_scale.min/max must be integers")
+    for scorecard in scorecards:
+        adapter_id = scorecard.get("adapter_id")
+        if adapter_id in scorecard_map:
+            errors.append(f"adapter-scorecards: duplicate adapter_id -> {adapter_id}")
+        if adapter_id not in adapter_map:
+            errors.append(f"adapter-scorecards: unknown adapter_id -> {adapter_id}")
+            continue
+        scorecard_map[adapter_id] = scorecard
+        metrics = scorecard.get("metrics", {})
+        required_metrics = {"extensibility", "performance", "learning_clarity", "ai_compatibility", "swap_safety"}
+        if set(metrics.keys()) != required_metrics:
+            errors.append(f"adapter-scorecards: {adapter_id} metrics must match {sorted(required_metrics)}")
+        for metric_name, metric_value in metrics.items():
+            if not isinstance(metric_value, int) or metric_value < score_min or metric_value > score_max:
+                errors.append(
+                    f"adapter-scorecards: {adapter_id}.{metric_name} must be integer within [{score_min}, {score_max}]"
+                )
+        if not ensure_list_of_strings(scorecard.get("strengths")):
+            errors.append(f"adapter-scorecards: {adapter_id} strengths required")
+        if not ensure_list_of_strings(scorecard.get("best_for")):
+            errors.append(f"adapter-scorecards: {adapter_id} best_for required")
+
+    for adapter_id in adapter_map:
+        if adapter_id not in scorecard_map:
+            errors.append(f"adapter-scorecards: missing scorecard for adapter -> {adapter_id}")
+
+    recipe_ids: set[str] = set()
+    for recipe in runtime_recipes:
+        recipe_id = recipe.get("id")
+        if recipe_id in recipe_ids:
+            errors.append(f"ai-runtime-recipes: duplicate recipe id -> {recipe_id}")
+        if not isinstance(recipe_id, str) or not recipe_id:
+            errors.append("ai-runtime-recipes: recipes[].id must be non-empty")
+            continue
+        recipe_ids.add(recipe_id)
+        architecture_profile = recipe.get("architecture_profile")
+        if architecture_profile not in profile_map:
+            errors.append(f"ai-runtime-recipes: {recipe_id} unknown architecture_profile -> {architecture_profile}")
+        adapter_refs = ensure_list_of_strings(recipe.get("adapters"))
+        if not adapter_refs:
+            errors.append(f"ai-runtime-recipes: {recipe_id} adapters required")
+        for adapter_ref in adapter_refs:
+            if adapter_ref not in adapter_map:
+                errors.append(f"ai-runtime-recipes: {recipe_id} unknown adapter -> {adapter_ref}")
+        if architecture_profile in profile_map:
+            profile_refs = set(ensure_list_of_strings(profile_map[architecture_profile].get("adapter_refs")))
+            for adapter_ref in adapter_refs:
+                if adapter_ref not in profile_refs:
+                    errors.append(
+                        f"ai-runtime-recipes: {recipe_id} adapter {adapter_ref} not permitted by profile {architecture_profile}"
+                    )
+        if not ensure_list_of_strings(recipe.get("tool_stack")):
+            errors.append(f"ai-runtime-recipes: {recipe_id} tool_stack required")
+        if len(recipe.get("operating_sequence", [])) < 2:
+            errors.append(f"ai-runtime-recipes: {recipe_id} operating_sequence must have at least 2 steps")
+        for blueprint_ref in ensure_list_of_strings(recipe.get("blueprint_refs")):
+            if blueprint_ref not in blueprint_ids:
+                errors.append(f"ai-runtime-recipes: {recipe_id} unknown blueprint -> {blueprint_ref}")
+        for learning_ref in ensure_list_of_strings(recipe.get("learning_track_refs")):
+            if learning_ref not in learning_track_ids:
+                errors.append(f"ai-runtime-recipes: {recipe_id} unknown learning track -> {learning_ref}")
+
+    allowed_relation_types = {"uses-profile", "teaches", "implements", "fits-profile"}
+    allowed_source_types = {"blueprint", "recipe", "module"}
+    allowed_target_types = {"profile", "learning-track", "blueprint"}
+    seen_relations: set[tuple[str, str, str, str, str]] = set()
+    for relation in relation_items:
+        source_type = relation.get("source_type")
+        source_id = relation.get("source_id")
+        relation_type = relation.get("relation")
+        target_type = relation.get("target_type")
+        target_id = relation.get("target_id")
+        key = (str(source_type), str(source_id), str(relation_type), str(target_type), str(target_id))
+        if key in seen_relations:
+            errors.append(f"master-os-relations: duplicate relation -> {key}")
+            continue
+        seen_relations.add(key)
+        if source_type not in allowed_source_types:
+            errors.append(f"master-os-relations: invalid source_type -> {source_type}")
+        if target_type not in allowed_target_types:
+            errors.append(f"master-os-relations: invalid target_type -> {target_type}")
+        if relation_type not in allowed_relation_types:
+            errors.append(f"master-os-relations: invalid relation -> {relation_type}")
+        if source_type == "blueprint" and source_id not in blueprint_ids:
+            errors.append(f"master-os-relations: unknown blueprint source -> {source_id}")
+        if source_type == "recipe" and source_id not in recipe_ids:
+            errors.append(f"master-os-relations: unknown recipe source -> {source_id}")
+        if source_type == "module" and source_id not in module_ids:
+            errors.append(f"master-os-relations: unknown module source -> {source_id}")
+        if target_type == "profile" and target_id not in profile_map:
+            errors.append(f"master-os-relations: unknown profile target -> {target_id}")
+        if target_type == "learning-track" and target_id not in learning_track_ids:
+            errors.append(f"master-os-relations: unknown learning track target -> {target_id}")
+        if target_type == "blueprint" and target_id not in blueprint_ids:
+            errors.append(f"master-os-relations: unknown blueprint target -> {target_id}")
 
     if set(metadata_flags.keys()) != feature_flags:
         missing_metadata = sorted(feature_flags - set(metadata_flags.keys()))

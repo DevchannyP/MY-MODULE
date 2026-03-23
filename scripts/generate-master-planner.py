@@ -131,8 +131,11 @@ health       = load_yaml("master-shell/observability/health-scores.yaml")
 flags        = load_yaml("master-shell/feature-flags/flags.yaml")
 registry     = load_yaml("master-shell/plugin-registry/registry.yaml")
 adapter_registry = load_yaml("master-shell/catalog/adapter-registry.yaml")
+adapter_scorecards = load_yaml("master-shell/catalog/adapter-scorecards.yaml")
 project_blueprints = load_yaml("master-shell/catalog/project-blueprints.yaml")
 ai_learning_map = load_yaml("master-shell/catalog/ai-learning-map.yaml")
+ai_runtime_recipes = load_yaml("master-shell/catalog/ai-runtime-recipes.yaml")
+master_os_relations = load_yaml("master-shell/catalog/master-os-relations.yaml")
 reflect_log   = load_yaml("memory/L0-hot/reflection-log.yaml")
 fail_patterns = load_yaml("memory/L0-hot/failure-patterns.yaml")
 gate_trends   = load_yaml("memory/L0-hot/gate-trends.yaml")
@@ -373,8 +376,11 @@ data = {
         "adapters": adapter_registry.get("adapters", []),
         "profiles": adapter_registry.get("adapter_profiles", []),
     },
+    "adapter_scorecards": adapter_scorecards.get("scorecards", []),
     "project_blueprints": project_blueprints.get("blueprints", []),
     "ai_learning_tracks": ai_learning_map.get("tracks", []),
+    "ai_runtime_recipes": ai_runtime_recipes.get("recipes", []),
+    "master_os_relations": master_os_relations.get("relations", []),
     "flags": {
         "global": flags.get("global_flags",{}),
         "plugin": flags.get("plugin_flags",{}),
@@ -1202,6 +1208,7 @@ function renderDash() {
   const stages=p.stage_states||{};
   const blueprints=d.project_blueprints||[];
   const learningTracks=d.ai_learning_tracks||[];
+  const recipes=d.ai_runtime_recipes||[];
 
   let dscr='';
   Object.entries(d.domain_scores||{}).forEach(([dom,info])=>{
@@ -1296,13 +1303,21 @@ function renderDash() {
 
     ${blueprints.length?`<div class="card"><div class="card-h"><div class="card-ic">🧭</div>
         <div><div class="card-tit">마스터 OS 시작 청사진</div>
-          <div class="card-sub">프로젝트 시작 블루프린트 ${blueprints.length}개 · AI 학습 트랙 ${learningTracks.length}개</div></div></div>
+          <div class="card-sub">프로젝트 시작 블루프린트 ${blueprints.length}개 · AI 학습 트랙 ${learningTracks.length}개 · 런타임 레시피 ${recipes.length}개</div></div></div>
       ${(blueprints||[]).slice(0,2).map(bp=>`<div class="wi">
         <div class="wd d-act"></div>
         <div class="wid">${esc(bp.name||bp.id)}</div>
         <div style="flex:1">
           <div class="wg">${esc(bp.summary||'')}</div>
           <div class="wr">추천 모듈: ${esc((bp.recommended_modules||[]).join(', '))}</div>
+        </div>
+      </div>`).join('')}
+      ${(recipes||[]).slice(0,2).map(recipe=>`<div class="wi">
+        <div class="wd d-pass"></div>
+        <div class="wid">${esc(recipe.name||recipe.id)}</div>
+        <div style="flex:1">
+          <div class="wg">${esc(recipe.objective||'')}</div>
+          <div class="wr">도구 스택: ${esc((recipe.tool_stack||[]).join(', '))}</div>
         </div>
       </div>`).join('')}
     </div>`:''}
@@ -1721,7 +1736,9 @@ function renderDom(){
   const stages=d.project.stage_states||{}, pf=d.flags.plugin||{};
   const adapters=d.adapter_catalog?.adapters||[];
   const profiles=d.adapter_catalog?.profiles||[];
+  const scorecards=d.adapter_scorecards||[];
   const adapterMap=Object.fromEntries(adapters.map(adapter=>[adapter.id,adapter]));
+  const scorecardMap=Object.fromEntries(scorecards.map(scorecard=>[scorecard.adapter_id,scorecard]));
   const pluginMap=Object.fromEntries((d.plugins||[]).map(plugin=>[plugin.module_id,plugin]));
   let html=`<div class="sec-tit">🗺 도메인 현황</div>`;
 
@@ -1783,6 +1800,27 @@ function renderDom(){
             <div class="wr">패턴: ${esc(profile.architecture_pattern||'—')} | adapters: ${esc((profile.adapter_refs||[]).join(', '))}</div>
           </div>
         </div>`).join('')}
+    </div>`;
+  }
+
+  if(scorecards.length){
+    html+=`<div class="card" style="margin-bottom:16px">
+      <div class="card-h"><div class="card-ic">📈</div>
+        <div><div class="card-tit">어댑터 Scorecard</div>
+          <div class="card-sub">성능·확장성·학습성 기준 비교</div></div></div>
+      ${(scorecards||[]).map(scorecard=>{
+        const adapter=adapterMap[scorecard.adapter_id]||{};
+        const metrics=scorecard.metrics||{};
+        return `<div class="wi">
+          <div class="wd d-pass"></div>
+          <div class="wid">${esc(adapter.name||scorecard.adapter_id)}</div>
+          <div style="flex:1">
+            <div class="wg">${esc(adapter.description||'')}</div>
+            <div class="wr">확장성 ${esc(metrics.extensibility)} / 성능 ${esc(metrics.performance)} / 학습성 ${esc(metrics.learning_clarity)} / AI 적합성 ${esc(metrics.ai_compatibility)} / 교체 안전성 ${esc(metrics.swap_safety)}</div>
+            <div class="wr">적합한 곳: ${esc((scorecard.best_for||[]).join(', '))}</div>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
   }
 
@@ -1867,12 +1905,14 @@ function renderDom(){
           <div style="font-size:10px;font-weight:600;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">어댑터 스택</div>
           ${(plugin.adapter_refs||[]).map(adapterRef=>{
             const adapter=adapterMap[adapterRef]||{};
+            const scorecard=scorecardMap[adapterRef]||{};
             return `<div class="wi" style="margin-bottom:5px">
               <div class="wd d-pass"></div>
               <div class="wid">${esc(adapter.name||adapterRef)}</div>
               <div style="flex:1">
                 <div class="wg">${esc(adapter.description||'')}</div>
                 <div class="wr">layer: ${esc(adapter.layer||'—')} | protocol: ${esc(adapter.protocol||'—')}</div>
+                ${scorecard.metrics?`<div class="wr">score: 확장성 ${esc(scorecard.metrics.extensibility)} · 성능 ${esc(scorecard.metrics.performance)} · AI ${esc(scorecard.metrics.ai_compatibility)}</div>`:''}
               </div>
             </div>`;
           }).join('')}
@@ -1991,6 +2031,8 @@ function renderReq(){
   const blueprints=window.D.project_blueprints||[];
   const tracks=window.D.ai_learning_tracks||[];
   const profiles=window.D.adapter_catalog?.profiles||[];
+  const recipes=window.D.ai_runtime_recipes||[];
+  const relations=window.D.master_os_relations||[];
 
   // NFR — 카테고리별 중첩 렌더링
   const nfrCats=req.nfr_categories||{};
@@ -2090,6 +2132,35 @@ function renderReq(){
     </div>`).join('')}
   </div>`).join('');
 
+  const recipeH=recipes.map(recipe=>{
+    const profile=profiles.find(pr=>pr.id===recipe.architecture_profile);
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="card-h">
+        <div class="card-ic">🤖</div>
+        <div>
+          <div class="card-tit">${esc(recipe.name||recipe.id)}</div>
+          <div class="card-sub">${esc(recipe.objective||'')}</div>
+        </div>
+      </div>
+      <div class="kv"><span class="kk">아키텍처 프로파일</span><span class="kv-ok">${esc(profile?.name||recipe.architecture_profile||'—')}</span></div>
+      <div class="kv"><span class="kk">도구 스택</span><span>${esc((recipe.tool_stack||[]).join(', '))}</span></div>
+      <div class="kv"><span class="kk">적합한 상황</span><span>${esc((recipe.best_for||[]).join(', '))}</span></div>
+      <div style="margin-top:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">운영 순서</div>
+        ${(recipe.operating_sequence||[]).map(step=>`<div class="wi" style="margin-bottom:5px">
+          <div class="wd d-act"></div>
+          <div class="wg">${esc(step)}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  const relationH=relations.map(rel=>`<div class="wi" style="margin-bottom:5px">
+    <div class="wd d-pass"></div>
+    <div class="wid">${esc(rel.source_type)}:${esc(rel.source_id)}</div>
+    <div class="wg">${esc(rel.relation)} → ${esc(rel.target_type)}:${esc(rel.target_id)}</div>
+  </div>`).join('');
+
   $('c-req').innerHTML=`
     <div class="sec-tit">📋 요구사항 & 제약조건</div>
 
@@ -2139,6 +2210,16 @@ function renderReq(){
     <div class="req-sec">
       <div class="req-sec-h">🧠 AI 학습 플로우</div>
       ${trackH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🤖 AI Runtime Recipes</div>
+      ${recipeH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🕸 마스터 OS 관계 맵</div>
+      ${relationH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
     </div>`;
 }
 
@@ -2299,6 +2380,10 @@ function runSearch(q){
   // Learning tracks
   (d.ai_learning_tracks||[]).filter(track=>(track.id+track.title+track.persona+track.objective).toLowerCase().includes(ql)).slice(0,4).forEach(track=>{
     results.push({tag:'학습',text:track.title,sub:track.objective,action:`sw('req')`});
+  });
+  // Recipes
+  (d.ai_runtime_recipes||[]).filter(recipe=>(recipe.id+recipe.name+recipe.objective+(recipe.tool_stack||[]).join(' ')).toLowerCase().includes(ql)).slice(0,4).forEach(recipe=>{
+    results.push({tag:'레시피',text:recipe.name,sub:recipe.objective,action:`sw('req')`});
   });
   if(!results.length){$('gsResults').innerHTML='<div class="gs-empty">검색 결과 없음: "'+esc(q)+'"</div>';return;}
   $('gsResults').innerHTML=results.map((r,i)=>`<div class="gs-item" style="${i===0?'background:var(--sf2)':''}"
