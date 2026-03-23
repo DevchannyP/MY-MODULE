@@ -331,7 +331,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
 <body>
 
 <script>window.D={
-  "generated_at": "2026-03-24T00:24:00.990535",
+  "generated_at": "2026-03-24T00:39:46.759479",
   "project": {
     "name": "Workflow OS",
     "repo": "my-module",
@@ -2381,6 +2381,204 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
       }
     ]
   },
+  "adapter_scorecards": [
+    {
+      "adapter_id": "master-ui-plugin-shell",
+      "metrics": {
+        "extensibility": 5,
+        "performance": 4,
+        "learning_clarity": 4,
+        "ai_compatibility": 4,
+        "swap_safety": 5
+      },
+      "strengths": [
+        "ui-contract만으로 화면을 조합할 수 있어 모듈 추가 비용이 낮다.",
+        "기술 구현과 기획 구조를 분리해 마스터 UI가 안정적으로 유지된다."
+      ],
+      "tradeoffs": [
+        "실제 렌더링 엔진이 없으면 기획 중심으로만 보일 수 있다."
+      ],
+      "best_for": [
+        "도메인 포털을 통합하는 마스터 쉘"
+      ]
+    },
+    {
+      "adapter_id": "master-ui-static-planner",
+      "metrics": {
+        "extensibility": 4,
+        "performance": 5,
+        "learning_clarity": 5,
+        "ai_compatibility": 3,
+        "swap_safety": 5
+      },
+      "strengths": [
+        "정적 산출물이라 운영 부담이 낮고 공유가 쉽다.",
+        "학습용 문맥과 프로젝트 구조를 한 화면에서 설명하기 좋다."
+      ],
+      "tradeoffs": [
+        "실시간 상호작용보다는 기획/학습 중심에 가깝다."
+      ],
+      "best_for": [
+        "사전 기획, 리포트, 학습 화면"
+      ]
+    },
+    {
+      "adapter_id": "http-problem-details",
+      "metrics": {
+        "extensibility": 4,
+        "performance": 4,
+        "learning_clarity": 4,
+        "ai_compatibility": 4,
+        "swap_safety": 4
+      },
+      "strengths": [
+        "표준 HTTP와 Problem Details를 써서 외부 도구 연결이 쉽다.",
+        "timeout, drain, rate limit, idempotency를 한 계층에서 제공한다."
+      ],
+      "tradeoffs": [
+        "비동기 이벤트 기반 처리에는 별도 게이트웨이가 필요할 수 있다."
+      ],
+      "best_for": [
+        "외부 연동과 운영 관측이 중요한 도메인 API"
+      ]
+    },
+    {
+      "adapter_id": "feature-flag-provider",
+      "metrics": {
+        "extensibility": 5,
+        "performance": 4,
+        "learning_clarity": 3,
+        "ai_compatibility": 4,
+        "swap_safety": 5
+      },
+      "strengths": [
+        "rollout과 targeting을 분리해 도메인 코어 변경 없이 운영 제어가 가능하다."
+      ],
+      "tradeoffs": [
+        "개념을 이해하지 못하면 플래그가 복잡해질 수 있다."
+      ],
+      "best_for": [
+        "점진 배포와 실험이 필요한 기능"
+      ]
+    },
+    {
+      "adapter_id": "planner-state-memory",
+      "metrics": {
+        "extensibility": 4,
+        "performance": 4,
+        "learning_clarity": 5,
+        "ai_compatibility": 5,
+        "swap_safety": 4
+      },
+      "strengths": [
+        "YAML 기반이라 사람과 AI가 함께 읽기 쉽다.",
+        "세션 상태, work packet, checkpoint를 기획과 운영에 동시에 쓸 수 있다."
+      ],
+      "tradeoffs": [
+        "원격 상태 저장소가 필요해지면 별도 동기화 계층이 필요하다."
+      ],
+      "best_for": [
+        "기획과 실행이 결합된 Workflow OS"
+      ]
+    },
+    {
+      "adapter_id": "openai-responses-agent",
+      "metrics": {
+        "extensibility": 5,
+        "performance": 4,
+        "learning_clarity": 4,
+        "ai_compatibility": 5,
+        "swap_safety": 4
+      },
+      "strengths": [
+        "tool calling, retrieval, MCP를 같은 런타임에서 다룰 수 있다.",
+        "마스터 UI가 읽는 기획서와 실제 AI orchestration을 연결하기 쉽다."
+      ],
+      "tradeoffs": [
+        "툴 설계 품질이 낮으면 AI 응답 품질도 함께 흔들린다."
+      ],
+      "best_for": [
+        "기획서 기반 AI workflow orchestration"
+      ]
+    },
+    {
+      "adapter_id": "remote-mcp-connector",
+      "metrics": {
+        "extensibility": 5,
+        "performance": 4,
+        "learning_clarity": 3,
+        "ai_compatibility": 5,
+        "swap_safety": 5
+      },
+      "strengths": [
+        "프레임워크 독립적인 툴 확장이 가능하다.",
+        "문서 검색, 결제, 내부 API를 표준 프로토콜로 연결할 수 있다."
+      ],
+      "tradeoffs": [
+        "도구 설계와 권한 설계가 느슨하면 운영 위험이 커진다."
+      ],
+      "best_for": [
+        "외부 도구를 AI에 연결하는 플랫폼 계층"
+      ]
+    },
+    {
+      "adapter_id": "observability-otel",
+      "metrics": {
+        "extensibility": 4,
+        "performance": 4,
+        "learning_clarity": 3,
+        "ai_compatibility": 4,
+        "swap_safety": 4
+      },
+      "strengths": [
+        "traceparent와 structured logs를 유지해 운영 흐름을 복기하기 쉽다."
+      ],
+      "tradeoffs": [
+        "시각화 대시보드가 없으면 체감이 약할 수 있다."
+      ],
+      "best_for": [
+        "운영 증적과 추적성을 중시하는 서비스"
+      ]
+    },
+    {
+      "adapter_id": "repository-inmemory",
+      "metrics": {
+        "extensibility": 4,
+        "performance": 5,
+        "learning_clarity": 5,
+        "ai_compatibility": 3,
+        "swap_safety": 5
+      },
+      "strengths": [
+        "테스트와 스모크에서 빠르고 단순하다."
+      ],
+      "tradeoffs": [
+        "실서비스 상태 보존에는 부적합하다."
+      ],
+      "best_for": [
+        "테스트, 학습, 초기 모델링"
+      ]
+    },
+    {
+      "adapter_id": "repository-sqlite",
+      "metrics": {
+        "extensibility": 4,
+        "performance": 4,
+        "learning_clarity": 4,
+        "ai_compatibility": 3,
+        "swap_safety": 4
+      },
+      "strengths": [
+        "작은 상태 저장형 모듈을 빠르게 실서비스 수준으로 끌어올리기 쉽다."
+      ],
+      "tradeoffs": [
+        "고부하 분산 환경에서는 추가 전략이 필요하다."
+      ],
+      "best_for": [
+        "상태 저장형 워크플로우 서비스"
+      ]
+    }
+  ],
   "project_blueprints": [
     {
       "id": "master-os-ai-studio",
@@ -2629,6 +2827,201 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
           "learn": "운영 판단이 어떤 증적 위에서 이뤄지는지 파악한다."
         }
       ]
+    }
+  ],
+  "ai_runtime_recipes": [
+    {
+      "id": "planner-first-hybrid",
+      "name": "Planner-First Hybrid",
+      "objective": "기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피",
+      "best_for": [
+        "새 프로젝트 시작",
+        "요구사항 분석",
+        "학습용 GUI 기반 탐색"
+      ],
+      "architecture_profile": "master-os-shell",
+      "adapters": [
+        "planner-state-memory",
+        "master-ui-static-planner",
+        "openai-responses-agent",
+        "remote-mcp-connector"
+      ],
+      "tool_stack": [
+        "file-search",
+        "function-calling",
+        "remote-mcp",
+        "web-search"
+      ],
+      "operating_sequence": [
+        "requirements / memory / planner artifact를 먼저 읽는다",
+        "부족한 지식만 MCP나 web search로 보강한다",
+        "결과는 Work Packet과 planner guide로 다시 환원한다"
+      ],
+      "blueprint_refs": [
+        "master-os-ai-studio"
+      ],
+      "learning_track_refs": [
+        "master-os-foundation",
+        "project-bootstrap"
+      ]
+    },
+    {
+      "id": "contract-first-module-builder",
+      "name": "Contract-First Module Builder",
+      "objective": "새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피",
+      "best_for": [
+        "새 bounded context 추가",
+        "모듈 확장"
+      ],
+      "architecture_profile": "workflow-domain-module",
+      "adapters": [
+        "master-ui-plugin-shell",
+        "http-problem-details",
+        "feature-flag-provider",
+        "observability-otel",
+        "repository-inmemory"
+      ],
+      "tool_stack": [
+        "file-search",
+        "function-calling"
+      ],
+      "operating_sequence": [
+        "Stage A 설계 메모를 작성한다",
+        "OpenAPI, ui-contract, capability를 먼저 만든다",
+        "plugin-registry와 learning map에 연결한다",
+        "feature flag와 smoke를 추가한다"
+      ],
+      "blueprint_refs": [
+        "domain-module-extension"
+      ],
+      "learning_track_refs": [
+        "module-extension-lab"
+      ]
+    },
+    {
+      "id": "stateful-ops-guarded",
+      "name": "Stateful Ops Guarded",
+      "objective": "상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피",
+      "best_for": [
+        "실서비스 운영",
+        "배포 안정성",
+        "영속 저장소 사용"
+      ],
+      "architecture_profile": "stateful-domain-module",
+      "adapters": [
+        "http-problem-details",
+        "repository-sqlite",
+        "observability-otel",
+        "feature-flag-provider"
+      ],
+      "tool_stack": [
+        "function-calling",
+        "web-search"
+      ],
+      "operating_sequence": [
+        "idempotency, timeout, drain, readiness를 transport에 고정한다",
+        "persistent adapter를 붙이되 repository port는 유지한다",
+        "deployment smoke와 planner evidence를 함께 갱신한다"
+      ],
+      "blueprint_refs": [
+        "stateful-workflow-service"
+      ],
+      "learning_track_refs": [
+        "runtime-operations"
+      ]
+    }
+  ],
+  "master_os_relations": [
+    {
+      "source_type": "blueprint",
+      "source_id": "master-os-ai-studio",
+      "relation": "uses-profile",
+      "target_type": "profile",
+      "target_id": "master-os-shell"
+    },
+    {
+      "source_type": "blueprint",
+      "source_id": "master-os-ai-studio",
+      "relation": "teaches",
+      "target_type": "learning-track",
+      "target_id": "master-os-foundation"
+    },
+    {
+      "source_type": "blueprint",
+      "source_id": "master-os-ai-studio",
+      "relation": "teaches",
+      "target_type": "learning-track",
+      "target_id": "project-bootstrap"
+    },
+    {
+      "source_type": "blueprint",
+      "source_id": "domain-module-extension",
+      "relation": "uses-profile",
+      "target_type": "profile",
+      "target_id": "workflow-domain-module"
+    },
+    {
+      "source_type": "blueprint",
+      "source_id": "domain-module-extension",
+      "relation": "teaches",
+      "target_type": "learning-track",
+      "target_id": "module-extension-lab"
+    },
+    {
+      "source_type": "blueprint",
+      "source_id": "stateful-workflow-service",
+      "relation": "uses-profile",
+      "target_type": "profile",
+      "target_id": "stateful-domain-module"
+    },
+    {
+      "source_type": "blueprint",
+      "source_id": "stateful-workflow-service",
+      "relation": "teaches",
+      "target_type": "learning-track",
+      "target_id": "runtime-operations"
+    },
+    {
+      "source_type": "recipe",
+      "source_id": "planner-first-hybrid",
+      "relation": "implements",
+      "target_type": "blueprint",
+      "target_id": "master-os-ai-studio"
+    },
+    {
+      "source_type": "recipe",
+      "source_id": "contract-first-module-builder",
+      "relation": "implements",
+      "target_type": "blueprint",
+      "target_id": "domain-module-extension"
+    },
+    {
+      "source_type": "recipe",
+      "source_id": "stateful-ops-guarded",
+      "relation": "implements",
+      "target_type": "blueprint",
+      "target_id": "stateful-workflow-service"
+    },
+    {
+      "source_type": "module",
+      "source_id": "task-management",
+      "relation": "fits-profile",
+      "target_type": "profile",
+      "target_id": "stateful-domain-module"
+    },
+    {
+      "source_type": "module",
+      "source_id": "billing",
+      "relation": "fits-profile",
+      "target_type": "profile",
+      "target_id": "workflow-domain-module"
+    },
+    {
+      "source_type": "module",
+      "source_id": "video",
+      "relation": "fits-profile",
+      "target_type": "profile",
+      "target_id": "workflow-domain-module"
     }
   ],
   "flags": {
@@ -3235,12 +3628,20 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   },
   "git": {
     "branch": "chore/core-git-governance-activation",
-    "hash": "ab0d0e8",
-    "hash_full": "ab0d0e849c7207769179ff65037c85e548712857",
-    "last_msg": "feat(master-ui): add blueprints, learning map, and adapter registry",
-    "last_date": "2026-03-24 00:24:00 +0900",
+    "hash": "46a76ce",
+    "hash_full": "46a76ce295a83b07d9551ffb0bdc82f6f9897ed8",
+    "last_msg": "feat(master-ui): add ai recipes and adapter scorecards",
+    "last_date": "2026-03-24 00:39:45 +0900",
     "last_auth": "DevchannyP",
     "commits": [
+      {
+        "hash": "46a76ce",
+        "msg": "feat(master-ui): add ai recipes and adapter scorecards"
+      },
+      {
+        "hash": "4d1a1f3",
+        "msg": "chore: refresh master planner artifact"
+      },
       {
         "hash": "ab0d0e8",
         "msg": "feat(master-ui): add blueprints, learning map, and adapter registry"
@@ -3264,17 +3665,9 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
       {
         "hash": "60c044a",
         "msg": "chore: refresh master planner artifact"
-      },
-      {
-        "hash": "b359a8c",
-        "msg": "feat(runtime): add rollout targeting, idempotency, and probe gates"
-      },
-      {
-        "hash": "5cc5ac6",
-        "msg": "chore: refresh master planner artifact"
       }
     ],
-    "diff_stat": ".claude/agents/adversary.md                        |    9 +\n .claude/agents/architect.md                        |    9 +\n .claude/agents/implementer.md                      |    9 +\n .claude/agents/observer.md                         |   14 +\n .claude/agents/reporter.md                         |    9 +\n .claude/agents/reviewer.md                         |   16 +\n .claude/skills/contract-codegen/skill.md           |   18 +\n .claude/skills/learning-report/skill.md            |   42 +\n .claude/skills/migration-export/skill.md           |   32 +\n .claude/skills/reflection-loop/skill.md            |   58 +\n .claude/skills/stage-a-design/skill.md             |   42 +\n .claude/skills/stage-d-implement/skill.md          |   78 +\n .claude/skills/stage-e-adversarial/skill.md        |   35 +\n .github/pull_request_template.md                   |    3 +\n .github/workflows/deployment-smoke.yml             |   86 +\n .github/workflows/quality-gates.yml                |  132 +\n .github/workflows/release-evidence.yml             |   74 +\n .github/workflows/requirements-validation.yml      |   37 +\n .gitignore                                         |   10 +\n .husky/commit-msg                                  |    2 +\n .husky/post-commit                                 |   10 +\n .husky/pre-commit                                  |   26 +\n .releaserc.json                                    |   35 +\n CLAUDE.md                                          |  570 +--\n CLAUDE.md.v1-backup                                |  218 +\n HOW_TO_USE.md                                      |  151 +-\n README.md                                          |  136 +-\n artifacts/advisory/advisory-policy.yaml            |   31 +\n artifacts/catalog-site/index.html                  |    6 +\n .../environment-provisioning-audit-template.json   |  159 +\n artifacts/deployment-smoke/manual-validation.json  |  125 +\n artifacts/deployment-smoke/target-resolution.json  |   13 +\n artifacts/github/branch-protection-policy.yaml     |   20 +\n artifacts/master-planner/index.html                | 4372 ++++++++++++++++++++\n artifacts/provenance/workflow-os-provenance.json   |    4 +-\n artifacts/release-evidence/release-evidence.json   |   28 +-\n commitlint.config.js                               |   14 +\n contracts/events/envelope.schema.json              |   58 +\n contracts/events/registry.yaml                     |   99 +\n docs/adr/0008-online-advisory-scan-strategy.md     |   86 +\n docs/adr/0009-github-branch-protection-baseline.md |   66 +\n ...265\\355\\225\\251\\352\\262\\200\\354\\246\\235-ADR.md\" |   42 +\n ...hfulness-for-legacy-and-placeholder-surfaces.md |   61 +\n docs/adr/adr-index.yaml                            |   42 +\n docs/adr/templates/adr-template.md                 |   38 +\n docs/explanation/composition-and-shell.md          |   17 +-\n docs/explanation/upgrade-plan-v2.md                |  238 ++\n docs/how-to/repeatable-cli-master-prompt.md        |  151 +\n docs/how-to/run-git-workflow.md                    |   45 +-\n docs/how-to/run-stage-a.md                         |   17 +-\n docs/how-to/run-stage-b.md                         |    9 +\n docs/how-to/run-stage-c.md                         |    9 +\n docs/how-to/run-stage-d.md                         |   23 +-\n docs/how-to/run-stage-e.md                         |  100 +-\n docs/reference/advisory-feed-policy.md             |   61 +\n .../reference/generated/domain-dependency-graph.md |   12 +\n docs/reference/git-governance.md                   |    2 +\n docs/reference/github-branch-protection.md         |   51 +\n docs/reference/memory-schema.md                    |  123 +-\n docs/reference/quality-gates.md                    |  123 +-\n docs/reference/routing-rules.md                    |   12 +-\n docs/reference/security-policy.md                  |    2 +\n docs/reference/supply-chain-policy.md              |   17 +-\n docs/tutorial/master-shell-integration-example.md  |   11 +-\n domains/billing/contracts/events.schema.json       |   70 +-\n domains/billing/contracts/openapi.yaml             |   36 +-\n domains/billing/contracts/ui-contract.yaml         |   70 +\n domains/billing/package.json                       |    7 +\n .../billing/src/application/GetPaymentUseCase.js   |   51 +\n .../billing/src/application/ListPaymentsUseCase.js |   37 +\n .../application/RejectBillingExceptionUseCase.js   |    3 +\n .../src/application/RetryPaymentSyncUseCase.js     |   58 +\n .../src/domain/entities/BillingException.js        |   21 +-\n domains/billing/src/domain/entities/Invoice.js     |   37 +-\n domains/billing/src/domain/entities/Payment.js     |   10 +-\n .../src/domain/services/BillingDomainService.js    |   10 +-\n .../src/domain/value-objects/InvoiceStatus.js      |    5 +-\n domains/billing/src/domain/value-objects/Money.js  |   34 +-\n domains/billing/src/interface/BillingController.js |  126 +-\n .../tests/application/AddLineItemUseCase.test.js   |   89 +\n .../application/GetBillingSummaryUseCase.test.js   |   63 +\n .../application/GetInvoiceListUseCase.test.js      |   73 +\n .../tests/application/GetPaymentUseCase.test.js    |   55 +\n .../tests/application/ListPaymentsUseCase.test.js  |   76 +\n .../RejectBillingExceptionUseCase.test.js          |   82 +\n .../application/RetryPaymentSyncUseCase.test.js    |   55 +\n .../tests/domain/entities/BillingException.test.js |   82 +\n .../billing/tests/domain/entities/Invoice.test.js  |   31 +\n .../billing/tests/domain/entities/Payment.test.js  |  121 +\n .../tests/domain/events/BillingEvents.test.js      |   76 +\n .../domain/value-objects/Money.multiply.test.js    |   50 +\n .../infrastructure/InMemoryRepositories.test.js    |  206 +\n .../tests/interface/BillingController.test.js      |   52 +\n .../tests/property/billing.property.test.js        |   93 +\n domains/productivity/package.json                  |    7 +\n .../task-tracking/contract/openapi.yaml            |   40 +-\n .../src/application/CreateTaskUseCase.js           |   25 +-\n .../src/application/GetTaskUseCase.js              |    7 +-\n .../src/application/ListTasksUseCase.js            |    6 +-\n .../src/application/ReassignTaskUseCase.js         |   32 +-\n .../src/application/TransitionTaskStatusUseCase.js |   29 +-\n .../task-tracking/src/domain/entities/Task.js      |   61 +-\n .../src/domain/value-objects/TaskStatus.js         |   14 +-\n .../src/infrastructure/SQLiteTaskRepository.js     |  128 +\n .../task-tracking/src/infrastructure/schema.sql    |   32 +\n .../task-tracking/src/interface/TaskController.js  |   51 +-\n .../tests/adversarial/stageE_adversarial.test.js   |   47 +-\n .../tests/application/CreateTaskUseCase.test.js    |   59 +-\n .../tests/application/GetTaskUseCase.test.js       |   54 +\n .../tests/application/ListTasksUseCase.test.js     |   68 +\n .../tests/application/ReassignTaskUseCase.test.js  |   94 +\n .../TransitionTaskStatusUseCase.test.js            |   91 +\n .../tests/domain/entities/Task.test.js             |   36 +-\n .../domain/services/TaskDomainService.test.js      |   24 +-\n .../infrastructure/InMemoryTaskRepository.test.js  |  116 +\n .../infrastructure/SQLiteTaskRepository.test.js    |   30 +\n .../tests/interface/TaskController.test.js         |   22 +\n domains/video/contract/capability.yaml             |   97 +\n domains/video/contract/events.schema.json          |  181 +\n domains/video/contract/openapi.yaml                |  344 ++\n domains/video/contract/ui-contract.yaml            |  169 +\n domains/video/package.json                         |    7 +\n .../video/src/application/ArchiveVideoUseCase.js   |   44 +\n .../src/application/ChangeAccessPolicyUseCase.js   |   52 +\n .../src/application/GetTranscodeJobUseCase.js      |   61 +\n domains/video/src/application/GetVideoUseCase.js   |   51 +\n domains/video/src/application/ListVideosUseCase.js |   56 +\n .../src/application/StartTranscodeJobUseCase.js    |   78 +\n .../video/src/application/UploadVideoUseCase.js    |   55 +\n domains/video/src/domain/TranscodeJob.js           |  151 +\n domains/video/src/domain/Video.js                  |  191 +\n .../InMemoryTranscodeJobRepository.js              |   46 +\n .../src/infrastructure/InMemoryVideoRepository.js  |   42 +\n domains/video/src/interface/VideoController.js     |  211 +\n domains/video/src/ports/TranscodeJobRepository.js  |   39 +\n domains/video/src/ports/VideoRepository.js         |   35 +\n .../tests/adversarial/stageE_adversarial.test.js   |  286 ++\n .../tests/application/ArchiveVideoUseCase.test.js  |   94 +\n .../application/ChangeAccessPolicyUseCase.test.js  |   93 +\n .../application/GetTranscodeJobUseCase.test.js     |  133 +\n .../tests/application/GetVideoUseCase.test.js      |   77 +\n .../tests/application/ListVideosUseCase.test.js    |  132 +\n .../application/StartTranscodeJobUseCase.test.js   |  101 +\n .../tests/application/UploadVideoUseCase.test.js   |   81 +\n domains/video/tests/domain/TranscodeJob.test.js    |  124 +\n domains/video/tests/domain/Video.test.js           |  197 +\n .../tests/interface/VideoController.authz.test.js  |  222 +\n .../tests/interface/VideoController.smoke.test.js  |  321 ++\n .../VideoController.uploaderId.security.test.js    |   70 +\n .../video/tests/property/video.property.test.js    |  134 +\n master-shell/catalog/adapter-registry.yaml         |  138 +\n master-shell/catalog/ai-learning-map.yaml          |  104 +\n master-shell/catalog/domains.yaml                  |   18 +-\n master-shell/catalog/project-blueprints.yaml       |   77 +\n master-shell/feature-flags/flags.yaml              |    8 +-\n master-shell/feature-flags/metadata.json           |  105 +\n master-shell/navigation/nav.yaml                   |   14 +-\n master-shell/observability/config.yaml             |   48 +-\n master-shell/observability/health-scores.yaml      |   14 +\n master-shell/observability/slo-policy.json         |   28 +\n master-shell/observability/timeline.jsonl          |    0\n .../deployment-environment-provisioning.yaml       |   79 +\n .../operations/deployment-environments.yaml        |   58 +\n master-shell/plugin-registry/registry.yaml         |   67 +-\n memory/L0-hot/current-state.yaml                   |    1 +\n memory/L0-hot/failure-patterns.yaml                |    4 +\n memory/L0-hot/gate-trends.yaml                     |    5 +\n memory/L0-hot/next-actions.yaml                    |    1 +\n memory/L0-hot/reflection-log.yaml                  |   29 +\n memory/L0-hot/unresolved-risks.yaml                |    1 +\n memory/L1-warm/stageA                              |    1 +\n memory/L1-warm/stageB                              |    1 +\n memory/L1-warm/stageC                              |    1 +\n memory/checkpoint.yaml                             |   79 +\n memory/current-state.yaml                          |  203 +\n memory/current-wp.yaml                             |   48 +\n memory/knowledge-graph.yaml                        |   23 +\n memory/next-actions.yaml                           |    9 +\n memory/project/core-upgrade-plan.yaml              |   18 +-\n memory/project/current-state.yaml                  |   75 +-\n memory/project/failure-log.yaml                    |    2 +\n memory/project/lessons-learned.yaml                |    2 +\n memory/project/master-prompt.md                    |   13 +-\n memory/project/metrics.yaml                        |    2 +\n memory/project/next-actions.yaml                   |   71 +-\n memory/project/similarity-index.yaml               |    3 +\n memory/project/unresolved-risks.yaml               |   48 +-\n memory/stageA/video.yaml                           |  114 +\n memory/stageB/video.yaml                           |  103 +\n memory/stageC/task-management-plugin.yaml          |   13 +-\n memory/wp-queue.yaml                               |  630 +++\n package-lock.json                                  | 1280 +++++-\n package.json                                       |   69 +-\n requirements/DOMAIN_TEMPLATE.yaml                  |    7 +-\n requirements/commit-convention.yaml                |   19 +\n requirements/domain-map.yaml                       |   68 +-\n requirements/glossary.yaml                         |    2 +-\n requirements/requirements.schema.json              |  624 +--\n scripts/architecture-fitness.js                    |  117 +\n scripts/audit-chain.js                             |   75 +\n scripts/auto-commit.sh                             |   10 +\n scripts/domain-migrate.js                          |  109 +\n scripts/error-budget-check.js                      |   69 +\n scripts/generate-adr.js                            |  156 +\n scripts/generate-catalog-site.js                   |   62 +\n scripts/generate-dep-graph.js                      |   67 +\n scripts/generate-from-contracts.js                 |   86 +\n scripts/generate-learning-report.js                |   96 +\n scripts/generate-master-planner.py                 | 2460 +++++++++++\n scripts/generate-release-evidence.js               |   64 +\n ...nerate_deployment_environment_audit_template.py |  103 +\n scripts/generate_release_evidence.py               |  106 +-\n scripts/health-dashboard.js                        |  115 +\n scripts/lib/domain-discovery.js                    |   47 +\n scripts/orchestrate.js                             |   95 +\n scripts/project_status.js                          |  149 +\n scripts/reconcile_state.py                         |  272 ++\n scripts/record-metrics.js                          |   52 +\n scripts/requirements_gap.py                        |  217 +\n scripts/resolve_deployment_target.py               |  128 +\n scripts/run_deployment_smoke.js                    |  848 ++++\n scripts/run_stage.js                               |  162 +\n scripts/session_end.py                             |  152 +\n scripts/session_metrics.py                         |  240 ++\n scripts/update-knowledge-graph.js                  |   63 +\n scripts/validate-contracts.js                      |   46 +\n scripts/validate_advisory_policy.py                |   50 +\n scripts/validate_branch_protection_policy.py       |   54 +\n scripts/validate_contract_drift.py                 |  106 +-\n scripts/validate_dependency_baseline.py            |  113 +\n ...validate_deployment_environment_provisioning.py |  134 +\n scripts/validate_deployment_smoke_binding.py       |   96 +\n scripts/validate_master_shell.py                   |  239 ++\n scripts/validate_openapi_governance.py             |   89 +\n scripts/validate_requirements.py                   |  324 ++\n scripts/wp_scheduler.py                            |  175 +\n src/index.js                                       |   43 +-\n src/infrastructure/FeatureFlagProvider.js          |  304 ++\n src/infrastructure/telemetry.js                    |  221 +\n src/server/createServer.js                         |  821 ++++\n src/shared/EventPublisher.js                       |  121 +\n src/shared/IdempotencyStore.js                     |   79 +\n src/shared/ProblemDetails.js                       |  125 +\n src/shared/QueryValidation.js                      |   61 +\n src/shared/RateLimiter.js                          |   43 +\n src/tests/smoke/featureFlagProvider.test.js        |  102 +\n src/tests/smoke/masterPlannerGuides.smoke.test.js  |   35 +\n src/tests/smoke/projectStatus.smoke.test.js        |   11 +\n src/tests/smoke/runDeploymentSmoke.test.js         |   75 +\n src/tests/smoke/serverWiring.smoke.test.js         |  476 +++\n .../archetypes/approval-workflow/archetype.yaml    |   28 +\n templates/archetypes/crud-entity/archetype.yaml    |   19 +\n .../archetypes/financial-ledger/archetype.yaml     |   37 +\n templates/tests/property-based.template.js         |   63 +\n turbo.json                                         |   33 +\n worklog/2026-03-19_WP-01.yaml                      |   41 +\n worklog/2026-03-19_WP-02.yaml                      |   33 +\n worklog/2026-03-19_WP-03.yaml                      |   35 +\n worklog/2026-03-19_WP-04.yaml                      |   42 +\n worklog/2026-03-19_WP-05.yaml                      |   39 +\n worklog/2026-03-19_WP-06.yaml                      |   31 +\n worklog/2026-03-19_WP-07.yaml                      |   37 +\n worklog/2026-03-19_WP-08.yaml                      |   48 +\n worklog/2026-03-19_WP-09.yaml                      |   32 +\n worklog/2026-03-19_WP-ARCH-001.yaml                |   66 +\n worklog/2026-03-19_WP-ARCH-003.yaml                |   45 +\n worklog/2026-03-20_WP-ARCH-004.yaml                |   62 +\n worklog/2026-03-20_WP-COMMIT-001.yaml              |   98 +\n worklog/2026-03-20_WP-DOC-001.yaml                 |   47 +\n worklog/2026-03-20_WP-DOC-002.yaml                 |   47 +\n worklog/2026-03-20_WP-DOM-002.yaml                 |   44 +\n worklog/2026-03-20_WP-EVID-001.yaml                |   40 +\n worklog/2026-03-20_WP-GOV-002.yaml                 |   43 +\n worklog/2026-03-20_WP-NFR-001.yaml                 |   44 +\n worklog/2026-03-20_WP-RUN-001.yaml                 |   35 +\n worklog/2026-03-20_WP-RUN-002.yaml                 |   89 +\n worklog/2026-03-20_WP-RUN-003.yaml                 |   90 +\n worklog/2026-03-20_WP-RUN-004.yaml                 |   72 +\n worklog/B_review.md                                |   65 +\n worklog/D_quality_gate.md                          |   82 +\n worklog/G_git_governance.md                        |   20 +\n worklog/audit-chain.json                           |   21 +\n worklog/commit-log.jsonl                           |    0\n worklog/contract-matrix.md                         |    8 +\n worklog/core-learning-log.md                       |   55 +\n worklog/release-notes.md                           |  104 +\n worklog/reports/.gitkeep                           |    0\n .../reports/2026-03-20_001_A___test__/REPORT.md    |   56 +\n .../2026-03-20_001_A___test__/snippets/01-basic.js |    1 +\n .../snippets/02-intermediate.js                    |    1 +\n .../snippets/03-advanced.js                        |    1 +\n worklog/reports/billing/StageDE_report.md          |   19 +\n .../productivity_task-tracking/StageDE_report.md   |   17 +\n worklog/reports/video/StageDE_report.md            |   18 +\n 294 files changed, 29656 insertions(+), 1517 deletions(-)"
+    "diff_stat": ".claude/agents/adversary.md                        |    9 +\n .claude/agents/architect.md                        |    9 +\n .claude/agents/implementer.md                      |    9 +\n .claude/agents/observer.md                         |   14 +\n .claude/agents/reporter.md                         |    9 +\n .claude/agents/reviewer.md                         |   16 +\n .claude/skills/contract-codegen/skill.md           |   18 +\n .claude/skills/learning-report/skill.md            |   42 +\n .claude/skills/migration-export/skill.md           |   32 +\n .claude/skills/reflection-loop/skill.md            |   58 +\n .claude/skills/stage-a-design/skill.md             |   42 +\n .claude/skills/stage-d-implement/skill.md          |   78 +\n .claude/skills/stage-e-adversarial/skill.md        |   35 +\n .github/pull_request_template.md                   |    3 +\n .github/workflows/deployment-smoke.yml             |   86 +\n .github/workflows/quality-gates.yml                |  132 +\n .github/workflows/release-evidence.yml             |   74 +\n .github/workflows/requirements-validation.yml      |   37 +\n .gitignore                                         |   10 +\n .husky/commit-msg                                  |    2 +\n .husky/post-commit                                 |   10 +\n .husky/pre-commit                                  |   26 +\n .releaserc.json                                    |   35 +\n CLAUDE.md                                          |  570 +--\n CLAUDE.md.v1-backup                                |  218 +\n HOW_TO_USE.md                                      |  151 +-\n README.md                                          |  136 +-\n artifacts/advisory/advisory-policy.yaml            |   31 +\n artifacts/catalog-site/index.html                  |    6 +\n .../environment-provisioning-audit-template.json   |  159 +\n artifacts/deployment-smoke/manual-validation.json  |  125 +\n artifacts/deployment-smoke/target-resolution.json  |   13 +\n artifacts/github/branch-protection-policy.yaml     |   20 +\n artifacts/master-planner/index.html                | 4960 ++++++++++++++++++++\n artifacts/provenance/workflow-os-provenance.json   |    4 +-\n artifacts/release-evidence/release-evidence.json   |   28 +-\n commitlint.config.js                               |   14 +\n contracts/events/envelope.schema.json              |   58 +\n contracts/events/registry.yaml                     |   99 +\n docs/adr/0008-online-advisory-scan-strategy.md     |   86 +\n docs/adr/0009-github-branch-protection-baseline.md |   66 +\n ...265\\355\\225\\251\\352\\262\\200\\354\\246\\235-ADR.md\" |   42 +\n ...hfulness-for-legacy-and-placeholder-surfaces.md |   61 +\n docs/adr/adr-index.yaml                            |   42 +\n docs/adr/templates/adr-template.md                 |   38 +\n docs/explanation/composition-and-shell.md          |   17 +-\n docs/explanation/upgrade-plan-v2.md                |  238 +\n docs/how-to/repeatable-cli-master-prompt.md        |  151 +\n docs/how-to/run-git-workflow.md                    |   45 +-\n docs/how-to/run-stage-a.md                         |   17 +-\n docs/how-to/run-stage-b.md                         |    9 +\n docs/how-to/run-stage-c.md                         |    9 +\n docs/how-to/run-stage-d.md                         |   23 +-\n docs/how-to/run-stage-e.md                         |  100 +-\n docs/reference/advisory-feed-policy.md             |   61 +\n .../reference/generated/domain-dependency-graph.md |   12 +\n docs/reference/git-governance.md                   |    2 +\n docs/reference/github-branch-protection.md         |   51 +\n docs/reference/memory-schema.md                    |  123 +-\n docs/reference/quality-gates.md                    |  123 +-\n docs/reference/routing-rules.md                    |   12 +-\n docs/reference/security-policy.md                  |    2 +\n docs/reference/supply-chain-policy.md              |   17 +-\n docs/tutorial/master-shell-integration-example.md  |   11 +-\n domains/billing/contracts/events.schema.json       |   70 +-\n domains/billing/contracts/openapi.yaml             |   36 +-\n domains/billing/contracts/ui-contract.yaml         |   70 +\n domains/billing/package.json                       |    7 +\n .../billing/src/application/GetPaymentUseCase.js   |   51 +\n .../billing/src/application/ListPaymentsUseCase.js |   37 +\n .../application/RejectBillingExceptionUseCase.js   |    3 +\n .../src/application/RetryPaymentSyncUseCase.js     |   58 +\n .../src/domain/entities/BillingException.js        |   21 +-\n domains/billing/src/domain/entities/Invoice.js     |   37 +-\n domains/billing/src/domain/entities/Payment.js     |   10 +-\n .../src/domain/services/BillingDomainService.js    |   10 +-\n .../src/domain/value-objects/InvoiceStatus.js      |    5 +-\n domains/billing/src/domain/value-objects/Money.js  |   34 +-\n domains/billing/src/interface/BillingController.js |  126 +-\n .../tests/application/AddLineItemUseCase.test.js   |   89 +\n .../application/GetBillingSummaryUseCase.test.js   |   63 +\n .../application/GetInvoiceListUseCase.test.js      |   73 +\n .../tests/application/GetPaymentUseCase.test.js    |   55 +\n .../tests/application/ListPaymentsUseCase.test.js  |   76 +\n .../RejectBillingExceptionUseCase.test.js          |   82 +\n .../application/RetryPaymentSyncUseCase.test.js    |   55 +\n .../tests/domain/entities/BillingException.test.js |   82 +\n .../billing/tests/domain/entities/Invoice.test.js  |   31 +\n .../billing/tests/domain/entities/Payment.test.js  |  121 +\n .../tests/domain/events/BillingEvents.test.js      |   76 +\n .../domain/value-objects/Money.multiply.test.js    |   50 +\n .../infrastructure/InMemoryRepositories.test.js    |  206 +\n .../tests/interface/BillingController.test.js      |   52 +\n .../tests/property/billing.property.test.js        |   93 +\n domains/productivity/package.json                  |    7 +\n .../task-tracking/contract/openapi.yaml            |   40 +-\n .../src/application/CreateTaskUseCase.js           |   25 +-\n .../src/application/GetTaskUseCase.js              |    7 +-\n .../src/application/ListTasksUseCase.js            |    6 +-\n .../src/application/ReassignTaskUseCase.js         |   32 +-\n .../src/application/TransitionTaskStatusUseCase.js |   29 +-\n .../task-tracking/src/domain/entities/Task.js      |   61 +-\n .../src/domain/value-objects/TaskStatus.js         |   14 +-\n .../src/infrastructure/SQLiteTaskRepository.js     |  128 +\n .../task-tracking/src/infrastructure/schema.sql    |   32 +\n .../task-tracking/src/interface/TaskController.js  |   51 +-\n .../tests/adversarial/stageE_adversarial.test.js   |   47 +-\n .../tests/application/CreateTaskUseCase.test.js    |   59 +-\n .../tests/application/GetTaskUseCase.test.js       |   54 +\n .../tests/application/ListTasksUseCase.test.js     |   68 +\n .../tests/application/ReassignTaskUseCase.test.js  |   94 +\n .../TransitionTaskStatusUseCase.test.js            |   91 +\n .../tests/domain/entities/Task.test.js             |   36 +-\n .../domain/services/TaskDomainService.test.js      |   24 +-\n .../infrastructure/InMemoryTaskRepository.test.js  |  116 +\n .../infrastructure/SQLiteTaskRepository.test.js    |   30 +\n .../tests/interface/TaskController.test.js         |   22 +\n domains/video/contract/capability.yaml             |   97 +\n domains/video/contract/events.schema.json          |  181 +\n domains/video/contract/openapi.yaml                |  344 ++\n domains/video/contract/ui-contract.yaml            |  169 +\n domains/video/package.json                         |    7 +\n .../video/src/application/ArchiveVideoUseCase.js   |   44 +\n .../src/application/ChangeAccessPolicyUseCase.js   |   52 +\n .../src/application/GetTranscodeJobUseCase.js      |   61 +\n domains/video/src/application/GetVideoUseCase.js   |   51 +\n domains/video/src/application/ListVideosUseCase.js |   56 +\n .../src/application/StartTranscodeJobUseCase.js    |   78 +\n .../video/src/application/UploadVideoUseCase.js    |   55 +\n domains/video/src/domain/TranscodeJob.js           |  151 +\n domains/video/src/domain/Video.js                  |  191 +\n .../InMemoryTranscodeJobRepository.js              |   46 +\n .../src/infrastructure/InMemoryVideoRepository.js  |   42 +\n domains/video/src/interface/VideoController.js     |  211 +\n domains/video/src/ports/TranscodeJobRepository.js  |   39 +\n domains/video/src/ports/VideoRepository.js         |   35 +\n .../tests/adversarial/stageE_adversarial.test.js   |  286 ++\n .../tests/application/ArchiveVideoUseCase.test.js  |   94 +\n .../application/ChangeAccessPolicyUseCase.test.js  |   93 +\n .../application/GetTranscodeJobUseCase.test.js     |  133 +\n .../tests/application/GetVideoUseCase.test.js      |   77 +\n .../tests/application/ListVideosUseCase.test.js    |  132 +\n .../application/StartTranscodeJobUseCase.test.js   |  101 +\n .../tests/application/UploadVideoUseCase.test.js   |   81 +\n domains/video/tests/domain/TranscodeJob.test.js    |  124 +\n domains/video/tests/domain/Video.test.js           |  197 +\n .../tests/interface/VideoController.authz.test.js  |  222 +\n .../tests/interface/VideoController.smoke.test.js  |  321 ++\n .../VideoController.uploaderId.security.test.js    |   70 +\n .../video/tests/property/video.property.test.js    |  134 +\n master-shell/catalog/adapter-registry.yaml         |  138 +\n master-shell/catalog/adapter-scorecards.yaml       |  159 +\n master-shell/catalog/ai-learning-map.yaml          |  104 +\n master-shell/catalog/ai-runtime-recipes.yaml       |   84 +\n master-shell/catalog/domains.yaml                  |   18 +-\n master-shell/catalog/master-os-relations.yaml      |   73 +\n master-shell/catalog/project-blueprints.yaml       |   77 +\n master-shell/feature-flags/flags.yaml              |    8 +-\n master-shell/feature-flags/metadata.json           |  105 +\n master-shell/navigation/nav.yaml                   |   14 +-\n master-shell/observability/config.yaml             |   48 +-\n master-shell/observability/health-scores.yaml      |   14 +\n master-shell/observability/slo-policy.json         |   28 +\n master-shell/observability/timeline.jsonl          |    0\n .../deployment-environment-provisioning.yaml       |   79 +\n .../operations/deployment-environments.yaml        |   58 +\n master-shell/plugin-registry/registry.yaml         |   67 +-\n memory/L0-hot/current-state.yaml                   |    1 +\n memory/L0-hot/failure-patterns.yaml                |    4 +\n memory/L0-hot/gate-trends.yaml                     |    5 +\n memory/L0-hot/next-actions.yaml                    |    1 +\n memory/L0-hot/reflection-log.yaml                  |   29 +\n memory/L0-hot/unresolved-risks.yaml                |    1 +\n memory/L1-warm/stageA                              |    1 +\n memory/L1-warm/stageB                              |    1 +\n memory/L1-warm/stageC                              |    1 +\n memory/checkpoint.yaml                             |   79 +\n memory/current-state.yaml                          |  203 +\n memory/current-wp.yaml                             |   48 +\n memory/knowledge-graph.yaml                        |   23 +\n memory/next-actions.yaml                           |    9 +\n memory/project/core-upgrade-plan.yaml              |   18 +-\n memory/project/current-state.yaml                  |   75 +-\n memory/project/failure-log.yaml                    |    2 +\n memory/project/lessons-learned.yaml                |    2 +\n memory/project/master-prompt.md                    |   13 +-\n memory/project/metrics.yaml                        |    2 +\n memory/project/next-actions.yaml                   |   71 +-\n memory/project/similarity-index.yaml               |    3 +\n memory/project/unresolved-risks.yaml               |   48 +-\n memory/stageA/video.yaml                           |  114 +\n memory/stageB/video.yaml                           |  103 +\n memory/stageC/task-management-plugin.yaml          |   13 +-\n memory/wp-queue.yaml                               |  630 +++\n package-lock.json                                  | 1280 ++++-\n package.json                                       |   69 +-\n requirements/DOMAIN_TEMPLATE.yaml                  |    7 +-\n requirements/commit-convention.yaml                |   19 +\n requirements/domain-map.yaml                       |   68 +-\n requirements/glossary.yaml                         |    2 +-\n requirements/requirements.schema.json              |  624 +--\n scripts/architecture-fitness.js                    |  117 +\n scripts/audit-chain.js                             |   75 +\n scripts/auto-commit.sh                             |   10 +\n scripts/domain-migrate.js                          |  109 +\n scripts/error-budget-check.js                      |   69 +\n scripts/generate-adr.js                            |  156 +\n scripts/generate-catalog-site.js                   |   62 +\n scripts/generate-dep-graph.js                      |   67 +\n scripts/generate-from-contracts.js                 |   86 +\n scripts/generate-learning-report.js                |   96 +\n scripts/generate-master-planner.py                 | 2545 ++++++++++\n scripts/generate-release-evidence.js               |   64 +\n ...nerate_deployment_environment_audit_template.py |  103 +\n scripts/generate_release_evidence.py               |  106 +-\n scripts/health-dashboard.js                        |  115 +\n scripts/lib/domain-discovery.js                    |   47 +\n scripts/orchestrate.js                             |   95 +\n scripts/project_status.js                          |  149 +\n scripts/reconcile_state.py                         |  272 ++\n scripts/record-metrics.js                          |   52 +\n scripts/requirements_gap.py                        |  217 +\n scripts/resolve_deployment_target.py               |  128 +\n scripts/run_deployment_smoke.js                    |  848 ++++\n scripts/run_stage.js                               |  162 +\n scripts/session_end.py                             |  152 +\n scripts/session_metrics.py                         |  240 +\n scripts/update-knowledge-graph.js                  |   63 +\n scripts/validate-contracts.js                      |   46 +\n scripts/validate_advisory_policy.py                |   50 +\n scripts/validate_branch_protection_policy.py       |   54 +\n scripts/validate_contract_drift.py                 |  106 +-\n scripts/validate_dependency_baseline.py            |  113 +\n ...validate_deployment_environment_provisioning.py |  134 +\n scripts/validate_deployment_smoke_binding.py       |   96 +\n scripts/validate_master_shell.py                   |  346 ++\n scripts/validate_openapi_governance.py             |   89 +\n scripts/validate_requirements.py                   |  324 ++\n scripts/wp_scheduler.py                            |  175 +\n src/index.js                                       |   43 +-\n src/infrastructure/FeatureFlagProvider.js          |  304 ++\n src/infrastructure/telemetry.js                    |  221 +\n src/server/createServer.js                         |  821 ++++\n src/shared/EventPublisher.js                       |  121 +\n src/shared/IdempotencyStore.js                     |   79 +\n src/shared/ProblemDetails.js                       |  125 +\n src/shared/QueryValidation.js                      |   61 +\n src/shared/RateLimiter.js                          |   43 +\n src/tests/smoke/featureFlagProvider.test.js        |  102 +\n src/tests/smoke/masterPlannerGuides.smoke.test.js  |   42 +\n src/tests/smoke/projectStatus.smoke.test.js        |   11 +\n src/tests/smoke/runDeploymentSmoke.test.js         |   75 +\n src/tests/smoke/serverWiring.smoke.test.js         |  476 ++\n .../archetypes/approval-workflow/archetype.yaml    |   28 +\n templates/archetypes/crud-entity/archetype.yaml    |   19 +\n .../archetypes/financial-ledger/archetype.yaml     |   37 +\n templates/tests/property-based.template.js         |   63 +\n turbo.json                                         |   33 +\n worklog/2026-03-19_WP-01.yaml                      |   41 +\n worklog/2026-03-19_WP-02.yaml                      |   33 +\n worklog/2026-03-19_WP-03.yaml                      |   35 +\n worklog/2026-03-19_WP-04.yaml                      |   42 +\n worklog/2026-03-19_WP-05.yaml                      |   39 +\n worklog/2026-03-19_WP-06.yaml                      |   31 +\n worklog/2026-03-19_WP-07.yaml                      |   37 +\n worklog/2026-03-19_WP-08.yaml                      |   48 +\n worklog/2026-03-19_WP-09.yaml                      |   32 +\n worklog/2026-03-19_WP-ARCH-001.yaml                |   66 +\n worklog/2026-03-19_WP-ARCH-003.yaml                |   45 +\n worklog/2026-03-20_WP-ARCH-004.yaml                |   62 +\n worklog/2026-03-20_WP-COMMIT-001.yaml              |   98 +\n worklog/2026-03-20_WP-DOC-001.yaml                 |   47 +\n worklog/2026-03-20_WP-DOC-002.yaml                 |   47 +\n worklog/2026-03-20_WP-DOM-002.yaml                 |   44 +\n worklog/2026-03-20_WP-EVID-001.yaml                |   40 +\n worklog/2026-03-20_WP-GOV-002.yaml                 |   43 +\n worklog/2026-03-20_WP-NFR-001.yaml                 |   44 +\n worklog/2026-03-20_WP-RUN-001.yaml                 |   35 +\n worklog/2026-03-20_WP-RUN-002.yaml                 |   89 +\n worklog/2026-03-20_WP-RUN-003.yaml                 |   90 +\n worklog/2026-03-20_WP-RUN-004.yaml                 |   72 +\n worklog/B_review.md                                |   65 +\n worklog/D_quality_gate.md                          |   82 +\n worklog/G_git_governance.md                        |   20 +\n worklog/audit-chain.json                           |   21 +\n worklog/commit-log.jsonl                           |    0\n worklog/contract-matrix.md                         |    8 +\n worklog/core-learning-log.md                       |   55 +\n worklog/release-notes.md                           |  104 +\n worklog/reports/.gitkeep                           |    0\n .../reports/2026-03-20_001_A___test__/REPORT.md    |   56 +\n .../2026-03-20_001_A___test__/snippets/01-basic.js |    1 +\n .../snippets/02-intermediate.js                    |    1 +\n .../snippets/03-advanced.js                        |    1 +\n worklog/reports/billing/StageDE_report.md          |   19 +\n .../productivity_task-tracking/StageDE_report.md   |   17 +\n worklog/reports/video/StageDE_report.md            |   18 +\n 297 files changed, 30759 insertions(+), 1517 deletions(-)"
   }
 };</script>
 
@@ -3720,6 +4113,7 @@ function renderDash() {
   const stages=p.stage_states||{};
   const blueprints=d.project_blueprints||[];
   const learningTracks=d.ai_learning_tracks||[];
+  const recipes=d.ai_runtime_recipes||[];
 
   let dscr='';
   Object.entries(d.domain_scores||{}).forEach(([dom,info])=>{
@@ -3814,13 +4208,21 @@ function renderDash() {
 
     ${blueprints.length?`<div class="card"><div class="card-h"><div class="card-ic">🧭</div>
         <div><div class="card-tit">마스터 OS 시작 청사진</div>
-          <div class="card-sub">프로젝트 시작 블루프린트 ${blueprints.length}개 · AI 학습 트랙 ${learningTracks.length}개</div></div></div>
+          <div class="card-sub">프로젝트 시작 블루프린트 ${blueprints.length}개 · AI 학습 트랙 ${learningTracks.length}개 · 런타임 레시피 ${recipes.length}개</div></div></div>
       ${(blueprints||[]).slice(0,2).map(bp=>`<div class="wi">
         <div class="wd d-act"></div>
         <div class="wid">${esc(bp.name||bp.id)}</div>
         <div style="flex:1">
           <div class="wg">${esc(bp.summary||'')}</div>
           <div class="wr">추천 모듈: ${esc((bp.recommended_modules||[]).join(', '))}</div>
+        </div>
+      </div>`).join('')}
+      ${(recipes||[]).slice(0,2).map(recipe=>`<div class="wi">
+        <div class="wd d-pass"></div>
+        <div class="wid">${esc(recipe.name||recipe.id)}</div>
+        <div style="flex:1">
+          <div class="wg">${esc(recipe.objective||'')}</div>
+          <div class="wr">도구 스택: ${esc((recipe.tool_stack||[]).join(', '))}</div>
         </div>
       </div>`).join('')}
     </div>`:''}
@@ -4239,7 +4641,9 @@ function renderDom(){
   const stages=d.project.stage_states||{}, pf=d.flags.plugin||{};
   const adapters=d.adapter_catalog?.adapters||[];
   const profiles=d.adapter_catalog?.profiles||[];
+  const scorecards=d.adapter_scorecards||[];
   const adapterMap=Object.fromEntries(adapters.map(adapter=>[adapter.id,adapter]));
+  const scorecardMap=Object.fromEntries(scorecards.map(scorecard=>[scorecard.adapter_id,scorecard]));
   const pluginMap=Object.fromEntries((d.plugins||[]).map(plugin=>[plugin.module_id,plugin]));
   let html=`<div class="sec-tit">🗺 도메인 현황</div>`;
 
@@ -4301,6 +4705,27 @@ function renderDom(){
             <div class="wr">패턴: ${esc(profile.architecture_pattern||'—')} | adapters: ${esc((profile.adapter_refs||[]).join(', '))}</div>
           </div>
         </div>`).join('')}
+    </div>`;
+  }
+
+  if(scorecards.length){
+    html+=`<div class="card" style="margin-bottom:16px">
+      <div class="card-h"><div class="card-ic">📈</div>
+        <div><div class="card-tit">어댑터 Scorecard</div>
+          <div class="card-sub">성능·확장성·학습성 기준 비교</div></div></div>
+      ${(scorecards||[]).map(scorecard=>{
+        const adapter=adapterMap[scorecard.adapter_id]||{};
+        const metrics=scorecard.metrics||{};
+        return `<div class="wi">
+          <div class="wd d-pass"></div>
+          <div class="wid">${esc(adapter.name||scorecard.adapter_id)}</div>
+          <div style="flex:1">
+            <div class="wg">${esc(adapter.description||'')}</div>
+            <div class="wr">확장성 ${esc(metrics.extensibility)} / 성능 ${esc(metrics.performance)} / 학습성 ${esc(metrics.learning_clarity)} / AI 적합성 ${esc(metrics.ai_compatibility)} / 교체 안전성 ${esc(metrics.swap_safety)}</div>
+            <div class="wr">적합한 곳: ${esc((scorecard.best_for||[]).join(', '))}</div>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
   }
 
@@ -4385,12 +4810,14 @@ function renderDom(){
           <div style="font-size:10px;font-weight:600;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">어댑터 스택</div>
           ${(plugin.adapter_refs||[]).map(adapterRef=>{
             const adapter=adapterMap[adapterRef]||{};
+            const scorecard=scorecardMap[adapterRef]||{};
             return `<div class="wi" style="margin-bottom:5px">
               <div class="wd d-pass"></div>
               <div class="wid">${esc(adapter.name||adapterRef)}</div>
               <div style="flex:1">
                 <div class="wg">${esc(adapter.description||'')}</div>
                 <div class="wr">layer: ${esc(adapter.layer||'—')} | protocol: ${esc(adapter.protocol||'—')}</div>
+                ${scorecard.metrics?`<div class="wr">score: 확장성 ${esc(scorecard.metrics.extensibility)} · 성능 ${esc(scorecard.metrics.performance)} · AI ${esc(scorecard.metrics.ai_compatibility)}</div>`:''}
               </div>
             </div>`;
           }).join('')}
@@ -4509,6 +4936,8 @@ function renderReq(){
   const blueprints=window.D.project_blueprints||[];
   const tracks=window.D.ai_learning_tracks||[];
   const profiles=window.D.adapter_catalog?.profiles||[];
+  const recipes=window.D.ai_runtime_recipes||[];
+  const relations=window.D.master_os_relations||[];
 
   // NFR — 카테고리별 중첩 렌더링
   const nfrCats=req.nfr_categories||{};
@@ -4608,6 +5037,35 @@ function renderReq(){
     </div>`).join('')}
   </div>`).join('');
 
+  const recipeH=recipes.map(recipe=>{
+    const profile=profiles.find(pr=>pr.id===recipe.architecture_profile);
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="card-h">
+        <div class="card-ic">🤖</div>
+        <div>
+          <div class="card-tit">${esc(recipe.name||recipe.id)}</div>
+          <div class="card-sub">${esc(recipe.objective||'')}</div>
+        </div>
+      </div>
+      <div class="kv"><span class="kk">아키텍처 프로파일</span><span class="kv-ok">${esc(profile?.name||recipe.architecture_profile||'—')}</span></div>
+      <div class="kv"><span class="kk">도구 스택</span><span>${esc((recipe.tool_stack||[]).join(', '))}</span></div>
+      <div class="kv"><span class="kk">적합한 상황</span><span>${esc((recipe.best_for||[]).join(', '))}</span></div>
+      <div style="margin-top:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">운영 순서</div>
+        ${(recipe.operating_sequence||[]).map(step=>`<div class="wi" style="margin-bottom:5px">
+          <div class="wd d-act"></div>
+          <div class="wg">${esc(step)}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  const relationH=relations.map(rel=>`<div class="wi" style="margin-bottom:5px">
+    <div class="wd d-pass"></div>
+    <div class="wid">${esc(rel.source_type)}:${esc(rel.source_id)}</div>
+    <div class="wg">${esc(rel.relation)} → ${esc(rel.target_type)}:${esc(rel.target_id)}</div>
+  </div>`).join('');
+
   $('c-req').innerHTML=`
     <div class="sec-tit">📋 요구사항 & 제약조건</div>
 
@@ -4657,6 +5115,16 @@ function renderReq(){
     <div class="req-sec">
       <div class="req-sec-h">🧠 AI 학습 플로우</div>
       ${trackH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🤖 AI Runtime Recipes</div>
+      ${recipeH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🕸 마스터 OS 관계 맵</div>
+      ${relationH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
     </div>`;
 }
 
@@ -4817,6 +5285,10 @@ function runSearch(q){
   // Learning tracks
   (d.ai_learning_tracks||[]).filter(track=>(track.id+track.title+track.persona+track.objective).toLowerCase().includes(ql)).slice(0,4).forEach(track=>{
     results.push({tag:'학습',text:track.title,sub:track.objective,action:`sw('req')`});
+  });
+  // Recipes
+  (d.ai_runtime_recipes||[]).filter(recipe=>(recipe.id+recipe.name+recipe.objective+(recipe.tool_stack||[]).join(' ')).toLowerCase().includes(ql)).slice(0,4).forEach(recipe=>{
+    results.push({tag:'레시피',text:recipe.name,sub:recipe.objective,action:`sw('req')`});
   });
   if(!results.length){$('gsResults').innerHTML='<div class="gs-empty">검색 결과 없음: "'+esc(q)+'"</div>';return;}
   $('gsResults').innerHTML=results.map((r,i)=>`<div class="gs-item" style="${i===0?'background:var(--sf2)':''}"
