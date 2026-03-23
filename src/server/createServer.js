@@ -188,6 +188,16 @@ function resolveVideoFeatureFlag(routePath, method) {
   return null;
 }
 
+function evaluateFlag(provider, flagName, defaultValue, context) {
+  if (provider && typeof provider.evaluate === 'function') {
+    return provider.evaluate(flagName, context, defaultValue);
+  }
+  if (provider && typeof provider.isEnabled === 'function') {
+    return { flagName, value: provider.isEnabled(flagName, defaultValue, context), reason: 'LEGACY_PROVIDER', metadata: {}, stale: false, context };
+  }
+  return { flagName, value: defaultValue, reason: 'NO_PROVIDER', metadata: {}, stale: false, context };
+}
+
 function sendJson(res, status, body) {
   const payload = JSON.stringify(body, null, 2);
   const isProblemDetails = body
@@ -206,7 +216,13 @@ function sendJson(res, status, body) {
 
 /** FeatureFlagProvider stub — 모든 플래그 활성화 (테스트/smoke 전용) */
 function createAllEnabledFlags() {
-  return { isEnabled: () => true, getAll: () => ({}) };
+  return {
+    isEnabled: () => true,
+    evaluate(flagName, context) {
+      return { flagName, value: true, reason: 'TEST_OVERRIDE', metadata: {}, stale: false, context: context || {} };
+    },
+    getAll: () => ({}),
+  };
 }
 
 function createAppHandler({
@@ -250,7 +266,13 @@ function createAppHandler({
       const resolvedFlags = flags || getFeatureFlags();
 
       if (hasMountedPrefix(url.pathname, '/tasks')) {
-        if (!resolvedFlags.isEnabled('enable_task_management')) {
+        const flagDecision = evaluateFlag(resolvedFlags, 'enable_task_management', false, {
+          userId: caller.userId,
+          permissions: caller.permissions,
+          route: url.pathname,
+          method,
+        });
+        if (!flagDecision.value) {
           sendJson(res, 404, fromError(
             Object.assign(new Error('task-management 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
@@ -271,7 +293,13 @@ function createAppHandler({
       }
 
       if (hasMountedPrefix(url.pathname, '/billing')) {
-        if (!resolvedFlags.isEnabled('billing.enabled')) {
+        const flagDecision = evaluateFlag(resolvedFlags, 'billing.enabled', false, {
+          userId: caller.userId,
+          permissions: caller.permissions,
+          route: url.pathname,
+          method,
+        });
+        if (!flagDecision.value) {
           sendJson(res, 404, fromError(
             Object.assign(new Error('billing 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
@@ -293,7 +321,13 @@ function createAppHandler({
       }
 
       if (hasMountedPrefix(url.pathname, '/videos')) {
-        if (!resolvedFlags.isEnabled('video.enabled')) {
+        const rootDecision = evaluateFlag(resolvedFlags, 'video.enabled', false, {
+          userId: caller.userId,
+          permissions: caller.permissions,
+          route: url.pathname,
+          method,
+        });
+        if (!rootDecision.value) {
           sendJson(res, 404, fromError(
             Object.assign(new Error('video 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
@@ -303,7 +337,15 @@ function createAppHandler({
 
         const route = findVideoRoute(url.pathname);
         const scopedFlag = resolveVideoFeatureFlag(route.path, method);
-        if (scopedFlag && !resolvedFlags.isEnabled(scopedFlag)) {
+        const scopedDecision = scopedFlag
+          ? evaluateFlag(resolvedFlags, scopedFlag, false, {
+            userId: caller.userId,
+            permissions: caller.permissions,
+            route: url.pathname,
+            method,
+          })
+          : null;
+        if (scopedDecision && !scopedDecision.value) {
           sendJson(res, 404, fromError(
             Object.assign(new Error(`video 세부 기능이 비활성화 상태입니다: ${scopedFlag}`), { code: 'NOT_FOUND' }),
             { path: url.pathname },

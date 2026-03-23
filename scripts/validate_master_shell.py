@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import sys
+from datetime import date
 
 import yaml
 
@@ -16,6 +18,12 @@ def load_yaml(relative_path: str) -> dict:
     path = REPO_ROOT / relative_path
     with path.open("r", encoding="utf-8") as handle:
       return yaml.safe_load(handle) or {}
+
+
+def load_json(relative_path: str) -> dict:
+    path = REPO_ROOT / relative_path
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle) or {}
 
 
 def file_exists(relative_path: str) -> bool:
@@ -66,6 +74,8 @@ def main() -> int:
     navigation = load_yaml("master-shell/navigation/nav.yaml")
     catalog = load_yaml("master-shell/catalog/domains.yaml")
     flags = load_yaml("master-shell/feature-flags/flags.yaml")
+    flag_metadata = load_json("master-shell/feature-flags/metadata.json")
+    slo_policy = load_json("master-shell/observability/slo-policy.json")
     observability = load_yaml("master-shell/observability/config.yaml")
 
     errors: list[str] = []
@@ -79,6 +89,7 @@ def main() -> int:
         plugin_map[plugin_id] = plugin
 
     feature_flags = set(flags.get("global_flags", {}).keys()) | set(flags.get("plugin_flags", {}).keys())
+    metadata_flags = flag_metadata.get("flags", {}) if isinstance(flag_metadata.get("flags", {}), dict) else {}
     nav_groups = {
         group.get("id"): group
         for group in navigation.get("navigation_groups", [])
@@ -91,6 +102,12 @@ def main() -> int:
         alert_group.get("id"): alert_group
         for alert_group in observability.get("alert_groups", [])
     }
+    slo_budgets = slo_policy.get("budgets", {}) if isinstance(slo_policy.get("budgets", {}), dict) else {}
+    deployment_protection = (
+        slo_policy.get("deployment_protection", {})
+        if isinstance(slo_policy.get("deployment_protection", {}), dict)
+        else {}
+    )
 
     for plugin_id, plugin in plugin_map.items():
         for field in ("ui_contract", "capability_contract", "stage_b_memory_ref"):
@@ -197,6 +214,69 @@ def main() -> int:
     for plugin_id in plugin_map:
         if plugin_id not in catalog_plugin_refs:
             errors.append(f"{plugin_id}: not referenced by master-shell catalog")
+
+    if set(metadata_flags.keys()) != feature_flags:
+        missing_metadata = sorted(feature_flags - set(metadata_flags.keys()))
+        unknown_metadata = sorted(set(metadata_flags.keys()) - feature_flags)
+        for flag_name in missing_metadata:
+            errors.append(f"feature-flag metadata missing -> {flag_name}")
+        for flag_name in unknown_metadata:
+            errors.append(f"feature-flag metadata orphaned -> {flag_name}")
+
+    today = date.today().isoformat()
+    allowed_stages = {"internal", "canary", "beta", "released", "archived"}
+    for flag_name, metadata in metadata_flags.items():
+        if not isinstance(metadata, dict):
+            errors.append(f"{flag_name}: metadata must be an object")
+            continue
+        owner = metadata.get("owner")
+        expires_on = metadata.get("expires_on")
+        stage = metadata.get("stage")
+        if not isinstance(owner, str) or not owner.strip():
+            errors.append(f"{flag_name}: metadata.owner must be a non-empty string")
+        if not isinstance(expires_on, str) or len(expires_on) != 10:
+            errors.append(f"{flag_name}: metadata.expires_on must be YYYY-MM-DD")
+        elif expires_on < today and stage != "archived":
+            errors.append(f"{flag_name}: metadata.expires_on is stale -> {expires_on}")
+        if stage not in allowed_stages:
+            errors.append(f"{flag_name}: metadata.stage invalid -> {stage}")
+
+    required_reviewers_min = deployment_protection.get("required_reviewers_min")
+    smoke_must_pass = deployment_protection.get("smoke_must_pass")
+    error_budget_policy = deployment_protection.get("error_budget_policy")
+    if not isinstance(required_reviewers_min, int) or required_reviewers_min < 1:
+        errors.append("slo-policy: deployment_protection.required_reviewers_min must be an integer >= 1")
+    if smoke_must_pass is not True:
+        errors.append("slo-policy: deployment_protection.smoke_must_pass must be true")
+    if error_budget_policy not in {"block-on-failure", "warn-only"}:
+        errors.append(
+            "slo-policy: deployment_protection.error_budget_policy must be one of block-on-failure, warn-only"
+        )
+
+    if "health" not in slo_budgets:
+        errors.append("slo-policy: budgets.health missing")
+
+    for budget_id, budget in slo_budgets.items():
+        if not isinstance(budget, dict):
+            errors.append(f"slo-policy: budget {budget_id} must be an object")
+            continue
+        latency_budget_ms = budget.get("latency_budget_ms")
+        if not isinstance(latency_budget_ms, (int, float)) or latency_budget_ms <= 0:
+            errors.append(f"slo-policy: budget {budget_id}.latency_budget_ms must be > 0")
+        availability = budget.get("availability_percent")
+        if availability is not None and (
+            not isinstance(availability, (int, float)) or availability <= 0 or availability > 100
+        ):
+            errors.append(f"slo-policy: budget {budget_id}.availability_percent must be within (0, 100]")
+        error_budget = budget.get("error_budget_percent")
+        if error_budget is not None and (
+            not isinstance(error_budget, (int, float)) or error_budget < 0 or error_budget > 100
+        ):
+            errors.append(f"slo-policy: budget {budget_id}.error_budget_percent must be within [0, 100]")
+
+    for plugin_id in plugin_map:
+        if plugin_id not in slo_budgets:
+            errors.append(f"slo-policy: missing budget for plugin -> {plugin_id}")
 
     if errors:
         for error in errors:

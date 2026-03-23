@@ -7,6 +7,7 @@ const { URL } = require('node:url');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, 'artifacts', 'deployment-smoke', 'latest.json');
+const DEFAULT_SLO_POLICY = path.join(REPO_ROOT, 'master-shell', 'observability', 'slo-policy.json');
 const { fetch, AbortController } = globalThis;
 
 function usage() {
@@ -32,6 +33,8 @@ function usage() {
     '  --videos-path <path>            Default: /videos',
     '  --user-id <id>                  Default: smoke-user',
     '  --timeout-ms <ms>               Default: 8000',
+    '  --reviewers-approved <n>        Default: 1',
+    '  --slo-policy <path>             Default: master-shell/observability/slo-policy.json',
     '  --output <path>                 Default: artifacts/deployment-smoke/latest.json',
     '  --help                          Show this help message',
   ].join('\n');
@@ -52,6 +55,8 @@ function parseArgs(argv) {
     videosPath: '/videos',
     userId: 'smoke-user',
     timeoutMs: 8000,
+    reviewersApproved: 1,
+    sloPolicyPath: DEFAULT_SLO_POLICY,
     output: DEFAULT_OUTPUT,
   };
 
@@ -117,6 +122,12 @@ function parseArgs(argv) {
       case '--timeout-ms':
         options.timeoutMs = Number.parseInt(next, 10);
         break;
+      case '--reviewers-approved':
+        options.reviewersApproved = Number.parseInt(next, 10);
+        break;
+      case '--slo-policy':
+        options.sloPolicyPath = path.resolve(process.cwd(), next);
+        break;
       case '--output':
         options.output = path.resolve(process.cwd(), next);
         break;
@@ -132,6 +143,9 @@ function parseArgs(argv) {
   }
   if (!Number.isInteger(options.timeoutMs) || options.timeoutMs <= 0) {
     throw new Error('--timeout-ms must be a positive integer');
+  }
+  if (!Number.isInteger(options.reviewersApproved) || options.reviewersApproved < 0) {
+    throw new Error('--reviewers-approved must be a non-negative integer');
   }
   if (options.requireFlagOff && !options.flagOffPath) {
     throw new Error('--require-flag-off requires --flag-off-path');
@@ -155,6 +169,23 @@ function futureDate(days = 30) {
   const date = new Date();
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+function loadJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function readSloPolicy(policyPath) {
+  const policy = loadJson(policyPath);
+  const protection = policy && typeof policy === 'object' ? policy.deployment_protection : null;
+  const budgets = policy && typeof policy === 'object' ? policy.budgets : null;
+  if (!protection || typeof protection !== 'object') {
+    throw new Error(`Invalid SLO policy: deployment_protection missing in ${policyPath}`);
+  }
+  if (!budgets || typeof budgets !== 'object') {
+    throw new Error(`Invalid SLO policy: budgets missing in ${policyPath}`);
+  }
+  return policy;
 }
 
 class SmokeAssertionError extends Error {
@@ -303,11 +334,29 @@ async function runStep(report, definition, runner) {
   const startedAt = Date.now();
   try {
     const detail = await runner();
+    const durationMs = Date.now() - startedAt;
+    const budget = definition.budgetId ? report.slo_policy.budgets[definition.budgetId] : null;
+    if (budget && typeof budget.latency_budget_ms === 'number' && durationMs > budget.latency_budget_ms) {
+      throw new SmokeAssertionError(
+        `Latency budget exceeded for ${definition.id}: ${durationMs}ms > ${budget.latency_budget_ms}ms`,
+        {
+          budget_id: definition.budgetId,
+          actual_duration_ms: durationMs,
+          latency_budget_ms: budget.latency_budget_ms,
+        }
+      );
+    }
     report.steps.push({
       id: definition.id,
       name: definition.name,
       status: 'PASS',
-      duration_ms: Date.now() - startedAt,
+      duration_ms: durationMs,
+      slo: budget ? {
+        budget_id: definition.budgetId,
+        latency_budget_ms: budget.latency_budget_ms,
+        availability_percent: budget.availability_percent ?? null,
+        error_budget_percent: budget.error_budget_percent ?? null,
+      } : null,
       ...detail,
     });
     return detail;
@@ -339,6 +388,8 @@ function printSummary(report) {
 }
 
 async function run(options) {
+  const sloPolicy = readSloPolicy(options.sloPolicyPath);
+  const protection = sloPolicy.deployment_protection;
   const report = {
     schema_version: '1',
     generated_at_utc: new Date().toISOString(),
@@ -361,6 +412,12 @@ async function run(options) {
       require_flag_off: options.requireFlagOff,
       timeout_ms: options.timeoutMs,
       user_id: options.userId,
+      reviewers_approved: options.reviewersApproved,
+    },
+    slo_policy: {
+      path: path.relative(REPO_ROOT, options.sloPolicyPath),
+      deployment_protection: protection,
+      budgets: sloPolicy.budgets,
     },
     steps: [],
     pending_manual_checks: [
@@ -369,9 +426,31 @@ async function run(options) {
   };
 
   try {
+    await runStep(report, {
+      id: 'deployment-protection',
+      name: 'Deployment protection inputs satisfy the policy gate',
+    }, async () => {
+      if (options.reviewersApproved < protection.required_reviewers_min) {
+        throw new SmokeAssertionError('Deployment protection reviewer gate not satisfied', {
+          required_reviewers_min: protection.required_reviewers_min,
+          reviewers_approved: options.reviewersApproved,
+        });
+      }
+
+      return {
+        protection_gate: {
+          required_reviewers_min: protection.required_reviewers_min,
+          reviewers_approved: options.reviewersApproved,
+          smoke_must_pass: protection.smoke_must_pass,
+          error_budget_policy: protection.error_budget_policy,
+        },
+      };
+    });
+
     const health = await runStep(report, {
       id: 'health',
       name: 'Health endpoint returns 200 and exposes runtime trace ID',
+      budgetId: 'health',
     }, async () => {
       const result = await requestJson(options.baseUrl, {
         method: 'GET',
@@ -394,13 +473,14 @@ async function run(options) {
 
       return {
         request: { method: 'GET', path: options.healthPath },
-        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
       };
     });
 
     const createdTask = await runStep(report, {
       id: 'task-create',
       name: 'Task create path works with write permissions',
+      budgetId: 'task-management-plugin',
     }, async () => {
       const result = await requestJson(options.baseUrl, {
         method: 'POST',
@@ -428,7 +508,7 @@ async function run(options) {
 
       return {
         request: { method: 'POST', path: options.tasksPath },
-        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
         task_id: result.body.task_id,
         health_trace_id: health.response.body.traceId,
       };
@@ -437,6 +517,7 @@ async function run(options) {
     await runStep(report, {
       id: 'task-read',
       name: 'Task read path returns the created task',
+      budgetId: 'task-management-plugin',
     }, async () => {
       const result = await requestJson(options.baseUrl, {
         method: 'GET',
@@ -460,13 +541,14 @@ async function run(options) {
 
       return {
         request: { method: 'GET', path: `${options.tasksPath}/${createdTask.task_id}` },
-        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
       };
     });
 
     await runStep(report, {
       id: 'billing-permission-denied',
       name: 'Billing write path rejects missing permissions',
+      budgetId: 'billing-plugin',
     }, async () => {
       const result = await requestJson(options.baseUrl, {
         method: 'POST',
@@ -485,13 +567,14 @@ async function run(options) {
 
       return {
         request: { method: 'POST', path: options.billingInvoicesPath },
-        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
       };
     });
 
     const uploadedVideo = await runStep(report, {
       id: 'video-upload',
       name: 'Video upload path works with write permissions',
+      budgetId: 'video-plugin',
     }, async () => {
       const result = await requestJson(options.baseUrl, {
         method: 'POST',
@@ -524,7 +607,7 @@ async function run(options) {
 
       return {
         request: { method: 'POST', path: options.videosPath },
-        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
         video_id: result.body.video_id,
       };
     });
@@ -532,6 +615,7 @@ async function run(options) {
     await runStep(report, {
       id: 'video-list',
       name: 'Video list path returns the uploaded video for the same caller',
+      budgetId: 'video-plugin',
     }, async () => {
       const result = await requestJson(options.baseUrl, {
         method: 'GET',
@@ -563,7 +647,7 @@ async function run(options) {
 
       return {
         request: { method: 'GET', path: options.videosPath },
-        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
       };
     });
 
@@ -571,6 +655,7 @@ async function run(options) {
       await runStep(report, {
         id: 'flag-off-route',
         name: 'Configured disabled route stays hidden with 404',
+        budgetId: 'video-plugin',
       }, async () => {
         const result = await requestJson(options.baseUrl, {
           method: 'GET',
@@ -588,7 +673,7 @@ async function run(options) {
 
         return {
           request: { method: 'GET', path: options.flagOffPath },
-          response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body) },
+          response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
         };
       });
     } else {
@@ -604,11 +689,21 @@ async function run(options) {
     }
 
     report.overall_status = 'PASS';
+    report.slo_gate = {
+      status: 'PASS',
+      policy: protection.error_budget_policy,
+      budgets_checked: Object.keys(sloPolicy.budgets),
+    };
     return report;
   } catch (error) {
     report.failure = {
       message: error.message,
       detail: error.detail || null,
+    };
+    report.slo_gate = {
+      status: 'FAIL',
+      policy: protection.error_budget_policy,
+      budgets_checked: Object.keys(sloPolicy.budgets),
     };
     return report;
   } finally {

@@ -44,6 +44,69 @@ def read_md(path, lines=10):
             return "".join(f.readlines()[:lines]).strip()
     except: return ""
 
+def normalize_ui_screen(screen):
+    if not isinstance(screen, dict):
+        return None
+    actions = []
+    for action in screen.get("actions", []) or []:
+        if isinstance(action, dict):
+            actions.append({
+                "id": action.get("id", ""),
+                "label": action.get("label") or action.get("name") or action.get("id", ""),
+                "triggers": action.get("triggers", ""),
+            })
+        elif isinstance(action, str):
+            actions.append({"id": action, "label": action, "triggers": ""})
+    data_sources = []
+    for req in screen.get("data_requirements", []) or []:
+        if isinstance(req, dict):
+            data_sources.append({
+                "source": req.get("source", ""),
+                "fields": req.get("fields", []) if isinstance(req.get("fields", []), list) else [],
+            })
+    permissions = screen.get("permissions", []) or screen.get("capabilities_required", []) or []
+    return {
+        "id": screen.get("id") or screen.get("module_key") or screen.get("mount") or "",
+        "title": screen.get("name") or screen.get("title") or screen.get("module_key") or "",
+        "route": screen.get("route", ""),
+        "description": screen.get("description", ""),
+        "permissions": permissions if isinstance(permissions, list) else [str(permissions)],
+        "feature_flag": screen.get("feature_flag", ""),
+        "actions": actions,
+        "data_sources": data_sources,
+    }
+
+def load_ui_guides(plugins):
+    guides = {}
+    for plugin in plugins or []:
+        ref = plugin.get("ui_contract")
+        module_id = plugin.get("module_id") or plugin.get("id")
+        if not ref or not module_id:
+            continue
+        contract = load_yaml(ref, {})
+        screens = []
+        for screen in contract.get("screens", []) or []:
+            normalized = normalize_ui_screen(screen)
+            if normalized:
+                screens.append(normalized)
+        entry_points = []
+        for entry in contract.get("entry_points", []) or []:
+            if isinstance(entry, dict):
+                entry_points.append({
+                    "route": entry.get("route", ""),
+                    "label": entry.get("label", ""),
+                    "description": entry.get("description", ""),
+                })
+        guides[module_id] = {
+            "module_id": module_id,
+            "plugin_id": plugin.get("id", ""),
+            "name": contract.get("name") or plugin.get("name") or module_id,
+            "description": contract.get("description") or "",
+            "entry_points": entry_points,
+            "screens": screens,
+        }
+    return guides
+
 # ═══════════════════════════════════════════════════════════════
 SILENT = "--silent" in sys.argv
 if not SILENT: print("📖 프로젝트 데이터 수집 중...")
@@ -139,6 +202,7 @@ active_modules = list(l0_state.get("active_modules", []))
 am_ids = {m.get("module_id") for m in active_modules}
 plugins  = registry.get("plugins", [])
 domain_scores = health.get("domains", {})
+ui_guides = load_ui_guides(plugins)
 
 for plugin in plugins:
     mod_id = plugin.get("module_id","")
@@ -300,6 +364,7 @@ data = {
     "domains":      active_modules,
     "domain_scores": domain_scores,
     "plugins":      plugins,
+    "ui_guides":    ui_guides,
     "flags": {
         "global": flags.get("global_flags",{}),
         "plugin": flags.get("plugin_flags",{}),
@@ -1660,6 +1725,7 @@ function renderDom(){
   d.domains.forEach(m=>{
     const domKey=m.domain==='productivity'?'productivity/task-tracking':m.domain;
     const si=d.domain_scores[domKey]||d.domain_scores[m.domain]||{};
+    const guide=d.ui_guides?.[m.module_id]||null;
     const score=m.health_score||si.score||'—', trend=si.trend||'→';
     const flagVal=pf[m.feature_flag];
     const ms=m.stage_a?{A:m.stage_a,B:m.stage_b,C:m.stage_c,D:m.stage_d,E:m.stage_e}:{A:'PASS',B:'PASS',C:'PASS',D:'PASS',E:'PASS'};
@@ -1675,6 +1741,40 @@ function renderDom(){
         <div class="wg">${esc(g.description)} <span style="color:var(--ac)">${esc(g.status)}</span></div>
       </div>`;
     });
+    let guideH='';
+    if(guide){
+      const entryPoints=(guide.entry_points||[]).map(ep=>`<div class="wi" style="margin-bottom:6px">
+        <div class="wd d-pass"></div>
+        <div class="wid">${esc(ep.label||ep.route||'entry')}</div>
+        <div style="flex:1">
+          <div class="wg">${esc(ep.route||'')}</div>
+          <div class="wr">${esc(ep.description||'')}</div>
+        </div>
+      </div>`).join('');
+      const screens=(guide.screens||[]).map(screen=>{
+        const screenChips=[...(screen.permissions||[]).map(p=>`<span class="st s-nd">${esc(p)}</span>`)];
+        if(screen.feature_flag) screenChips.push(`<span class="st s-ac">${esc(screen.feature_flag)}</span>`);
+        const actions=(screen.actions||[]).slice(0,3).map(action=>esc(action.label||action.id)).join(', ');
+        const dataSources=(screen.data_sources||[]).slice(0,2).map(req=>esc(req.source)).join(', ');
+        return `<div class="wi" style="margin-bottom:6px">
+          <div class="wd d-act"></div>
+          <div class="wid">${esc(screen.title||screen.id)}</div>
+          <div style="flex:1">
+            <div class="wg">${esc(screen.route||'')}</div>
+            <div class="wr">${esc(screen.description||'설명 없음')}</div>
+            <div class="sb-r" style="margin-top:6px">${screenChips.join('')}</div>
+            ${actions?`<div class="wr">주요 액션: ${actions}</div>`:''}
+            ${dataSources?`<div class="wr">데이터 소스: ${dataSources}</div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+      guideH=`<div style="margin-top:12px">
+        <div style="font-size:10px;font-weight:600;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">화면 설명서</div>
+        ${guide.description?`<div class="wr" style="margin:0 0 8px 0">${esc(guide.description)}</div>`:''}
+        ${entryPoints?`<div style="margin-bottom:8px"><div class="wr" style="margin:0 0 5px 0;color:var(--br)">진입 화면</div>${entryPoints}</div>`:''}
+        ${screens||'<div class="wr">정의된 화면이 없습니다.</div>'}
+      </div>`;
+    }
     html+=`<div class="dc">
       <div class="dh">
         <div class="dsc ${sc(typeof score==='number'?score:0)}">${score}
@@ -1695,6 +1795,7 @@ function renderDom(){
         ${m.interface_layer?`<div class="kv"><span class="kk">인터페이스</span><span class="kv-ok">${esc(m.interface_layer.substring(0,70))}</span></div>`:''}
         ${m.unit_tests?`<div class="kv"><span class="kk">단위 테스트</span><span class="kv-ok">${esc(m.unit_tests)}</span></div>`:''}
         ${gH?`<div style="margin-top:10px"><div style="font-size:10px;font-weight:600;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Stage E 갭</div>${gH}</div>`:''}
+        ${guideH}
       </div>
     </div>`;
   });

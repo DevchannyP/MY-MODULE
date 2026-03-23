@@ -1,0 +1,27 @@
+'use strict';
+
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+
+const execFileAsync = promisify(execFile);
+
+test('[master planner] bundles per-screen UI guides for operators and planners', async () => {
+  const repoRoot = path.resolve(__dirname, '../../..');
+  const artifactPath = path.join(repoRoot, 'artifacts', 'master-planner', 'index.html');
+
+  const { stderr } = await execFileAsync('python3', ['scripts/generate-master-planner.py', '--silent'], {
+    cwd: repoRoot,
+  });
+
+  assert.equal(stderr, '');
+
+  const html = fs.readFileSync(artifactPath, 'utf8');
+  assert.match(html, /"ui_guides"/);
+  assert.match(html, /화면 설명서/);
+  assert.match(html, /핵심 KPI, 미결 인보이스, 예외 현황/);
+  assert.match(html, /비동기 트랜스코딩 작업의 진행률과 실패 원인/);
+});

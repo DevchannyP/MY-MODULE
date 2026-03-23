@@ -2,6 +2,9 @@ openapi: "3.0.3"
 info:
   title: "영상관리 API"
   version: "0.1.0"
+  x-api-id: "video"
+  x-api-audience: "internal"
+  x-api-version-policy: "semver-with-explicit-breaking-review"
   description: |
     video bounded context의 HTTP API 계약.
     capability.yaml의 capability를 HTTP로 노출한다.
@@ -208,6 +211,21 @@ components:
       bearerFormat: JWT
 
   schemas:
+    ProblemDetails:
+      type: object
+      required: [type, title, status, code, message]
+      properties:
+        type:           { type: string, format: uri }
+        title:          { type: string }
+        status:         { type: integer }
+        detail:         { type: string }
+        message:        { type: string }
+        code:           { type: string }
+        instance:       { type: string, nullable: true }
+        correlationId:  { type: string, nullable: true }
+        correlation_id: { type: string, nullable: true }
+        traceId:        { type: string, nullable: true }
+
     # Video
     Video:
       type: object
@@ -298,38 +316,29 @@ components:
           type: string
           enum: [PUBLIC, PRIVATE, INTERNAL]
 
-    # Error
-    ErrorResponse:
-      type: object
-      required: [code, message]
-      properties:
-        code:           { type: string }
-        message:        { type: string }
-        correlation_id: { type: string }
-
   responses:
     BadRequest:
       description: "잘못된 요청 (불변조건 위반 포함)"
       content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
     Unauthorized:
       description: "인증 필요"
       content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
     Forbidden:
       description: "권한 없음"
       content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
     NotFound:
       description: "리소스를 찾을 수 없음"
       content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
     Conflict:
       description: "상태 충돌 (허용되지 않은 상태 전이, 동시 Job 제한 등)"
       content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
