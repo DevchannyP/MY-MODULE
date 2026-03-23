@@ -1,6 +1,7 @@
 'use strict';
 
 const http = require('node:http');
+const crypto = require('node:crypto');
 const { URL } = require('node:url');
 
 const { TaskController } = require('../../domains/productivity/task-tracking/src/interface/TaskController');
@@ -16,6 +17,7 @@ const { VideoController } = require('../../domains/video/src/interface/VideoCont
 const { fromError } = require('../shared/ProblemDetails');
 const { InMemoryEventPublisher } = require('../shared/EventPublisher');
 const { InMemoryIdempotencyStore } = require('../shared/IdempotencyStore');
+const { InMemoryRateLimiter } = require('../shared/RateLimiter');
 const { getFeatureFlags } = require('../infrastructure/FeatureFlagProvider');
 const { tracer, metrics, logger } = require('../infrastructure/telemetry');
 const { InMemoryInvoiceRepository } = require('../../domains/billing/src/infrastructure/InMemoryInvoiceRepository');
@@ -67,15 +69,30 @@ function getCaller(headers) {
   };
 }
 
-function readRequestBody(req) {
+function readRequestBody(req, maxBytes = 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const chunks = [];
+    let totalBytes = 0;
+    let tooLarge = false;
 
     req.on('data', (chunk) => {
+      if (tooLarge) {
+        return;
+      }
+      totalBytes += chunk.length;
+      if (totalBytes > maxBytes) {
+        tooLarge = true;
+        reject(Object.assign(new Error(`Request body exceeds ${maxBytes} bytes`), { code: 'CONTENT_TOO_LARGE' }));
+        req.resume();
+        return;
+      }
       chunks.push(chunk);
     });
 
     req.on('end', () => {
+      if (tooLarge) {
+        return;
+      }
       if (chunks.length === 0) {
         resolve({});
         return;
@@ -223,6 +240,28 @@ function validateIdempotencyKey(value) {
   return normalized;
 }
 
+function createEtag(payload) {
+  return `"${crypto.createHash('sha256').update(payload).digest('hex')}"`;
+}
+
+function etagMatches(ifNoneMatchHeader, etag) {
+  if (typeof ifNoneMatchHeader !== 'string' || !ifNoneMatchHeader.trim()) {
+    return false;
+  }
+  return ifNoneMatchHeader
+    .split(',')
+    .map((part) => part.trim())
+    .includes(etag);
+}
+
+function rateLimitHeaders(result) {
+  return {
+    'x-ratelimit-limit': String(result.limit),
+    'x-ratelimit-remaining': String(result.remaining),
+    'x-ratelimit-reset': String(Math.floor(result.resetAt / 1000)),
+  };
+}
+
 function sendJson(res, status, body, extraHeaders = {}) {
   const payload = JSON.stringify(body, null, 2);
   const isProblemDetails = body
@@ -238,6 +277,25 @@ function sendJson(res, status, body, extraHeaders = {}) {
     ...extraHeaders,
   });
   res.end(payload);
+}
+
+function sendResponse(req, res, status, body, extraHeaders = {}) {
+  const method = req.method || 'GET';
+  const payload = JSON.stringify(body, null, 2);
+  const headers = { ...extraHeaders };
+
+  if ((method === 'GET' || method === 'HEAD') && status >= 200 && status < 300) {
+    const etag = createEtag(payload);
+    headers.etag = etag;
+    headers['cache-control'] = 'private, max-age=0, must-revalidate';
+    if (etagMatches(req.headers['if-none-match'], etag)) {
+      res.writeHead(304, headers);
+      res.end();
+      return;
+    }
+  }
+
+  sendJson(res, status, body, headers);
 }
 
 /** FeatureFlagProvider stub — 모든 플래그 활성화 (테스트/smoke 전용) */
@@ -257,6 +315,9 @@ function createAppHandler({
   billingController = createBillingController(),
   videoController = createVideoController(),
   idempotencyStore = new InMemoryIdempotencyStore(),
+  rateLimiter = new InMemoryRateLimiter(),
+  rateLimitPolicy = { readLimit: 120, writeLimit: 30, windowMs: 60 * 1000 },
+  maxRequestBodyBytes = 1024 * 1024,
   flags = null,  // null → 파일 기반 provider 사용 (프로덕션 기본값)
 } = {}) {
   const bootedAt = new Date().toISOString();
@@ -283,23 +344,31 @@ function createAppHandler({
     try {
       const resolvedFlags = flags || getFeatureFlags();
       const runtimeStatus = getRuntimeStatus(resolvedFlags);
+      const isReadMethod = method === 'GET' || method === 'HEAD';
+      const rateLimitKey = `${caller.userId}:${isReadMethod ? 'read' : 'write'}`;
+      const rateLimitResult = rateLimiter.consume({
+        key: rateLimitKey,
+        limit: isReadMethod ? rateLimitPolicy.readLimit : rateLimitPolicy.writeLimit,
+        windowMs: rateLimitPolicy.windowMs,
+      });
+      const responseHeaders = rateLimitHeaders(rateLimitResult);
 
       if (url.pathname === '/livez') {
         metrics.httpRequestsTotal.add(1, { route: '/livez', method });
         span.setStatus('ok').end();
-        sendJson(res, 200, { status: 'alive', service: 'my-module', transport: 'http', traceId: span.traceId });
+        sendResponse(req, res, 200, { status: 'alive', service: 'my-module', transport: 'http', traceId: span.traceId }, responseHeaders);
         return;
       }
 
       if (url.pathname === '/startupz') {
         metrics.httpRequestsTotal.add(1, { route: '/startupz', method });
         span.setStatus('ok').end();
-        sendJson(res, 200, {
+        sendResponse(req, res, 200, {
           status: 'started',
           started_at: bootedAt,
           service: 'my-module',
           traceId: span.traceId,
-        });
+        }, responseHeaders);
         return;
       }
 
@@ -307,29 +376,37 @@ function createAppHandler({
         const ready = runtimeStatus.flagsLoaded && runtimeStatus.metadataLoaded && runtimeStatus.errors.length === 0;
         metrics.httpRequestsTotal.add(1, { route: '/readyz', method, status: ready ? 200 : 503 });
         span.setAttribute('http.status_code', ready ? 200 : 503).setStatus(ready ? 'ok' : 'error').end();
-        sendJson(res, ready ? 200 : 503, {
+        sendResponse(req, res, ready ? 200 : 503, {
           status: ready ? 'ready' : 'not_ready',
           service: 'my-module',
           feature_flags: runtimeStatus,
           traceId: span.traceId,
-        });
+        }, responseHeaders);
         return;
       }
 
       if (url.pathname === '/health') {
         metrics.httpRequestsTotal.add(1, { route: '/health', method });
         span.setStatus('ok').end();
-        sendJson(res, 200, {
+        sendResponse(req, res, 200, {
           status: 'ok',
           service: 'my-module',
           transport: 'http',
           feature_flags: runtimeStatus,
           traceId: span.traceId,
-        });
+        }, responseHeaders);
         return;
       }
 
-      const body = method === 'GET' || method === 'HEAD' ? {} : await readRequestBody(req);
+      if (!rateLimitResult.allowed) {
+        throw Object.assign(new Error('Rate limit exceeded for this caller'), {
+          code: 'RATE_LIMITED',
+          retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+          rateLimitHeaders: responseHeaders,
+        });
+      }
+
+      const body = method === 'GET' || method === 'HEAD' ? {} : await readRequestBody(req, maxRequestBodyBytes);
       const query = Object.fromEntries(url.searchParams.entries());
       const idempotencyKey = method === 'POST'
         ? validateIdempotencyKey(typeof req.headers['idempotency-key'] === 'string' ? req.headers['idempotency-key'] : null)
@@ -343,8 +420,9 @@ function createAppHandler({
           body,
         });
         if (claim.outcome === 'replay' && claim.response) {
-          sendJson(res, claim.response.status, claim.response.body, {
+          sendResponse(req, res, claim.response.status, claim.response.body, {
             'idempotency-replayed': 'true',
+            ...responseHeaders,
           });
           return;
         }
@@ -371,10 +449,10 @@ function createAppHandler({
           if (idempotencyScope) {
             idempotencyStore.abort(idempotencyScope);
           }
-          sendJson(res, 404, fromError(
+          sendResponse(req, res, 404, fromError(
             Object.assign(new Error('task-management 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body);
+          ).body, responseHeaders);
           return;
         }
         const response = await taskController.handle({
@@ -393,7 +471,7 @@ function createAppHandler({
             idempotencyStore.abort(idempotencyScope);
           }
         }
-        sendJson(res, response.status, response.body);
+        sendResponse(req, res, response.status, response.body, responseHeaders);
         return;
       }
 
@@ -409,10 +487,10 @@ function createAppHandler({
           if (idempotencyScope) {
             idempotencyStore.abort(idempotencyScope);
           }
-          sendJson(res, 404, fromError(
+          sendResponse(req, res, 404, fromError(
             Object.assign(new Error('billing 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body);
+          ).body, responseHeaders);
           return;
         }
         const route = findBillingRoute(url.pathname);
@@ -432,7 +510,7 @@ function createAppHandler({
             idempotencyStore.abort(idempotencyScope);
           }
         }
-        sendJson(res, response.status, response.body);
+        sendResponse(req, res, response.status, response.body, responseHeaders);
         return;
       }
 
@@ -448,10 +526,10 @@ function createAppHandler({
           if (idempotencyScope) {
             idempotencyStore.abort(idempotencyScope);
           }
-          sendJson(res, 404, fromError(
+          sendResponse(req, res, 404, fromError(
             Object.assign(new Error('video 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body);
+          ).body, responseHeaders);
           return;
         }
 
@@ -470,10 +548,10 @@ function createAppHandler({
           if (idempotencyScope) {
             idempotencyStore.abort(idempotencyScope);
           }
-          sendJson(res, 404, fromError(
+          sendResponse(req, res, 404, fromError(
             Object.assign(new Error(`video 세부 기능이 비활성화 상태입니다: ${scopedFlag}`), { code: 'NOT_FOUND' }),
             { path: url.pathname },
-          ).body);
+          ).body, responseHeaders);
           return;
         }
 
@@ -493,7 +571,7 @@ function createAppHandler({
             idempotencyStore.abort(idempotencyScope);
           }
         }
-        sendJson(res, response.status, response.body);
+        sendResponse(req, res, response.status, response.body, responseHeaders);
         return;
       }
 
@@ -503,10 +581,10 @@ function createAppHandler({
       metrics.httpRequestsTotal.add(1, { route: url.pathname, method, status: 404 });
       metrics.httpDurationMs.record(Date.now() - startMs, { route: url.pathname });
       span.setAttribute('http.status_code', 404).setStatus('error').end();
-      sendJson(res, 404, fromError(
+      sendResponse(req, res, 404, fromError(
         Object.assign(new Error(`Route not found: ${method} ${url.pathname}`), { code: 'NOT_FOUND' }),
         { path: url.pathname, traceId: span.traceId },
-      ).body);
+      ).body, responseHeaders);
     } catch (error) {
       if (idempotencyScope) {
         idempotencyStore.abort(idempotencyScope);
@@ -522,7 +600,13 @@ function createAppHandler({
       metrics.httpDurationMs.record(Date.now() - startMs, { route: url.pathname, error: true });
       span.setAttribute('http.status_code', status).recordException(error).end();
       logger.error('http.error', { trace_id: span.traceId, route: url.pathname, status, message: error.message });
-      sendJson(res, status, body);
+      const errorHeaders = {
+        ...(error.rateLimitHeaders || {}),
+      };
+      if (error.retryAfterSeconds) {
+        errorHeaders['retry-after'] = String(error.retryAfterSeconds);
+      }
+      sendResponse(req, res, status, body, errorHeaders);
     }
   };
 }
@@ -531,8 +615,16 @@ function createServer(overrides = {}) {
   return http.createServer(createAppHandler(overrides));
 }
 
-function startServer({ port = 3000, host = '127.0.0.1', flags = null, idempotencyStore = undefined } = {}) {
-  const server = createServer({ flags, idempotencyStore });
+function startServer({
+  port = 3000,
+  host = '127.0.0.1',
+  flags = null,
+  idempotencyStore = undefined,
+  rateLimiter = undefined,
+  rateLimitPolicy = undefined,
+  maxRequestBodyBytes = undefined,
+} = {}) {
+  const server = createServer({ flags, idempotencyStore, rateLimiter, rateLimitPolicy, maxRequestBodyBytes });
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);

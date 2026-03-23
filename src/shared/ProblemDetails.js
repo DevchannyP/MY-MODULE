@@ -29,6 +29,8 @@ const ERROR_MAP = Object.freeze({
   IDEMPOTENCY_IN_PROGRESS: { status: 409, slug: 'idempotency-in-progress', title: 'Conflict' },
   IDEMPOTENCY_KEY_REUSE_MISMATCH: { status: 422, slug: 'idempotency-key-reuse-mismatch', title: 'Unprocessable Content' },
   INVALID_IDEMPOTENCY_KEY: { status: 400, slug: 'invalid-idempotency-key', title: 'Validation Error' },
+  RATE_LIMITED: { status: 429, slug: 'rate-limited', title: 'Too Many Requests' },
+  CONTENT_TOO_LARGE: { status: 413, slug: 'content-too-large', title: 'Content Too Large' },
   INTERNAL_ERROR:   { status: 500, slug: 'internal-error',    title: 'Internal Server Error' },
 });
 

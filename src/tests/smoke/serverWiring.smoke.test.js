@@ -113,6 +113,84 @@ test('[server wiring smoke] probe endpoints and task flow succeed over HTTP tran
     });
     assert.equal(fetched.status, 200);
     assert.equal(fetched.body.task_id, created.body.task_id);
+    assert.ok(typeof fetched.headers.etag === 'string' && fetched.headers.etag.length > 0);
+
+    const cached = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: `/tasks/${created.body.task_id}`,
+      permissions: ['task:read'],
+      headers: { 'if-none-match': String(fetched.headers.etag) },
+    });
+    assert.equal(cached.status, 304);
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
+test('[server wiring smoke] body limit returns 413 over HTTP transport', async () => {
+  const runtime = await startServer({
+    port: 0,
+    flags: createAllEnabledFlags(),
+    maxRequestBodyBytes: 24,
+  });
+
+  try {
+    const oversized = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: '/tasks',
+      permissions: ['task:read', 'task:write'],
+      body: {
+        title: 'this-body-is-too-large-for-the-limit',
+        assignee_id: 'user-1',
+      },
+    });
+    assert.equal(oversized.status, 413);
+    assert.equal(oversized.body.code, 'CONTENT_TOO_LARGE');
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
+test('[server wiring smoke] rate limit returns 429 with retry headers', async () => {
+  const runtime = await startServer({
+    port: 0,
+    flags: createAllEnabledFlags(),
+    rateLimitPolicy: {
+      readLimit: 1,
+      writeLimit: 10,
+      windowMs: 60 * 1000,
+    },
+  });
+
+  try {
+    const created = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: '/tasks',
+      permissions: ['task:read', 'task:write'],
+      body: {
+        title: 'rate-limit-target',
+        assignee_id: 'user-1',
+        due_date: futureDate(),
+      },
+    });
+    assert.equal(created.status, 201);
+
+    const firstRead = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: `/tasks/${created.body.task_id}`,
+      permissions: ['task:read'],
+    });
+    assert.equal(firstRead.status, 200);
+
+    const limited = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: `/tasks/${created.body.task_id}`,
+      permissions: ['task:read'],
+    });
+    assert.equal(limited.status, 429);
+    assert.equal(limited.body.code, 'RATE_LIMITED');
+    assert.ok(Number(limited.headers['retry-after']) >= 1);
+    assert.ok(Number(limited.headers['x-ratelimit-limit']) >= 1);
   } finally {
     await closeServer(runtime.server);
   }
