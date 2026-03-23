@@ -21,12 +21,15 @@ function usage() {
     '  --task-write-permissions <csv>  Default: task:read,task:write',
     '  --task-read-permissions <csv>   Default: task:read',
     '  --billing-denied-permissions    Default: empty',
+    '  --video-write-permissions <csv> Default: video:read,video:write',
+    '  --video-read-permissions <csv>  Default: video:read',
     '  --flag-off-path <path>          Optional path expected to return 404 when a feature is disabled',
     '  --flag-off-permissions <csv>    Default: task:read',
     '  --require-flag-off              Fail if --flag-off-path is not provided',
     '  --health-path <path>            Default: /health',
     '  --tasks-path <path>             Default: /tasks',
     '  --billing-invoices-path <path>  Default: /billing/invoices',
+    '  --videos-path <path>            Default: /videos',
     '  --user-id <id>                  Default: smoke-user',
     '  --timeout-ms <ms>               Default: 8000',
     '  --output <path>                 Default: artifacts/deployment-smoke/latest.json',
@@ -39,11 +42,14 @@ function parseArgs(argv) {
     taskWritePermissions: 'task:read,task:write',
     taskReadPermissions: 'task:read',
     billingDeniedPermissions: '',
+    videoWritePermissions: 'video:read,video:write',
+    videoReadPermissions: 'video:read',
     flagOffPermissions: 'task:read',
     requireFlagOff: false,
     healthPath: '/health',
     tasksPath: '/tasks',
     billingInvoicesPath: '/billing/invoices',
+    videosPath: '/videos',
     userId: 'smoke-user',
     timeoutMs: 8000,
     output: DEFAULT_OUTPUT,
@@ -81,6 +87,12 @@ function parseArgs(argv) {
       case '--billing-denied-permissions':
         options.billingDeniedPermissions = next;
         break;
+      case '--video-write-permissions':
+        options.videoWritePermissions = next;
+        break;
+      case '--video-read-permissions':
+        options.videoReadPermissions = next;
+        break;
       case '--flag-off-path':
         options.flagOffPath = next;
         break;
@@ -95,6 +107,9 @@ function parseArgs(argv) {
         break;
       case '--billing-invoices-path':
         options.billingInvoicesPath = next;
+        break;
+      case '--videos-path':
+        options.videosPath = next;
         break;
       case '--user-id':
         options.userId = next;
@@ -294,12 +309,15 @@ async function run(options) {
       health_path: options.healthPath,
       tasks_path: options.tasksPath,
       billing_invoices_path: options.billingInvoicesPath,
+      videos_path: options.videosPath,
       flag_off_path: options.flagOffPath || null,
     },
     inputs: {
       task_write_permissions: parseCsv(options.taskWritePermissions),
       task_read_permissions: parseCsv(options.taskReadPermissions),
       billing_denied_permissions: parseCsv(options.billingDeniedPermissions),
+      video_write_permissions: parseCsv(options.videoWritePermissions),
+      video_read_permissions: parseCsv(options.videoReadPermissions),
       flag_off_permissions: parseCsv(options.flagOffPermissions),
       require_flag_off: options.requireFlagOff,
       timeout_ms: options.timeoutMs,
@@ -427,6 +445,84 @@ async function run(options) {
 
       return {
         request: { method: 'POST', path: options.billingInvoicesPath },
+        response: { status: result.status, body: sanitizeBody(result.body) },
+      };
+    });
+
+    const uploadedVideo = await runStep(report, {
+      id: 'video-upload',
+      name: 'Video upload path works with write permissions',
+    }, async () => {
+      const result = await requestJson(options.baseUrl, {
+        method: 'POST',
+        routePath: options.videosPath,
+        permissions: parseCsv(options.videoWritePermissions),
+        userId: options.userId,
+        timeoutMs: options.timeoutMs,
+        body: {
+          title: `deployment-smoke-video-${Date.now()}`,
+          original_file_ref: 's3://deployment-smoke/video.mp4',
+          file_size_bytes: 0,
+        },
+      });
+
+      assertResponse(result, {
+        status: 201,
+        bodyCheck(body) {
+          if (!body || typeof body.video_id !== 'string' || body.video_id.length === 0) {
+            throw new SmokeAssertionError('Video upload response must include video_id', {
+              body: sanitizeBody(body),
+            });
+          }
+          if (body.file_size_bytes !== 0) {
+            throw new SmokeAssertionError('Video upload response must preserve zero file_size_bytes', {
+              body: sanitizeBody(body),
+            });
+          }
+        },
+      });
+
+      return {
+        request: { method: 'POST', path: options.videosPath },
+        response: { status: result.status, body: sanitizeBody(result.body) },
+        video_id: result.body.video_id,
+      };
+    });
+
+    await runStep(report, {
+      id: 'video-list',
+      name: 'Video list path returns the uploaded video for the same caller',
+    }, async () => {
+      const result = await requestJson(options.baseUrl, {
+        method: 'GET',
+        routePath: options.videosPath,
+        permissions: parseCsv(options.videoReadPermissions),
+        userId: options.userId,
+        timeoutMs: options.timeoutMs,
+      });
+
+      assertResponse(result, {
+        status: 200,
+        bodyCheck(body) {
+          const items = Array.isArray(body?.items) ? body.items : [];
+          const matched = items.find((item) => item.video_id === uploadedVideo.video_id);
+          if (!matched) {
+            throw new SmokeAssertionError('Video list response must include the uploaded video', {
+              expectedVideoId: uploadedVideo.video_id,
+              body: sanitizeBody(body),
+            });
+          }
+          if (matched.file_size_bytes !== 0) {
+            throw new SmokeAssertionError('Video list response must preserve zero file_size_bytes', {
+              expectedVideoId: uploadedVideo.video_id,
+              body: sanitizeBody(body),
+            });
+          }
+        },
+      });
+
+      return {
+        request: { method: 'GET', path: options.videosPath },
         response: { status: result.status, body: sanitizeBody(result.body) },
       };
     });

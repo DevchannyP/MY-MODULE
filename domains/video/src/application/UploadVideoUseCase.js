@@ -44,8 +44,8 @@ class UploadVideoUseCase {
       uploaderId:      cmd.uploaderId,
       originalFileRef: cmd.originalFileRef,
       accessPolicy:    cmd.accessPolicy    || 'PRIVATE',
-      description:     cmd.description     || null,
-      fileSizeBytes:   cmd.fileSizeBytes   || null,
+      description:     cmd.description ?? null,
+      fileSizeBytes:   cmd.fileSizeBytes ?? null,
     });
 
     return this._videoRepo.save(video);

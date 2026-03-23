@@ -49,6 +49,18 @@ def stage_b_entry_points(stage_b_memory_ref: str) -> set[str]:
     return entries
 
 
+def ui_contract_feature_flags(ui_contract_ref: str) -> set[str]:
+    data = load_yaml(ui_contract_ref)
+    flags: set[str] = set()
+
+    for screen in data.get("screens", []):
+        feature_flag = screen.get("feature_flag")
+        if isinstance(feature_flag, str) and feature_flag:
+            flags.add(feature_flag)
+
+    return flags
+
+
 def main() -> int:
     registry = load_yaml("master-shell/plugin-registry/registry.yaml")
     navigation = load_yaml("master-shell/navigation/nav.yaml")
@@ -89,6 +101,14 @@ def main() -> int:
         feature_flag = plugin.get("feature_flag")
         if feature_flag not in feature_flags:
             errors.append(f"{plugin_id}: feature flag not registered -> {feature_flag}")
+
+        ui_contract_ref = plugin.get("ui_contract")
+        if isinstance(ui_contract_ref, str) and file_exists(ui_contract_ref):
+            for ui_flag in sorted(ui_contract_feature_flags(ui_contract_ref)):
+                if ui_flag not in feature_flags:
+                    errors.append(
+                        f"{plugin_id}: ui-contract feature flag not registered -> {ui_flag}"
+                    )
 
         navigation_group = plugin.get("navigation", {}).get("group")
         nav_group = nav_groups.get(navigation_group)

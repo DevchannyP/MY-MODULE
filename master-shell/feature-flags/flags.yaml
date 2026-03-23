@@ -24,7 +24,9 @@ plugin_flags:
 
   # video 플러그인
   video.enabled: false                 # true: 비디오 도메인 전체 활성화 (영상 목록·업로드 노출)
+  video.upload.enabled: false          # true: 영상 업로드 화면/API 활성화
   video.transcode.enabled: false       # true: 트랜스코딩 기능 활성화 (내부 환경 전용)
+  video.admin.enabled: false           # true: 영상 관리자 화면/API 활성화
 
 # ── 활성화 절차 ──────────────────────────────────────────────────────────
 # 1. Stage D 품질 게이트 전체 PASS

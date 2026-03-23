@@ -48,6 +48,8 @@ test('[deployment smoke runner] executes the deployed-environment checklist and 
     assert.equal(report.steps.find((step) => step.id === 'task-create').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'task-read').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'billing-permission-denied').status, 'PASS');
+    assert.equal(report.steps.find((step) => step.id === 'video-upload').status, 'PASS');
+    assert.equal(report.steps.find((step) => step.id === 'video-list').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'flag-off-route').status, 'SKIPPED');
     assert.ok(Array.isArray(report.pending_manual_checks));
   } finally {

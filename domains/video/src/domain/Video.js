@@ -46,9 +46,9 @@ class Video {
     this.originalFileRef = snapshot.originalFileRef;
     this.status          = snapshot.status;
     this.accessPolicy    = snapshot.accessPolicy;
-    this.description     = snapshot.description     || null;
-    this.durationSeconds = snapshot.durationSeconds || null;
-    this.fileSizeBytes   = snapshot.fileSizeBytes   || null;
+    this.description     = snapshot.description ?? null;
+    this.durationSeconds = snapshot.durationSeconds ?? null;
+    this.fileSizeBytes   = snapshot.fileSizeBytes ?? null;
     this.createdAt       = snapshot.createdAt;
     this.updatedAt       = snapshot.updatedAt;
     Object.freeze(this);
@@ -179,9 +179,9 @@ class Video {
       originalFileRef: originalFileRef.trim(),
       status:          'UPLOADED',
       accessPolicy:    policy,
-      description:     description     || null,
+      description:     description ?? null,
       durationSeconds: null,
-      fileSizeBytes:   fileSizeBytes   || null,
+      fileSizeBytes:   fileSizeBytes ?? null,
       createdAt:       now,
       updatedAt:       now,
     });

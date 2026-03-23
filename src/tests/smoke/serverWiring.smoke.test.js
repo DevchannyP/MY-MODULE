@@ -111,6 +111,40 @@ test('[server wiring smoke] billing permission denial survives HTTP transport', 
   }
 });
 
+test('[server wiring smoke] video flow succeeds over HTTP transport and preserves zero-valued fields', async () => {
+  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+
+  try {
+    const uploaded = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: '/videos',
+      permissions: ['video:read', 'video:write'],
+      userId: 'video-uploader',
+      body: {
+        title: 'server-smoke-video',
+        original_file_ref: 's3://bucket/video.mp4',
+        file_size_bytes: 0,
+      },
+    });
+    assert.equal(uploaded.status, 201);
+    assert.ok(uploaded.body.video_id);
+    assert.equal(uploaded.body.file_size_bytes, 0);
+
+    const listed = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: '/videos',
+      permissions: ['video:read'],
+      userId: 'video-uploader',
+    });
+    assert.equal(listed.status, 200);
+    assert.ok(Array.isArray(listed.body.items));
+    assert.equal(listed.body.items[0].video_id, uploaded.body.video_id);
+    assert.equal(listed.body.items[0].file_size_bytes, 0);
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
 test('[server wiring smoke] disabled task-management flag returns 404 over HTTP transport', async () => {
   const runtime = await startServer({
     port: 0,
@@ -126,6 +160,46 @@ test('[server wiring smoke] disabled task-management flag returns 404 over HTTP 
       method: 'GET',
       path: '/tasks',
       permissions: ['task:read'],
+    });
+    assert.equal(response.status, 404);
+    assert.equal(response.body.code, 'NOT_FOUND');
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
+test('[server wiring smoke] disabled video transcode flag returns 404 over HTTP transport', async () => {
+  const runtime = await startServer({
+    port: 0,
+    flags: {
+      isEnabled(flagName) {
+        return flagName !== 'video.transcode.enabled';
+      },
+    },
+  });
+
+  try {
+    const uploaded = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: '/videos',
+      permissions: ['video:read', 'video:write'],
+      userId: 'video-uploader',
+      body: {
+        title: 'flag-gated-video',
+        original_file_ref: 's3://bucket/flag-gated.mp4',
+      },
+    });
+    assert.equal(uploaded.status, 201);
+
+    const response = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: `/videos/${uploaded.body.video_id}/transcode`,
+      permissions: ['video:write'],
+      userId: 'video-uploader',
+      body: {
+        target_format: 'MP4',
+        target_resolution: '1080p',
+      },
     });
     assert.equal(response.status, 404);
     assert.equal(response.body.code, 'NOT_FOUND');

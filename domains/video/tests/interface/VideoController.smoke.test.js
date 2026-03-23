@@ -67,6 +67,17 @@ describe('[VideoController smoke] POST /videos', () => {
     assert.ok(res.body.created_at);
   });
 
+  test('[회귀] file_size_bytes=0을 null로 바꾸지 않는다', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'POST', path: '/videos',
+      body: { title: '0 byte 영상', original_file_ref: 's3://bucket/v.mp4', file_size_bytes: 0 },
+      caller: WRITE_CALLER,
+    });
+    assert.equal(res.status, 201);
+    assert.equal(res.body.file_size_bytes, 0);
+  });
+
   test('title 누락 → 400', async () => {
     const { ctrl } = makeCtrl();
     const res = await ctrl.handle({

@@ -173,9 +173,9 @@ class VideoController {
       original_file_ref: video.originalFileRef,
       status:            video.status,
       access_policy:     video.accessPolicy,
-      description:       video.description     || null,
-      duration_seconds:  video.durationSeconds || null,
-      file_size_bytes:   video.fileSizeBytes   || null,
+      description:       video.description ?? null,
+      duration_seconds:  video.durationSeconds ?? null,
+      file_size_bytes:   video.fileSizeBytes ?? null,
       created_at:        video.createdAt,
       updated_at:        video.updatedAt,
     };

@@ -12,6 +12,7 @@ const { ReassignTaskUseCase } = require('../../domains/productivity/task-trackin
 const { InMemoryTaskRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/InMemoryTaskRepository');
 
 const { BillingController } = require('../../domains/billing/src/interface/BillingController');
+const { VideoController } = require('../../domains/video/src/interface/VideoController');
 const { fromError } = require('../shared/ProblemDetails');
 const { InMemoryEventPublisher } = require('../shared/EventPublisher');
 const { getFeatureFlags } = require('../infrastructure/FeatureFlagProvider');
@@ -19,6 +20,8 @@ const { tracer, metrics, logger } = require('../infrastructure/telemetry');
 const { InMemoryInvoiceRepository } = require('../../domains/billing/src/infrastructure/InMemoryInvoiceRepository');
 const { InMemoryPaymentRepository } = require('../../domains/billing/src/infrastructure/InMemoryPaymentRepository');
 const { InMemoryBillingExceptionRepository } = require('../../domains/billing/src/infrastructure/InMemoryBillingExceptionRepository');
+const { InMemoryVideoRepository } = require('../../domains/video/src/infrastructure/InMemoryVideoRepository');
+const { InMemoryTranscodeJobRepository } = require('../../domains/video/src/infrastructure/InMemoryTranscodeJobRepository');
 
 function createTaskController(taskRepository = new InMemoryTaskRepository(), eventPublisher = new InMemoryEventPublisher()) {
   return new TaskController({
@@ -35,6 +38,13 @@ function createBillingController() {
     invoiceRepo: new InMemoryInvoiceRepository(),
     paymentRepo: new InMemoryPaymentRepository(),
     exceptionRepo: new InMemoryBillingExceptionRepository(),
+  });
+}
+
+function createVideoController() {
+  return new VideoController({
+    videoRepository: new InMemoryVideoRepository(),
+    transcodeJobRepository: new InMemoryTranscodeJobRepository(),
   });
 }
 
@@ -114,6 +124,70 @@ function findBillingRoute(pathname) {
   return { path: pathname, params: {} };
 }
 
+function findVideoRoute(pathname) {
+  if (pathname === '/videos') {
+    return { path: '/videos', params: {} };
+  }
+
+  const routePatterns = [
+    {
+      match: /^\/videos\/([^/]+)$/,
+      path: '/videos/:videoId',
+      params: ['videoId'],
+    },
+    {
+      match: /^\/videos\/([^/]+)\/transcode$/,
+      path: '/videos/:videoId/transcode',
+      params: ['videoId'],
+    },
+    {
+      match: /^\/videos\/([^/]+)\/transcode-jobs\/([^/]+)$/,
+      path: '/videos/:videoId/transcode-jobs/:jobId',
+      params: ['videoId', 'jobId'],
+    },
+    {
+      match: /^\/videos\/([^/]+)\/access-policy$/,
+      path: '/videos/:videoId/access-policy',
+      params: ['videoId'],
+    },
+    {
+      match: /^\/videos\/([^/]+)\/archive$/,
+      path: '/videos/:videoId/archive',
+      params: ['videoId'],
+    },
+  ];
+
+  for (const route of routePatterns) {
+    const matched = pathname.match(route.match);
+    if (matched) {
+      const params = {};
+      route.params.forEach((name, index) => {
+        params[name] = matched[index + 1];
+      });
+      return { path: route.path, params };
+    }
+  }
+
+  return { path: pathname, params: {} };
+}
+
+function hasMountedPrefix(pathname, mountPath) {
+  return pathname === mountPath || pathname.startsWith(`${mountPath}/`);
+}
+
+function resolveVideoFeatureFlag(routePath, method) {
+  if (routePath === '/videos' && method === 'POST') {
+    return 'video.upload.enabled';
+  }
+  if (routePath === '/videos/:videoId/transcode' || routePath === '/videos/:videoId/transcode-jobs/:jobId') {
+    return 'video.transcode.enabled';
+  }
+  if (routePath === '/videos/:videoId/archive') {
+    return 'video.admin.enabled';
+  }
+  return null;
+}
+
 function sendJson(res, status, body) {
   const payload = JSON.stringify(body, null, 2);
   res.writeHead(status, {
@@ -131,6 +205,7 @@ function createAllEnabledFlags() {
 function createAppHandler({
   taskController = createTaskController(),
   billingController = createBillingController(),
+  videoController = createVideoController(),
   flags = null,  // null → 파일 기반 provider 사용 (프로덕션 기본값)
 } = {}) {
   return async function appHandler(req, res) {
@@ -167,7 +242,7 @@ function createAppHandler({
       // ── Feature Flag 라우트 게이트 (OpenFeature 패턴) ──────────────────────
       const resolvedFlags = flags || getFeatureFlags();
 
-      if (url.pathname.startsWith('/tasks')) {
+      if (hasMountedPrefix(url.pathname, '/tasks')) {
         if (!resolvedFlags.isEnabled('enable_task_management')) {
           sendJson(res, 404, fromError(
             Object.assign(new Error('task-management 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
@@ -188,7 +263,7 @@ function createAppHandler({
         return;
       }
 
-      if (url.pathname.startsWith('/billing')) {
+      if (hasMountedPrefix(url.pathname, '/billing')) {
         if (!resolvedFlags.isEnabled('billing.enabled')) {
           sendJson(res, 404, fromError(
             Object.assign(new Error('billing 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
@@ -198,6 +273,38 @@ function createAppHandler({
         }
         const route = findBillingRoute(url.pathname);
         const response = await billingController.handle({
+          method,
+          path: route.path,
+          params: route.params,
+          query,
+          body,
+          caller,
+          correlationId,
+        });
+        sendJson(res, response.status, response.body);
+        return;
+      }
+
+      if (hasMountedPrefix(url.pathname, '/videos')) {
+        if (!resolvedFlags.isEnabled('video.enabled')) {
+          sendJson(res, 404, fromError(
+            Object.assign(new Error('video 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
+            { path: url.pathname },
+          ).body);
+          return;
+        }
+
+        const route = findVideoRoute(url.pathname);
+        const scopedFlag = resolveVideoFeatureFlag(route.path, method);
+        if (scopedFlag && !resolvedFlags.isEnabled(scopedFlag)) {
+          sendJson(res, 404, fromError(
+            Object.assign(new Error(`video 세부 기능이 비활성화 상태입니다: ${scopedFlag}`), { code: 'NOT_FOUND' }),
+            { path: url.pathname },
+          ).body);
+          return;
+        }
+
+        const response = await videoController.handle({
           method,
           path: route.path,
           params: route.params,

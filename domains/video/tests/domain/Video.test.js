@@ -62,6 +62,29 @@ describe('Video Entity', () => {
       const v = validCreate({ accessPolicy: 'PUBLIC' });
       assert.equal(v.accessPolicy, 'PUBLIC');
     });
+
+    test('fileSizeBytes=0은 null로 손실되지 않는다', () => {
+      const v = validCreate({ fileSizeBytes: 0 });
+      assert.equal(v.fileSizeBytes, 0);
+    });
+
+    test('snapshot 기반 재구성 시 0 값(duration/fileSize)을 유지한다', () => {
+      const v = new Video({
+        videoId: 'vid-zero',
+        title: '0 값 영상',
+        uploaderId: 'user-1',
+        originalFileRef: 's3://bucket/video-zero.mp4',
+        status: 'READY',
+        accessPolicy: 'PUBLIC',
+        description: null,
+        durationSeconds: 0,
+        fileSizeBytes: 0,
+        createdAt: '2026-03-23T00:00:00.000Z',
+        updatedAt: '2026-03-23T00:00:00.000Z',
+      });
+      assert.equal(v.durationSeconds, 0);
+      assert.equal(v.fileSizeBytes, 0);
+    });
   });
 
   describe('INV-V002: 상태 전이 검증', () => {
