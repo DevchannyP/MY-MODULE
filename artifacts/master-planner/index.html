@@ -271,9 +271,59 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   letter-spacing:.08em;margin:14px 0 5px;display:flex;align-items:center;gap:6px}
 .cap-prog{font-size:10px;color:var(--ac);margin-left:auto}
 
+/* ── sprint board ── */
+.kb{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.kb-col{background:var(--sf);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.kb-h{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px}
+.kb-body{padding:8px;min-height:80px}
+.kb-card{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);
+  padding:10px;margin-bottom:6px;transition:all .13s}
+.kb-card:hover{border-color:#3a4149;transform:translateY(-1px)}
+.kb-card.active{border-color:var(--ac2);background:rgba(31,111,235,.05)}
+.kb-card.done{opacity:.65}
+.kb-cid{font-size:9px;font-family:var(--mo);color:var(--dm);margin-bottom:4px;
+  display:flex;align-items:center;gap:5px}
+.kb-goal{font-size:11px;color:var(--tx);line-height:1.5}
+.kb-tier{font-size:9px;padding:1px 5px;border-radius:99px;background:var(--sf);
+  color:var(--dm);border:1px solid var(--bd);margin-top:5px;display:inline-block}
+
+/* ── git info ── */
+.git-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;
+  font-family:var(--mo);color:var(--dm);background:var(--sf2);
+  padding:2px 8px;border-radius:99px;border:1px solid var(--bd)}
+.git-chip em{color:var(--ac2);font-style:normal}
+.commit-row{display:flex;gap:8px;padding:5px 8px;border-bottom:1px solid var(--bd);
+  font-size:11px;align-items:baseline}
+.commit-row:last-child{border-bottom:none}
+.commit-hash{font-family:var(--mo);font-size:9px;color:var(--pu);min-width:50px;flex-shrink:0}
+.commit-msg{color:var(--tx);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── global search ── */
+.gs-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:9999;align-items:flex-start;justify-content:center;padding-top:80px}
+.gs-modal.open{display:flex}
+.gs-box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;
+  width:100%;max-width:560px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.gs-inp{width:100%;background:transparent;border:none;color:var(--br);font-family:var(--fn);
+  font-size:15px;padding:14px 16px;outline:none}
+.gs-inp::placeholder{color:var(--dm)}
+.gs-results{border-top:1px solid var(--bd);max-height:340px;overflow-y:auto}
+.gs-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;
+  cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(48,54,61,.5)}
+.gs-item:hover{background:var(--sf2)}
+.gs-item-tag{font-size:9px;padding:1px 5px;border-radius:99px;
+  background:rgba(31,111,235,.1);color:var(--ac2);border:1px solid rgba(31,111,235,.2);
+  flex-shrink:0;margin-top:2px;white-space:nowrap}
+.gs-item-text{font-size:12px;color:var(--tx);flex:1;line-height:1.4}
+.gs-item-sub{font-size:10px;color:var(--dm)}
+.gs-empty{padding:20px;text-align:center;color:var(--dm);font-size:12px}
+.gs-hint{padding:8px 16px;font-size:10px;color:var(--dm);border-top:1px solid var(--bd)}
+
 @media(max-width:860px){
   .ly{grid-template-columns:1fr}.sb{display:none}
   .g3{grid-template-columns:1fr}.ig.open{grid-template-columns:1fr!important}
+  .kb{grid-template-columns:1fr}
   .main{padding:14px}
 }
 </style>
@@ -281,7 +331,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
 <body>
 
 <script>window.D={
-  "generated_at": "2026-03-23T19:33:05.190799",
+  "generated_at": "2026-03-23T19:47:58.101665",
   "project": {
     "name": "Workflow OS",
     "repo": "my-module",
@@ -2194,6 +2244,49 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
         "related_adrs": []
       }
     }
+  },
+  "git": {
+    "branch": "chore/core-git-governance-activation",
+    "hash": "41e69ba",
+    "hash_full": "41e69bade13ddc21bdb76def5556f6df6ea5bc0a",
+    "last_msg": "fix(master-planner): v3 버그수정 + 형상관리 강화 — 14개 개선점 전부 적용",
+    "last_date": "2026-03-23 19:35:00 +0900",
+    "last_auth": "DevchannyP",
+    "commits": [
+      {
+        "hash": "41e69ba",
+        "msg": "fix(master-planner): v3 버그수정 + 형상관리 강화 — 14개 개선점 전부 적용"
+      },
+      {
+        "hash": "83fe8d8",
+        "msg": "feat(master-planner): v3 완전 통합 — 요구사항탭·WP연결·완료아카이브·초기화 버튼"
+      },
+      {
+        "hash": "911c5ff",
+        "msg": "feat(master-planner): v2 완전 통합 — ADR·Stage A·Reflexion·감사체인·video 도메인 추가"
+      },
+      {
+        "hash": "dde5b15",
+        "msg": "chore(catalog): catalog-site html 최신화"
+      },
+      {
+        "hash": "c98f345",
+        "msg": "feat(master-planner): 프로젝트 완전 통합 마스터 기획서 UI 재구축"
+      },
+      {
+        "hash": "90c7d90",
+        "msg": "feat(master-planner): 마스터 UI 기획서 에디터 신설"
+      },
+      {
+        "hash": "f5d48cb",
+        "msg": "chore(video): inMemoryRepo 인프라 레이어 이동 + 테스트 정비"
+      },
+      {
+        "hash": "1331846",
+        "msg": "fix(billing): payment 3개 UseCase 신설 + Clean Architecture 위반 수정"
+      }
+    ],
+    "diff_stat": ".claude/agents/adversary.md                        |    9 +\n .claude/agents/architect.md                        |    9 +\n .claude/agents/implementer.md                      |    9 +\n .claude/agents/observer.md                         |   14 +\n .claude/agents/reporter.md                         |    9 +\n .claude/agents/reviewer.md                         |   16 +\n .claude/skills/contract-codegen/skill.md           |   18 +\n .claude/skills/learning-report/skill.md            |   42 +\n .claude/skills/migration-export/skill.md           |   32 +\n .claude/skills/reflection-loop/skill.md            |   58 +\n .claude/skills/stage-a-design/skill.md             |   42 +\n .claude/skills/stage-d-implement/skill.md          |   78 +\n .claude/skills/stage-e-adversarial/skill.md        |   35 +\n .github/pull_request_template.md                   |    3 +\n .github/workflows/deployment-smoke.yml             |   86 +\n .github/workflows/quality-gates.yml                |  132 +\n .github/workflows/release-evidence.yml             |   74 +\n .github/workflows/requirements-validation.yml      |   37 +\n .gitignore                                         |   10 +\n .husky/commit-msg                                  |    2 +\n .husky/pre-commit                                  |   26 +\n .releaserc.json                                    |   35 +\n CLAUDE.md                                          |  570 +---\n CLAUDE.md.v1-backup                                |  218 ++\n HOW_TO_USE.md                                      |  151 +-\n README.md                                          |  136 +-\n artifacts/advisory/advisory-policy.yaml            |   31 +\n artifacts/catalog-site/index.html                  |    6 +\n .../environment-provisioning-audit-template.json   |  159 +\n artifacts/deployment-smoke/manual-validation.json  |  125 +\n artifacts/deployment-smoke/target-resolution.json  |   13 +\n artifacts/github/branch-protection-policy.yaml     |   20 +\n artifacts/master-planner/index.html                | 3350 ++++++++++++++++++++\n artifacts/provenance/workflow-os-provenance.json   |    4 +-\n artifacts/release-evidence/release-evidence.json   |   28 +-\n commitlint.config.js                               |   14 +\n contracts/events/envelope.schema.json              |   58 +\n contracts/events/registry.yaml                     |   99 +\n docs/adr/0008-online-advisory-scan-strategy.md     |   86 +\n docs/adr/0009-github-branch-protection-baseline.md |   66 +\n ...265\\355\\225\\251\\352\\262\\200\\354\\246\\235-ADR.md\" |   42 +\n ...hfulness-for-legacy-and-placeholder-surfaces.md |   61 +\n docs/adr/adr-index.yaml                            |   42 +\n docs/adr/templates/adr-template.md                 |   38 +\n docs/explanation/composition-and-shell.md          |   17 +-\n docs/explanation/upgrade-plan-v2.md                |  238 ++\n docs/how-to/repeatable-cli-master-prompt.md        |  151 +\n docs/how-to/run-git-workflow.md                    |   45 +-\n docs/how-to/run-stage-a.md                         |   17 +-\n docs/how-to/run-stage-b.md                         |    9 +\n docs/how-to/run-stage-c.md                         |    9 +\n docs/how-to/run-stage-d.md                         |   23 +-\n docs/how-to/run-stage-e.md                         |  100 +-\n docs/reference/advisory-feed-policy.md             |   61 +\n .../reference/generated/domain-dependency-graph.md |   12 +\n docs/reference/git-governance.md                   |    2 +\n docs/reference/github-branch-protection.md         |   51 +\n docs/reference/memory-schema.md                    |  123 +-\n docs/reference/quality-gates.md                    |  123 +-\n docs/reference/routing-rules.md                    |   12 +-\n docs/reference/security-policy.md                  |    2 +\n docs/reference/supply-chain-policy.md              |   17 +-\n docs/tutorial/master-shell-integration-example.md  |   11 +-\n domains/billing/contracts/events.schema.json       |   70 +-\n domains/billing/package.json                       |    7 +\n .../billing/src/application/GetPaymentUseCase.js   |   51 +\n .../billing/src/application/ListPaymentsUseCase.js |   37 +\n .../src/application/RetryPaymentSyncUseCase.js     |   58 +\n .../src/domain/entities/BillingException.js        |   12 +-\n domains/billing/src/domain/entities/Invoice.js     |   23 +-\n .../src/domain/services/BillingDomainService.js    |   10 +-\n .../src/domain/value-objects/InvoiceStatus.js      |    5 +-\n domains/billing/src/domain/value-objects/Money.js  |   25 +-\n domains/billing/src/interface/BillingController.js |   92 +-\n .../tests/application/AddLineItemUseCase.test.js   |   89 +\n .../application/GetBillingSummaryUseCase.test.js   |   63 +\n .../application/GetInvoiceListUseCase.test.js      |   73 +\n .../tests/application/GetPaymentUseCase.test.js    |   55 +\n .../tests/application/ListPaymentsUseCase.test.js  |   76 +\n .../RejectBillingExceptionUseCase.test.js          |   70 +\n .../application/RetryPaymentSyncUseCase.test.js    |   55 +\n .../tests/domain/entities/BillingException.test.js |   82 +\n .../billing/tests/domain/entities/Invoice.test.js  |   31 +\n .../billing/tests/domain/entities/Payment.test.js  |  107 +\n .../tests/domain/events/BillingEvents.test.js      |   76 +\n .../domain/value-objects/Money.multiply.test.js    |   50 +\n .../infrastructure/InMemoryRepositories.test.js    |  206 ++\n .../tests/property/billing.property.test.js        |   93 +\n domains/productivity/package.json                  |    7 +\n .../src/application/CreateTaskUseCase.js           |   19 +-\n .../src/application/GetTaskUseCase.js              |    2 +-\n .../src/application/ReassignTaskUseCase.js         |    7 +-\n .../src/application/TransitionTaskStatusUseCase.js |    2 +-\n .../task-tracking/src/domain/entities/Task.js      |   27 +-\n .../src/domain/value-objects/TaskStatus.js         |   14 +-\n .../src/infrastructure/SQLiteTaskRepository.js     |  128 +\n .../task-tracking/src/infrastructure/schema.sql    |   32 +\n .../task-tracking/src/interface/TaskController.js  |   31 +-\n .../tests/application/CreateTaskUseCase.test.js    |   12 +\n .../tests/application/GetTaskUseCase.test.js       |   51 +\n .../tests/application/ListTasksUseCase.test.js     |   65 +\n .../tests/application/ReassignTaskUseCase.test.js  |   92 +\n .../TransitionTaskStatusUseCase.test.js            |   89 +\n .../infrastructure/InMemoryTaskRepository.test.js  |  116 +\n .../infrastructure/SQLiteTaskRepository.test.js    |   30 +\n domains/video/contract/capability.yaml             |   97 +\n domains/video/contract/events.schema.json          |  181 ++\n domains/video/contract/openapi.yaml                |  335 ++\n domains/video/contract/ui-contract.yaml            |  102 +\n domains/video/package.json                         |    7 +\n .../video/src/application/ArchiveVideoUseCase.js   |   44 +\n .../src/application/ChangeAccessPolicyUseCase.js   |   52 +\n .../src/application/GetTranscodeJobUseCase.js      |   61 +\n domains/video/src/application/GetVideoUseCase.js   |   51 +\n domains/video/src/application/ListVideosUseCase.js |   45 +\n .../src/application/StartTranscodeJobUseCase.js    |   78 +\n .../video/src/application/UploadVideoUseCase.js    |   55 +\n domains/video/src/domain/InMemoryFakeRepo.js       |    1 +\n domains/video/src/domain/TranscodeJob.js           |  151 +\n domains/video/src/domain/Video.js                  |  191 ++\n .../InMemoryTranscodeJobRepository.js              |   46 +\n .../src/infrastructure/InMemoryVideoRepository.js  |   42 +\n domains/video/src/interface/VideoController.js     |  206 ++\n domains/video/src/ports/TranscodeJobRepository.js  |   39 +\n domains/video/src/ports/VideoRepository.js         |   35 +\n .../tests/adversarial/stageE_adversarial.test.js   |  286 ++\n .../tests/application/ArchiveVideoUseCase.test.js  |   94 +\n .../application/ChangeAccessPolicyUseCase.test.js  |   93 +\n .../application/GetTranscodeJobUseCase.test.js     |  133 +\n .../tests/application/GetVideoUseCase.test.js      |   77 +\n .../tests/application/ListVideosUseCase.test.js    |  114 +\n .../application/StartTranscodeJobUseCase.test.js   |  101 +\n .../tests/application/UploadVideoUseCase.test.js   |   81 +\n domains/video/tests/domain/TranscodeJob.test.js    |  124 +\n domains/video/tests/domain/Video.test.js           |  174 +\n .../tests/interface/VideoController.authz.test.js  |  222 ++\n .../tests/interface/VideoController.smoke.test.js  |  270 ++\n .../VideoController.uploaderId.security.test.js    |   70 +\n .../video/tests/property/video.property.test.js    |  134 +\n master-shell/catalog/domains.yaml                  |   18 +-\n master-shell/feature-flags/flags.yaml              |    6 +-\n master-shell/navigation/nav.yaml                   |   14 +-\n master-shell/observability/config.yaml             |   48 +-\n master-shell/observability/health-scores.yaml      |   14 +\n master-shell/observability/timeline.jsonl          |    0\n .../deployment-environment-provisioning.yaml       |   79 +\n .../operations/deployment-environments.yaml        |   58 +\n master-shell/plugin-registry/registry.yaml         |   45 +-\n memory/L0-hot/current-state.yaml                   |    1 +\n memory/L0-hot/failure-patterns.yaml                |    4 +\n memory/L0-hot/gate-trends.yaml                     |    5 +\n memory/L0-hot/next-actions.yaml                    |    1 +\n memory/L0-hot/reflection-log.yaml                  |   29 +\n memory/L0-hot/unresolved-risks.yaml                |    1 +\n memory/L1-warm/stageA                              |    1 +\n memory/L1-warm/stageB                              |    1 +\n memory/L1-warm/stageC                              |    1 +\n memory/checkpoint.yaml                             |   79 +\n memory/current-state.yaml                          |  203 ++\n memory/current-wp.yaml                             |   48 +\n memory/knowledge-graph.yaml                        |   23 +\n memory/next-actions.yaml                           |    9 +\n memory/project/core-upgrade-plan.yaml              |   18 +-\n memory/project/current-state.yaml                  |   75 +-\n memory/project/failure-log.yaml                    |    2 +\n memory/project/lessons-learned.yaml                |    2 +\n memory/project/master-prompt.md                    |   13 +-\n memory/project/metrics.yaml                        |    2 +\n memory/project/next-actions.yaml                   |   71 +-\n memory/project/similarity-index.yaml               |    3 +\n memory/project/unresolved-risks.yaml               |   48 +-\n memory/stageA/video.yaml                           |  114 +\n memory/stageB/video.yaml                           |  103 +\n memory/stageC/task-management-plugin.yaml          |   13 +-\n memory/wp-queue.yaml                               |  630 ++++\n package-lock.json                                  | 1280 +++++++-\n package.json                                       |   68 +-\n requirements/DOMAIN_TEMPLATE.yaml                  |    7 +-\n requirements/commit-convention.yaml                |   19 +\n requirements/domain-map.yaml                       |   68 +-\n requirements/glossary.yaml                         |    2 +-\n requirements/requirements.schema.json              |  624 +---\n scripts/architecture-fitness.js                    |  121 +\n scripts/audit-chain.js                             |   75 +\n scripts/auto-commit.sh                             |   10 +\n scripts/domain-migrate.js                          |  109 +\n scripts/error-budget-check.js                      |   69 +\n scripts/generate-adr.js                            |  156 +\n scripts/generate-catalog-site.js                   |   62 +\n scripts/generate-dep-graph.js                      |   67 +\n scripts/generate-from-contracts.js                 |   86 +\n scripts/generate-learning-report.js                |   96 +\n scripts/generate-master-planner.py                 | 1752 ++++++++++\n scripts/generate-release-evidence.js               |   64 +\n ...nerate_deployment_environment_audit_template.py |  103 +\n scripts/generate_release_evidence.py               |  106 +-\n scripts/health-dashboard.js                        |  115 +\n scripts/lib/domain-discovery.js                    |   47 +\n scripts/orchestrate.js                             |   95 +\n scripts/project_status.js                          |   96 +\n scripts/reconcile_state.py                         |  272 ++\n scripts/record-metrics.js                          |   54 +\n scripts/requirements_gap.py                        |  217 ++\n scripts/resolve_deployment_target.py               |  128 +\n scripts/run_deployment_smoke.js                    |  508 +++\n scripts/run_stage.js                               |  162 +\n scripts/session_end.py                             |  152 +\n scripts/session_metrics.py                         |  240 ++\n scripts/update-knowledge-graph.js                  |   63 +\n scripts/validate-contracts.js                      |   46 +\n scripts/validate_advisory_policy.py                |   50 +\n scripts/validate_branch_protection_policy.py       |   54 +\n scripts/validate_contract_drift.py                 |  106 +-\n scripts/validate_dependency_baseline.py            |  113 +\n ...validate_deployment_environment_provisioning.py |  134 +\n scripts/validate_deployment_smoke_binding.py       |   96 +\n scripts/validate_requirements.py                   |  324 ++\n scripts/wp_scheduler.py                            |  175 +\n src/index.js                                       |   21 +-\n src/infrastructure/FeatureFlagProvider.js          |  132 +\n src/infrastructure/telemetry.js                    |  221 ++\n src/server/createServer.js                         |  265 ++\n src/shared/EventPublisher.js                       |  121 +\n src/shared/ProblemDetails.js                       |  118 +\n src/tests/smoke/runDeploymentSmoke.test.js         |   57 +\n src/tests/smoke/serverWiring.smoke.test.js         |  135 +\n .../archetypes/approval-workflow/archetype.yaml    |   28 +\n templates/archetypes/crud-entity/archetype.yaml    |   19 +\n .../archetypes/financial-ledger/archetype.yaml     |   37 +\n templates/tests/property-based.template.js         |   63 +\n turbo.json                                         |   33 +\n worklog/2026-03-19_WP-01.yaml                      |   41 +\n worklog/2026-03-19_WP-02.yaml                      |   33 +\n worklog/2026-03-19_WP-03.yaml                      |   35 +\n worklog/2026-03-19_WP-04.yaml                      |   42 +\n worklog/2026-03-19_WP-05.yaml                      |   39 +\n worklog/2026-03-19_WP-06.yaml                      |   31 +\n worklog/2026-03-19_WP-07.yaml                      |   37 +\n worklog/2026-03-19_WP-08.yaml                      |   48 +\n worklog/2026-03-19_WP-09.yaml                      |   32 +\n worklog/2026-03-19_WP-ARCH-001.yaml                |   66 +\n worklog/2026-03-19_WP-ARCH-003.yaml                |   45 +\n worklog/2026-03-20_WP-ARCH-004.yaml                |   62 +\n worklog/2026-03-20_WP-COMMIT-001.yaml              |   98 +\n worklog/2026-03-20_WP-DOC-001.yaml                 |   47 +\n worklog/2026-03-20_WP-DOC-002.yaml                 |   47 +\n worklog/2026-03-20_WP-DOM-002.yaml                 |   44 +\n worklog/2026-03-20_WP-EVID-001.yaml                |   40 +\n worklog/2026-03-20_WP-GOV-002.yaml                 |   43 +\n worklog/2026-03-20_WP-NFR-001.yaml                 |   44 +\n worklog/2026-03-20_WP-RUN-001.yaml                 |   35 +\n worklog/2026-03-20_WP-RUN-002.yaml                 |   89 +\n worklog/2026-03-20_WP-RUN-003.yaml                 |   90 +\n worklog/2026-03-20_WP-RUN-004.yaml                 |   72 +\n worklog/B_review.md                                |   65 +\n worklog/D_quality_gate.md                          |   82 +\n worklog/G_git_governance.md                        |   20 +\n worklog/audit-chain.json                           |   21 +\n worklog/commit-log.jsonl                           |    0\n worklog/contract-matrix.md                         |    8 +\n worklog/core-learning-log.md                       |   55 +\n worklog/release-notes.md                           |  104 +\n worklog/reports/.gitkeep                           |    0\n .../reports/2026-03-20_001_A___test__/REPORT.md    |   56 +\n .../2026-03-20_001_A___test__/snippets/01-basic.js |    1 +\n .../snippets/02-intermediate.js                    |    1 +\n .../snippets/03-advanced.js                        |    1 +\n worklog/reports/billing/StageDE_report.md          |   19 +\n .../productivity_task-tracking/StageDE_report.md   |   17 +\n worklog/reports/video/StageDE_report.md            |   18 +\n 270 files changed, 24643 insertions(+), 1356 deletions(-)"
   }
 };</script>
 
@@ -2204,10 +2297,12 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
     <span style="font-weight:400;font-size:13px;color:var(--dm)">마스터 기획서</span>
   </div>
   <div class="tb-right">
+    <span class="git-chip" id="gitchip"><em>⎇</em> </span>
     <span class="badge badge-elite" id="hbadge">ELITE</span>
     <span class="badge-gen" id="gentime"></span>
-    <button class="btn-regen" onclick="regenData()">🔄 데이터 재생성</button>
-    <button class="btn btn-s" style="font-size:11px" onclick="exportMD()">📄 MD 내보내기</button>
+    <button class="btn btn-s" style="font-size:11px;padding:4px 9px" onclick="openSearch()">🔍 검색 <kbd style="font-size:9px;opacity:.5">Ctrl+K</kbd></button>
+    <button class="btn-regen" onclick="regenData()">🔄 재생성</button>
+    <button class="btn btn-s" style="font-size:11px" onclick="exportMD()">📄 MD</button>
   </div>
 </header>
 
@@ -2232,6 +2327,9 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   <div class="tab" onclick="sw('adr')" id="tab-adr">
     🏛 ADR <span class="tc" id="tc-adr"></span>
   </div>
+  <div class="tab" onclick="sw('sprint')" id="tab-sprint">
+    🎯 스프린트
+  </div>
   <div class="tab" onclick="sw('log')" id="tab-log">
     🔍 감사·학습
   </div>
@@ -2247,8 +2345,20 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
     <div class="tab-panel" id="p-dom"><div id="c-dom"></div></div>
     <div class="tab-panel" id="p-req"><div id="c-req"></div></div>
     <div class="tab-panel" id="p-adr"><div id="c-adr"></div></div>
+    <div class="tab-panel" id="p-sprint"><div id="c-sprint"></div></div>
     <div class="tab-panel" id="p-log"><div id="c-log"></div></div>
   </main>
+</div>
+
+<!-- 전역 검색 모달 -->
+<div class="gs-modal" id="gsModal" onclick="if(event.target===this)closeSearch()">
+  <div class="gs-box">
+    <input class="gs-inp" id="gsInp" placeholder="WP·기획·도메인·ADR 검색..." oninput="runSearch(this.value)" onkeydown="gsKey(event)">
+    <div class="gs-results" id="gsResults">
+      <div class="gs-empty">검색어를 입력하세요 (↑↓ 탐색, Enter 이동, Esc 닫기)</div>
+    </div>
+    <div class="gs-hint">Ctrl+K / ⌘K 로 열기 · Esc 로 닫기</div>
+  </div>
 </div>
 
 <footer class="cf">
@@ -2323,7 +2433,7 @@ const SECTIONS = [
     desc:"도메인 간 인터페이스 계약(contracts/), 조합 전략, 충돌 감지 방법론.",
     init(d) {
       const stB = (d.project.stage_states||{}).B||'PASS';
-      return `## 계약 원칙\n\n- 도메인 간 직접 src/ import 금지 — contracts/만 참조\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n- Consumer-Driven Contract Testing 준비\n\n## Stage B 상태: ${stB}\n- test:contract PASS (계약 드리프트 검증)\n- validate:composition PASS\n\n## ADR 연계\n${d.adrs.filter(a=>a.id<='0003').map(a=>`- ADR-${a.id}: ${a.title}`).join('\n')}`;
+      return `## 계약 원칙\n\n- 도메인 간 직접 src/ import 금지 — contracts/만 참조\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n- Consumer-Driven Contract Testing 준비\n\n## Stage B 상태: ${stB}\n- test:contract PASS (계약 드리프트 검증)\n- validate:composition PASS\n\n## ADR 연계\n${d.adrs.filter(a=>['contract','composition','interface','stage-b','stageB','billing','video'].some(k=>(a.domain||a.title||'').toLowerCase().includes(k))||parseInt(a.id||'99')<=4).slice(0,5).map(a=>`- ADR-${a.id}: ${a.title}`).join('\n')}`;
     },
     ideas:[
       {num:"안 01",title:"Consumer-Driven Contract Testing (Pact)",
@@ -2583,6 +2693,14 @@ function renderDash() {
           <div class="card-sub">memory/L0-hot/current-state.yaml</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:8px">${qgH}</div></div>
 
+    <div class="card"><div class="card-h"><div class="card-ic">🔀</div>
+        <div><div class="card-tit">형상관리 — 현재 브랜치</div>
+          <div class="card-sub" id="dash-git-sub">git 정보 로딩중...</div></div>
+        <button class="btn btn-i" style="font-size:10px;margin-left:auto" onclick="sw('sprint')">스프린트 보기 →</button>
+      </div>
+      <div id="dash-git-commits" style="margin-top:6px"></div>
+    </div>
+
     <div class="card"><div class="card-h"><div class="card-ic">⚠️</div>
         <div><div class="card-tit">Known Issues</div></div></div>
       ${kiH}</div>
@@ -2604,6 +2722,11 @@ function renderDash() {
         ${rows}</div>`;
     })()}
 `;
+  // git 카드 채우기
+  const g=d.git||{};
+  const gs=$('dash-git-sub'); if(gs) gs.textContent=`브랜치: ${g.branch||'—'} · HEAD: ${g.hash||'—'} · ${(g.last_date||'').substring(0,10)} ${g.last_auth||''}`;
+  const gc=$('dash-git-commits'); if(gc) gc.innerHTML=(g.commits||[]).slice(0,4).map(c=>`
+    <div class="commit-row"><span class="commit-hash">${esc(c.hash)}</span><span class="commit-msg">${esc(c.msg)}</span></div>`).join('');
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -3244,6 +3367,169 @@ function renderReq(){
 }
 
 // ────────────────────────────────────────────────────────────────
+// SPRINT BOARD
+// ────────────────────────────────────────────────────────────────
+function renderSprint(){
+  const d=window.D;
+  const active=d.wps.active||[], pending=d.wps.pending||[];
+  const done=[...d.wps.done].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,8);
+  const git=d.git||{};
+
+  // 현재 스프린트 정보
+  const curWP=active[0]||{};
+  const curCap=d.caps.find(c=>c.id===(curWP.cap_id||''))||{};
+  const capPct=curCap.wp_count?Math.round(curCap.done_count/curCap.wp_count*100):100;
+
+  // Kanban cards
+  const mkCard=(w,cls)=>`<div class="kb-card ${cls}">
+    <div class="kb-cid">
+      <div class="wd ${cls==='active'?'w-ac':cls==='done'?'w-ok':'w-nd'}" style="width:7px;height:7px;border-radius:50%"></div>
+      ${esc(w.id||'')} <span class="wt" style="flex-shrink:0">${esc(w.tier||'')}</span>
+    </div>
+    <div class="kb-goal">${esc((w.goal||'').substring(0,80))}${(w.goal||'').length>80?'…':''}</div>
+    ${w.cap_name?`<div style="font-size:9px;color:var(--dm);margin-top:4px">${esc(w.cap_id)} — ${esc(w.cap_name)}</div>`:''}
+    ${w.completed_at&&cls==='done'?`<div style="font-size:9px;color:var(--dm);margin-top:3px">✓ ${esc(w.completed_at)}</div>`:''}
+  </div>`;
+
+  const activeCards=active.length?active.map(w=>mkCard(w,'active')).join('')
+    :'<div style="color:var(--dm);font-size:11px;padding:8px">진행 중인 WP 없음<br><small>npm run wp:next 실행</small></div>';
+  const pendingCards=pending.slice(0,4).map(w=>mkCard(w,'pending')).join('')
+    ||'<div style="color:var(--dm);font-size:11px;padding:8px">대기 WP 없음</div>';
+  const doneCards=done.slice(0,5).map(w=>mkCard(w,'done')).join('');
+
+  // Recent commits
+  const commitsH=(git.commits||[]).map(c=>`<div class="commit-row">
+    <span class="commit-hash">${esc(c.hash)}</span>
+    <span class="commit-msg">${esc(c.msg)}</span>
+  </div>`).join('');
+
+  $('c-sprint').innerHTML=`
+    <div class="sec-tit">🎯 현재 스프린트</div>
+
+    ${curWP.id?`<div class="card" style="border-color:rgba(31,111,235,.4);background:rgba(31,111,235,.04);margin-bottom:14px">
+      <div style="display:flex;align-items:flex-start;gap:14px">
+        <div style="font-size:32px">🔄</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--ac2);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">
+            현재 진행중 — ${esc(curWP.id)}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--br);margin-bottom:5px">${esc(curWP.goal||'')}</div>
+          <div style="font-size:11px;color:var(--dm)">CAP: ${esc(curWP.cap_id||'')} — ${esc(curWP.cap_name||'')} |
+            Tier: ${esc(curWP.tier||'')} | CAP 진행률: ${capPct}%</div>
+          <div class="pb2" style="margin-top:6px"><div class="pb2-f" style="width:${capPct}%"></div></div>
+        </div>
+        <button class="btn btn-i" style="flex-shrink:0" onclick="sw('wps')">WP 목록 →</button>
+      </div>
+    </div>`:`<div class="card" style="margin-bottom:14px">
+      <div style="color:var(--dm);padding:8px">진행 중인 Work Packet 없음 — <code style="font-size:11px">npm run wp:next</code> 실행</div>
+    </div>`}
+
+    <div class="g3" style="margin-bottom:14px">
+      <div class="mc"><div class="mc-l">전체 WP 완료</div>
+        <div class="mc-v sc-hi">${d.wps.done_count}<span style="font-size:13px;color:var(--dm)">/${d.wps.total}</span></div>
+        <div class="pb2"><div class="pb2-f" style="width:${pct(d.wps.done_count,d.wps.total)}%"></div></div></div>
+      <div class="mc"><div class="mc-l">브랜치</div>
+        <div class="mc-v" style="font-size:12px;font-family:var(--mo)">${esc(git.branch||'—')}</div>
+        <div class="mc-s">${esc((git.hash||'').substring(0,7))}</div></div>
+      <div class="mc"><div class="mc-l">최근 커밋</div>
+        <div class="mc-v" style="font-size:11px;line-height:1.3">${esc((git.last_msg||'—').substring(0,30))}${(git.last_msg||'').length>30?'…':''}</div>
+        <div class="mc-s">${esc((git.last_date||'').substring(0,10))}</div></div>
+    </div>
+
+    <div class="kb">
+      <div class="kb-col">
+        <div class="kb-h" style="color:var(--ac2)">🔄 진행중 <span class="tc" style="margin-left:auto">${active.length}</span></div>
+        <div class="kb-body">${activeCards}</div>
+      </div>
+      <div class="kb-col">
+        <div class="kb-h" style="color:var(--ac3)">⏳ 대기 <span class="tc" style="margin-left:auto">${pending.length}</span></div>
+        <div class="kb-body">${pendingCards}</div>
+      </div>
+      <div class="kb-col">
+        <div class="kb-h" style="color:var(--ac)">✅ 최근 완료 <span class="tc" style="margin-left:auto">${done.length}</span></div>
+        <div class="kb-body">${doneCards}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-ic">🔀</div>
+        <div><div class="card-tit">형상관리 — Git 커밋 이력</div>
+          <div class="card-sub">브랜치: ${esc(git.branch||'')} · HEAD: ${esc(git.hash||'')}</div></div></div>
+      <div style="margin-top:8px">${commitsH||'<div style="color:var(--dm);font-size:11px;padding:8px">git 정보 없음</div>'}</div>
+      ${git.diff_stat?`<div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:5px;font-family:var(--mo);font-size:10px;color:var(--dm);max-height:120px;overflow-y:auto;white-space:pre-wrap">${esc(git.diff_stat)}</div>`:''}
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-ic">🗺</div>
+        <div><div class="card-tit">Capability 로드맵</div>
+          <div class="card-sub">전체 CAP 진행 현황</div></div></div>
+      <div style="margin-top:10px">
+        ${d.caps.map(c=>{
+          const cp=c.wp_count?Math.round(c.done_count/c.wp_count*100):0;
+          return `<div style="margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+              <span style="font-size:9px;font-weight:700;color:var(--dm);min-width:55px">${esc(c.id)}</span>
+              <span style="font-size:11px;color:var(--tx);flex:1">${esc(c.name)}</span>
+              <span style="font-size:10px;color:${cp===100?'var(--ac)':'var(--dm)'}">${cp===100?'✅':''}${c.done_count}/${c.wp_count}</span>
+            </div>
+            <div class="pb2"><div class="pb2-f" style="width:${cp}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+// ────────────────────────────────────────────────────────────────
+// GLOBAL SEARCH
+// ────────────────────────────────────────────────────────────────
+let _gsIdx=0;
+function openSearch(){ $('gsModal').classList.add('open'); $('gsInp').focus(); $('gsInp').value=''; $('gsResults').innerHTML='<div class="gs-empty">검색어를 입력하세요</div>'; }
+function closeSearch(){ $('gsModal').classList.remove('open'); }
+function gsKey(e){
+  if(e.key==='Escape'){closeSearch();return;}
+  const items=[...$('gsResults').querySelectorAll('.gs-item')];
+  if(!items.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();_gsIdx=Math.min(_gsIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_gsIdx=Math.max(_gsIdx-1,0);}
+  else if(e.key==='Enter'){items[_gsIdx]?.click();return;}
+  items.forEach((it,i)=>it.style.background=i===_gsIdx?'var(--sf2)':'');
+}
+function runSearch(q){
+  _gsIdx=0;
+  if(!q||q.length<2){$('gsResults').innerHTML='<div class="gs-empty">검색어를 2자 이상 입력하세요</div>';return;}
+  const d=window.D; const ql=q.toLowerCase(); const results=[];
+  // WPs
+  d.wps.all.filter(w=>(w.id+w.goal+w.cap_name+w.result).toLowerCase().includes(ql)).slice(0,6).forEach(w=>{
+    results.push({tag:'WP',text:w.id+' — '+w.goal.substring(0,60),sub:'CAP: '+w.cap_id+' | '+w.status,
+      action:`sw('wps')`});
+  });
+  // Planning sections
+  SECTIONS.filter(s=>(s.title+s.desc+(ST.planC[s.id]||'')).toLowerCase().includes(ql)).forEach(s=>{
+    results.push({tag:'기획',text:s.num+' '+s.title,sub:s.desc.substring(0,50),
+      action:`sw('plan');setTimeout(()=>document.getElementById('ps-${s.id}')?.scrollIntoView({behavior:'smooth'}),100)`});
+  });
+  // Domains
+  d.domains.filter(m=>(m.module_id+m.domain).toLowerCase().includes(ql)).forEach(m=>{
+    results.push({tag:'도메인',text:m.module_id+' ('+m.domain+')',sub:'health: '+(m.health_score||'—'),
+      action:`sw('dom')`});
+  });
+  // ADRs
+  d.adrs.filter(a=>(a.id+a.title+a.domain).toLowerCase().includes(ql)).slice(0,4).forEach(a=>{
+    results.push({tag:'ADR',text:'ADR-'+a.id+': '+a.title,sub:'domain: '+a.domain,action:`sw('adr')`});
+  });
+  if(!results.length){$('gsResults').innerHTML='<div class="gs-empty">검색 결과 없음: "'+esc(q)+'"</div>';return;}
+  $('gsResults').innerHTML=results.map((r,i)=>`<div class="gs-item" style="${i===0?'background:var(--sf2)':''}"
+    onclick="${r.action};closeSearch()">
+    <span class="gs-item-tag">${esc(r.tag)}</span>
+    <div><div class="gs-item-text">${esc(r.text)}</div>
+      <div class="gs-item-sub">${esc(r.sub)}</div></div>
+  </div>`).join('');
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openSearch();}
+  if(e.key==='Escape'&&$('gsModal').classList.contains('open'))closeSearch();
+});
+
+// ────────────────────────────────────────────────────────────────
 // SIDEBAR
 // ────────────────────────────────────────────────────────────────
 function buildSB(tab){
@@ -3312,6 +3598,23 @@ function buildSB(tab){
         <span class="dot d-act"></span>
         <span style="font-size:10px;flex:1">${esc(a.id)}: ${esc(a.title.substring(0,22))}${a.title.length>22?'…':''}</span>
       </div>`).join('');
+  } else if(tab==='sprint'){
+    const d2=window.D; const git=d2.git||{};
+    sb.innerHTML=`<div class="sb-lbl">스프린트</div>
+      <div class="nl on"><span class="dot d-act"></span>현재 WP (${d2.wps.active.length})</div>
+      <div class="nl"><span class="dot d-warn"></span>대기 (${d2.wps.pending.length})</div>
+      <div class="nl"><span class="dot d-pass"></span>최근 완료 WP</div>
+      <div class="sb-lbl">Git</div>
+      <div class="nl"><span class="dot d-act"></span><span style="font-size:10px;font-family:var(--mo)">${esc(git.branch||'—')}</span></div>
+      <div class="nl"><span class="dot d-pass"></span>HEAD: <span style="font-family:var(--mo);font-size:9px">${esc(git.hash||'—')}</span></div>
+      <div class="sb-lbl">CAP 로드맵</div>
+      ${d2.caps.map(c=>{
+        const cp=c.wp_count?Math.round(c.done_count/c.wp_count*100):100;
+        return `<div class="nl"><span class="dot ${cp===100?'d-pass':'d-act'}"></span>
+          <span style="flex:1;font-size:10px">${esc(c.id)}</span>
+          <span style="font-size:9px;color:${cp===100?'var(--ac)':'var(--dm)'}">${cp}%</span>
+        </div>`;
+      }).join('')}`;
   } else if(tab==='log'){
     const d2=window.D;
     sb.innerHTML=`<div class="sb-lbl">감사 로그</div>
@@ -3336,7 +3639,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const d=window.D;
   $('hbadge').textContent=d.project.health_rating;
   $('gentime').textContent='생성: '+new Date(d.generated_at).toLocaleString('ko-KR');
-  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderLog();
+  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderSprint(); renderLog();
+  // git 칩
+  const g=d.git||{}; if(g.branch) $('gitchip').innerHTML=`<em>⎇</em> ${esc(g.branch)} <span style="opacity:.5;font-size:9px">${esc(g.hash||'')}</span>`;
   buildSB('dash');
   setInterval(()=>{
     SECTIONS.forEach(s=>{

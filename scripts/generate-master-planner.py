@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 """
-Workflow OS — 마스터 기획서 UI 생성기 v2
-실제 프로젝트 YAML/JSON/MD 데이터를 수집해 self-contained HTML을 생성한다.
+Workflow OS — 마스터 기획서 UI 생성기 v4
+실제 프로젝트 YAML/JSON/MD + Git 데이터를 수집해 self-contained HTML을 생성한다.
 실행: python3 scripts/generate-master-planner.py
 출력: artifacts/master-planner/index.html
 """
 
-import yaml, json, os, sys, datetime, glob, re
+import yaml, json, os, sys, datetime, glob, re, subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def git(args):
+    """Run git command, return stdout or empty string on error."""
+    try:
+        r = subprocess.run(["git"] + args, capture_output=True, text=True,
+                           cwd=ROOT, timeout=5)
+        return r.stdout.strip()
+    except Exception:
+        return ""
 
 def load_yaml(path, default=None):
     full = os.path.join(ROOT, path)
@@ -36,7 +45,19 @@ def read_md(path, lines=10):
     except: return ""
 
 # ═══════════════════════════════════════════════════════════════
-print("📖 프로젝트 데이터 수집 중...")
+SILENT = "--silent" in sys.argv
+if not SILENT: print("📖 프로젝트 데이터 수집 중...")
+
+# ── Git 형상관리 정보 ────────────────────────────────────────────
+git_branch   = git(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown"
+git_hash     = git(["rev-parse", "--short", "HEAD"]) or ""
+git_hash_full= git(["rev-parse", "HEAD"]) or ""
+git_last_msg = git(["log", "-1", "--format=%s"]) or ""
+git_last_date= git(["log", "-1", "--format=%ai"]) or ""
+git_last_auth= git(["log", "-1", "--format=%an"]) or ""
+git_log_lines= git(["log", "--oneline", "-8"]) or ""
+git_commits  = [{"hash": l[:7], "msg": l[8:]} for l in git_log_lines.splitlines() if l]
+git_diff_stat= git(["diff", "main...HEAD", "--stat", "--no-color"]) or ""
 
 root_state   = load_yaml("memory/current-state.yaml")
 l0_state     = load_yaml("memory/L0-hot/current-state.yaml")
@@ -221,6 +242,24 @@ ver = checkpoint.get("verification_summary", {})
 ki  = root_state.get("known_issues", [])
 stages = l0_state.get("stage_states", {})
 
+# ── 실제 테스트 수 동적 계산 ─────────────────────────────────────
+_tests_total, _tests_pass = 0, 0
+for module in l0_state.get("active_modules", []):
+    for key in ("unit_tests", "stage_d_detail"):
+        val = str(module.get(key, "") or module.get("stage_d_detail", {}).get("unit", "") if key=="stage_d_detail" else module.get(key,""))
+        m = re.search(r'(\d+)/(\d+)', val)
+        if m:
+            _tests_pass += int(m.group(1))
+            _tests_total += int(m.group(2))
+            break
+# quality_gate_detail에서 보충
+for val in qgd.values():
+    m = re.search(r'(\d+)/(\d+)', str(val))
+    if m and int(m.group(2)) > _tests_total:
+        _tests_total = int(m.group(2))
+        _tests_pass  = int(m.group(1))
+if not _tests_total: _tests_total = _tests_pass = 500  # fallback
+
 # ── 번들 ─────────────────────────────────────────────────────────────
 data = {
     "generated_at": datetime.datetime.now().isoformat(),
@@ -228,7 +267,7 @@ data = {
         "name":  "Workflow OS",
         "repo":  "my-module",
         "phase": l0_state.get("repository",{}).get("phase","continuous-self-improvement"),
-        "branch": "chore/core-git-governance-activation",
+        "branch": git_branch,
         "stage_states": stages,
         "quality_gate_result":   l0_state.get("quality_gate_result","PASS"),
         "quality_gate_last_run": l0_state.get("quality_gate_last_run","2026-03-21"),
@@ -237,8 +276,8 @@ data = {
         "gate_pass_rate":   hm.get("gate_pass_rate_pct", 88.1),
         "change_failure_rate": hm.get("change_failure_rate_pct", 0),
         "avg_wps_per_session": hm.get("avg_wps_per_session", 10.0),
-        "tests_total": 500,
-        "tests_pass":  500,
+        "tests_total": _tests_total,
+        "tests_pass":  _tests_pass,
         "known_issues": ki,
         "upgrade_v3_features": l0_state.get("upgrade_v3",{}).get("features_added",[]),
         "notes": l0_state.get("notes",""),
@@ -289,16 +328,27 @@ data = {
     "knowledge_graph": {
         "domains": (knowledge_g or {}).get("entities", {}).get("domains", {}),
     },
+    "git": {
+        "branch":    git_branch,
+        "hash":      git_hash,
+        "hash_full": git_hash_full,
+        "last_msg":  git_last_msg,
+        "last_date": git_last_date,
+        "last_auth": git_last_auth,
+        "commits":   git_commits,
+        "diff_stat": git_diff_stat,
+    },
 }
 
 DATA_JSON = json.dumps(data, ensure_ascii=False, indent=2)
-print(f"  ✓ WPs: {len(all_wps)} total | done:{len(done_wps)} active:{len(active_wps)} pending:{len(pending_wps)}")
-print(f"  ✓ Domains: {len(active_modules)} | Plugins: {len(plugins)}")
-print(f"  ✓ ADRs: {len(adrs)} | Stage A mems: {len(stage_a_summaries)}")
-print(f"  ✓ Reflections: {len(reflections)} | Audit: {len(audit_entries)} | Reports: {len(learning_reports)}")
+if not SILENT:
+    print(f"  ✓ WPs: {len(all_wps)} total | done:{len(done_wps)} active:{len(active_wps)} pending:{len(pending_wps)}")
+    print(f"  ✓ Domains: {len(active_modules)} | Plugins: {len(plugins)}")
+    print(f"  ✓ ADRs: {len(adrs)} | Stage A mems: {len(stage_a_summaries)}")
+    print(f"  ✓ Reflections: {len(reflections)} | Audit: {len(audit_entries)} | Reports: {len(learning_reports)}")
 
 # ═══════════════════════════════════════════════════════════════
-print("🎨 HTML 생성 중...")
+if not SILENT: print("🎨 HTML 생성 중...")
 
 HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="ko">
@@ -573,9 +623,59 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   letter-spacing:.08em;margin:14px 0 5px;display:flex;align-items:center;gap:6px}
 .cap-prog{font-size:10px;color:var(--ac);margin-left:auto}
 
+/* ── sprint board ── */
+.kb{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.kb-col{background:var(--sf);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.kb-h{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px}
+.kb-body{padding:8px;min-height:80px}
+.kb-card{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--r);
+  padding:10px;margin-bottom:6px;transition:all .13s}
+.kb-card:hover{border-color:#3a4149;transform:translateY(-1px)}
+.kb-card.active{border-color:var(--ac2);background:rgba(31,111,235,.05)}
+.kb-card.done{opacity:.65}
+.kb-cid{font-size:9px;font-family:var(--mo);color:var(--dm);margin-bottom:4px;
+  display:flex;align-items:center;gap:5px}
+.kb-goal{font-size:11px;color:var(--tx);line-height:1.5}
+.kb-tier{font-size:9px;padding:1px 5px;border-radius:99px;background:var(--sf);
+  color:var(--dm);border:1px solid var(--bd);margin-top:5px;display:inline-block}
+
+/* ── git info ── */
+.git-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;
+  font-family:var(--mo);color:var(--dm);background:var(--sf2);
+  padding:2px 8px;border-radius:99px;border:1px solid var(--bd)}
+.git-chip em{color:var(--ac2);font-style:normal}
+.commit-row{display:flex;gap:8px;padding:5px 8px;border-bottom:1px solid var(--bd);
+  font-size:11px;align-items:baseline}
+.commit-row:last-child{border-bottom:none}
+.commit-hash{font-family:var(--mo);font-size:9px;color:var(--pu);min-width:50px;flex-shrink:0}
+.commit-msg{color:var(--tx);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── global search ── */
+.gs-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:9999;align-items:flex-start;justify-content:center;padding-top:80px}
+.gs-modal.open{display:flex}
+.gs-box{background:var(--sf);border:1px solid var(--bd);border-radius:12px;
+  width:100%;max-width:560px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.gs-inp{width:100%;background:transparent;border:none;color:var(--br);font-family:var(--fn);
+  font-size:15px;padding:14px 16px;outline:none}
+.gs-inp::placeholder{color:var(--dm)}
+.gs-results{border-top:1px solid var(--bd);max-height:340px;overflow-y:auto}
+.gs-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;
+  cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(48,54,61,.5)}
+.gs-item:hover{background:var(--sf2)}
+.gs-item-tag{font-size:9px;padding:1px 5px;border-radius:99px;
+  background:rgba(31,111,235,.1);color:var(--ac2);border:1px solid rgba(31,111,235,.2);
+  flex-shrink:0;margin-top:2px;white-space:nowrap}
+.gs-item-text{font-size:12px;color:var(--tx);flex:1;line-height:1.4}
+.gs-item-sub{font-size:10px;color:var(--dm)}
+.gs-empty{padding:20px;text-align:center;color:var(--dm);font-size:12px}
+.gs-hint{padding:8px 16px;font-size:10px;color:var(--dm);border-top:1px solid var(--bd)}
+
 @media(max-width:860px){
   .ly{grid-template-columns:1fr}.sb{display:none}
   .g3{grid-template-columns:1fr}.ig.open{grid-template-columns:1fr!important}
+  .kb{grid-template-columns:1fr}
   .main{padding:14px}
 }
 </style>
@@ -591,10 +691,12 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
     <span style="font-weight:400;font-size:13px;color:var(--dm)">마스터 기획서</span>
   </div>
   <div class="tb-right">
+    <span class="git-chip" id="gitchip"><em>⎇</em> </span>
     <span class="badge badge-elite" id="hbadge">ELITE</span>
     <span class="badge-gen" id="gentime"></span>
-    <button class="btn-regen" onclick="regenData()">🔄 데이터 재생성</button>
-    <button class="btn btn-s" style="font-size:11px" onclick="exportMD()">📄 MD 내보내기</button>
+    <button class="btn btn-s" style="font-size:11px;padding:4px 9px" onclick="openSearch()">🔍 검색 <kbd style="font-size:9px;opacity:.5">Ctrl+K</kbd></button>
+    <button class="btn-regen" onclick="regenData()">🔄 재생성</button>
+    <button class="btn btn-s" style="font-size:11px" onclick="exportMD()">📄 MD</button>
   </div>
 </header>
 
@@ -619,6 +721,9 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   <div class="tab" onclick="sw('adr')" id="tab-adr">
     🏛 ADR <span class="tc" id="tc-adr"></span>
   </div>
+  <div class="tab" onclick="sw('sprint')" id="tab-sprint">
+    🎯 스프린트
+  </div>
   <div class="tab" onclick="sw('log')" id="tab-log">
     🔍 감사·학습
   </div>
@@ -634,8 +739,20 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
     <div class="tab-panel" id="p-dom"><div id="c-dom"></div></div>
     <div class="tab-panel" id="p-req"><div id="c-req"></div></div>
     <div class="tab-panel" id="p-adr"><div id="c-adr"></div></div>
+    <div class="tab-panel" id="p-sprint"><div id="c-sprint"></div></div>
     <div class="tab-panel" id="p-log"><div id="c-log"></div></div>
   </main>
+</div>
+
+<!-- 전역 검색 모달 -->
+<div class="gs-modal" id="gsModal" onclick="if(event.target===this)closeSearch()">
+  <div class="gs-box">
+    <input class="gs-inp" id="gsInp" placeholder="WP·기획·도메인·ADR 검색..." oninput="runSearch(this.value)" onkeydown="gsKey(event)">
+    <div class="gs-results" id="gsResults">
+      <div class="gs-empty">검색어를 입력하세요 (↑↓ 탐색, Enter 이동, Esc 닫기)</div>
+    </div>
+    <div class="gs-hint">Ctrl+K / ⌘K 로 열기 · Esc 로 닫기</div>
+  </div>
 </div>
 
 <footer class="cf">
@@ -710,7 +827,7 @@ const SECTIONS = [
     desc:"도메인 간 인터페이스 계약(contracts/), 조합 전략, 충돌 감지 방법론.",
     init(d) {
       const stB = (d.project.stage_states||{}).B||'PASS';
-      return `## 계약 원칙\n\n- 도메인 간 직접 src/ import 금지 — contracts/만 참조\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n- Consumer-Driven Contract Testing 준비\n\n## Stage B 상태: ${stB}\n- test:contract PASS (계약 드리프트 검증)\n- validate:composition PASS\n\n## ADR 연계\n${d.adrs.filter(a=>a.id<='0003').map(a=>`- ADR-${a.id}: ${a.title}`).join('\n')}`;
+      return `## 계약 원칙\n\n- 도메인 간 직접 src/ import 금지 — contracts/만 참조\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n- Consumer-Driven Contract Testing 준비\n\n## Stage B 상태: ${stB}\n- test:contract PASS (계약 드리프트 검증)\n- validate:composition PASS\n\n## ADR 연계\n${d.adrs.filter(a=>['contract','composition','interface','stage-b','stageB','billing','video'].some(k=>(a.domain||a.title||'').toLowerCase().includes(k))||parseInt(a.id||'99')<=4).slice(0,5).map(a=>`- ADR-${a.id}: ${a.title}`).join('\n')}`;
     },
     ideas:[
       {num:"안 01",title:"Consumer-Driven Contract Testing (Pact)",
@@ -970,6 +1087,14 @@ function renderDash() {
           <div class="card-sub">memory/L0-hot/current-state.yaml</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:8px">${qgH}</div></div>
 
+    <div class="card"><div class="card-h"><div class="card-ic">🔀</div>
+        <div><div class="card-tit">형상관리 — 현재 브랜치</div>
+          <div class="card-sub" id="dash-git-sub">git 정보 로딩중...</div></div>
+        <button class="btn btn-i" style="font-size:10px;margin-left:auto" onclick="sw('sprint')">스프린트 보기 →</button>
+      </div>
+      <div id="dash-git-commits" style="margin-top:6px"></div>
+    </div>
+
     <div class="card"><div class="card-h"><div class="card-ic">⚠️</div>
         <div><div class="card-tit">Known Issues</div></div></div>
       ${kiH}</div>
@@ -991,6 +1116,11 @@ function renderDash() {
         ${rows}</div>`;
     })()}
 `;
+  // git 카드 채우기
+  const g=d.git||{};
+  const gs=$('dash-git-sub'); if(gs) gs.textContent=`브랜치: ${g.branch||'—'} · HEAD: ${g.hash||'—'} · ${(g.last_date||'').substring(0,10)} ${g.last_auth||''}`;
+  const gc=$('dash-git-commits'); if(gc) gc.innerHTML=(g.commits||[]).slice(0,4).map(c=>`
+    <div class="commit-row"><span class="commit-hash">${esc(c.hash)}</span><span class="commit-msg">${esc(c.msg)}</span></div>`).join('');
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -1631,6 +1761,169 @@ function renderReq(){
 }
 
 // ────────────────────────────────────────────────────────────────
+// SPRINT BOARD
+// ────────────────────────────────────────────────────────────────
+function renderSprint(){
+  const d=window.D;
+  const active=d.wps.active||[], pending=d.wps.pending||[];
+  const done=[...d.wps.done].sort((a,b)=>(b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,8);
+  const git=d.git||{};
+
+  // 현재 스프린트 정보
+  const curWP=active[0]||{};
+  const curCap=d.caps.find(c=>c.id===(curWP.cap_id||''))||{};
+  const capPct=curCap.wp_count?Math.round(curCap.done_count/curCap.wp_count*100):100;
+
+  // Kanban cards
+  const mkCard=(w,cls)=>`<div class="kb-card ${cls}">
+    <div class="kb-cid">
+      <div class="wd ${cls==='active'?'w-ac':cls==='done'?'w-ok':'w-nd'}" style="width:7px;height:7px;border-radius:50%"></div>
+      ${esc(w.id||'')} <span class="wt" style="flex-shrink:0">${esc(w.tier||'')}</span>
+    </div>
+    <div class="kb-goal">${esc((w.goal||'').substring(0,80))}${(w.goal||'').length>80?'…':''}</div>
+    ${w.cap_name?`<div style="font-size:9px;color:var(--dm);margin-top:4px">${esc(w.cap_id)} — ${esc(w.cap_name)}</div>`:''}
+    ${w.completed_at&&cls==='done'?`<div style="font-size:9px;color:var(--dm);margin-top:3px">✓ ${esc(w.completed_at)}</div>`:''}
+  </div>`;
+
+  const activeCards=active.length?active.map(w=>mkCard(w,'active')).join('')
+    :'<div style="color:var(--dm);font-size:11px;padding:8px">진행 중인 WP 없음<br><small>npm run wp:next 실행</small></div>';
+  const pendingCards=pending.slice(0,4).map(w=>mkCard(w,'pending')).join('')
+    ||'<div style="color:var(--dm);font-size:11px;padding:8px">대기 WP 없음</div>';
+  const doneCards=done.slice(0,5).map(w=>mkCard(w,'done')).join('');
+
+  // Recent commits
+  const commitsH=(git.commits||[]).map(c=>`<div class="commit-row">
+    <span class="commit-hash">${esc(c.hash)}</span>
+    <span class="commit-msg">${esc(c.msg)}</span>
+  </div>`).join('');
+
+  $('c-sprint').innerHTML=`
+    <div class="sec-tit">🎯 현재 스프린트</div>
+
+    ${curWP.id?`<div class="card" style="border-color:rgba(31,111,235,.4);background:rgba(31,111,235,.04);margin-bottom:14px">
+      <div style="display:flex;align-items:flex-start;gap:14px">
+        <div style="font-size:32px">🔄</div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--ac2);font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">
+            현재 진행중 — ${esc(curWP.id)}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--br);margin-bottom:5px">${esc(curWP.goal||'')}</div>
+          <div style="font-size:11px;color:var(--dm)">CAP: ${esc(curWP.cap_id||'')} — ${esc(curWP.cap_name||'')} |
+            Tier: ${esc(curWP.tier||'')} | CAP 진행률: ${capPct}%</div>
+          <div class="pb2" style="margin-top:6px"><div class="pb2-f" style="width:${capPct}%"></div></div>
+        </div>
+        <button class="btn btn-i" style="flex-shrink:0" onclick="sw('wps')">WP 목록 →</button>
+      </div>
+    </div>`:`<div class="card" style="margin-bottom:14px">
+      <div style="color:var(--dm);padding:8px">진행 중인 Work Packet 없음 — <code style="font-size:11px">npm run wp:next</code> 실행</div>
+    </div>`}
+
+    <div class="g3" style="margin-bottom:14px">
+      <div class="mc"><div class="mc-l">전체 WP 완료</div>
+        <div class="mc-v sc-hi">${d.wps.done_count}<span style="font-size:13px;color:var(--dm)">/${d.wps.total}</span></div>
+        <div class="pb2"><div class="pb2-f" style="width:${pct(d.wps.done_count,d.wps.total)}%"></div></div></div>
+      <div class="mc"><div class="mc-l">브랜치</div>
+        <div class="mc-v" style="font-size:12px;font-family:var(--mo)">${esc(git.branch||'—')}</div>
+        <div class="mc-s">${esc((git.hash||'').substring(0,7))}</div></div>
+      <div class="mc"><div class="mc-l">최근 커밋</div>
+        <div class="mc-v" style="font-size:11px;line-height:1.3">${esc((git.last_msg||'—').substring(0,30))}${(git.last_msg||'').length>30?'…':''}</div>
+        <div class="mc-s">${esc((git.last_date||'').substring(0,10))}</div></div>
+    </div>
+
+    <div class="kb">
+      <div class="kb-col">
+        <div class="kb-h" style="color:var(--ac2)">🔄 진행중 <span class="tc" style="margin-left:auto">${active.length}</span></div>
+        <div class="kb-body">${activeCards}</div>
+      </div>
+      <div class="kb-col">
+        <div class="kb-h" style="color:var(--ac3)">⏳ 대기 <span class="tc" style="margin-left:auto">${pending.length}</span></div>
+        <div class="kb-body">${pendingCards}</div>
+      </div>
+      <div class="kb-col">
+        <div class="kb-h" style="color:var(--ac)">✅ 최근 완료 <span class="tc" style="margin-left:auto">${done.length}</span></div>
+        <div class="kb-body">${doneCards}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-ic">🔀</div>
+        <div><div class="card-tit">형상관리 — Git 커밋 이력</div>
+          <div class="card-sub">브랜치: ${esc(git.branch||'')} · HEAD: ${esc(git.hash||'')}</div></div></div>
+      <div style="margin-top:8px">${commitsH||'<div style="color:var(--dm);font-size:11px;padding:8px">git 정보 없음</div>'}</div>
+      ${git.diff_stat?`<div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:5px;font-family:var(--mo);font-size:10px;color:var(--dm);max-height:120px;overflow-y:auto;white-space:pre-wrap">${esc(git.diff_stat)}</div>`:''}
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-ic">🗺</div>
+        <div><div class="card-tit">Capability 로드맵</div>
+          <div class="card-sub">전체 CAP 진행 현황</div></div></div>
+      <div style="margin-top:10px">
+        ${d.caps.map(c=>{
+          const cp=c.wp_count?Math.round(c.done_count/c.wp_count*100):0;
+          return `<div style="margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+              <span style="font-size:9px;font-weight:700;color:var(--dm);min-width:55px">${esc(c.id)}</span>
+              <span style="font-size:11px;color:var(--tx);flex:1">${esc(c.name)}</span>
+              <span style="font-size:10px;color:${cp===100?'var(--ac)':'var(--dm)'}">${cp===100?'✅':''}${c.done_count}/${c.wp_count}</span>
+            </div>
+            <div class="pb2"><div class="pb2-f" style="width:${cp}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+// ────────────────────────────────────────────────────────────────
+// GLOBAL SEARCH
+// ────────────────────────────────────────────────────────────────
+let _gsIdx=0;
+function openSearch(){ $('gsModal').classList.add('open'); $('gsInp').focus(); $('gsInp').value=''; $('gsResults').innerHTML='<div class="gs-empty">검색어를 입력하세요</div>'; }
+function closeSearch(){ $('gsModal').classList.remove('open'); }
+function gsKey(e){
+  if(e.key==='Escape'){closeSearch();return;}
+  const items=[...$('gsResults').querySelectorAll('.gs-item')];
+  if(!items.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();_gsIdx=Math.min(_gsIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_gsIdx=Math.max(_gsIdx-1,0);}
+  else if(e.key==='Enter'){items[_gsIdx]?.click();return;}
+  items.forEach((it,i)=>it.style.background=i===_gsIdx?'var(--sf2)':'');
+}
+function runSearch(q){
+  _gsIdx=0;
+  if(!q||q.length<2){$('gsResults').innerHTML='<div class="gs-empty">검색어를 2자 이상 입력하세요</div>';return;}
+  const d=window.D; const ql=q.toLowerCase(); const results=[];
+  // WPs
+  d.wps.all.filter(w=>(w.id+w.goal+w.cap_name+w.result).toLowerCase().includes(ql)).slice(0,6).forEach(w=>{
+    results.push({tag:'WP',text:w.id+' — '+w.goal.substring(0,60),sub:'CAP: '+w.cap_id+' | '+w.status,
+      action:`sw('wps')`});
+  });
+  // Planning sections
+  SECTIONS.filter(s=>(s.title+s.desc+(ST.planC[s.id]||'')).toLowerCase().includes(ql)).forEach(s=>{
+    results.push({tag:'기획',text:s.num+' '+s.title,sub:s.desc.substring(0,50),
+      action:`sw('plan');setTimeout(()=>document.getElementById('ps-${s.id}')?.scrollIntoView({behavior:'smooth'}),100)`});
+  });
+  // Domains
+  d.domains.filter(m=>(m.module_id+m.domain).toLowerCase().includes(ql)).forEach(m=>{
+    results.push({tag:'도메인',text:m.module_id+' ('+m.domain+')',sub:'health: '+(m.health_score||'—'),
+      action:`sw('dom')`});
+  });
+  // ADRs
+  d.adrs.filter(a=>(a.id+a.title+a.domain).toLowerCase().includes(ql)).slice(0,4).forEach(a=>{
+    results.push({tag:'ADR',text:'ADR-'+a.id+': '+a.title,sub:'domain: '+a.domain,action:`sw('adr')`});
+  });
+  if(!results.length){$('gsResults').innerHTML='<div class="gs-empty">검색 결과 없음: "'+esc(q)+'"</div>';return;}
+  $('gsResults').innerHTML=results.map((r,i)=>`<div class="gs-item" style="${i===0?'background:var(--sf2)':''}"
+    onclick="${r.action};closeSearch()">
+    <span class="gs-item-tag">${esc(r.tag)}</span>
+    <div><div class="gs-item-text">${esc(r.text)}</div>
+      <div class="gs-item-sub">${esc(r.sub)}</div></div>
+  </div>`).join('');
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openSearch();}
+  if(e.key==='Escape'&&$('gsModal').classList.contains('open'))closeSearch();
+});
+
+// ────────────────────────────────────────────────────────────────
 // SIDEBAR
 // ────────────────────────────────────────────────────────────────
 function buildSB(tab){
@@ -1699,6 +1992,23 @@ function buildSB(tab){
         <span class="dot d-act"></span>
         <span style="font-size:10px;flex:1">${esc(a.id)}: ${esc(a.title.substring(0,22))}${a.title.length>22?'…':''}</span>
       </div>`).join('');
+  } else if(tab==='sprint'){
+    const d2=window.D; const git=d2.git||{};
+    sb.innerHTML=`<div class="sb-lbl">스프린트</div>
+      <div class="nl on"><span class="dot d-act"></span>현재 WP (${d2.wps.active.length})</div>
+      <div class="nl"><span class="dot d-warn"></span>대기 (${d2.wps.pending.length})</div>
+      <div class="nl"><span class="dot d-pass"></span>최근 완료 WP</div>
+      <div class="sb-lbl">Git</div>
+      <div class="nl"><span class="dot d-act"></span><span style="font-size:10px;font-family:var(--mo)">${esc(git.branch||'—')}</span></div>
+      <div class="nl"><span class="dot d-pass"></span>HEAD: <span style="font-family:var(--mo);font-size:9px">${esc(git.hash||'—')}</span></div>
+      <div class="sb-lbl">CAP 로드맵</div>
+      ${d2.caps.map(c=>{
+        const cp=c.wp_count?Math.round(c.done_count/c.wp_count*100):100;
+        return `<div class="nl"><span class="dot ${cp===100?'d-pass':'d-act'}"></span>
+          <span style="flex:1;font-size:10px">${esc(c.id)}</span>
+          <span style="font-size:9px;color:${cp===100?'var(--ac)':'var(--dm)'}">${cp}%</span>
+        </div>`;
+      }).join('')}`;
   } else if(tab==='log'){
     const d2=window.D;
     sb.innerHTML=`<div class="sb-lbl">감사 로그</div>
@@ -1723,7 +2033,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const d=window.D;
   $('hbadge').textContent=d.project.health_rating;
   $('gentime').textContent='생성: '+new Date(d.generated_at).toLocaleString('ko-KR');
-  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderLog();
+  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderSprint(); renderLog();
+  // git 칩
+  const g=d.git||{}; if(g.branch) $('gitchip').innerHTML=`<em>⎇</em> ${esc(g.branch)} <span style="opacity:.5;font-size:9px">${esc(g.hash||'')}</span>`;
   buildSB('dash');
   setInterval(()=>{
     SECTIONS.forEach(s=>{
@@ -1747,6 +2059,9 @@ with open(OUT_PATH, "w", encoding="utf-8") as f:
     f.write(HTML)
 
 size_kb = os.path.getsize(OUT_PATH) // 1024
-print(f"✅ 생성 완료: {OUT_PATH} ({size_kb}KB)")
-print(f"   파일 크기: {size_kb}KB")
-print(f"   브라우저에서 열기: file://{OUT_PATH}")
+if not SILENT:
+    print(f"✅ 생성 완료: {OUT_PATH} ({size_kb}KB)")
+    print(f"   파일 크기: {size_kb}KB")
+    print(f"   브라우저에서 열기: file://{OUT_PATH}")
+else:
+    print(f"✅ {OUT_PATH} ({size_kb}KB)")
