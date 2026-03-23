@@ -1399,6 +1399,79 @@ function renderDash() {
       ${kiH}</div>
 
     ${(()=>{
+      // Parse dated notes into timeline events
+      const notes=d.project.notes||'';
+      const events=[];
+      notes.split('\n').forEach(line=>{
+        const m=line.match(/^(\d{4}-\d{2}-\d{2}):\s*(.+)/);
+        if(m) events.push({date:m[1], text:m[2].trim()});
+      });
+      if(!events.length) return '';
+
+      // Group by date and pick first non-trivial event per date
+      const byDate={};
+      events.forEach(e=>{
+        if(!byDate[e.date]) byDate[e.date]=[];
+        byDate[e.date].push(e.text);
+      });
+      const dates=Object.keys(byDate).sort();
+
+      const W=Math.max(600, dates.length*120);
+      const H=110;
+      const nodeY=55;
+      const spacing=Math.min(140, (W-80)/(Math.max(dates.length-1,1)));
+
+      // Milestone colors by significance
+      const getColor=(text)=>{
+        if(text.includes('Stage E')) return '#cf222e';
+        if(text.includes('Stage D')) return '#e36209';
+        if(text.includes('Stage A')||text.includes('Stage B')||text.includes('Stage C')) return '#1f6feb';
+        if(text.includes('PASS')) return '#1a7f37';
+        if(text.includes('초기화')) return '#8b49e5';
+        return '#555';
+      };
+
+      let svgC='';
+      // Horizontal line
+      const lineStart=40, lineEnd=40+spacing*(dates.length-1);
+      svgC+=`<line x1="${lineStart}" y1="${nodeY}" x2="${lineEnd}" y2="${nodeY}" stroke="#30363d" stroke-width="2"/>`;
+
+      dates.forEach((date,i)=>{
+        const x=40+spacing*i;
+        const texts=byDate[date];
+        const mainText=texts[0]||'';
+        const color=getColor(mainText);
+        const month=date.slice(5);
+
+        // Circle node
+        svgC+=`<circle cx="${x}" cy="${nodeY}" r="8" fill="#161b22" stroke="${color}" stroke-width="2.5"/>`;
+
+        // Date label (below)
+        svgC+=`<text x="${x}" y="${nodeY+22}" text-anchor="middle" fill="#8b949e" font-size="9">${esc(month)}</text>`;
+
+        // Event label (above)
+        const label=mainText.length>28?mainText.slice(0,26)+'\u2026':mainText;
+        svgC+=`<text x="${x}" y="${nodeY-15}" text-anchor="middle" fill="${color}" font-size="9" width="100">${esc(label)}</text>`;
+        if(texts.length>1) svgC+=`<text x="${x}" y="${nodeY-26}" text-anchor="middle" fill="#555" font-size="8">+${texts.length-1}건</text>`;
+      });
+
+      const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${W}px;height:${H}px">${svgC}</svg>`;
+
+      return `<div class="card"><div class="card-h"><div class="card-ic">📅</div>
+        <div><div class="card-tit">프로젝트 성장 타임라인</div>
+          <div class="card-sub">memory/L0-hot/current-state.yaml 주요 마일스톤 ${dates.length}일</div></div></div>
+        <div style="overflow-x:auto;padding:8px 0">${svg}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11px">
+          <span><span style="color:#8b49e5">●</span> 초기화</span>
+          <span><span style="color:#1f6feb">●</span> Stage A~C</span>
+          <span><span style="color:#e36209">●</span> Stage D</span>
+          <span><span style="color:#cf222e">●</span> Stage E</span>
+          <span><span style="color:#1a7f37">●</span> PASS</span>
+        </div>
+      </div>`;
+    })()}
+
+    ${(()=>{
       const kg=d.knowledge_graph||{}; const kgd=kg.domains||{};
       if(!Object.keys(kgd).length) return '';
       const rows=Object.entries(kgd).map(([name,info])=>`
@@ -1800,6 +1873,63 @@ function renderDom(){
   const scorecardMap=Object.fromEntries(scorecards.map(scorecard=>[scorecard.adapter_id,scorecard]));
   const pluginMap=Object.fromEntries((d.plugins||[]).map(plugin=>[plugin.module_id,plugin]));
   let html=`<div class="sec-tit">🗺 도메인 현황</div>`;
+
+  // Architecture Map
+  const archMapSvg=(()=>{
+    const doms=d.domains||[];
+    const W=680, H=240;
+    const hubX=W/2, hubY=H/2;
+    const hubR=40;
+    const domR=35;
+    const angleStep=doms.length?2*Math.PI/doms.length:0;
+    const radius=130;
+
+    let svgContent='';
+
+    // Hub: Master Shell
+    svgContent+=`<circle cx="${hubX}" cy="${hubY}" r="${hubR}" fill="#161b22" stroke="#1f6feb" stroke-width="2"/>`;
+    svgContent+=`<text x="${hubX}" y="${hubY-5}" text-anchor="middle" fill="#1f6feb" font-size="10" font-weight="bold">Master</text>`;
+    svgContent+=`<text x="${hubX}" y="${hubY+9}" text-anchor="middle" fill="#1f6feb" font-size="10">Shell</text>`;
+
+    // Domains
+    const domColors=['#e36209','#8b49e5','#1a7f37','#cf222e','#d4a72c'];
+    doms.forEach((dom,i)=>{
+      const angle=angleStep*i - Math.PI/2;
+      const dx=hubX+radius*Math.cos(angle);
+      const dy=hubY+radius*Math.sin(angle);
+      const color=domColors[i%domColors.length];
+      const hs=(d.domain_scores[dom.domain_id||dom.id]||{}).score||0;
+
+      // Contract line
+      svgContent+=`<line x1="${hubX}" y1="${hubY}" x2="${dx}" y2="${dy}" stroke="${color}" stroke-width="1.5" stroke-dasharray="5,3" opacity=".6"/>`;
+
+      // Domain circle
+      svgContent+=`<circle cx="${dx}" cy="${dy}" r="${domR}" fill="#161b22" stroke="${color}" stroke-width="2"/>`;
+      const name=(dom.name||dom.domain_id||dom.id||'').split('-')[0];
+      svgContent+=`<text x="${dx}" y="${dy-3}" text-anchor="middle" fill="${color}" font-size="10" font-weight="bold">${esc(name)}</text>`;
+      svgContent+=`<text x="${dx}" y="${dy+10}" text-anchor="middle" fill="#8b949e" font-size="9">헬스 ${hs}</text>`;
+
+      // Stage D indicator
+      const dPass=(dom.stage_d||dom.stage_states?.D||stages['D'])==='PASS';
+      svgContent+=`<circle cx="${dx+domR-5}" cy="${dy-domR+5}" r="7" fill="${dPass?'#1a7f37':'#444'}" stroke="#0d1117" stroke-width="1.5"/>`;
+      svgContent+=`<text x="${dx+domR-5}" y="${dy-domR+9}" text-anchor="middle" fill="white" font-size="7" font-weight="bold">D</text>`;
+    });
+
+    // Contract hub label
+    svgContent+=`<text x="${hubX}" y="${hubY+hubR+14}" text-anchor="middle" fill="#8b949e" font-size="9">계약 허브</text>`;
+
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:${H}px">${svgContent}</svg>`;
+  })();
+
+  html+=`<div class="card" style="margin-bottom:16px">
+    <div class="card-h"><div class="card-ic">🗺</div>
+      <div><div class="card-tit">도메인 아키텍처 관계 맵</div>
+        <div class="card-sub">Master Shell 계약 허브 · ${(d.domains||[]).length}개 도메인 연결</div></div></div>
+    <div style="padding:12px;overflow-x:auto">${archMapSvg}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--dm)">
+      <span>● 원: 도메인</span><span>- - -: 계약 연결</span><span>D뱃지: Stage D PASS 여부</span>
+    </div>
+  </div>`;
 
   // 계약 매트릭스
   html+=`<div class="card" style="margin-bottom:16px">
@@ -2284,21 +2414,61 @@ function renderReq(){
   }).join('');
 
   const masteryLevels={foundation:'기초',apprentice:'입문 확장',practitioner:'운영 실전',mastery:'설계 숙련'};
-  const masteryH=masteryMilestones.map(milestone=>`<div class="card" style="margin-bottom:10px">
-    <div class="card-h">
-      <div class="card-ic">🎓</div>
-      <div>
-        <div class="card-tit">${esc(milestone.title||milestone.id)}</div>
-        <div class="card-sub">${esc(masteryLevels[milestone.level]||milestone.level||'—')} · track: ${esc(milestone.track_ref||'—')}</div>
+  const masteryLevelColors={foundation:'#1f6feb',apprentice:'#8b49e5',practitioner:'#e36209',mastery:'#1a7f37'};
+  const masteryTabLinks={
+    'foundation-01':'dom','bootstrap-01':'req','module-01':'dom','runtime-01':'adr','mastery-01':'req'
+  };
+
+  function isMilestoneChecked(id){ return localStorage.getItem('wfos-milestone-'+id)==='1'; }
+  function toggleMilestone(id){
+    const cur=isMilestoneChecked(id);
+    if(cur) localStorage.removeItem('wfos-milestone-'+id);
+    else localStorage.setItem('wfos-milestone-'+id,'1');
+    renderReq();
+  }
+  function arePrerequsitesMet(milestone){
+    return (milestone.prerequisites||[]).every(prereqId=>isMilestoneChecked(prereqId));
+  }
+
+  const checkedCount=masteryMilestones.filter(m=>isMilestoneChecked(m.id)).length;
+  const totalCount=masteryMilestones.length;
+  const progressPct=totalCount?Math.round(checkedCount/totalCount*100):0;
+
+  const masteryProgressBar=`
+    <div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:600">학습 진도</span>
+        <span style="font-size:13px;color:#1a7f37;font-weight:700">${checkedCount}/${totalCount} 완료 (${progressPct}%)</span>
       </div>
-    </div>
-    <div class="kv"><span class="kk">목표</span><span>${esc(milestone.objective||'')}</span></div>
-    <div class="kv"><span class="kk">선행 단계</span><span>${esc((milestone.prerequisites||[]).join(', ')||'없음')}</span></div>
-    <div style="margin-top:8px">
-      <div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">완료 증거</div>
-      ${(milestone.proof||[]).map(item=>`<div class="wi" style="margin-bottom:5px"><div class="wd d-pass"></div><div class="wg">${esc(item)}</div></div>`).join('')}
-    </div>
-  </div>`).join('');
+      <div style="background:#21262d;height:8px;border-radius:4px;overflow:hidden">
+        <div style="background:linear-gradient(90deg,#1f6feb,#1a7f37);height:100%;width:${progressPct}%;transition:width .3s;border-radius:4px"></div>
+      </div>
+      ${progressPct===100?'<div style="color:#3fb950;font-size:12px;margin-top:6px;font-weight:600">🏆 모든 마일스톤 완료! 설계 숙련 달성</div>':''}
+    </div>`;
+
+  const masteryH=masteryProgressBar+masteryMilestones.map(milestone=>{
+    const checked=isMilestoneChecked(milestone.id);
+    const prereqsMet=arePrerequsitesMet(milestone);
+    const locked=!prereqsMet&&!checked;
+    const lvlColor=masteryLevelColors[milestone.level]||'#8b949e';
+    const tabLink=masteryTabLinks[milestone.id];
+    return `<div class="card" style="margin-bottom:10px;opacity:${locked?'.5':'1'};border-left:3px solid ${checked?'#1a7f37':locked?'#444':lvlColor}">
+      <div class="card-h" style="cursor:pointer" onclick="${locked?'':'toggleMilestone(''+milestone.id+'')'}">
+        <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${checked?'#1a7f37':locked?'#555':lvlColor};background:${checked?'#1a7f37':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px">${checked?'✓':locked?'🔒':''}</div>
+        <div style="flex:1">
+          <div class="card-tit" style="color:${checked?'#1a7f37':locked?'#8b949e':'var(--tx)'}">${esc(milestone.title||milestone.id)}</div>
+          <div class="card-sub"><span style="background:${lvlColor}22;color:${lvlColor};padding:1px 6px;border-radius:10px;font-size:10px">${esc(masteryLevels[milestone.level]||milestone.level||'—')}</span> · ${esc(milestone.track_ref||'—')}</div>
+        </div>
+        ${tabLink?`<button class="btn btn-i" style="font-size:10px;flex-shrink:0" onclick="event.stopPropagation();sw('${tabLink}')">탭 이동 →</button>`:''}
+      </div>
+      ${locked?`<div style="color:var(--dm);font-size:11px;margin-top:6px">🔒 선행 단계 필요: ${esc((milestone.prerequisites||[]).join(', '))}</div>`:`
+      <div class="kv" style="margin-top:8px"><span class="kk">목표</span><span>${esc(milestone.objective||'')}</span></div>
+      <div style="margin-top:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">완료 증거</div>
+        ${(milestone.proof||[]).map(item=>`<div class="wi" style="margin-bottom:5px"><div class="wd ${checked?'d-pass':'d-act'}"></div><div class="wg" style="color:${checked?'#3fb950':'var(--tx)'}">${esc(item)}</div></div>`).join('')}
+      </div>`}
+    </div>`;
+  }).join('');
 
   $('c-req').innerHTML=`
     <div class="sec-tit">📋 요구사항 & 제약조건</div>
