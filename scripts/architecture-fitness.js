@@ -3,9 +3,14 @@
 
 /**
  * 아키텍처 피트니스 함수 + 경계 검사
- * C001 (직접 import 금지), C002 (Clean Architecture), C003 (계약 존재) 자동 검증
+ * C001 (직접 import 금지), C002 (Clean Architecture 프레임워크 금지),
+ * C003 (계약 존재), C004 (인프라 어댑터 도메인 레이어 배치 금지) 자동 검증
  * node scripts/architecture-fitness.js          → 전체 도메인
  * node scripts/architecture-fitness.js {domain} → 단일 도메인
+ *
+ * 벤치마킹: ports-and-adapters (Hexagonal Architecture, Alistair Cockburn) —
+ *   InMemory/SQLite/MongoDB 어댑터는 infrastructure/ 레이어에만 존재해야 한다.
+ *   domain/ 레이어에 어댑터가 있으면 도메인 순수성이 오염된다.
  */
 
 const fs = require('node:fs');
@@ -72,6 +77,18 @@ for (const entry of domainEntries) {
 
   if (!entry.contractsDir || !fs.existsSync(entry.contractsDir) || fs.readdirSync(entry.contractsDir).length === 0) {
     fails.push('C003: contracts/ 또는 contract/ 없음 또는 비어있음');
+  }
+
+  // C004: 인프라 어댑터(InMemory*, SQLite*, Postgres* 등)가 domain/ 레이어에 있으면 안 된다.
+  // 벤치마킹: Hexagonal Architecture — 어댑터는 포트 밖(infrastructure/)에만 존재해야 함.
+  if (domainCoreDir && fs.existsSync(domainCoreDir)) {
+    const infraPatterns = [/^InMemory/i, /^SQLite/i, /^Postgres/i, /^Mongo/i, /^Redis/i, /^MySQL/i];
+    for (const file of walkJs(domainCoreDir)) {
+      const basename = path.basename(file);
+      if (infraPatterns.some(p => p.test(basename))) {
+        fails.push(`C004: ${relPath(file)} — 인프라 어댑터가 domain/ 레이어에 배치됨 (infrastructure/로 이동하라)`);
+      }
+    }
   }
 
   const status = fails.length === 0 ? '✅ PASS' : '❌ FAIL';

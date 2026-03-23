@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { ChangeAccessPolicyUseCase }    = require('../../src/application/ChangeAccessPolicyUseCase');
-const { InMemoryVideoRepository }      = require('../../src/domain/InMemoryVideoRepository');
+const { InMemoryVideoRepository }      = require('../../src/infrastructure/InMemoryVideoRepository');
 const { Video }                        = require('../../src/domain/Video');
 
 const WRITE_CALLER = { permissions: ['video:write'], userId: 'user-1' };

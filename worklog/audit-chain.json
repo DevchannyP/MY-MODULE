@@ -7,7 +7,15 @@
       "details": "audit-chain 설치",
       "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
       "hash": "c75a2ccf65e1432a33369600a7b06ad9f4830e3e124d832dc8f1389ce2298219"
+    },
+    {
+      "seq": 2,
+      "timestamp": "2026-03-21T01:50:20.302Z",
+      "action": "fix/billing-payment-usecase",
+      "details": "payment 3 UseCase 신설 + Clean Arch 위반 수정 + 36 테스트 추가",
+      "prev_hash": "c75a2ccf65e1432a33369600a7b06ad9f4830e3e124d832dc8f1389ce2298219",
+      "hash": "e20338b4677db7b6c817a08dccf01ca9c6ab50571e7e87240e82f04e614d72e3"
     }
   ],
-  "last_hash": "c75a2ccf65e1432a33369600a7b06ad9f4830e3e124d832dc8f1389ce2298219"
+  "last_hash": "e20338b4677db7b6c817a08dccf01ca9c6ab50571e7e87240e82f04e614d72e3"
 }

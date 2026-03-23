@@ -28,7 +28,7 @@ class InMemoryVideoRepository {
     return { items: paged, total, page, page_size: pageSize };
   }
 
-  /** @param {import('./Video').Video} video */
+  /** @param {import('../domain/Video').Video} video */
   async save(video) {
     this._store.set(video.videoId, video);
     return video;

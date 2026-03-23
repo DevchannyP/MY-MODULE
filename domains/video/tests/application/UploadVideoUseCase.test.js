@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { UploadVideoUseCase }         = require('../../src/application/UploadVideoUseCase');
-const { InMemoryVideoRepository }    = require('../../src/domain/InMemoryVideoRepository');
+const { InMemoryVideoRepository }    = require('../../src/infrastructure/InMemoryVideoRepository');
 
 const WRITE_CALLER = { permissions: ['video:write'], userId: 'user-1' };
 const NO_PERM      = { permissions: [], userId: 'nobody' };

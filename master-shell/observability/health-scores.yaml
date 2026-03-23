@@ -1,6 +1,6 @@
 domains:
   "billing":
-    score: 81
+    score: 83
     trend: "→"
     ejectable: true
   "productivity/task-tracking":
@@ -11,4 +11,4 @@ domains:
     score: 84
     trend: "→"
     ejectable: true
-last_calculated: "2026-03-20T16:51:48.783Z"
+last_calculated: "2026-03-21T01:50:18.776Z"

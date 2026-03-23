@@ -3,7 +3,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { GetVideoUseCase }          = require('../../src/application/GetVideoUseCase');
-const { InMemoryVideoRepository }  = require('../../src/domain/InMemoryVideoRepository');
+const { InMemoryVideoRepository }  = require('../../src/infrastructure/InMemoryVideoRepository');
 const { Video }                    = require('../../src/domain/Video');
 
 const READ_CALLER  = { permissions: ['video:read'], userId: 'user-1' };

@@ -10,8 +10,8 @@ const assert = require('node:assert/strict');
 
 const { Video }                           = require('../../src/domain/Video');
 const { TranscodeJob }                    = require('../../src/domain/TranscodeJob');
-const { InMemoryVideoRepository }         = require('../../src/domain/InMemoryVideoRepository');
-const { InMemoryTranscodeJobRepository }  = require('../../src/domain/InMemoryTranscodeJobRepository');
+const { InMemoryVideoRepository }         = require('../../src/infrastructure/InMemoryVideoRepository');
+const { InMemoryTranscodeJobRepository }  = require('../../src/infrastructure/InMemoryTranscodeJobRepository');
 const { UploadVideoUseCase }              = require('../../src/application/UploadVideoUseCase');
 const { GetVideoUseCase }                 = require('../../src/application/GetVideoUseCase');
 const { StartTranscodeJobUseCase }        = require('../../src/application/StartTranscodeJobUseCase');

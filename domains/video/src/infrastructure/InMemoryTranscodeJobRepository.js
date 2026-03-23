@@ -32,7 +32,7 @@ class InMemoryTranscodeJobRepository {
     return Array.from(this._store.values()).filter(j => j.videoId === videoId);
   }
 
-  /** @param {import('./TranscodeJob').TranscodeJob} job */
+  /** @param {import('../domain/TranscodeJob').TranscodeJob} job */
   async save(job) {
     this._store.set(job.jobId, job);
     return job;
