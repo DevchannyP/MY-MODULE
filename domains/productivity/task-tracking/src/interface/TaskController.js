@@ -101,34 +101,34 @@ class TaskController {
       due_before,
       page:      page      ? Number(page)      : 1,
       page_size: page_size ? Number(page_size) : 20,
-    });
+    }, req.caller);
     return { status: 200, body: result };
   }
 
   async _handleCreateTask(req) {
     this._requirePermission(req.caller, 'task:write');
     const { title, assignee_id, due_date, description } = req.body || {};
-    const result = await this._createTask.execute({ title, assignee_id, due_date, description });
+    const result = await this._createTask.execute({ title, assignee_id, due_date, description }, req.caller);
     return { status: 201, body: { task_id: result.task_id, status: result.status } };
   }
 
   async _handleGetTask(req, taskId) {
     this._requirePermission(req.caller, 'task:read');
-    const task = await this._getTask.execute({ task_id: taskId });
+    const task = await this._getTask.execute({ task_id: taskId }, req.caller);
     return { status: 200, body: this._serializeTask(task) };
   }
 
   async _handleTransitionStatus(req, taskId) {
     this._requirePermission(req.caller, 'task:write');
     const { new_status } = req.body || {};
-    const result = await this._transitionTaskStatus.execute({ task_id: taskId, new_status });
+    const result = await this._transitionTaskStatus.execute({ task_id: taskId, new_status }, req.caller);
     return { status: 200, body: result };
   }
 
   async _handleReassign(req, taskId) {
     this._requirePermission(req.caller, 'task:write');
     const { new_assignee_id } = req.body || {};
-    const result = await this._reassignTask.execute({ task_id: taskId, new_assignee_id });
+    const result = await this._reassignTask.execute({ task_id: taskId, new_assignee_id }, req.caller);
     return { status: 200, body: this._serializeTask(result) };
   }
 

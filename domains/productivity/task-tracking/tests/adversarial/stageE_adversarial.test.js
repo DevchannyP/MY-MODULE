@@ -15,6 +15,8 @@ const { TransitionTaskStatusUseCase } = require('../../src/application/Transitio
 const { ReassignTaskUseCase } = require('../../src/application/ReassignTaskUseCase');
 const { InMemoryTaskRepository } = require('../../src/infrastructure/InMemoryTaskRepository');
 
+const WRITE_CALLER = { userId: 'test-user', permissions: ['task:read', 'task:write'] };
+
 function today() { return new Date().toISOString().slice(0, 10); }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -161,30 +163,27 @@ describe('[E-4] 계약 위반 시뮬레이션 (구조적 갭)', () => {
     const transUC    = new TransitionTaskStatusUseCase(repo);
     const reassignUC = new ReassignTaskUseCase(repo);
 
-    const { task_id } = await createUC.execute({ title: '취소 재할당', assignee_id: 'alice' });
-    await transUC.execute({ task_id, new_status: 'CANCELLED' });
+    const { task_id } = await createUC.execute({ title: '취소 재할당', assignee_id: 'alice' }, WRITE_CALLER);
+    await transUC.execute({ task_id, new_status: 'CANCELLED' }, WRITE_CALLER);
 
     // 코드 동작: canReassign → DONE만 막음, CANCELLED는 허용
     // capability.yaml invariant에 이 동작이 명시되지 않음 → 계약 갭
-    const result = await reassignUC.execute({ task_id, new_assignee_id: 'bob' });
+    const result = await reassignUC.execute({ task_id, new_assignee_id: 'bob' }, WRITE_CALLER);
     assert.equal(result.assignee_id, 'bob'); // 현재 코드: 허용됨
     // 이 테스트가 PASS라는 것이 곧 갭의 증거:
     // 계약에는 "CANCELLED 상태에서 재할당 가능"이 명시되어 있지 않다.
   });
 
-  // [갭 발견] permissions_required가 UseCase 레이어에서 강제되지 않음
+  // [갭 수정] permissions_required가 UseCase 레이어에서 강제됨
   // capability.yaml: create-task permissions_required: ["task:write"]
-  // 코드: CreateTaskUseCase는 권한 검사 없이 실행됨
-  test('[갭-2] 권한 검사 미강제: task:write 없이도 create-task 실행됨 → 구조적 보안 갭', async () => {
+  // 코드: CreateTaskUseCase가 caller 권한 검사를 수행함
+  test('[갭-2 수정] 권한 없이 create-task 호출 → FORBIDDEN 에러', async () => {
     const repo = new InMemoryTaskRepository();
     const createUC = new CreateTaskUseCase(repo);
-
-    // 권한 없이 호출 → 현재 코드는 에러 없이 성공
-    // 이것이 "PASS"라는 것이 갭의 증거
-    const result = await createUC.execute({ title: '권한 없는 생성', assignee_id: 'u1' });
-    assert.ok(result.task_id); // 성공 — 권한 강제 없음이 확인됨
-
-    // [기대 동작] UseCase 생성자나 execute()에 caller_role 파라미터와 권한 검사 추가 필요
+    await assert.rejects(
+      () => createUC.execute({ title: '권한 없는 생성', assignee_id: 'u1' }, null),
+      { code: 'FORBIDDEN' },
+    );
   });
 
   // [갭 발견] task가 존재하지 않을 때 reassign 시도
@@ -192,7 +191,7 @@ describe('[E-4] 계약 위반 시뮬레이션 (구조적 갭)', () => {
     const repo = new InMemoryTaskRepository();
     const reassignUC = new ReassignTaskUseCase(repo);
     await assert.rejects(
-      () => reassignUC.execute({ task_id: 'ghost-task', new_assignee_id: 'bob' }),
+      () => reassignUC.execute({ task_id: 'ghost-task', new_assignee_id: 'bob' }, WRITE_CALLER),
       /찾을 수 없습니다/
     );
   });
@@ -207,16 +206,16 @@ describe('[E-5] 동시성 및 낙관적 잠금 누락', () => {
     const createUC = new CreateTaskUseCase(repo);
     const transUC  = new TransitionTaskStatusUseCase(repo);
 
-    const { task_id } = await createUC.execute({ title: '순차 전이', assignee_id: 'u1' });
-    await transUC.execute({ task_id, new_status: 'IN_PROGRESS' });
+    const { task_id } = await createUC.execute({ title: '순차 전이', assignee_id: 'u1' }, WRITE_CALLER);
+    await transUC.execute({ task_id, new_status: 'IN_PROGRESS' }, WRITE_CALLER);
 
     // IN_PROGRESS에서 동시에 두 클라이언트가 DONE과 CANCELLED를 각각 시도하는 시나리오:
     // 순차 시뮬레이션 — 첫 번째 DONE 성공, 두 번째 CANCELLED는 terminal에서 throw
-    const r1 = await transUC.execute({ task_id, new_status: 'DONE' });
+    const r1 = await transUC.execute({ task_id, new_status: 'DONE' }, WRITE_CALLER);
     assert.equal(r1.new_status, 'DONE');
 
     await assert.rejects(
-      () => transUC.execute({ task_id, new_status: 'CANCELLED' }),
+      () => transUC.execute({ task_id, new_status: 'CANCELLED' }, WRITE_CALLER),
       /\[INV002\]/
     );
     // [갭 발견] 실제 동시 요청에서는 두 번째 요청이 stale read 이후 저장하면

@@ -21,9 +21,13 @@ class CreateTaskUseCase {
 
   /**
    * @param {{ title: string, assignee_id: string, due_date?: string, description?: string }} command
+   * @param {{ userId: string, permissions: string[] }|null} caller
    * @returns {Promise<{ task_id: string, status: string }>}
    */
-  async execute({ title, assignee_id, due_date, description }) {
+  async execute({ title, assignee_id, due_date, description }, caller) {
+    if (!caller?.permissions?.includes('task:write')) {
+      throw Object.assign(new Error('Forbidden: task:write 권한이 필요합니다'), { code: 'FORBIDDEN' });
+    }
     const task = Task.create({ title, assignee_id, due_date, description });
     await this._repo.save(task);
     const events = task.pullDomainEvents();

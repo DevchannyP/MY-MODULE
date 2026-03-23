@@ -22,7 +22,7 @@ async function seedTask(repo, overrides = {}) {
     title:       overrides.title       || '기본 작업',
     assignee_id: overrides.assignee_id || 'user-1',
     due_date:    overrides.due_date    || null,
-  });
+  }, { userId: 'seed', permissions: ['task:read', 'task:write'] });
 }
 
 describe('InMemoryTaskRepository — 계약 테스트', () => {

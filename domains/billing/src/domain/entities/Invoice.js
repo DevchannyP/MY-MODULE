@@ -107,7 +107,7 @@ class Invoice {
       throw Object.assign(new Error('quantity must be >= 1'), { code: 'VALIDATION_ERROR' });
     }
 
-    const amount = new Money(unitPrice.amount * quantity, unitPrice.currency);
+    const amount = unitPrice.multiply(quantity);
     const item   = { lineItemId, description, quantity, unitPrice, amount };
     return new Invoice({
       ...this._snapshot(),

@@ -14,7 +14,7 @@ test('SQLiteTaskRepository는 저장 후 조회와 목록 조회를 지원한다
     const created = await createTask.execute({
       title: 'sqlite-task',
       assignee_id: 'user-1',
-    });
+    }, { userId: 'test', permissions: ['task:read', 'task:write'] });
 
     const task = await repo.findById(created.task_id);
     assert.ok(task);

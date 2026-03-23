@@ -6,6 +6,9 @@ const { GetTaskUseCase }              = require('../../src/application/GetTaskUs
 const { CreateTaskUseCase }           = require('../../src/application/CreateTaskUseCase');
 const { InMemoryTaskRepository }      = require('../../src/infrastructure/InMemoryTaskRepository');
 
+const WRITE_CALLER = { userId: 'test-user', permissions: ['task:read', 'task:write'] };
+const READ_CALLER  = { userId: 'test-reader', permissions: ['task:read'] };
+
 function makeSetup() {
   const repo     = new InMemoryTaskRepository();
   const getUC    = new GetTaskUseCase(repo);
@@ -18,8 +21,8 @@ const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 describe('GetTaskUseCase', () => {
   test('존재하는 task_id → snapshot 반환', async () => {
     const { getUC, createUC } = makeSetup();
-    const created = await createUC.execute({ title: '작업1', assignee_id: 'user-1', due_date: tomorrow });
-    const result = await getUC.execute({ task_id: created.task_id });
+    const created = await createUC.execute({ title: '작업1', assignee_id: 'user-1', due_date: tomorrow }, WRITE_CALLER);
+    const result = await getUC.execute({ task_id: created.task_id }, READ_CALLER);
     assert.equal(result.id, created.task_id);
     assert.equal(result.title, '작업1');
     assert.equal(result.assignee_id, 'user-1');
@@ -28,7 +31,7 @@ describe('GetTaskUseCase', () => {
   test('존재하지 않는 task_id → Error throw', async () => {
     const { getUC } = makeSetup();
     await assert.rejects(
-      () => getUC.execute({ task_id: 'nonexistent' }),
+      () => getUC.execute({ task_id: 'nonexistent' }, READ_CALLER),
       /찾을 수 없습니다/,
     );
   });
@@ -36,15 +39,15 @@ describe('GetTaskUseCase', () => {
   test('[회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)', async () => {
     const { getUC } = makeSetup();
     await assert.rejects(
-      () => getUC.execute({ task_id: 'nonexistent' }),
+      () => getUC.execute({ task_id: 'nonexistent' }, READ_CALLER),
       err => { assert.equal(err.code, 'NOT_FOUND'); return true; },
     );
   });
 
   test('snapshot에 status 필드 포함됨', async () => {
     const { getUC, createUC } = makeSetup();
-    const created = await createUC.execute({ title: '작업2', assignee_id: 'user-2', due_date: tomorrow });
-    const result = await getUC.execute({ task_id: created.task_id });
+    const created = await createUC.execute({ title: '작업2', assignee_id: 'user-2', due_date: tomorrow }, WRITE_CALLER);
+    const result = await getUC.execute({ task_id: created.task_id }, READ_CALLER);
     assert.ok('status' in result);
     assert.equal(result.status, 'PENDING');
   });
