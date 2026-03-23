@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workflow OS — 마스터 기획서 에디터</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #238636;
+    --accent2: #1f6feb;
+    --accent3: #bb8009;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --text-bright: #f0f6fc;
+    --red: #da3633;
+    --purple: #8957e5;
+    --radius: 8px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── 상단 헤더 ── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13,17,23,.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .topbar-logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .topbar-logo span { color: var(--accent2); }
+  .topbar-meta {
+    font-size: 12px;
+    color: var(--text-dim);
+    flex: 1;
+  }
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* ── 버튼 시스템 ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover:not(:disabled) { background: #2ea043; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover:not(:disabled) { background: var(--border); color: var(--text-bright); }
+  .btn-idea { background: linear-gradient(135deg,#1f6feb22,#8957e522); color: var(--accent2); border-color: var(--accent2)44; }
+  .btn-idea:hover:not(:disabled) { background: var(--accent2)22; border-color: var(--accent2); }
+  .btn-copy-all {
+    background: linear-gradient(135deg, #238636, #1f6feb);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 4px 20px #23863633;
+  }
+  .btn-copy-all:hover { transform: translateY(-1px); box-shadow: 0 6px 28px #23863655; }
+  .btn-apply { background: transparent; color: var(--accent); border-color: var(--accent)66; font-size: 12px; padding: 4px 10px; }
+  .btn-apply:hover { background: var(--accent)11; border-color: var(--accent); }
+
+  /* ── 레이아웃 ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 57px);
+  }
+
+  /* ── 사이드바 ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    position: sticky;
+    top: 57px;
+    height: calc(100vh - 57px);
+    overflow-y: auto;
+    background: var(--surface);
+  }
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-dim);
+    transition: all .12s;
+    border: 1px solid transparent;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent2)18; color: var(--accent2); border-color: var(--accent2)33; }
+  .nav-item .badge {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 99px;
+    background: var(--surface2);
+    color: var(--text-dim);
+  }
+  .nav-item.done .badge { background: var(--accent)22; color: var(--accent); }
+  .stage-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    min-width: 28px;
+    text-align: center;
+  }
+
+  /* ── 메인 콘텐츠 ── */
+  .main {
+    padding: 32px 40px;
+    max-width: 960px;
+  }
+
+  /* ── 기획서 섹션 ── */
+  .section {
+    margin-bottom: 48px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .section:target, .section.active-section {
+    border-color: var(--accent2)66;
+    box-shadow: 0 0 0 3px var(--accent2)11;
+  }
+
+  .section-header {
+    background: var(--surface);
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .section-icon {
+    font-size: 28px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .section-meta { flex: 1; }
+  .section-number {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+  }
+  .section-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .section-stage {
+    background: var(--accent2)18;
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--accent2)33;
+    white-space: nowrap;
+  }
+
+  .section-body { padding: 24px; }
+
+  /* ── 편집 영역 ── */
+  .edit-area {
+    width: 100%;
+    min-height: 120px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 14px 16px;
+    resize: vertical;
+    transition: border-color .15s;
+    outline: none;
+  }
+  .edit-area:focus { border-color: var(--accent2)88; }
+  .edit-area::placeholder { color: var(--text-dim); }
+
+  /* ── 아이디어 트리거 ── */
+  .idea-trigger {
+    margin-top: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--surface) 0%, #1f6feb08 100%);
+    border: 1px dashed var(--accent2)44;
+    border-radius: var(--radius);
+  }
+  .idea-trigger-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .idea-trigger-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    flex: 1;
+  }
+  .prompt-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 12px;
+    position: relative;
+    display: none;
+  }
+  .prompt-box.visible { display: block; }
+  .prompt-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 3px 8px;
+    cursor: pointer;
+  }
+  .prompt-copy-btn:hover { color: var(--text-bright); }
+
+  /* ── 아이디어 카드 그리드 ── */
+  .ideas-grid {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .ideas-grid.visible { display: grid; }
+
+  .idea-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    transition: border-color .15s, transform .15s;
+    position: relative;
+  }
+  .idea-card:hover { border-color: var(--accent2)88; transform: translateY(-2px); }
+  .idea-card.selected { border-color: var(--accent); background: var(--accent)08; }
+  .idea-card-num {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent2);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 6px;
+  }
+  .idea-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .idea-card-body {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .idea-card-source {
+    font-size: 11px;
+    color: var(--purple);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .idea-card-footer { display: flex; gap: 6px; flex-wrap: wrap; }
+  .idea-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: var(--surface);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* ── 로딩 스피너 ── */
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── 진행 게이지 ── */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-top: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width .4s ease;
+  }
+
+  /* ── 푸터 (전체 복사 영역) ── */
+  .copy-footer {
+    position: sticky;
+    bottom: 0;
+    background: rgba(13,17,23,.96);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .copy-footer-meta { flex: 1; }
+  .copy-footer-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 2px;
+  }
+  .copy-footer-sub { font-size: 12px; color: var(--text-dim); }
+  .copy-status {
+    font-size: 12px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .copy-status.show { opacity: 1; }
+
+  /* ── 완료 배지 ── */
+  .done-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    background: var(--accent)11;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid var(--accent)33;
+    display: none;
+  }
+  .done-badge.show { display: inline-flex; }
+
+  /* ── 구분선 ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── 반응형 ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+    .ideas-grid { grid-template-columns: 1fr; }
+    .main { padding: 20px 16px; }
+  }
+
+  /* ── 토스트 ── */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text-bright);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all .25s;
+    z-index: 999;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<!-- ── 상단 헤더 ── -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <span>⬡</span> Workflow OS
+    <span style="color:var(--border)">|</span>
+    <span style="font-weight:400;font-size:14px;color:var(--text-dim)">마스터 기획서 에디터</span>
+  </div>
+  <div class="topbar-meta">v1.0 · 2026-03-23 · Clean Architecture + DDD</div>
+  <div class="topbar-actions">
+    <button class="btn btn-secondary" onclick="toggleAllIdeas()">💡 전체 아이디어 펼치기</button>
+    <button class="btn btn-secondary" onclick="exportMarkdown()">📄 Markdown 내보내기</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── 좌측 네비게이션 ── -->
+  <nav class="sidebar">
+    <div class="sidebar-title">기획서 목차</div>
+    <div id="nav-list"></div>
+
+    <hr class="divider" style="margin:20px 0">
+    <div class="sidebar-title">진행률</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">
+      <span id="progress-label">0 / 8 섹션 작성</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+    <hr class="divider" style="margin:20px 0">
+    <div class="sidebar-title">단계별 현황</div>
+    <div style="font-size:12px;color:var(--text-dim);line-height:2;">
+      <div>Stage A · 요구사항 분석</div>
+      <div>Stage B · 계약 설계</div>
+      <div>Stage C · 마스터 쉘</div>
+      <div>Stage D · 구현</div>
+      <div>Stage E · 적대적 검증</div>
+    </div>
+  </nav>
+
+  <!-- ── 메인 기획서 영역 ── -->
+  <main class="main" id="main-content">
+    <div id="sections-container"></div>
+  </main>
+
+</div>
+
+<!-- ── 하단 전체 복사 푸터 ── -->
+<footer class="copy-footer">
+  <div class="copy-footer-meta">
+    <div class="copy-footer-title">최종 기획서 내보내기</div>
+    <div class="copy-footer-sub">모든 섹션의 내용을 하나의 문서로 복사합니다</div>
+  </div>
+  <span class="copy-status" id="copy-status">✓ 클립보드에 복사되었습니다!</span>
+  <button class="btn-copy-all" onclick="copyAll()">
+    📋 전체 기획서 한 번에 복사
+  </button>
+</footer>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ────────────────────────────────────────────────
+// 데이터 정의: 기획서 섹션 구조
+// ────────────────────────────────────────────────
+const SECTIONS = [
+  {
+    id: "overview",
+    icon: "🎯",
+    number: "섹션 01",
+    stage: "Vision",
+    title: "프로젝트 비전 & 목표",
+    desc: "Workflow OS의 핵심 가치 제안, 해결할 문제, 성공 지표를 정의합니다.",
+    placeholder: "예: 이 프로젝트는 분산된 업무 도구들을 단일 Workflow OS로 통합하여 팀 생산성을 극대화한다...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "OKR 기반 비전 프레임워크",
+        body: "Objective(비전)→Key Results(성공 지표)→Initiatives(핵심 이니셔티브)로 계층화. Google, Spotify가 채택한 구조. 분기별 리뷰 사이클과 연동.",
+        source: "📌 출처: Google re:Work, Spotify Squad Model",
+        tags: ["OKR", "측정가능", "분기리뷰"]
+      },
+      {
+        num: "안 02",
+        title: "Problem-Solution Fit Canvas",
+        body: "Jobs-To-Be-Done 프레임으로 사용자 고통(Pain)→기능(Gain Creator)→가치(Value Proposition) 매핑. Miro, Notion이 초기 기획에 적용.",
+        source: "📌 출처: JTBD Theory, Strategyzer Value Proposition Canvas",
+        tags: ["JTBD", "사용자중심", "린"]
+      },
+      {
+        num: "안 03",
+        title: "North Star Metric + Guardrails",
+        body: "단일 핵심 지표(North Star) + 하락 금지 가드레일 지표 3개 설정. Amplitude의 Product Analytics 방법론. 팀 전체가 같은 방향으로 정렬.",
+        source: "📌 출처: Amplitude Product Analytics, Reforge Growth Framework",
+        tags: ["NorthStar", "지표정렬", "가드레일"]
+      }
+    ]
+  },
+  {
+    id: "domain-design",
+    icon: "🗺",
+    number: "섹션 02",
+    stage: "Stage A",
+    title: "도메인 설계 & 경계 컨텍스트",
+    desc: "DDD(Domain-Driven Design) 기반 바운디드 컨텍스트 정의, 유비쿼터스 언어, 불변조건(INV) 목록.",
+    placeholder: "도메인 목록, 각 바운디드 컨텍스트 경계, 핵심 불변조건(INV)을 기술하세요...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "Event Storming → Context Map 자동 생성",
+        body: "Big Picture Event Storming으로 도메인 이벤트를 발굴 후 Context Map을 자동 생성. Miro 플러그인 + PlantUML 연동. DDD 커뮤니티 표준.",
+        source: "📌 출처: EventStorming.com, Vaughn Vernon 'Implementing DDD'",
+        tags: ["EventStorming", "ContextMap", "자동화"]
+      },
+      {
+        num: "안 02",
+        title: "Architecture Decision Records (ADR) 연동 INV 추적",
+        body: "각 INV를 ADR과 1:1 연결. 불변조건 변경 시 자동으로 영향 ADR 목록 출력. GitHub Actions로 PR 시 INV 드리프트 감지.",
+        source: "📌 출처: Michael Nygard ADR, adr-tools GitHub",
+        tags: ["ADR", "INV추적", "자동감지"]
+      },
+      {
+        num: "안 03",
+        title: "Fitness Functions for Architecture",
+        body: "도메인 경계 위반을 CI에서 자동 검증하는 피트니스 함수 작성. 'Evolutionary Architectures' 방식. 현재 architecture-fitness.js와 직접 연동 가능.",
+        source: "📌 출처: 'Building Evolutionary Architectures' O'Reilly, ArchUnit",
+        tags: ["FitnessFunction", "CI연동", "자동검증"]
+      }
+    ]
+  },
+  {
+    id: "contract-design",
+    icon: "📜",
+    number: "섹션 03",
+    stage: "Stage B",
+    title: "계약 설계 & 도메인 조합",
+    desc: "도메인 간 인터페이스 계약(contracts/), 조합 전략, 충돌 감지 방법론을 정의합니다.",
+    placeholder: "계약 설계 원칙, Anti-Corruption Layer 전략, 이벤트 드리븐 통신 방식...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "Consumer-Driven Contract Testing (Pact)",
+        body: "소비자가 계약을 먼저 작성하고 제공자가 검증. Pact 라이브러리 기반. Netflix, ING 등 MSA 대규모 조직 표준. 현재 contracts/ 디렉토리와 완벽 호환.",
+        source: "📌 출처: Pact Foundation (pact.io), Martin Fowler ContractTest",
+        tags: ["Pact", "CDC", "MSA표준"]
+      },
+      {
+        num: "안 02",
+        title: "AsyncAPI 스펙 기반 이벤트 계약",
+        body: "REST 계약은 OpenAPI, 이벤트 계약은 AsyncAPI로 이중 스펙화. Kafka/RabbitMQ와 연동 시 자동 문서 생성. 국내 카카오, 네이버 도입 사례.",
+        source: "📌 출처: AsyncAPI.com, AsyncAPI Generator CLI",
+        tags: ["AsyncAPI", "이벤트계약", "자동문서"]
+      },
+      {
+        num: "안 03",
+        title: "Schema Registry + 하위호환성 강제",
+        body: "Confluent Schema Registry 패턴으로 계약 버전 관리. BACKWARD/FORWARD 호환성 자동 검증. 계약 파괴 변경 시 PR 블록.",
+        source: "📌 출처: Confluent Schema Registry, Avro Schema Evolution",
+        tags: ["SchemaRegistry", "하위호환", "PR블록"]
+      }
+    ]
+  },
+  {
+    id: "master-shell",
+    icon: "🐚",
+    number: "섹션 04",
+    stage: "Stage C",
+    title: "마스터 쉘 & 플러그인 아키텍처",
+    desc: "plugin-registry, feature-flags, navigation, observability 구성 전략.",
+    placeholder: "플러그인 등록 방식, 피처 플래그 전략, 네비게이션 구조, 헬스 대시보드...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "Module Federation (Micro-Frontend)",
+        body: "Webpack 5 Module Federation으로 각 도메인을 독립 번들로 배포. 런타임 플러그인 로딩. Zack Jackson 원작. 도메인팀 독립 배포 가능.",
+        source: "📌 출처: Webpack Module Federation, 'Micro Frontends in Action'",
+        tags: ["ModuleFederation", "마이크로프론트", "독립배포"]
+      },
+      {
+        num: "안 02",
+        title: "Feature Flag as Code (OpenFeature)",
+        body: "CNCF 표준 OpenFeature SDK + Flagd 백엔드. 코드 변경 없이 기능 on/off. A/B 테스트, Canary 릴리즈 지원. 현재 feature-flags/flags.yaml과 연동.",
+        source: "📌 출처: OpenFeature.dev (CNCF), LaunchDarkly Architecture",
+        tags: ["OpenFeature", "CNCF", "ABtest"]
+      },
+      {
+        num: "안 03",
+        title: "Plugin Marketplace + 동적 로딩",
+        body: "Obsidian, VS Code 플러그인 모델. manifest.json 선언 → 런타임 검증 → 동적 import. 플러그인 간 의존성 DAG 해결. 국내 채널톡 플러그인 시스템 참조.",
+        source: "📌 출처: VS Code Extension API, Obsidian Plugin System",
+        tags: ["플러그인마켓", "동적로딩", "DAG"]
+      }
+    ]
+  },
+  {
+    id: "implementation",
+    icon: "⚙️",
+    number: "섹션 05",
+    stage: "Stage D",
+    title: "구현 전략 & 품질 게이트",
+    desc: "Clean Architecture 레이어 구조, 테스트 피라미드, 코드 품질 게이트 기준을 정의합니다.",
+    placeholder: "구현 레이어 설명, 테스트 전략, 품질 게이트 기준값 (커버리지, INV 통과율 등)...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "Test-Driven Development + Property-Based Testing",
+        body: "TDD 레드-그린-리팩터 사이클 + fast-check로 수백만 케이스 속성 검증. 현재 프로젝트에 이미 fast-check 설치됨. Haskell QuickCheck에서 유래.",
+        source: "📌 출처: fast-check (GitHub 2.8k⭐), 'TDD by Example' Kent Beck",
+        tags: ["TDD", "PropertyTest", "fast-check"]
+      },
+      {
+        num: "안 02",
+        title: "Architecture Fitness CI Gate",
+        body: "모든 PR에서 아키텍처 피트니스 자동 검증. 의존성 방향 위반, 도메인 직접 참조, 계약 외 통신 시 CI FAIL. 현재 architecture-fitness.js 확장으로 구현.",
+        source: "📌 출처: ArchUnit (Java), dependency-cruiser (JS), Nx boundary checks",
+        tags: ["ArchUnit", "CI게이트", "자동검증"]
+      },
+      {
+        num: "안 03",
+        title: "DORA Metrics 기반 배포 품질 측정",
+        body: "Deployment Frequency, Lead Time, Change Failure Rate, MTTR 4대 지표 자동 집계. Google DevOps Research 기반. 현재 health-scores.yaml에 통합 가능.",
+        source: "📌 출처: DORA (Google), 'Accelerate' Nicole Forsgren",
+        tags: ["DORA", "배포품질", "자동집계"]
+      }
+    ]
+  },
+  {
+    id: "adversarial",
+    icon: "🛡",
+    number: "섹션 06",
+    stage: "Stage E",
+    title: "적대적 검증 & 보안 전략",
+    desc: "레드팀 시나리오, OWASP 대응, 불변조건 공격 벡터, 침투 테스트 체크리스트.",
+    placeholder: "공격 벡터 목록, 보안 테스트 기준, INV 파괴 시나리오, 복구 절차...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "STRIDE 위협 모델링 자동화",
+        body: "Spoofing·Tampering·Repudiation·Info Disclosure·DoS·EoP 6가지 위협 체계적 분류. Microsoft Threat Modeling Tool 기반. 각 도메인 INV와 1:1 매핑.",
+        source: "📌 출처: Microsoft STRIDE, OWASP Threat Modeling",
+        tags: ["STRIDE", "위협모델", "INV매핑"]
+      },
+      {
+        num: "안 02",
+        title: "Chaos Engineering + 복원력 테스트",
+        body: "Chaos Monkey 방식의 의도적 장애 주입. 현재 stageE_adversarial.test.js를 chaos 시나리오로 확장. 서킷브레이커, 재시도 정책 검증.",
+        source: "📌 출처: Netflix Chaos Engineering, Chaos Toolkit (GitHub 2.5k⭐)",
+        tags: ["ChaosEngineering", "복원력", "서킷브레이커"]
+      },
+      {
+        num: "안 03",
+        title: "Automated Penetration Testing Pipeline",
+        body: "OWASP ZAP + Semgrep + Trivy를 CI/CD에 통합. PR 시 자동 취약점 스캔. SAST+DAST+SCA 3중 방어. 카카오페이, 토스 보안팀 채택 방식.",
+        source: "📌 출처: OWASP ZAP, Semgrep OSS, Trivy (Aqua Security)",
+        tags: ["ZAP", "Semgrep", "자동스캔"]
+      }
+    ]
+  },
+  {
+    id: "deployment",
+    icon: "🚀",
+    number: "섹션 07",
+    stage: "Ops",
+    title: "배포 & 운영 전략",
+    desc: "배포 환경 구성, 롤백 플레이북, 모니터링, SLO/SLA 정의.",
+    placeholder: "배포 파이프라인, Blue-Green/Canary 전략, 모니터링 스택, SLO 목표값...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "GitOps + ArgoCD 선언적 배포",
+        body: "Git을 단일 진실원으로 삼아 클러스터 상태를 선언적으로 관리. ArgoCD 자동 동기화. 현재 deployment-environments.yaml과 연동. CNCF 표준.",
+        source: "📌 출처: ArgoCD (CNCF), Weaveworks GitOps",
+        tags: ["GitOps", "ArgoCD", "선언적배포"]
+      },
+      {
+        num: "안 02",
+        title: "SLO 기반 Error Budget 자동 경보",
+        body: "SLI→SLO→Error Budget 체계. 에러 버짓 소진 속도가 임계치 초과 시 자동 배포 중단. 현재 error-budget-check.js와 연동 가능. Google SRE 방식.",
+        source: "📌 출처: 'Site Reliability Engineering' Google, Prometheus + Alertmanager",
+        tags: ["SLO", "ErrorBudget", "자동경보"]
+      },
+      {
+        num: "안 03",
+        title: "Feature Flag 기반 점진적 롤아웃",
+        body: "internal(5%)→beta(20%)→full(100%) 3단계 점진 배포. 지표 이상 시 자동 롤백. 현재 CLAUDE.md의 Feature Flag 정책과 완벽 정합.",
+        source: "📌 출처: Martin Fowler FeatureToggles, LaunchDarkly Rollout",
+        tags: ["점진롤아웃", "자동롤백", "FeatureFlag"]
+      }
+    ]
+  },
+  {
+    id: "growth",
+    icon: "📈",
+    number: "섹션 08",
+    stage: "Roadmap",
+    title: "성장 로드맵 & 자기개선 사이클",
+    desc: "분기별 목표, Reflexion Loop, Knowledge Graph 확장 계획, 팀 역량 성장 방향.",
+    placeholder: "Q1~Q4 목표, 자기개선 메트릭, 팀 온보딩 전략, 기술 부채 상환 계획...",
+    ideas: [
+      {
+        num: "안 01",
+        title: "Shape Up (6-week Cycles) + Cooldown",
+        body: "Basecamp의 Shape Up 방법론. 6주 빌드 사이클 + 2주 쿨다운. 범위 고정·기간 유동 대신 기간 고정·범위 유동. 기술 부채 해소를 쿨다운에 배정.",
+        source: "📌 출처: Basecamp 'Shape Up' (무료 공개), 37signals",
+        tags: ["ShapeUp", "6주사이클", "기술부채"]
+      },
+      {
+        num: "안 02",
+        title: "Learning Organization + Blameless Post-mortem",
+        body: "Google SRE 방식 비비난 사후검토. 실패를 학습 자산화. 현재 Reflexion Loop + lessons-learned.yaml과 완벽 정합. 심리적 안전감 기반 성장.",
+        source: "📌 출처: Google SRE Book Ch.15, Project Aristotle",
+        tags: ["Postmortem", "심리안전", "학습조직"]
+      },
+      {
+        num: "안 03",
+        title: "Platform Engineering + Internal Developer Platform",
+        body: "개발자 경험(DX) 전담 플랫폼팀 운영. Backstage(Spotify OSS)로 IDP 구축. 현재 카탈로그 사이트를 Backstage로 발전. CNCF Platforms WG 방향.",
+        source: "📌 출처: Backstage.io (Spotify, GitHub 23k⭐), Team Topologies",
+        tags: ["PlatformEng", "Backstage", "DX"]
+      }
+    ]
+  }
+];
+
+// ────────────────────────────────────────────────
+// 상태 관리
+// ────────────────────────────────────────────────
+const state = {
+  contents: {},
+  selectedIdeas: {},
+  ideaVisible: {},
+  doneMap: {}
+};
+
+// ────────────────────────────────────────────────
+// 네비게이션 생성
+// ────────────────────────────────────────────────
+function buildNav() {
+  const nav = document.getElementById('nav-list');
+  SECTIONS.forEach(sec => {
+    const item = document.createElement('div');
+    item.className = 'nav-item';
+    item.id = `nav-${sec.id}`;
+    item.innerHTML = `
+      <span class="stage-tag">${sec.stage}</span>
+      <span style="flex:1">${sec.title}</span>
+      <span class="badge" id="badge-${sec.id}">—</span>
+    `;
+    item.onclick = () => {
+      document.getElementById(`section-${sec.id}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+    };
+    nav.appendChild(item);
+  });
+}
+
+// ────────────────────────────────────────────────
+// 섹션 카드 생성
+// ────────────────────────────────────────────────
+function buildSections() {
+  const container = document.getElementById('sections-container');
+
+  SECTIONS.forEach(sec => {
+    const ideasHtml = sec.ideas.map((idea, i) => `
+      <div class="idea-card" id="card-${sec.id}-${i}">
+        <div class="idea-card-num">${idea.num}</div>
+        <div class="idea-card-title">${idea.title}</div>
+        <div class="idea-card-body">${idea.body}</div>
+        <div class="idea-card-source">${idea.source}</div>
+        <div class="idea-card-footer">
+          ${idea.tags.map(t => `<span class="idea-tag">${t}</span>`).join('')}
+          <button class="btn btn-apply" onclick="applyIdea('${sec.id}',${i})" style="margin-left:auto">
+            ✓ 이 안 적용
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    const promptText = `이 "${sec.title}" 구간에 대해 Claude Skills, GitHub 라이브러리 (⭐ 높은 순), 국내외(카카오·네이버·토스·Google·Spotify·Netflix 등) 최고의 업무 아이디어와 최신 지식을 벤치마킹하여, 실제 적용 가능한 최적 안을 3가지 제시해주세요. 각 안에는 ① 방법론명 ② 핵심 설명 ③ 적용 출처/레퍼런스 ④ 장단점을 포함하세요.`;
+
+    const div = document.createElement('div');
+    div.className = 'section';
+    div.id = `section-${sec.id}`;
+    div.innerHTML = `
+      <div class="section-header">
+        <div class="section-icon">${sec.icon}</div>
+        <div class="section-meta">
+          <div class="section-number">${sec.number}</div>
+          <div class="section-title">${sec.title}</div>
+          <div class="section-desc">${sec.desc}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+          <span class="section-stage">${sec.stage}</span>
+          <span class="done-badge" id="done-${sec.id}">✓ 작성완료</span>
+        </div>
+      </div>
+
+      <div class="section-body">
+        <textarea
+          class="edit-area"
+          id="area-${sec.id}"
+          placeholder="${sec.placeholder}"
+          oninput="onInput('${sec.id}', this.value)"
+        ></textarea>
+
+        <div class="idea-trigger">
+          <div class="idea-trigger-header">
+            <div class="idea-trigger-label">💡 아이디어 벤치마킹 — 국내외 최고 사례 3가지 제안</div>
+            <button class="btn btn-idea" onclick="toggleIdeas('${sec.id}')">
+              아이디어 제안 보기
+            </button>
+          </div>
+
+          <div class="prompt-box" id="prompt-${sec.id}">
+            <button class="prompt-copy-btn" onclick="copyPrompt('${sec.id}')">복사</button>
+            ${promptText}
+          </div>
+
+          <div class="ideas-grid" id="ideas-${sec.id}">
+            ${ideasHtml}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // 프롬프트 텍스트 저장
+    div.dataset.prompt = promptText;
+    container.appendChild(div);
+  });
+}
+
+// ────────────────────────────────────────────────
+// 이벤트 핸들러
+// ────────────────────────────────────────────────
+function onInput(id, value) {
+  state.contents[id] = value;
+  updateProgress();
+  if (value.trim().length > 20) {
+    document.getElementById(`done-${id}`).classList.add('show');
+    document.getElementById(`badge-${id}`).textContent = '✓';
+    document.getElementById(`badge-${id}`).style.color = 'var(--accent)';
+    document.getElementById(`nav-${id}`).classList.add('done');
+    state.doneMap[id] = true;
+  } else {
+    document.getElementById(`done-${id}`).classList.remove('show');
+    document.getElementById(`badge-${id}`).textContent = '—';
+    document.getElementById(`badge-${id}`).style.color = '';
+    document.getElementById(`nav-${id}`).classList.remove('done');
+    state.doneMap[id] = false;
+  }
+}
+
+function toggleIdeas(id) {
+  const grid = document.getElementById(`ideas-${id}`);
+  const prompt = document.getElementById(`prompt-${id}`);
+  const isVisible = grid.classList.contains('visible');
+  if (isVisible) {
+    grid.classList.remove('visible');
+    prompt.classList.remove('visible');
+  } else {
+    grid.classList.add('visible');
+    prompt.classList.add('visible');
+  }
+}
+
+function toggleAllIdeas() {
+  const allGrids = document.querySelectorAll('.ideas-grid');
+  const allPrompts = document.querySelectorAll('.prompt-box');
+  const anyVisible = [...allGrids].some(g => g.classList.contains('visible'));
+  allGrids.forEach(g => anyVisible ? g.classList.remove('visible') : g.classList.add('visible'));
+  allPrompts.forEach(p => anyVisible ? p.classList.remove('visible') : p.classList.add('visible'));
+}
+
+function applyIdea(secId, ideaIndex) {
+  const sec = SECTIONS.find(s => s.id === secId);
+  const idea = sec.ideas[ideaIndex];
+  const area = document.getElementById(`area-${secId}`);
+
+  const appended = `\n\n[채택 안 ${idea.num}] ${idea.title}\n${idea.body}\n참조: ${idea.source}`;
+  area.value += appended;
+  onInput(secId, area.value);
+
+  // 선택 표시
+  document.querySelectorAll(`[id^="card-${secId}-"]`).forEach(c => c.classList.remove('selected'));
+  document.getElementById(`card-${secId}-${ideaIndex}`).classList.add('selected');
+
+  showToast(`"${idea.title}" 아이디어가 적용되었습니다`);
+}
+
+function copyPrompt(id) {
+  const sec = SECTIONS.find(s => s.id === id);
+  const promptText = `이 "${sec.title}" 구간에 대해 Claude Skills, GitHub 라이브러리 (⭐ 높은 순), 국내외(카카오·네이버·토스·Google·Spotify·Netflix 등) 최고의 업무 아이디어와 최신 지식을 벤치마킹하여, 실제 적용 가능한 최적 안을 3가지 제시해주세요. 각 안에는 ① 방법론명 ② 핵심 설명 ③ 적용 출처/레퍼런스 ④ 장단점을 포함하세요.`;
+  navigator.clipboard.writeText(promptText).then(() => showToast('프롬프트가 클립보드에 복사되었습니다'));
+}
+
+// ────────────────────────────────────────────────
+// 전체 기획서 복사
+// ────────────────────────────────────────────────
+function copyAll() {
+  let doc = `# Workflow OS 마스터 기획서\n생성일: ${new Date().toLocaleDateString('ko-KR')}\n\n`;
+  doc += `---\n\n`;
+
+  SECTIONS.forEach(sec => {
+    const content = (document.getElementById(`area-${sec.id}`) || {}).value || '';
+    doc += `## ${sec.number} — ${sec.title} [${sec.stage}]\n\n`;
+    doc += content.trim() ? content.trim() : '(미작성)';
+    doc += `\n\n---\n\n`;
+  });
+
+  doc += `\n> 생성: Workflow OS 마스터 기획서 에디터 v1.0`;
+
+  navigator.clipboard.writeText(doc).then(() => {
+    const status = document.getElementById('copy-status');
+    status.classList.add('show');
+    setTimeout(() => status.classList.remove('show'), 3000);
+    showToast('전체 기획서가 클립보드에 복사되었습니다!');
+  });
+}
+
+// ────────────────────────────────────────────────
+// Markdown 내보내기
+// ────────────────────────────────────────────────
+function exportMarkdown() {
+  let md = `# Workflow OS 마스터 기획서\n\n> 생성: ${new Date().toLocaleString('ko-KR')}  \n> 버전: v1.0\n\n`;
+  md += `## 목차\n\n`;
+  SECTIONS.forEach((sec, i) => md += `${i+1}. [${sec.title}](#${sec.id})\n`);
+  md += `\n---\n\n`;
+
+  SECTIONS.forEach(sec => {
+    const content = (document.getElementById(`area-${sec.id}`) || {}).value || '';
+    md += `## ${sec.title} {#${sec.id}}\n\n`;
+    md += `> **Stage**: ${sec.stage}  \n`;
+    md += `> ${sec.desc}\n\n`;
+    md += content.trim() || '*(미작성)*';
+    md += `\n\n---\n\n`;
+  });
+
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `workflow-os-plan-${Date.now()}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Markdown 파일이 다운로드되었습니다');
+}
+
+// ────────────────────────────────────────────────
+// 진행률 업데이트
+// ────────────────────────────────────────────────
+function updateProgress() {
+  const done = Object.values(state.doneMap).filter(Boolean).length;
+  const total = SECTIONS.length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progress-label').textContent = `${done} / ${total} 섹션 작성`;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ────────────────────────────────────────────────
+// 토스트 메시지
+// ────────────────────────────────────────────────
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+// ────────────────────────────────────────────────
+// 스크롤 → 네비 하이라이트
+// ────────────────────────────────────────────────
+function setupScrollSpy() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id.replace('section-', '');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        const navEl = document.getElementById(`nav-${id}`);
+        if (navEl) navEl.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+
+  SECTIONS.forEach(sec => {
+    const el = document.getElementById(`section-${sec.id}`);
+    if (el) observer.observe(el);
+  });
+}
+
+// ────────────────────────────────────────────────
+// 로컬 스토리지 자동 저장
+// ────────────────────────────────────────────────
+function autoSave() {
+  const data = {};
+  SECTIONS.forEach(sec => {
+    const el = document.getElementById(`area-${sec.id}`);
+    if (el) data[sec.id] = el.value;
+  });
+  localStorage.setItem('workflow-os-plan', JSON.stringify(data));
+}
+
+function autoLoad() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('workflow-os-plan') || '{}');
+    SECTIONS.forEach(sec => {
+      if (saved[sec.id]) {
+        const el = document.getElementById(`area-${sec.id}`);
+        if (el) {
+          el.value = saved[sec.id];
+          onInput(sec.id, saved[sec.id]);
+        }
+      }
+    });
+  } catch(e) {}
+}
+
+// ────────────────────────────────────────────────
+// 초기화
+// ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav();
+  buildSections();
+  autoLoad();
+  setupScrollSpy();
+  setInterval(autoSave, 5000);
+
+  // 첫 번째 nav 활성
+  const firstNav = document.querySelector('.nav-item');
+  if (firstNav) firstNav.classList.add('active');
+});
+</script>
+
+</body>
+</html>
