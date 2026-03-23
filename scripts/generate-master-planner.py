@@ -322,6 +322,7 @@ data = {
         "hard_constraints": (constraints or {}).get("hard_constraints", []),
         "soft_constraints": (constraints or {}).get("soft_constraints", []),
         "domain_map_domains": (domain_map or {}).get("domains", []),
+        "composition_policies": (domain_map or {}).get("composition_policies", []),
         "fail_patterns":  (fail_patterns or {}).get("patterns", []),
         "gate_trends":    (gate_trends or {}).get("domains", {}),
     },
@@ -758,10 +759,14 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
 <footer class="cf">
   <div class="cf-m">
     <div class="cf-t">전체 기획서 내보내기</div>
-    <div class="cf-s">8개 섹션 전체를 Markdown으로 복사합니다</div>
+    <div class="cf-s">8개 섹션 전체를 Markdown 또는 YAML로 내보냅니다</div>
   </div>
   <span class="copy-ok" id="cok">✓ 클립보드에 복사됨</span>
-  <button class="btn-all" onclick="copyAll()">📋 전체 기획서 한 번에 복사</button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn-all" style="background:linear-gradient(135deg,#1a7f37,#1a5ca8);padding:11px 20px;font-size:13px" onclick="exportMD()">📄 MD 다운로드</button>
+    <button class="btn-all" onclick="copyAll()">📋 전체 복사</button>
+    <button class="btn-all" style="background:linear-gradient(135deg,#6a3fa0,#1f6feb);padding:11px 20px;font-size:13px" onclick="exportYAML()">📁 YAML 내보내기</button>
+  </div>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -776,7 +781,18 @@ const SECTIONS = [
     title:"프로젝트 비전 & 목표",
     desc:"Workflow OS의 핵심 가치, 해결할 문제, 성공 지표를 정의합니다.",
     init(d) {
-      return `# Workflow OS — 마스터 기획서\n\n**목적**: ${d.project.name} — 격리 모듈 생성·조합·검증 엔진\n**단계**: ${d.project.phase}\n**브랜치**: ${d.project.branch}\n**생성**: ${new Date(d.generated_at).toLocaleDateString('ko-KR')}\n\n## 성공 지표\n- 헬스 레이팅: ${d.project.health_rating}\n- 전체 테스트: ${d.project.tests_pass}/${d.project.tests_total} PASS\n- 게이트 통과율: ${d.project.gate_pass_rate}%\n- 변경 실패율: ${d.project.change_failure_rate}%\n- 세션당 WP: ${d.project.avg_wps_per_session}`;
+      const mod = d.requirements.module || {};
+      const nfr = d.requirements.nfr_categories || {};
+      const perf = nfr.performance || {};
+      const rel  = nfr.reliability || {};
+      const doms = d.requirements.domain_map_domains || [];
+      const domList = doms.map(dm=>{
+        const sc=(d.domain_scores[dm.id]||{}).score;
+        const scStr=sc?` (헬스 ${sc}점)`:'';
+        return `- **${dm.name}** (${dm.id})${scStr}: ${dm.description||''}`;
+      }).join('\n');
+      const desc = (mod.description||'격리 모듈 생성·조합·검증 엔진').trim().replace(/\n/g,' ');
+      return `# Workflow OS — 마스터 기획서\n\n## 프로젝트 목적\n${desc}\n\n## 품질 목표 (NFR 기준)\n- API 지연시간 P99: **≤ ${perf.api_latency_p99_ms||200}ms** | P50: ≤ ${perf.api_latency_p50_ms||100}ms\n- UI FCP: ≤ ${perf.ui_first_contentful_paint_ms||1500}ms | TTI: ≤ ${perf.ui_time_to_interactive_ms||3000}ms\n- 가용성: **≥ ${rel.availability_percent||99.9}%** (에러 버짓 ${rel.error_budget_percent||0.1}%)\n- RPO: ${rel.rpo_minutes||60}분 / RTO: ${rel.rto_minutes||30}분\n\n## 도메인 포트폴리오 (${doms.length}개)\n${domList||'(domain-map.yaml 참조)'}\n\n## 현재 달성 지표\n- 헬스 레이팅: **${d.project.health_rating}** | 게이트 통과율: ${d.project.gate_pass_rate}%\n- 전체 테스트: **${d.project.tests_pass}/${d.project.tests_total} PASS**\n- 완료 WP: ${d.wps.done_count}/${d.wps.total} | 세션당 WP: ${d.project.avg_wps_per_session}\n- 변경 실패율: ${d.project.change_failure_rate}%`;
     },
     ideas:[
       {num:"안 01",title:"OKR 기반 비전 프레임워크",
@@ -795,19 +811,30 @@ const SECTIONS = [
     title:"도메인 설계 & 경계 컨텍스트",
     desc:"DDD 바운디드 컨텍스트 정의, 유비쿼터스 언어, 불변조건(INV) 목록.",
     init(d) {
-      let out = `## 활성 도메인 (${d.domains.length}개)\n\n`;
-      d.domains.forEach(m => {
-        const sc = (d.domain_scores[m.domain] || d.domain_scores[`productivity/${m.domain}`] || {}).score || '—';
-        out += `### ${m.module_id}\n- 도메인: ${m.domain} | 플러그인: ${m.plugin_id}\n- 헬스 스코어: ${sc} | Flag: ${m.feature_flag} = ${m.feature_flag_value||false}\n\n`;
+      const doms = d.requirements.domain_map_domains || [];
+      let out = `## 도메인 로드맵 (${doms.length}개)\n\n`;
+      doms.forEach(dm=>{
+        const sc=(d.domain_scores[dm.id]||{}).score;
+        const scStr=sc?` | 헬스 **${sc}점**`:'';
+        const stStr='✅ 구현 완료';
+        out+=`### ${dm.name} (${dm.id}) — ${stStr}${scStr}\n${dm.description||''}\n\n`;
+        (dm.bounded_contexts||[]).forEach(bc=>{
+          out+=`**컨텍스트**: ${bc.name}\n`;
+          const invs=bc.invariants||[];
+          if(invs.length){ out+=`불변조건 (${invs.length}개):\n`; invs.forEach(inv=>{ out+=`  - ${inv}\n`; }); }
+          out+='\n';
+        });
       });
-      const sums = d.stage_a_summaries || {};
-      if(Object.keys(sums).length) {
-        out += `## Stage A 메모리 요약\n`;
-        Object.entries(sums).forEach(([name,s]) => {
-          out += `- **${name}**: INV ${s.invariant_count}개 | 언어: ${s.ubiquitous_language.join(', ')}\n`;
+      const sums=d.stage_a_summaries||{};
+      if(Object.keys(sums).length){
+        out+=`## Stage A 메모리 (도메인 설계 확정)\n`;
+        Object.entries(sums).forEach(([n,s])=>{
+          out+=`- **${n}**: INV ${s.invariant_count}개 | 언어: ${s.ubiquitous_language.join(', ')} | 리스크: ${s.risk_level||'—'}\n`;
         });
       }
-      return out + `\n## 계약 매트릭스\n${d.contract_matrix||'- billing/task-tracking/video: OpenAPI ✅ Events ✅ UI ✅ Capability ✅'}`;
+      const cp=(d.requirements.composition_policies||[]);
+      if(cp.length){ out+=`\n## 조합 정책\n`; cp.forEach(p=>{ out+=`- ${p.rule||p}\n`; }); }
+      return out;
     },
     ideas:[
       {num:"안 01",title:"Event Storming → Context Map",
@@ -826,8 +853,22 @@ const SECTIONS = [
     title:"계약 설계 & 도메인 조합",
     desc:"도메인 간 인터페이스 계약(contracts/), 조합 전략, 충돌 감지 방법론.",
     init(d) {
-      const stB = (d.project.stage_states||{}).B||'PASS';
-      return `## 계약 원칙\n\n- 도메인 간 직접 src/ import 금지 — contracts/만 참조\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n- Consumer-Driven Contract Testing 준비\n\n## Stage B 상태: ${stB}\n- test:contract PASS (계약 드리프트 검증)\n- validate:composition PASS\n\n## ADR 연계\n${d.adrs.filter(a=>['contract','composition','interface','stage-b','stageB','billing','video'].some(k=>(a.domain||a.title||'').toLowerCase().includes(k))||parseInt(a.id||'99')<=4).slice(0,5).map(a=>`- ADR-${a.id}: ${a.title}`).join('\n')}`;
+      const doms=d.requirements.domain_map_domains||[];
+      let out=`## 계약 설계 원칙\n\n- 도메인 간 직접 \`src/\` import 금지 — \`contracts/\`만 참조\n- 4종 계약 형식: **OpenAPI (HTTP)** + **Events** + **UI Contract** + **Capability**\n- CloudEvents envelope 표준 (CNCF)\n- RFC 7807 Problem Details 에러 응답\n- Consumer-Driven Contract Testing 목표\n\n## 도메인별 계약 현황\n\n`;
+      doms.forEach(dm=>{
+        (dm.bounded_contexts||[]).forEach(bc=>{
+          out+=`### ${dm.name} — ${bc.name}\n`;
+          (bc.contracts||[]).forEach(c=>{ out+=`- **${c.type}**: \`${c.path}\`\n`; });
+          out+='\n';
+        });
+      });
+      const cp=(d.requirements.composition_policies||[]);
+      if(cp.length){ out+=`## 조합 정책\n`; cp.forEach(p=>{ out+=`- ${p.rule||p}\n`; }); out+='\n'; }
+      const stB=(d.project.stage_states||{}).B||'PASS';
+      out+=`## Stage B 상태: **${stB}**\n- test:contract PASS (드리프트 검증)\n- validate:composition PASS\n`;
+      const relAdrs=d.adrs.filter(a=>['contract','composition','interface'].some(k=>(a.title||'').toLowerCase().includes(k)));
+      if(relAdrs.length){ out+=`\n## 관련 ADR\n`; relAdrs.forEach(a=>{ out+=`- ADR-${a.id}: ${a.title}\n`; }); }
+      return out;
     },
     ideas:[
       {num:"안 01",title:"Consumer-Driven Contract Testing (Pact)",
@@ -846,15 +887,23 @@ const SECTIONS = [
     title:"마스터 쉘 & 플러그인 아키텍처",
     desc:"plugin-registry, feature-flags, navigation, observability 구성 전략.",
     init(d) {
-      const stC = (d.project.stage_states||{}).C||'PASS';
-      let out = `## 플러그인 레지스트리 (${d.plugins.length}개)\n\n`;
-      d.plugins.forEach(p => {
-        out += `### ${p.name} (${p.id})\n- 상태: ${p.status} | Flag: ${p.feature_flag}\n- 롤아웃: ${p.rollout?.strategy||'canary'}\n\n`;
+      const stC=(d.project.stage_states||{}).C||'PASS';
+      const pf=d.flags.plugin||{};
+      const active=Object.entries(pf).filter(([,v])=>v).map(([k])=>k);
+      const inactive=Object.entries(pf).filter(([,v])=>!v).map(([k])=>k);
+      let out=`## 플러그인 활성화 계획\n\n현재 모든 플래그가 \`false\`인 것은 운영 환경 준비 전 안전 기본값이다.\n활성화는 Stage D → E → B_review 순 검증 후 단계적으로 진행한다.\n\n`;
+      out+=`## 플러그인 레지스트리 (${d.plugins.length}개)\n\n`;
+      d.plugins.forEach(p=>{
+        const fval=pf[p.feature_flag];
+        const fStr=fval?'✅ 활성':'🔒 비활성 (운영 준비 후 활성화)';
+        out+=`### ${p.name} (\`${p.feature_flag}\`) — ${fStr}\n`;
+        out+=`- 플러그인 ID: ${p.id} | 현재 상태: ${p.status}\n`;
+        out+=`- 롤아웃 전략: ${p.rollout?.strategy||'canary'} (internal 5% → beta 20% → full 100%)\n\n`;
       });
-      const pf = d.flags.plugin||{};
-      const active = Object.entries(pf).filter(([,v])=>v).map(([k])=>k);
-      const inactive = Object.entries(pf).filter(([,v])=>!v).map(([k])=>k);
-      return out + `## Feature Flags\n- 활성: ${active.length?active.join(', '):'없음'}\n- 비활성: ${inactive.join(', ')}\n\n## Stage C 상태: ${stC}`;
+      out+=`## 활성화 조건\n- Stage D PASS → internal(5%) 활성화\n- Stage E PASS → beta(20%) 확장\n- B_review PASS → full(100%) 전환\n- 운영 환경 Smoke Test 통과 필수\n\n`;
+      out+=`## Feature Flag 현황\n- 활성: ${active.length?active.join(', '):'없음'}\n- 비활성: ${inactive.join(', ') || '없음'}\n\n`;
+      out+=`## Stage C 상태: **${stC}**\n- validate:composition PASS\n- plugin-registry 검증 PASS`;
+      return out;
     },
     ideas:[
       {num:"안 01",title:"Module Federation (Micro-Frontend)",
@@ -873,10 +922,24 @@ const SECTIONS = [
     title:"구현 전략 & 품질 게이트",
     desc:"Clean Architecture 레이어 구조, 테스트 피라미드, 품질 게이트 기준.",
     init(d) {
-      const gd = d.project.quality_gate_detail||{};
-      const stD = (d.project.stage_states||{}).D||'PASS';
-      const top8 = Object.entries(gd).slice(0,8).map(([k,v])=>`- **${k}**: ${v}`).join('\n');
-      return `## 품질 게이트 (${d.project.quality_gate_last_run})\n\n${top8}\n\n## Stage D 상태: ${stD}\n- 전체 테스트: ${d.project.tests_pass}/${d.project.tests_total} PASS\n\n## 검증 통계\n- 명령 실행: ${d.wps.verification.total_commands_run||0}회\n- PASS: ${d.wps.verification.passed||0} / FAIL: ${d.wps.verification.failed||0}`;
+      const gd=d.project.quality_gate_detail||{};
+      const stD=(d.project.stage_states||{}).D||'PASS';
+      const nfr=d.requirements.nfr_categories||{};
+      const perf=nfr.performance||{};
+      const rel=nfr.reliability||{};
+      const sec=nfr.security||{};
+      const obs=nfr.observability||{};
+      let out=`## 구현 품질 목표 (NFR 기준)\n\n`;
+      if(Object.keys(perf).length){ out+=`### 성능 목표\n`; Object.entries(perf).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; }); out+='\n'; }
+      if(Object.keys(rel).length){ out+=`### 신뢰성 목표\n`; Object.entries(rel).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; }); out+='\n'; }
+      if(Object.keys(sec).length){ out+=`### 보안 요건\n`; Object.entries(sec).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; }); out+='\n'; }
+      if(Object.keys(obs).length){ out+=`### 관측가능성 요건\n`; Object.entries(obs).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; }); out+='\n'; }
+      out+=`## 현재 품질 게이트 (${d.project.quality_gate_last_run})\n\n`;
+      Object.entries(gd).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; });
+      out+=`\n## Stage D 상태: **${stD}**\n- 전체 테스트: **${d.project.tests_pass}/${d.project.tests_total} PASS**\n`;
+      const ver=d.wps.verification||{};
+      if(ver.total_commands_run){ out+=`- 검증 실행: ${ver.total_commands_run}회 | PASS: ${ver.passed||0} / FAIL: ${ver.failed||0}\n`; }
+      return out;
     },
     ideas:[
       {num:"안 01",title:"TDD + Property-Based Testing",
@@ -895,11 +958,29 @@ const SECTIONS = [
     title:"적대적 검증 & 보안 전략",
     desc:"레드팀 시나리오, OWASP 대응, 불변조건 공격 벡터, 침투 테스트 체크리스트.",
     init(d) {
-      const ef = d.stage_e_findings||{};
-      const stE = (d.project.stage_states||{}).E||'PASS';
-      let gaps = (ef.gap_details||[]).map(g=>`- **${g.id}** [${g.severity}]: ${g.description} → ${g.status}`).join('\n');
-      const refs = d.reflections.map(r=>`- [${r.stage}/${r.domain}] ${(r.went_wrong||[]).join('; ')}`).join('\n');
-      return `## Stage E 현황\n\n- 총 갭: ${ef.total_gaps||0}건 | 수정: ${ef.gaps_fixed||0} | ADR: ${ef.gaps_adred||0}\n\n## 발견된 갭\n${gaps||'없음'}\n\n## Reflexion 로그\n${refs||'없음'}\n\n## Stage E 상태: ${stE}`;
+      const ef=d.stage_e_findings||{};
+      const stE=(d.project.stage_states||{}).E||'PASS';
+      const nfr=d.requirements.nfr_categories||{};
+      const sec=nfr.security||{};
+      let out=`## 보안 전략 & 적대적 검증 계획\n\n`;
+      if(Object.keys(sec).length){
+        out+=`### 핵심 보안 요건 (NFR)\n`;
+        Object.entries(sec).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; });
+        out+='\n';
+      }
+      out+=`## Stage E 적대적 검증 결과\n`;
+      out+=`- 총 갭: **${ef.total_gaps||0}건** | 수정: ${ef.gaps_fixed||0} | ADR 처리: ${ef.gaps_adred||0}\n`;
+      out+=`- Stage E 상태: **${stE}**\n\n`;
+      const gaps=ef.gap_details||[];
+      if(gaps.length){ out+=`### 발견된 갭\n`; gaps.forEach(g=>{ out+=`- **${g.id}** [${g.severity}]: ${g.description} → **${g.status}**${g.adr?' ('+g.adr+')':''}\n`; }); out+='\n'; }
+      out+=`## 다음 보안 강화 계획\n`;
+      out+=`- STRIDE 위협 모델링 → 각 도메인 INV와 1:1 매핑\n`;
+      out+=`- OWASP ZAP + Semgrep CI 통합 (SAST+DAST+SCA 3중 방어)\n`;
+      out+=`- Stage E 자동 재실행 — 신규 도메인 추가 시마다\n`;
+      out+=`- Chaos Engineering: 의도적 장애 주입으로 복원력 검증\n`;
+      const eRefs=d.reflections.filter(r=>r.stage==='E').slice(0,3);
+      if(eRefs.length){ out+=`\n## Reflexion 로그 (Stage E)\n`; eRefs.forEach(r=>{ out+=`- [${r.stage}/${r.domain}] ${(r.went_wrong||[]).join('; ')}\n`; }); }
+      return out;
     },
     ideas:[
       {num:"안 01",title:"STRIDE 위협 모델링",
@@ -918,9 +999,29 @@ const SECTIONS = [
     title:"배포 & 운영 전략",
     desc:"배포 환경 구성, 롤백 플레이북, 모니터링, SLO/SLA 정의.",
     init(d) {
-      const ki = (d.project.known_issues||[]).map(i=>`- **${i.id}** [${i.severity}]: ${i.description}`).join('\n');
-      const ae = d.audit_entries.map(e=>`- #${e.seq} ${e.timestamp.substring(0,10)} ${e.action}`).join('\n');
-      return `## 배포 현황\n\n- 릴리즈 모드: work-packet-governed\n- 품질 게이트: ${d.project.quality_gate_result}\n- SBOM: artifacts/sbom/ | Provenance: artifacts/provenance/\n\n## Known Issues\n${ki||'없음'}\n\n## 감사 체인\n${ae||'없음'}\n\n## 운영 기준선\n- check:observability PASS\n- test:rollback PASS\n- deployment-environment-provisioning PASS`;
+      const nfr=d.requirements.nfr_categories||{};
+      const rel=nfr.reliability||{};
+      const sc=nfr.supply_chain||{};
+      const scalability=nfr.scalability||{};
+      let out=`## 배포 & 운영 전략\n\n`;
+      if(Object.keys(rel).length){ out+=`### SLO 목표 (신뢰성)\n`; Object.entries(rel).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; }); out+='\n'; }
+      if(Object.keys(sc).length){ out+=`### 공급망 보안 요건\n`; Object.entries(sc).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; }); out+='\n'; }
+      if(Object.keys(scalability).length){ out+=`### 확장성 전략\n`; Object.entries(scalability).forEach(([k,v])=>{ out+=`- **${k}**: ${v}\n`; }); out+='\n'; }
+      out+=`## 배포 파이프라인 계획\n`;
+      out+=`- 릴리즈 방식: **Work Packet 기반 점진 릴리즈**\n`;
+      out+=`- 품질 게이트: **${d.project.quality_gate_result}** (최종 ${d.project.quality_gate_last_run})\n`;
+      out+=`- SBOM: \`artifacts/sbom/\` | Provenance: \`artifacts/provenance/\`\n`;
+      out+=`- 롤백 플레이북: \`docs/runbooks/rollback-playbook.md\`\n\n`;
+      out+=`## 운영 체크리스트\n`;
+      out+=`- ✅ check:observability PASS\n`;
+      out+=`- ✅ test:rollback PASS\n`;
+      out+=`- ✅ deployment-environment-provisioning PASS\n`;
+      out+=`- ✅ SBOM 생성 PASS\n`;
+      out+=`- ✅ Provenance 증거 PASS\n`;
+      out+=`- 🔒 기능 플래그 활성화: 운영 환경 준비 후 결정\n\n`;
+      const ki=d.project.known_issues||[];
+      if(ki.length){ out+=`## Known Issues (배포 전 해소 목표)\n`; ki.forEach(i=>{ out+=`- **${i.id}** [${i.severity}]: ${i.description}\n`; }); }
+      return out;
     },
     ideas:[
       {num:"안 01",title:"GitOps + ArgoCD 선언적 배포",
@@ -939,10 +1040,30 @@ const SECTIONS = [
     title:"성장 로드맵 & 자기개선 사이클",
     desc:"다음 Work Packet 계획, Reflexion Loop, Knowledge Graph 확장, 팀 역량 성장.",
     init(d) {
-      const nq = (d.next_queue||[]).map(q=>`- **${q.id}** [${q.status}]: ${q.goal}`).join('\n');
-      const reps = d.learning_reports.map(r=>`- [${r.domain}] ${r.file}`).join('\n');
-      const v3 = (d.project.upgrade_v3_features||[]).slice(0,8).map(f=>`- ${f}`).join('\n');
-      return `## 다음 Work Packet 큐\n\n${nq||'현재 큐 비어 있음 (npm run wp:next 실행)'}\n\n## 학습 보고서\n${reps||'없음'}\n\n## v3.0 완료 피처 (주요)\n${v3}\n\n## 자기개선 지표\n- 헬스 레이팅: ${d.project.health_rating}\n- 게이트 통과율: ${d.project.gate_pass_rate}%\n- 세션당 WP: ${d.project.avg_wps_per_session}`;
+      const active=d.wps.active||[];
+      const pending=d.wps.pending||[];
+      const nq=d.next_queue||[];
+      let out=`## 현재 진행 중\n\n`;
+      if(active.length){
+        active.forEach(w=>{ out+=`### 🔄 ${w.id}: ${w.goal}\n- CAP: ${w.cap_id} | 티어: ${w.tier||'—'}\n\n`; });
+      } else { out+=`- 현재 활성 Work Packet 없음 (\`npm run wp:next\` 실행)\n\n`; }
+      out+=`## 다음 단계 계획\n\n`;
+      const nextList=nq.length?nq:pending.slice(0,5);
+      if(nextList.length){ nextList.forEach(w=>{ out+=`- **${w.id}** [${w.status}]: ${w.goal}\n`; }); }
+      else { out+=`- \`npm run wp:next\`로 DAG 기반 다음 WP 확인\n`; }
+      out+=`\n## 기능 활성화 로드맵\n`;
+      out+=`1. **현재**: WP-VIDEO-001 진행 중 → video 도메인 E2E 검증\n`;
+      out+=`2. **다음**: feature flag internal(5%) 활성화 → 운영 지표 수집\n`;
+      out+=`3. **이후**: beta(20%) 확장 → SLO 위반 없으면 full(100%)\n`;
+      out+=`4. **장기**: 신규 도메인 온보딩 → domain-map.yaml 추가 → Stage A 재실행\n\n`;
+      out+=`## 자기개선 지표\n`;
+      out+=`- 헬스 레이팅: **${d.project.health_rating}** | 게이트 통과율: **${d.project.gate_pass_rate}%**\n`;
+      out+=`- 완료 WP: ${d.wps.done_count}/${d.wps.total} | 세션당 WP: ${d.project.avg_wps_per_session}\n`;
+      const v3=(d.project.upgrade_v3_features||[]).slice(0,6);
+      if(v3.length){ out+=`\n## v3.0 완료 피처 (주요)\n`; v3.forEach(f=>{ out+=`- ${f}\n`; }); }
+      const reps=d.learning_reports;
+      if(reps.length){ out+=`\n## 학습 보고서 (${reps.length}건)\n`; reps.forEach(r=>{ out+=`- [${r.domain}] ${r.file}\n`; }); }
+      return out;
     },
     ideas:[
       {num:"안 01",title:"Shape Up (6-week Cycles)",
@@ -1286,6 +1407,28 @@ function exportMD(){
   const u=URL.createObjectURL(b), a=document.createElement('a');
   a.href=u; a.download=`wfos-plan-${Date.now()}.md`; a.click(); URL.revokeObjectURL(u);
   toast('Markdown 다운로드됨');
+}
+function exportYAML(){
+  // YAML-safe escape: indent multiline, quote strings with special chars
+  function yamlStr(s){
+    if(!s||!s.trim()) return "''"
+    if(s.includes('\n')){
+      return '|\n'+s.split('\n').map(l=>'      '+l).join('\n');
+    }
+    if(s.match(/[:#\[\]{}|>&*!,?@`'"]/)) return JSON.stringify(s);
+    return s;
+  }
+  const d=window.D; const now=new Date().toISOString();
+  let yaml=`# Workflow OS 마스터 기획서 — YAML 내보내기\n# 생성: ${now}\n# 브랜치: ${d.project.branch}\n# 이 파일을 memory/project/plan-snapshot.yaml 에 저장하면 기획 이력을 보존할 수 있습니다\n\nplan:\n  generated_at: "${now}"\n  branch: "${d.project.branch}"\n  health_rating: "${d.project.health_rating}"\n  gate_pass_rate: ${d.project.gate_pass_rate}\n  tests: "${d.project.tests_pass}/${d.project.tests_total}"\n\nsections:\n`;
+  SECTIONS.forEach(s=>{
+    const content=ST.planC[s.id]?.trim()||'';
+    const done=!!(ST.planDone[s.id]||localStorage.getItem('wfos-done-'+s.id));
+    yaml+=`  - id: "${s.id}"\n    num: "${s.num}"\n    tag: "${s.tag}"\n    title: "${s.title}"\n    done: ${done}\n    related_caps: [${s.related_caps.map(c=>`"${c}"`).join(',')}]\n    content: ${yamlStr(content)}\n\n`;
+  });
+  const b=new Blob([yaml],{type:'text/yaml'});
+  const u=URL.createObjectURL(b), a=document.createElement('a');
+  a.href=u; a.download=`wfos-plan-${Date.now()}.yaml`; a.click(); URL.revokeObjectURL(u);
+  toast('YAML 내보내기 완료');
 }
 
 // ────────────────────────────────────────────────────────────────

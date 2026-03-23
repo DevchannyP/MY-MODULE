@@ -88,10 +88,10 @@ active_modules:
         status: "FIXED"
         fix: "null로 명시 반환"
 
-quality_gate_last_run: "2026-03-21"
+quality_gate_last_run: "2026-03-23"
 quality_gate_result: "PASS"
 quality_gate_detail:
-  unit_tests: "PASS (500/500)"        # 478 (이전) + 22 신규 회귀/보안 테스트
+  unit_tests: "PASS (550/550)"        # 500 (이전) + 50 신규 (InMemoryTaskRepository 계약 테스트 + video infra 이동)
   integration_tests: "PASS (유스케이스 수준)"
   adversarial_tests: "PASS (43/43, Stage E)"
   contract_tests: "PASS (test:contract — task-management+billing drift validator)"

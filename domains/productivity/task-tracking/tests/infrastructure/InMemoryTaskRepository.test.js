@@ -59,12 +59,12 @@ describe('InMemoryTaskRepository — 계약 테스트', () => {
     assert.equal(result.items[0].assignee_id, 'user-A');
   });
 
-  test('status 필터 — TODO 작업만 반환', async () => {
+  test('status 필터 — PENDING 작업만 반환', async () => {
     const repo = makeRepo();
     await seedTask(repo);
-    const result = await repo.findAll({ status: 'TODO' });
+    const result = await repo.findAll({ status: 'PENDING' });
     assert.equal(result.total, 1);
-    assert.equal(result.items[0].status, 'TODO');
+    assert.equal(result.items[0].status, 'PENDING');
   });
 
   test('status 필터 — 존재하지 않는 상태 → 빈 결과', async () => {
@@ -111,6 +111,6 @@ describe('InMemoryTaskRepository — 계약 테스트', () => {
     const found = await repo.findById(created.task_id);
     assert.equal(found.title, '스냅샷 테스트');
     assert.equal(found.assignee_id, 'user-1');
-    assert.equal(found.status, 'TODO');
+    assert.equal(found.status, 'PENDING');
   });
 });
