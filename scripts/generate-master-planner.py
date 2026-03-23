@@ -818,6 +818,9 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   <div class="tab" onclick="sw('log')" id="tab-log">
     🔍 감사·학습
   </div>
+  <div class="tab" onclick="sw('flow')" id="tab-flow">
+    🤖 AI 흐름
+  </div>
 </nav>
 
 <div class="ly">
@@ -832,6 +835,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
     <div class="tab-panel" id="p-adr"><div id="c-adr"></div></div>
     <div class="tab-panel" id="p-sprint"><div id="c-sprint"></div></div>
     <div class="tab-panel" id="p-log"><div id="c-log"></div></div>
+    <div class="tab-panel" id="p-flow"><div id="c-flow"></div></div>
   </main>
 </div>
 
@@ -2693,13 +2697,231 @@ function regenData(){
 }
 
 // ────────────────────────────────────────────────────────────────
+// AI FLOW VISUALIZER
+// ────────────────────────────────────────────────────────────────
+function renderAIFlow() {
+  const d=window.D;
+  const stages=d.project.stage_states||{};
+  const domains=d.domains||[];
+  const stageDefs=[
+    {id:'A',icon:'📐',agent:'architect',color:'#1f6feb',title:'요구사항 분석 & 계약 설계',thinking:'ultrathink',
+     inputs:['requirements/[domain].yaml','constraints.yaml'],
+     outputs:['capability.yaml','openapi.yaml','ui-contract.yaml','events.yaml'],
+     gate:'도메인 경계 + 불변조건(INV) 정의'},
+    {id:'B',icon:'🔗',agent:'architect',color:'#8b49e5',title:'도메인 조합 충돌 검사',thinking:'ultrathink',
+     inputs:['Stage A 계약 (전 도메인)'],
+     outputs:['stageB/[domain]-composition.yaml'],
+     gate:'전체 도메인 간 계약 충돌 없음'},
+    {id:'C',icon:'🔌',agent:'master-shell',color:'#1a7f37',title:'마스터 셸 플러그인 등록',thinking:'normal',
+     inputs:['plugin-registry/registry.yaml','navigation/nav.yaml'],
+     outputs:['plugin 등록','feature-flag 설정','navigation 연결'],
+     gate:'validate:composition PASS'},
+    {id:'D',icon:'⚙️',agent:'implementer',color:'#e36209',title:'구현 & 품질 게이트',thinking:'normal',
+     inputs:['Stage A 계약','Stage B 조합 규칙'],
+     outputs:['domain/src/ 구현체','tests/ 스위트','interface/controller.js'],
+     gate:'unit + lint + contract + authz + e2e PASS'},
+    {id:'E',icon:'🔴',agent:'adversary',color:'#cf222e',title:'적대적 검증 (레드팀)',thinking:'ultrathink',
+     inputs:['Stage D 구현체','불변조건 목록'],
+     outputs:['GAP-*.yaml','reflections/','ADR (필요시)'],
+     gate:'모든 INV 공격 벡터 차단 확인'},
+  ];
+  const agentDefs=[
+    {name:'architect',stages:['A','B'],color:'#1f6feb',desc:'요구사항 분석, 계약 설계, 도메인 조합 충돌 검사'},
+    {name:'implementer',stages:['D'],color:'#e36209',desc:'Clean Architecture 안쪽→바깥, 코딩 패턴 강제'},
+    {name:'adversary',stages:['E'],color:'#cf222e',desc:'모든 INV를 깨뜨리는 레드팀 적대적 검증'},
+    {name:'reviewer (B_review)',stages:[],color:'#8b49e5',desc:'코드 리뷰 + 계약 영향 + semver, Cross-Model'},
+    {name:'observer',stages:[],color:'#1a7f37',desc:'독립 감사, 파일시스템 직접 검증, MISMATCH 0건 요구'},
+    {name:'reporter',stages:[],color:'#d4a72c',desc:'학습보고서 생성 전문, 기승전결 + 코드 스니펫 3단계'},
+  ];
+  const kwDefs=[
+    {kw:'계속',action:'next-actions priority 1 실행',thinking:'normal',auto:'✅'},
+    {kw:'A [도메인]',action:'Stage A~E 전체 실행',thinking:'ultrathink(A,B,E)',auto:'✅'},
+    {kw:'D [도메인]',action:'Stage D만 실행',thinking:'normal',auto:'✅'},
+    {kw:'E [도메인]',action:'Stage E + B_review',thinking:'ultrathink',auto:'✅'},
+    {kw:'검토',action:'현재 상태 보고',thinking:'normal',auto:'—'},
+    {kw:'게이트',action:'전 도메인 품질 게이트',thinking:'normal',auto:'✅'},
+    {kw:'B_review [도메인]',action:'적대적 리뷰만',thinking:'ultrathink',auto:'✅'},
+    {kw:'보고서 [도메인]',action:'학습보고서 생성',thinking:'normal',auto:'✅'},
+    {kw:'A *',action:'전 도메인 병렬 실행',thinking:'ultrathink',auto:'✅'},
+    {kw:'건강',action:'건강도 대시보드',thinking:'normal',auto:'—'},
+    {kw:'그래프',action:'의존성 다이어그램 생성',thinking:'normal',auto:'—'},
+    {kw:'카탈로그',action:'도메인 카탈로그 사이트 생성',thinking:'normal',auto:'✅'},
+  ];
+
+  // SVG flow diagram
+  const W=700,H=180,nW=100,nH=60,gX=38,sX=20,sY=40;
+  let paths='',nodes='';
+  stageDefs.forEach((st,i)=>{
+    const x=sX+i*(nW+gX),y=sY;
+    const status=stages[st.id]||'N/A';
+    const sc=status==='PASS'?'#1a7f37':status==='FAIL'?'#cf222e':'#444';
+    if(i<stageDefs.length-1){
+      const nx=sX+(i+1)*(nW+gX);
+      paths+=`<line x1="${x+nW}" y1="${y+nH/2}" x2="${nx}" y2="${y+nH/2}" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>`;
+    }
+    nodes+=`<rect x="${x}" y="${y}" width="${nW}" height="${nH}" rx="7" fill="#161b22" stroke="${sc}" stroke-width="2"/>`;
+    nodes+=`<text x="${x+nW/2}" y="${y+18}" text-anchor="middle" fill="${st.color}" font-size="13" font-weight="bold">${st.icon} ${st.id}</text>`;
+    nodes+=`<text x="${x+nW/2}" y="${y+33}" text-anchor="middle" fill="#8b949e" font-size="9">${st.agent}</text>`;
+    nodes+=`<text x="${x+nW/2}" y="${y+52}" text-anchor="middle" fill="${sc}" font-size="10" font-weight="bold">${status}</text>`;
+    // label below
+    nodes+=`<text x="${x+nW/2}" y="${y+nH+18}" text-anchor="middle" fill="#8b949e" font-size="8" width="${nW}">${st.thinking}</text>`;
+  });
+  const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px">
+    <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#555"/></marker></defs>
+    ${paths}${nodes}</svg>`;
+
+  // Domain grid
+  let domH='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px">';
+  (domains.length?domains:[{id:'—',name:'등록된 도메인 없음'}]).forEach(dom=>{
+    const hs=(d.domain_scores[dom.domain_id||dom.id]||{}).score||0;
+    const domStages=dom.stage_states||{};
+    domH+=`<div class="card" style="margin:0">
+      <div class="card-tit" style="font-size:13px">${esc(dom.name||dom.domain_id||dom.id)}</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:6px">
+        ${['A','B','C','D','E'].map(s=>`<span class="st ${(domStages[s]||stages[s]||'N/A')==='PASS'?'s-ok':'s-nd'}" style="font-size:9px">Stage ${s}</span>`).join('')}
+      </div>
+      <div style="color:var(--dm);font-size:11px;margin-top:4px">헬스 ${hs}점</div>
+    </div>`;
+  });
+  domH+='</div>';
+
+  // Stage cards
+  let stH='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin-top:10px">';
+  stageDefs.forEach(st=>{
+    const status=stages[st.id]||'N/A';
+    stH+=`<div class="card" style="margin:0;border-left:3px solid ${st.color}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:18px">${st.icon}</span>
+        <div style="flex:1"><div style="font-weight:700;color:${st.color}">Stage ${st.id}: ${esc(st.title)}</div>
+        <div style="font-size:11px;color:var(--dm)">에이전트: <strong>${esc(st.agent)}</strong> · <em style="color:#d4a72c">${esc(st.thinking)}</em></div></div>
+        <span class="st ${status==='PASS'?'s-ok':status==='FAIL'?'s-fl':'s-nd'}" style="font-size:10px">${esc(status)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--dm);margin-bottom:4px">📥 ${esc((st.inputs||[]).join(' · '))}</div>
+      <div style="font-size:11px;color:var(--dm);margin-bottom:4px">📤 ${esc((st.outputs||[]).join(' · '))}</div>
+      <div style="font-size:11px;color:#1f6feb">🔒 ${esc(st.gate)}</div>
+    </div>`;
+  });
+  stH+='</div>';
+
+  // Agent table
+  let agH=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="border-bottom:1px solid var(--br)">
+      <th style="padding:8px;text-align:left;color:var(--dm)">에이전트</th>
+      <th style="padding:8px;text-align:left;color:var(--dm)">담당 Stage</th>
+      <th style="padding:8px;text-align:left;color:var(--dm)">역할</th>
+    </tr>`;
+  agentDefs.forEach(ag=>{
+    agH+=`<tr style="border-bottom:1px solid #21262d">
+      <td style="padding:8px"><strong style="color:${ag.color}">${esc(ag.name)}</strong></td>
+      <td style="padding:8px">${ag.stages.map(s=>`<span class="st s-ok" style="font-size:9px">Stage ${s}</span>`).join(' ')||'<span style="color:var(--dm)">on-demand</span>'}</td>
+      <td style="padding:8px;color:var(--dm)">${esc(ag.desc)}</td>
+    </tr>`;
+  });
+  agH+='</table>';
+
+  // Keyword table
+  let kwH=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="border-bottom:1px solid var(--br)">
+      <th style="padding:8px;text-align:left;color:var(--dm)">키워드</th>
+      <th style="padding:8px;text-align:left;color:var(--dm)">행동</th>
+      <th style="padding:8px;text-align:left;color:var(--dm)">사고 모드</th>
+      <th style="padding:8px;text-align:center;color:var(--dm)">자동</th>
+    </tr>`;
+  kwDefs.forEach(kw=>{
+    kwH+=`<tr style="border-bottom:1px solid #21262d">
+      <td style="padding:8px"><code style="background:#161b22;padding:2px 6px;border-radius:4px;color:#e6edf3;font-size:11px">${esc(kw.kw)}</code></td>
+      <td style="padding:8px;color:var(--dm)">${esc(kw.action)}</td>
+      <td style="padding:8px;color:#d4a72c;font-size:11px">${esc(kw.thinking)}</td>
+      <td style="padding:8px;text-align:center">${kw.auto}</td>
+    </tr>`;
+  });
+  kwH+='</table>';
+
+  $('c-flow').innerHTML=`
+    <div class="sec-tit">🤖 AI 에이전트 흐름 시각화</div>
+    <div class="sec-sub">Stage A→E 오케스트레이션 · 에이전트 위임 · 키워드 명령 레퍼런스 · Reflexion Loop</div>
+
+    <div class="req-sec-h" style="margin-top:20px">📊 Stage 플로우 다이어그램</div>
+    <div class="card" style="overflow-x:auto;padding:20px">${svg}</div>
+
+    <div class="req-sec-h" style="margin-top:20px">🗂 도메인별 Stage 현황</div>
+    ${domH}
+
+    <div class="req-sec-h" style="margin-top:20px">📋 Stage 상세 카드</div>
+    ${stH}
+
+    <div class="req-sec-h" style="margin-top:20px">🤝 에이전트 위임 매트릭스</div>
+    <div class="card">${agH}</div>
+
+    <div class="req-sec-h" style="margin-top:20px">⌨️ 단일 키워드 명령 레퍼런스</div>
+    <div class="card">${kwH}</div>
+
+    <div class="req-sec-h" style="margin-top:20px">🔄 자동화 vs 멈춤 정책</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card" style="margin:0;border-left:3px solid #1a7f37">
+        <div class="card-tit" style="color:#1a7f37">✅ 자동 진행</div>
+        <ul style="color:var(--dm);font-size:12px;padding-left:16px;margin:8px 0">
+          <li>품질 게이트 PASS → 다음 Stage</li>
+          <li>테스트 실패 → 수정 후 재실행 (최대 3회)</li>
+          <li>ESLint → 즉시 수정</li>
+          <li>P0/P1 갭 발견 → 즉시 수정</li>
+          <li>Feature Flag: D PASS→internal(5%), E PASS→beta(20%), B_review PASS→full(100%)</li>
+        </ul>
+      </div>
+      <div class="card" style="margin:0;border-left:3px solid #cf222e">
+        <div class="card-tit" style="color:#cf222e">⛔ 멈추고 보고</div>
+        <ul style="color:var(--dm);font-size:12px;padding-left:16px;margin:8px 0">
+          <li>requirements/ 구조 변경</li>
+          <li>기존 코드 삭제</li>
+          <li>보안 정책 변경</li>
+          <li>3회 연속 동일 실패 미해결</li>
+          <li>INV 충돌 → ADR 필요</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="req-sec-h" style="margin-top:20px">🔁 Reflexion Loop (자기반성)</div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--dm);margin-bottom:10px">테스트 실패 / 게이트 FAIL 즉시 발동. 동일 category 3회 반복 시 ADR 경고.</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        ${['1.실패 감지','2.reflection.yaml 생성','3.root_cause 분류','4.next_strategy 수립','5.재시도 (max 3회)','6.성공→lessons-learned.yaml'].map((s,i)=>`
+          <span style="background:#161b22;border:1px solid ${i===5?'#1a7f37':'#30363d'};padding:5px 10px;border-radius:20px;font-size:11px;color:${i===5?'#3fb950':'#c9d1d9'}">${esc(s)}</span>${i<5?'<span style="color:#555;font-size:16px">→</span>':''}`).join('')}
+      </div>
+    </div>
+
+    <div class="req-sec-h" style="margin-top:20px">✅ Chain-of-Verification (CoVe)</div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--dm);margin-bottom:10px">Stage D 게이트 PASS 후 자동 실행</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+        <div style="background:#161b22;border:1px solid #30363d;padding:10px;border-radius:6px;font-size:12px">
+          <div style="font-weight:600;margin-bottom:4px">① 자문</div>
+          <div style="color:var(--dm)">"이 테스트가 정말 INV를 검증하는가?"</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #30363d;padding:10px;border-radius:6px;font-size:12px">
+          <div style="font-weight:600;margin-bottom:4px">② 탐색</div>
+          <div style="color:var(--dm)">"PASS해도 위반 가능한 입력이 존재하는가?"</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #30363d;padding:10px;border-radius:6px;font-size:12px">
+          <div style="font-weight:600;margin-bottom:4px">③ 보완</div>
+          <div style="color:var(--dm)">불일치 → 테스트 보완 → 재검증</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #1a7f37;padding:10px;border-radius:6px;font-size:12px">
+          <div style="font-weight:600;margin-bottom:4px;color:#3fb950">④ 기록</div>
+          <div style="color:var(--dm)">결과 → memory/stageD/[domain]-cove.yaml</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ────────────────────────────────────────────────────────────────
 // INIT
 // ────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
   const d=window.D;
   $('hbadge').textContent=d.project.health_rating;
   $('gentime').textContent='생성: '+new Date(d.generated_at).toLocaleString('ko-KR');
-  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderSprint(); renderLog();
+  renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderSprint(); renderLog(); renderAIFlow();
   // git 칩
   const g=d.git||{}; if(g.branch) $('gitchip').innerHTML=`<em>⎇</em> ${esc(g.branch)} <span style="opacity:.5;font-size:9px">${esc(g.hash||'')}</span>`;
   buildSB('dash');

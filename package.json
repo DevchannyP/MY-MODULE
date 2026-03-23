@@ -72,7 +72,9 @@
     "prepare": "husky",
     "test:turbo": "turbo run test",
     "gate:turbo": "turbo run gate",
-    "gate:all": "turbo run gate --parallel"
+    "gate:all": "turbo run gate --parallel",
+    "study-guide": "node scripts/generate-study-guide.js",
+    "scaffold": "node scripts/generate-domain-scaffold.js"
   },
   "keywords": [
     "workflow-os",
