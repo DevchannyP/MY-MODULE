@@ -24,7 +24,7 @@ const domainEntries = collectDomainEntries(domainsDir);
 const previousScores = {};
 if (fs.existsSync(scoresFile)) {
   const content = fs.readFileSync(scoresFile, 'utf-8');
-  for (const match of content.matchAll(/"([^"]+)":\s*\n\s+score:\s*(\d+(?:\.\d+)?)/g)) {
+  for (const match of content.matchAll(/"([^"]+)":\s*\r?\n\s+score:\s*(\d+(?:\.\d+)?)/g)) {
     previousScores[match[1]] = parseFloat(match[2]);
   }
 }

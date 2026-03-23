@@ -13,6 +13,7 @@ const EXCEPTION_STATUSES = Object.freeze({ OPEN: 'OPEN', APPROVED: 'APPROVED', R
  *   status: string,
  *   reason?: string|null,
  *   approvedBy?: string|null,
+ *   rejectedBy?: string|null,
  *   resolvedAt?: string|null,
  *   createdAt: string,
  * }} BillingExceptionSnapshot
@@ -35,7 +36,7 @@ class BillingException {
   /**
    * @param {BillingExceptionSnapshot} param0
    */
-  constructor({ exceptionId, invoiceId, paymentId, exceptionType, status, reason, approvedBy, resolvedAt, createdAt }) {
+  constructor({ exceptionId, invoiceId, paymentId, exceptionType, status, reason, approvedBy, rejectedBy, resolvedAt, createdAt }) {
     this.exceptionId   = exceptionId;
     this.invoiceId     = invoiceId;
     this.paymentId     = paymentId   || null;
@@ -43,6 +44,7 @@ class BillingException {
     this.status        = status;
     this.reason        = reason      || null;
     this.approvedBy    = approvedBy  || null;
+    this.rejectedBy    = rejectedBy  || null;
     this.resolvedAt    = resolvedAt  || null;
     this.createdAt     = createdAt;
 
@@ -94,7 +96,8 @@ class BillingException {
     return new BillingException({
       ...this._snapshot(),
       status:     EXCEPTION_STATUSES.REJECTED,
-      approvedBy: rejectedBy,
+      approvedBy: null,
+      rejectedBy,
       reason,
       resolvedAt: new Date().toISOString(),
     });
@@ -112,6 +115,7 @@ class BillingException {
       status:        this.status,
       reason:        this.reason,
       approvedBy:    this.approvedBy,
+      rejectedBy:    this.rejectedBy,
       resolvedAt:    this.resolvedAt,
       createdAt:     this.createdAt,
     };
@@ -127,6 +131,7 @@ class BillingException {
       status:         this.status,
       reason:         this.reason,
       approved_by:    this.approvedBy,
+      rejected_by:    this.rejectedBy,
       resolved_at:    this.resolvedAt,
       created_at:     this.createdAt,
     };
