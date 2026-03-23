@@ -112,4 +112,21 @@ describe('ListVideosUseCase', () => {
     assert.equal(result.items.length, 1);
     assert.equal(result.items[0].uploaderId, 'user-1');
   });
+
+  test('[회귀] 권한 필터는 페이지네이션보다 먼저 적용된다', async () => {
+    const { listUC, uploadUC } = makeSetup();
+    await uploadUC.execute(
+      { title: '비공개영상', uploaderId: 'user-1', originalFileRef: 'private-ref', accessPolicy: 'PRIVATE' },
+      WRITE_CALLER,
+    );
+    await uploadUC.execute(
+      { title: '공개영상', uploaderId: 'user-1', originalFileRef: 'public-ref', accessPolicy: 'PUBLIC' },
+      WRITE_CALLER,
+    );
+
+    const result = await listUC.execute({ page: 1, pageSize: 1 }, OTHER_CALLER);
+    assert.equal(result.total, 1);
+    assert.equal(result.items.length, 1);
+    assert.equal(result.items[0].accessPolicy, 'PUBLIC');
+  });
 });

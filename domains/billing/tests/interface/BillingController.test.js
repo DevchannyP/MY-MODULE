@@ -104,6 +104,30 @@ describe('[BillingController] GET /billing/invoices', () => {
     assert.ok('status'     in res.body.items[0]);
     assert.ok('total'      in res.body.items[0]);
   });
+
+  test('[회귀] invalid amount_min → 400', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET',
+      path: '/billing/invoices',
+      query: { amount_min: 'NaN-ish' },
+      caller: READ_CALLER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
+  });
+
+  test('[회귀] page_size > 100 → 400', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET',
+      path: '/billing/invoices',
+      query: { page_size: '101' },
+      caller: READ_CALLER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
+  });
 });
 
 // ── 3. POST /billing/invoices ─────────────────────────────────────────────────

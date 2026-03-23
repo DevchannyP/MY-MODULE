@@ -27,6 +27,7 @@ const { GetPaymentUseCase }             = require('../application/GetPaymentUseC
 const { RetryPaymentSyncUseCase }        = require('../application/RetryPaymentSyncUseCase');
 
 const { fromError } = require('../../../../src/shared/ProblemDetails');
+const { parsePagination, parseOptionalFiniteNumber } = require('../../../../src/shared/QueryValidation');
 
 class BillingController {
   /**
@@ -85,15 +86,21 @@ class BillingController {
     // GET /billing/invoices
     if (method === 'GET' && path === '/billing/invoices') {
       this._requirePermission(caller, 'billing.read');
+      const pagination = parsePagination(query);
+      const amountMin = parseOptionalFiniteNumber(query.amount_min, 'amount_min');
+      const amountMax = parseOptionalFiniteNumber(query.amount_max, 'amount_max');
+      if (amountMin !== undefined && amountMax !== undefined && amountMin > amountMax) {
+        throw Object.assign(new Error('amount_min must be less than or equal to amount_max'), { code: 'VALIDATION_ERROR' });
+      }
       const result = await this._invoiceRepo.findAll({
         status:     query.status,
         customerId: query.customer_id,
-        amountMin:  query.amount_min  !== undefined ? Number(query.amount_min)  : undefined,
-        amountMax:  query.amount_max  !== undefined ? Number(query.amount_max)  : undefined,
+        amountMin,
+        amountMax,
         dueFrom:    query.due_from,
         dueTo:      query.due_to,
-        page:       query.page       ? Number(query.page)       : 1,
-        pageSize:   query.page_size  ? Number(query.page_size)  : 20,
+        page:       pagination.page,
+        pageSize:   pagination.pageSize,
       });
       return { status: 200, body: this._pageOf(result, this._serializeInvoice) };
     }
@@ -144,12 +151,13 @@ class BillingController {
 
     // GET /billing/payments
     if (method === 'GET' && path === '/billing/payments') {
+      const pagination = parsePagination(query);
       const result = await this._listPayments.execute(
         {
           invoiceId: query.invoice_id,
           status:    query.status,
-          page:      query.page      ? Number(query.page)      : 1,
-          pageSize:  query.page_size ? Number(query.page_size) : 20,
+          page:      pagination.page,
+          pageSize:  pagination.pageSize,
         },
         caller,
       );
@@ -179,11 +187,12 @@ class BillingController {
     // GET /billing/exceptions
     if (method === 'GET' && path === '/billing/exceptions') {
       this._requirePermission(caller, 'billing.admin');
+      const pagination = parsePagination(query);
       const result = await this._exceptionRepo.findAll({
         exceptionType: query.exception_type,
         status:        query.status,
-        page:          query.page      ? Number(query.page)      : 1,
-        pageSize:      query.page_size ? Number(query.page_size) : 20,
+        page:          pagination.page,
+        pageSize:      pagination.pageSize,
       });
       return { status: 200, body: this._pageOf(result, this._serializeException) };
     }

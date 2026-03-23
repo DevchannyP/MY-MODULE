@@ -120,6 +120,18 @@ describe('[VideoController smoke] GET /videos', () => {
     assert.equal(res.body.items.length, 0);
     assert.equal(res.body.total, 0);
   });
+
+  test('[회귀] page_size > 100 → 400', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET',
+      path: '/videos',
+      query: { page_size: '101' },
+      caller: READ_CALLER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
+  });
 });
 
 // ── GET /videos/:videoId — getVideo ───────────────────────────────────────────

@@ -14,6 +14,7 @@
  */
 
 const { fromError } = require('../../../../../src/shared/ProblemDetails');
+const { parsePagination } = require('../../../../../src/shared/QueryValidation');
 
 class TaskController {
   /**
@@ -95,12 +96,13 @@ class TaskController {
   async _handleListTasks(req) {
     this._requirePermission(req.caller, 'task:read');
     const { assignee_id, status, due_before, page, page_size } = req.query || {};
+    const pagination = parsePagination({ page, page_size });
     const result = await this._listTasks.execute({
       assignee_id,
       status,
       due_before,
-      page:      page      ? Number(page)      : 1,
-      page_size: page_size ? Number(page_size) : 20,
+      page:      pagination.page,
+      page_size: pagination.pageSize,
     }, req.caller);
     return { status: 200, body: result };
   }

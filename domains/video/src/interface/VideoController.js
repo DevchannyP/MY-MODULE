@@ -20,6 +20,7 @@ const { ChangeAccessPolicyUseCase } = require('../application/ChangeAccessPolicy
 const { ArchiveVideoUseCase }      = require('../application/ArchiveVideoUseCase');
 
 const { fromError } = require('../../../../src/shared/ProblemDetails');
+const { parsePagination } = require('../../../../src/shared/QueryValidation');
 
 class VideoController {
   /**
@@ -88,12 +89,13 @@ class VideoController {
 
     // GET /videos — listVideos
     if (method === 'GET' && path === '/videos') {
+      const pagination = parsePagination(query);
       const result = await this._listVideos.execute(
         {
           status:     query.status,
           uploaderId: query.uploader_id,
-          page:       query.page      ? Number(query.page)      : 1,
-          pageSize:   query.page_size ? Number(query.page_size) : 20,
+          page:       pagination.page,
+          pageSize:   pagination.pageSize,
         },
         caller,
       );
