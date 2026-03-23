@@ -35,6 +35,14 @@ plugins:
     status: "inactive"               # feature_flag=false 동안 inactive. PASS 후 active로 변경.
     registered_at: "2026-03-17"
     owner: "productivity-team"
+    architecture_profile: "stateful-domain-module"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
+      - "repository-sqlite"
     stage_b_memory_ref: "memory/stageB/task-management-composition.yaml"
     notes: |
       - enable_task_management: false → 마스터 UI 미노출 상태.
@@ -78,6 +86,13 @@ plugins:
     status: "inactive"
     registered_at: "2026-03-18"
     owner: "platform-team"
+    architecture_profile: "workflow-domain-module"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
     stage_b_memory_ref: "memory/stageB/billing.yaml"
     notes: |
       - billing.enabled: false → 마스터 UI 미노출 상태.
@@ -122,6 +137,13 @@ plugins:
     status: "inactive"
     registered_at: "2026-03-20"
     owner: "video-team"
+    architecture_profile: "workflow-domain-module"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
     stage_b_memory_ref: "memory/stageB/video.yaml"
     notes: |
       - video.enabled: false → Stage D PASS 후 internal 5% 시작.

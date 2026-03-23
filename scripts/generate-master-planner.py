@@ -130,6 +130,9 @@ next_actions = load_yaml("memory/next-actions.yaml")
 health       = load_yaml("master-shell/observability/health-scores.yaml")
 flags        = load_yaml("master-shell/feature-flags/flags.yaml")
 registry     = load_yaml("master-shell/plugin-registry/registry.yaml")
+adapter_registry = load_yaml("master-shell/catalog/adapter-registry.yaml")
+project_blueprints = load_yaml("master-shell/catalog/project-blueprints.yaml")
+ai_learning_map = load_yaml("master-shell/catalog/ai-learning-map.yaml")
 reflect_log   = load_yaml("memory/L0-hot/reflection-log.yaml")
 fail_patterns = load_yaml("memory/L0-hot/failure-patterns.yaml")
 gate_trends   = load_yaml("memory/L0-hot/gate-trends.yaml")
@@ -365,6 +368,13 @@ data = {
     "domain_scores": domain_scores,
     "plugins":      plugins,
     "ui_guides":    ui_guides,
+    "adapter_catalog": {
+        "principles": adapter_registry.get("principles", []),
+        "adapters": adapter_registry.get("adapters", []),
+        "profiles": adapter_registry.get("adapter_profiles", []),
+    },
+    "project_blueprints": project_blueprints.get("blueprints", []),
+    "ai_learning_tracks": ai_learning_map.get("tracks", []),
     "flags": {
         "global": flags.get("global_flags",{}),
         "plugin": flags.get("plugin_flags",{}),
@@ -954,6 +964,7 @@ const SECTIONS = [
     init(d) {
       const stC=(d.project.stage_states||{}).C||'PASS';
       const pf=d.flags.plugin||{};
+      const profiles=d.adapter_catalog?.profiles||[];
       const active=Object.entries(pf).filter(([,v])=>v).map(([k])=>k);
       const inactive=Object.entries(pf).filter(([,v])=>!v).map(([k])=>k);
       let out=`## 플러그인 활성화 계획\n\n현재 모든 플래그가 \`false\`인 것은 운영 환경 준비 전 안전 기본값이다.\n활성화는 Stage D → E → B_review 순 검증 후 단계적으로 진행한다.\n\n`;
@@ -961,8 +972,11 @@ const SECTIONS = [
       d.plugins.forEach(p=>{
         const fval=pf[p.feature_flag];
         const fStr=fval?'✅ 활성':'🔒 비활성 (운영 준비 후 활성화)';
+        const profile=profiles.find(pr=>pr.id===p.architecture_profile);
         out+=`### ${p.name} (\`${p.feature_flag}\`) — ${fStr}\n`;
         out+=`- 플러그인 ID: ${p.id} | 현재 상태: ${p.status}\n`;
+        out+=`- 아키텍처 프로파일: ${profile?`${profile.name} (${profile.id})`:p.architecture_profile||'—'}\n`;
+        out+=`- 어댑터 스택: ${(p.adapter_refs||[]).join(', ') || '—'}\n`;
         out+=`- 롤아웃 전략: ${p.rollout?.strategy||'canary'} (internal 5% → beta 20% → full 100%)\n\n`;
       });
       out+=`## 활성화 조건\n- Stage D PASS → internal(5%) 활성화\n- Stage E PASS → beta(20%) 확장\n- B_review PASS → full(100%) 전환\n- 운영 환경 Smoke Test 통과 필수\n\n`;
@@ -1108,6 +1122,8 @@ const SECTIONS = [
       const active=d.wps.active||[];
       const pending=d.wps.pending||[];
       const nq=d.next_queue||[];
+      const blueprints=d.project_blueprints||[];
+      const tracks=d.ai_learning_tracks||[];
       let out=`## 현재 진행 중\n\n`;
       if(active.length){
         active.forEach(w=>{ out+=`### 🔄 ${w.id}: ${w.goal}\n- CAP: ${w.cap_id} | 티어: ${w.tier||'—'}\n\n`; });
@@ -1128,6 +1144,14 @@ const SECTIONS = [
       if(v3.length){ out+=`\n## v3.0 완료 피처 (주요)\n`; v3.forEach(f=>{ out+=`- ${f}\n`; }); }
       const reps=d.learning_reports;
       if(reps.length){ out+=`\n## 학습 보고서 (${reps.length}건)\n`; reps.forEach(r=>{ out+=`- [${r.domain}] ${r.file}\n`; }); }
+      if(blueprints.length){
+        out+=`\n## 프로젝트 시작 블루프린트\n`;
+        blueprints.forEach(bp=>{ out+=`- **${bp.name}** (${bp.id}): ${bp.summary}\n`; });
+      }
+      if(tracks.length){
+        out+=`\n## AI 학습 플로우\n`;
+        tracks.forEach(track=>{ out+=`- **${track.title}**: ${(track.steps||[]).length}단계 학습\n`; });
+      }
       return out;
     },
     ideas:[
@@ -1176,6 +1200,8 @@ function sw(name) {
 function renderDash() {
   const d=window.D,p=d.project,wp=d.wps,dp=pct(wp.done_count,wp.total);
   const stages=p.stage_states||{};
+  const blueprints=d.project_blueprints||[];
+  const learningTracks=d.ai_learning_tracks||[];
 
   let dscr='';
   Object.entries(d.domain_scores||{}).forEach(([dom,info])=>{
@@ -1267,6 +1293,19 @@ function renderDash() {
         <div><div class="card-tit">Feature Flag 현황</div>
           <div class="card-sub">master-shell/feature-flags/flags.yaml</div></div></div>
       <div style="margin-top:8px">${fH}</div></div>
+
+    ${blueprints.length?`<div class="card"><div class="card-h"><div class="card-ic">🧭</div>
+        <div><div class="card-tit">마스터 OS 시작 청사진</div>
+          <div class="card-sub">프로젝트 시작 블루프린트 ${blueprints.length}개 · AI 학습 트랙 ${learningTracks.length}개</div></div></div>
+      ${(blueprints||[]).slice(0,2).map(bp=>`<div class="wi">
+        <div class="wd d-act"></div>
+        <div class="wid">${esc(bp.name||bp.id)}</div>
+        <div style="flex:1">
+          <div class="wg">${esc(bp.summary||'')}</div>
+          <div class="wr">추천 모듈: ${esc((bp.recommended_modules||[]).join(', '))}</div>
+        </div>
+      </div>`).join('')}
+    </div>`:''}
 
     <div class="card"><div class="card-h"><div class="card-ic">✅</div>
         <div><div class="card-tit">품질 게이트 상세</div>
@@ -1680,6 +1719,10 @@ function togArc(id){ $(id).classList.toggle('open'); }
 function renderDom(){
   const d=window.D; $('tc-dom').textContent=d.domains.length;
   const stages=d.project.stage_states||{}, pf=d.flags.plugin||{};
+  const adapters=d.adapter_catalog?.adapters||[];
+  const profiles=d.adapter_catalog?.profiles||[];
+  const adapterMap=Object.fromEntries(adapters.map(adapter=>[adapter.id,adapter]));
+  const pluginMap=Object.fromEntries((d.plugins||[]).map(plugin=>[plugin.module_id,plugin]));
   let html=`<div class="sec-tit">🗺 도메인 현황</div>`;
 
   // 계약 매트릭스
@@ -1721,11 +1764,35 @@ function renderDom(){
     </div>`;
   }
 
+  if(adapters.length || profiles.length){
+    html+=`<div class="card" style="margin-bottom:16px">
+      <div class="card-h"><div class="card-ic">🔌</div>
+        <div><div class="card-tit">어댑터 레지스트리</div>
+          <div class="card-sub">master-shell/catalog/adapter-registry.yaml</div></div></div>
+      <div class="g3" style="margin-top:10px">
+        <div class="mc"><div class="mc-l">총 어댑터</div><div class="mc-v">${adapters.length}</div></div>
+        <div class="mc"><div class="mc-l">프로파일</div><div class="mc-v">${profiles.length}</div></div>
+        <div class="mc"><div class="mc-l">핵심 원칙</div><div class="mc-v" style="font-size:11px;line-height:1.4">${esc((d.adapter_catalog?.principles||[])[0]||'—')}</div></div>
+      </div>
+      ${(profiles||[]).map(profile=>`
+        <div class="wi">
+          <div class="wd d-act"></div>
+          <div class="wid">${esc(profile.name||profile.id)}</div>
+          <div style="flex:1">
+            <div class="wg">${esc(profile.intent||'')}</div>
+            <div class="wr">패턴: ${esc(profile.architecture_pattern||'—')} | adapters: ${esc((profile.adapter_refs||[]).join(', '))}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
   // 도메인 카드
   d.domains.forEach(m=>{
     const domKey=m.domain==='productivity'?'productivity/task-tracking':m.domain;
     const si=d.domain_scores[domKey]||d.domain_scores[m.domain]||{};
     const guide=d.ui_guides?.[m.module_id]||null;
+    const plugin=pluginMap[m.module_id]||{};
+    const profile=profiles.find(pr=>pr.id===plugin.architecture_profile)||null;
     const score=m.health_score||si.score||'—', trend=si.trend||'→';
     const flagVal=pf[m.feature_flag];
     const ms=m.stage_a?{A:m.stage_a,B:m.stage_b,C:m.stage_c,D:m.stage_d,E:m.stage_e}:{A:'PASS',B:'PASS',C:'PASS',D:'PASS',E:'PASS'};
@@ -1794,6 +1861,22 @@ function renderDom(){
         ${m.contract_dir?`<div class="kv"><span class="kk">계약 디렉토리</span><span>${esc(m.contract_dir)}</span></div>`:''}
         ${m.interface_layer?`<div class="kv"><span class="kk">인터페이스</span><span class="kv-ok">${esc(m.interface_layer.substring(0,70))}</span></div>`:''}
         ${m.unit_tests?`<div class="kv"><span class="kk">단위 테스트</span><span class="kv-ok">${esc(m.unit_tests)}</span></div>`:''}
+        ${profile?`<div class="kv"><span class="kk">아키텍처 프로파일</span><span class="kv-ok">${esc(profile.name)} <span style="color:var(--dm)">(${esc(profile.id)})</span></span></div>`:''}
+        ${plugin.architecture_profile && !profile?`<div class="kv"><span class="kk">아키텍처 프로파일</span><span>${esc(plugin.architecture_profile)}</span></div>`:''}
+        ${(plugin.adapter_refs||[]).length?`<div style="margin-top:10px">
+          <div style="font-size:10px;font-weight:600;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">어댑터 스택</div>
+          ${(plugin.adapter_refs||[]).map(adapterRef=>{
+            const adapter=adapterMap[adapterRef]||{};
+            return `<div class="wi" style="margin-bottom:5px">
+              <div class="wd d-pass"></div>
+              <div class="wid">${esc(adapter.name||adapterRef)}</div>
+              <div style="flex:1">
+                <div class="wg">${esc(adapter.description||'')}</div>
+                <div class="wr">layer: ${esc(adapter.layer||'—')} | protocol: ${esc(adapter.protocol||'—')}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`:''}
         ${gH?`<div style="margin-top:10px"><div style="font-size:10px;font-weight:600;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Stage E 갭</div>${gH}</div>`:''}
         ${guideH}
       </div>
@@ -1905,6 +1988,9 @@ function renderReq(){
   const mod=req.module||{}, nfr=req.nfr||{}, qg=req.quality_gates||{};
   const hc=req.hard_constraints||[], sc=req.soft_constraints||[];
   const doms=req.domain_map_domains||[];
+  const blueprints=window.D.project_blueprints||[];
+  const tracks=window.D.ai_learning_tracks||[];
+  const profiles=window.D.adapter_catalog?.profiles||[];
 
   // NFR — 카테고리별 중첩 렌더링
   const nfrCats=req.nfr_categories||{};
@@ -1962,6 +2048,48 @@ function renderReq(){
       </div>`).join('')}
   </div>`).join('');
 
+  const bpH=blueprints.map(bp=>{
+    const profile=profiles.find(pr=>pr.id===bp.architecture_profile);
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="card-h">
+        <div class="card-ic">🧭</div>
+        <div>
+          <div class="card-tit">${esc(bp.name||bp.id)}</div>
+          <div class="card-sub">${esc(bp.summary||'')}</div>
+        </div>
+      </div>
+      <div class="kv"><span class="kk">언제 쓰는가</span><span>${esc(bp.when_to_use||'')}</span></div>
+      <div class="kv"><span class="kk">아키텍처 프로파일</span><span class="kv-ok">${esc(profile?.name||bp.architecture_profile||'—')}</span></div>
+      <div class="kv"><span class="kk">추천 모듈</span><span>${esc((bp.recommended_modules||[]).join(', '))}</span></div>
+      <div style="margin-top:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--dm);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">시작 순서</div>
+        ${(bp.starter_sequence||[]).map(step=>`<div class="wi" style="margin-bottom:5px">
+          <div class="wd d-pass"></div>
+          <div class="wid">${esc(step.step||'step')}</div>
+          <div class="wg">${esc(step.focus||'')}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  const trackH=tracks.map(track=>`<div class="card" style="margin-bottom:10px">
+    <div class="card-h">
+      <div class="card-ic">🧠</div>
+      <div>
+        <div class="card-tit">${esc(track.title||track.id)}</div>
+        <div class="card-sub">${esc(track.persona||'')} · ${esc(track.objective||'')}</div>
+      </div>
+    </div>
+    ${(track.steps||[]).map((step,index)=>`<div class="wi" style="margin-bottom:5px">
+      <div class="wd d-act"></div>
+      <div class="wid">${index+1}. ${esc(step.title||step.id)}</div>
+      <div style="flex:1">
+        <div class="wg">${esc(step.learn||'')}</div>
+        <div class="wr">탭: ${esc(step.tab||'—')} | 섹션: ${esc(step.section||'—')}</div>
+      </div>
+    </div>`).join('')}
+  </div>`).join('');
+
   $('c-req').innerHTML=`
     <div class="sec-tit">📋 요구사항 & 제약조건</div>
 
@@ -2001,6 +2129,16 @@ function renderReq(){
     <div class="req-sec">
       <div class="req-sec-h">🗺 도메인 맵 (requirements/domain-map.yaml)</div>
       ${dmH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🚀 프로젝트 시작 블루프린트</div>
+      ${bpH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
+    </div>
+
+    <div class="req-sec">
+      <div class="req-sec-h">🧠 AI 학습 플로우</div>
+      ${trackH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
     </div>`;
 }
 
@@ -2154,6 +2292,14 @@ function runSearch(q){
   d.adrs.filter(a=>(a.id+a.title+a.domain).toLowerCase().includes(ql)).slice(0,4).forEach(a=>{
     results.push({tag:'ADR',text:'ADR-'+a.id+': '+a.title,sub:'domain: '+a.domain,action:`sw('adr')`});
   });
+  // Blueprints
+  (d.project_blueprints||[]).filter(bp=>(bp.id+bp.name+bp.summary+bp.when_to_use).toLowerCase().includes(ql)).slice(0,4).forEach(bp=>{
+    results.push({tag:'청사진',text:bp.name,sub:bp.summary,action:`sw('req')`});
+  });
+  // Learning tracks
+  (d.ai_learning_tracks||[]).filter(track=>(track.id+track.title+track.persona+track.objective).toLowerCase().includes(ql)).slice(0,4).forEach(track=>{
+    results.push({tag:'학습',text:track.title,sub:track.objective,action:`sw('req')`});
+  });
   if(!results.length){$('gsResults').innerHTML='<div class="gs-empty">검색 결과 없음: "'+esc(q)+'"</div>';return;}
   $('gsResults').innerHTML=results.map((r,i)=>`<div class="gs-item" style="${i===0?'background:var(--sf2)':''}"
     onclick="${r.action};closeSearch()">
@@ -2223,13 +2369,16 @@ function buildSB(tab){
   } else if(tab==='req'){
     const req=window.D.requirements||{};
     const hc=(req.hard_constraints||[]).length, sc=(req.soft_constraints||[]).length;
+    const bp=(window.D.project_blueprints||[]).length, lt=(window.D.ai_learning_tracks||[]).length;
     sb.innerHTML=`<div class="sb-lbl">요구사항</div>
       <div class="nl"><span class="dot d-pass"></span>모듈 정의</div>
       <div class="nl"><span class="dot d-act"></span>NFR 비기능 요구사항</div>
       <div class="nl"><span class="dot d-pass"></span>품질 게이트</div>
       <div class="nl"><span class="dot d-warn"></span>하드 제약 (${hc}개)</div>
       <div class="nl"><span class="dot d-off"></span>소프트 제약 (${sc}개)</div>
-      <div class="nl"><span class="dot d-act"></span>도메인 맵</div>`;
+      <div class="nl"><span class="dot d-act"></span>도메인 맵</div>
+      <div class="nl"><span class="dot d-pass"></span>블루프린트 (${bp}개)</div>
+      <div class="nl"><span class="dot d-pass"></span>AI 학습 플로우 (${lt}개)</div>`;
   } else if(tab==='adr'){
     sb.innerHTML=`<div class="sb-lbl">ADR (${d.adrs.length})</div>`+
       d.adrs.map(a=>`<div class="nl">

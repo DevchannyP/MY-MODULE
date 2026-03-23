@@ -69,10 +69,19 @@ def ui_contract_feature_flags(ui_contract_ref: str) -> set[str]:
     return flags
 
 
+def ensure_list_of_strings(value) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, str) and item]
+
+
 def main() -> int:
     registry = load_yaml("master-shell/plugin-registry/registry.yaml")
     navigation = load_yaml("master-shell/navigation/nav.yaml")
     catalog = load_yaml("master-shell/catalog/domains.yaml")
+    adapter_registry = load_yaml("master-shell/catalog/adapter-registry.yaml")
+    project_blueprints = load_yaml("master-shell/catalog/project-blueprints.yaml")
+    ai_learning_map = load_yaml("master-shell/catalog/ai-learning-map.yaml")
     flags = load_yaml("master-shell/feature-flags/flags.yaml")
     flag_metadata = load_json("master-shell/feature-flags/metadata.json")
     slo_policy = load_json("master-shell/observability/slo-policy.json")
@@ -81,6 +90,10 @@ def main() -> int:
     errors: list[str] = []
 
     plugins = registry.get("plugins", [])
+    adapters = adapter_registry.get("adapters", [])
+    adapter_profiles = adapter_registry.get("adapter_profiles", [])
+    blueprints = project_blueprints.get("blueprints", [])
+    learning_tracks = ai_learning_map.get("tracks", [])
     plugin_map = {}
     for plugin in plugins:
         plugin_id = plugin.get("id")
@@ -108,6 +121,39 @@ def main() -> int:
         if isinstance(slo_policy.get("deployment_protection", {}), dict)
         else {}
     )
+    adapter_ids: set[str] = set()
+    adapter_map = {}
+    for adapter in adapters:
+        adapter_id = adapter.get("id")
+        if adapter_id in adapter_ids:
+            errors.append(f"adapter-registry: duplicate adapter id -> {adapter_id}")
+        if not isinstance(adapter_id, str) or not adapter_id:
+            errors.append("adapter-registry: adapter.id must be non-empty")
+            continue
+        adapter_ids.add(adapter_id)
+        adapter_map[adapter_id] = adapter
+
+    profile_map = {}
+    for profile in adapter_profiles:
+        profile_id = profile.get("id")
+        if profile_id in profile_map:
+            errors.append(f"adapter-registry: duplicate adapter profile -> {profile_id}")
+        if not isinstance(profile_id, str) or not profile_id:
+            errors.append("adapter-registry: adapter_profiles[].id must be non-empty")
+            continue
+        profile_map[profile_id] = profile
+        profile_refs = ensure_list_of_strings(profile.get("adapter_refs"))
+        if not profile_refs:
+            errors.append(f"adapter-registry: profile {profile_id} must reference at least one adapter")
+        for adapter_ref in profile_refs:
+            if adapter_ref not in adapter_map:
+                errors.append(f"adapter-registry: profile {profile_id} unknown adapter -> {adapter_ref}")
+
+    module_ids = {
+        plugin.get("module_id")
+        for plugin in plugins
+        if isinstance(plugin.get("module_id"), str) and plugin.get("module_id")
+    }
 
     for plugin_id, plugin in plugin_map.items():
         for field in ("ui_contract", "capability_contract", "stage_b_memory_ref"):
@@ -118,6 +164,25 @@ def main() -> int:
         feature_flag = plugin.get("feature_flag")
         if feature_flag not in feature_flags:
             errors.append(f"{plugin_id}: feature flag not registered -> {feature_flag}")
+
+        architecture_profile = plugin.get("architecture_profile")
+        if architecture_profile not in profile_map:
+            errors.append(f"{plugin_id}: architecture_profile not found -> {architecture_profile}")
+
+        adapter_refs = ensure_list_of_strings(plugin.get("adapter_refs"))
+        if not adapter_refs:
+            errors.append(f"{plugin_id}: adapter_refs must declare at least one adapter")
+        for adapter_ref in adapter_refs:
+            if adapter_ref not in adapter_map:
+                errors.append(f"{plugin_id}: unknown adapter ref -> {adapter_ref}")
+
+        if architecture_profile in profile_map:
+            profile_refs = set(ensure_list_of_strings(profile_map[architecture_profile].get("adapter_refs")))
+            for adapter_ref in adapter_refs:
+                if adapter_ref not in profile_refs:
+                    errors.append(
+                        f"{plugin_id}: adapter {adapter_ref} not permitted by architecture_profile {architecture_profile}"
+                    )
 
         ui_contract_ref = plugin.get("ui_contract")
         if isinstance(ui_contract_ref, str) and file_exists(ui_contract_ref):
@@ -214,6 +279,66 @@ def main() -> int:
     for plugin_id in plugin_map:
         if plugin_id not in catalog_plugin_refs:
             errors.append(f"{plugin_id}: not referenced by master-shell catalog")
+
+    learning_track_ids: set[str] = set()
+    allowed_learning_tabs = {
+        "대시보드",
+        "기획서",
+        "Work Packets",
+        "완료 아카이브",
+        "도메인",
+        "요구사항",
+        "ADR",
+        "스프린트",
+        "감사·학습",
+    }
+    for track in learning_tracks:
+        track_id = track.get("id")
+        if track_id in learning_track_ids:
+            errors.append(f"ai-learning-map: duplicate track id -> {track_id}")
+        if not isinstance(track_id, str) or not track_id:
+            errors.append("ai-learning-map: tracks[].id must be non-empty")
+            continue
+        learning_track_ids.add(track_id)
+        steps = track.get("steps", [])
+        if not isinstance(steps, list) or len(steps) < 2:
+            errors.append(f"ai-learning-map: track {track_id} must define at least 2 steps")
+            continue
+        for step in steps:
+            if not isinstance(step.get("title"), str) or not step.get("title"):
+                errors.append(f"ai-learning-map: track {track_id} step title missing")
+            if step.get("tab") not in allowed_learning_tabs:
+                errors.append(f"ai-learning-map: track {track_id} invalid tab -> {step.get('tab')}")
+            if not isinstance(step.get("learn"), str) or not step.get("learn"):
+                errors.append(f"ai-learning-map: track {track_id} step learn missing")
+
+    blueprint_ids: set[str] = set()
+    for blueprint in blueprints:
+        blueprint_id = blueprint.get("id")
+        if blueprint_id in blueprint_ids:
+            errors.append(f"project-blueprints: duplicate blueprint id -> {blueprint_id}")
+        if not isinstance(blueprint_id, str) or not blueprint_id:
+            errors.append("project-blueprints: blueprints[].id must be non-empty")
+            continue
+        blueprint_ids.add(blueprint_id)
+        architecture_profile = blueprint.get("architecture_profile")
+        if architecture_profile not in profile_map:
+            errors.append(f"project-blueprints: {blueprint_id} unknown architecture_profile -> {architecture_profile}")
+        recommended_modules = ensure_list_of_strings(blueprint.get("recommended_modules"))
+        if not recommended_modules:
+            errors.append(f"project-blueprints: {blueprint_id} must declare recommended_modules")
+        for module_id in recommended_modules:
+            if module_id not in module_ids:
+                errors.append(f"project-blueprints: {blueprint_id} unknown module -> {module_id}")
+        learning_refs = ensure_list_of_strings(blueprint.get("learning_tracks"))
+        if not learning_refs:
+            errors.append(f"project-blueprints: {blueprint_id} must declare learning_tracks")
+        for learning_ref in learning_refs:
+            if learning_ref not in learning_track_ids:
+                errors.append(f"project-blueprints: {blueprint_id} unknown learning track -> {learning_ref}")
+        starter_sequence = blueprint.get("starter_sequence", [])
+        if not isinstance(starter_sequence, list) or len(starter_sequence) < 2:
+            errors.append(f"project-blueprints: {blueprint_id} must define at least 2 starter_sequence steps")
 
     if set(metadata_flags.keys()) != feature_flags:
         missing_metadata = sorted(feature_flags - set(metadata_flags.keys()))
