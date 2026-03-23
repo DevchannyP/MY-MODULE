@@ -34,3 +34,9 @@ Thumbs.db
 # SBOM (빌드 시 생성, 저장소에 포함하지 않음)
 sbom.spdx.json
 sbom.cyclonedx.json
+
+# 임시 생성물 (artifacts/는 의도적으로 추적 — 설계 산출물)
+# artifacts/master-planner/index.html → 의도적으로 커밋 (design deliverable)
+# artifacts/catalog/  → 의도적으로 커밋 (domain catalog)
+tmp/
+*.tmp

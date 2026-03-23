@@ -48,6 +48,7 @@
     "release:evidence": "node scripts/generate-release-evidence.js",
     "catalog": "node scripts/generate-catalog-site.js",
     "planner": "python3 scripts/generate-master-planner.py",
+    "planner:watch": "python3 -c \"import time,subprocess,os; [subprocess.run(['python3','scripts/generate-master-planner.py']) or time.sleep(10) for _ in iter(int,1)]\"",
     "project:status": "node scripts/project_status.js",
     "stage:a": "node scripts/run_stage.js A --dry-run",
     "stage:b": "node scripts/run_stage.js B --dry-run",

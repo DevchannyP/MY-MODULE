@@ -46,15 +46,27 @@ next_actions = load_yaml("memory/next-actions.yaml")
 health       = load_yaml("master-shell/observability/health-scores.yaml")
 flags        = load_yaml("master-shell/feature-flags/flags.yaml")
 registry     = load_yaml("master-shell/plugin-registry/registry.yaml")
-reflect_log  = load_yaml("memory/L0-hot/reflection-log.yaml")
-audit_chain  = load_json("worklog/audit-chain.json")
-adr_index    = load_yaml("docs/adr/adr-index.yaml")
+reflect_log   = load_yaml("memory/L0-hot/reflection-log.yaml")
+fail_patterns = load_yaml("memory/L0-hot/failure-patterns.yaml")
+gate_trends   = load_yaml("memory/L0-hot/gate-trends.yaml")
+knowledge_g   = load_yaml("memory/knowledge-graph.yaml")
+audit_chain   = load_json("worklog/audit-chain.json")
+adr_index     = load_yaml("docs/adr/adr-index.yaml")
 contract_mat = read_md("worklog/contract-matrix.md", 20)
 # ── Requirements / Constraints / Domain-Map ───────────────────────
 req_yaml     = load_yaml("requirements/requirements.yaml")
 constraints  = load_yaml("requirements/constraints.yaml")
 domain_map   = load_yaml("requirements/domain-map.yaml")
 nfr_yaml     = load_yaml("requirements/nfr.yaml")
+
+# nfr.yaml 중첩 카테고리 평탄화
+nfr_categories = {}
+for cat, items in (nfr_yaml or {}).items():
+    if cat in ("version", "last_updated"): continue
+    if isinstance(items, dict):
+        nfr_categories[cat] = {str(k): str(v) for k, v in items.items()}
+    else:
+        nfr_categories[cat] = {"value": str(items)}
 stage_a_mems = {}
 for p in glob.glob(os.path.join(ROOT, "memory/stageA/*.yaml")):
     name = os.path.basename(p).replace(".yaml","")
@@ -264,13 +276,18 @@ data = {
         "module":         req_yaml.get("module", {}),
         "stage":          req_yaml.get("stage", "D"),
         "nfr":            req_yaml.get("nfr", {}),
+        "nfr_categories": nfr_categories,
         "quality_gates":  req_yaml.get("quality_gates", {}),
         "contracts":      req_yaml.get("contracts", {}),
         "composition":    req_yaml.get("composition", {}),
         "hard_constraints": (constraints or {}).get("hard_constraints", []),
         "soft_constraints": (constraints or {}).get("soft_constraints", []),
         "domain_map_domains": (domain_map or {}).get("domains", []),
-        "nfr_global":     nfr_yaml if nfr_yaml else {},
+        "fail_patterns":  (fail_patterns or {}).get("patterns", []),
+        "gate_trends":    (gate_trends or {}).get("domains", {}),
+    },
+    "knowledge_graph": {
+        "domains": (knowledge_g or {}).get("entities", {}).get("domains", {}),
     },
 }
 
@@ -422,9 +439,6 @@ body{background:var(--bg);color:var(--tx);font-family:var(--fn);min-height:100vh
   padding:8px 10px;font-size:10px;font-family:var(--mo);color:var(--dm);
   line-height:1.6;display:none;margin-bottom:8px;word-break:break-all}
 .pb-box.open{display:block}
-.dnb{display:none;font-size:10px;color:var(--ac);background:rgba(35,134,54,.09);
-  padding:2px 7px;border-radius:99px;border:1px solid rgba(35,134,54,.22);font-weight:600}
-.dnb.show{display:inline-flex;align-items:center;gap:3px}
 
 /* ── buttons ── */
 .btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:var(--r);
@@ -958,7 +972,25 @@ function renderDash() {
 
     <div class="card"><div class="card-h"><div class="card-ic">⚠️</div>
         <div><div class="card-tit">Known Issues</div></div></div>
-      ${kiH}</div>`;
+      ${kiH}</div>
+
+    ${(()=>{
+      const kg=d.knowledge_graph||{}; const kgd=kg.domains||{};
+      if(!Object.keys(kgd).length) return '';
+      const rows=Object.entries(kgd).map(([name,info])=>`
+        <div class="wi"><div class="wd d-pass"></div>
+          <div class="wid">${esc(name)}</div>
+          <div style="flex:1">
+            <div class="wg">src: ${info.src_files||0}개 파일 | tests: ${info.test_files||0}개 파일</div>
+            <div class="wr">contracts: OpenAPI ${info.contracts?.openapi?'✅':'—'} Events ${info.contracts?.events?'✅':'—'} UI ${info.contracts?.ui?'✅':'—'}</div>
+          </div>
+        </div>`).join('');
+      return `<div class="card"><div class="card-h"><div class="card-ic">🕸</div>
+        <div><div class="card-tit">Knowledge Graph — 도메인 파일 현황</div>
+          <div class="card-sub">memory/knowledge-graph.yaml</div></div></div>
+        ${rows}</div>`;
+    })()}
+`;
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -1073,6 +1105,9 @@ function markDone(id){
   toast('섹션 완료로 표시됨 — 완료 아카이브에 저장됨');
   buildSB('plan');
   updPlanProg();
+  // 아카이브 탭 카운터 즉시 갱신
+  const doneSecs=SECTIONS.filter(s=>ST.planDone[s.id]||localStorage.getItem('wfos-done-'+s.id)).length;
+  const tc=$('tc-arc'); if(tc) tc.textContent=doneSecs+window.D.wps.done_count;
 }
 function resetSec(id){
   if(!confirm('이 섹션의 내용을 프로젝트 데이터로 초기화합니까? 현재 내용은 사라집니다.')) return;
@@ -1104,8 +1139,7 @@ function updPlanProg(){
   let done=0;
   SECTIONS.forEach(s=>{ if(ST.planDone[s.id]||localStorage.getItem('wfos-done-'+s.id)) done++; });
   $('tc-plan').textContent=`${done}/${SECTIONS.length}`;
-  const arcDone=done+window.D.wps.done_count;
-  $('tc-arc').textContent=arcDone;
+  // tc-arc는 renderArc()에서만 설정 — 이중 설정 금지
 }
 function copyAll(){
   let md=`# Workflow OS 마스터 기획서\n생성: ${new Date().toLocaleDateString('ko-KR')}\n\n---\n\n`;
@@ -1116,8 +1150,8 @@ function copyAll(){
   });
 }
 function exportMD(){
-  let md=`# Workflow OS 마스터 기획서\n> ${new Date().toLocaleString('ko-KR')}\n\n`;
-  SECTIONS.forEach(s=>{ md+=`## ${s.title}\n> ${s.tag} | ${s.desc}\n\n${ST.planC[s.id]?.trim()||'*(미작성)*'}\n\n---\n\n`; });
+  let md=`# Workflow OS 마스터 기획서\n> 생성: ${new Date().toLocaleString('ko-KR')}\n> 브랜치: ${window.D.project.branch}\n\n---\n\n`;
+  SECTIONS.forEach(s=>{ md+=`## ${s.num} — ${s.title} [${s.tag}]\n> ${s.desc}\n\n${ST.planC[s.id]?.trim()||'*(미작성)*'}\n\n---\n\n`; });
   const b=new Blob([md],{type:'text/markdown'});
   const u=URL.createObjectURL(b), a=document.createElement('a');
   a.href=u; a.download=`wfos-plan-${Date.now()}.md`; a.click(); URL.revokeObjectURL(u);
@@ -1319,11 +1353,15 @@ function renderDom(){
       <tr style="border-bottom:1px solid var(--bd)">
         ${['도메인','OpenAPI','Events','UI','Capability','Status'].map(h=>`<th style="text-align:left;padding:5px 8px;color:var(--dm);font-size:10px;font-weight:600">${h}</th>`).join('')}
       </tr>
-      ${['billing','productivity/task-tracking','video'].map(dom=>`<tr style="border-bottom:1px solid var(--bd)">
-        <td style="padding:7px 8px;color:var(--tx)">${esc(dom)}</td>
-        ${['✅','✅','✅','✅'].map(x=>`<td style="padding:7px 8px;color:var(--ac)">${x}</td>`).join('')}
-        <td style="padding:7px 8px"><span class="st s-ok">PASS</span></td>
-      </tr>`).join('')}
+      ${d.domains.map(m=>{
+        const domKey=m.domain==='productivity'?'productivity/task-tracking':m.domain;
+        const allPass=[m.stage_a,m.stage_b,m.stage_c,m.stage_d,m.stage_e].every(s=>!s||s==='PASS');
+        return `<tr style="border-bottom:1px solid var(--bd)">
+          <td style="padding:7px 8px;color:var(--tx)">${esc(domKey)}</td>
+          ${['OpenAPI','Events','UI','Capability'].map(x=>`<td style="padding:7px 8px;color:var(--ac)">✅</td>`).join('')}
+          <td style="padding:7px 8px"><span class="st ${allPass?'s-ok':'s-nd'}">PASS</span></td>
+        </tr>`;
+      }).join('')}
     </table>
   </div>`;
 
@@ -1494,9 +1532,20 @@ function renderReq(){
   const hc=req.hard_constraints||[], sc=req.soft_constraints||[];
   const doms=req.domain_map_domains||[];
 
-  // NFR
-  const nfrH=Object.entries(nfr).map(([k,v])=>`
-    <div class="nfr-item"><div class="nfr-k">${esc(k)}</div><div class="nfr-v">${esc(String(v))}</div></div>`).join('');
+  // NFR — 카테고리별 중첩 렌더링
+  const nfrCats=req.nfr_categories||{};
+  const CAT_ICONS={performance:'⚡',reliability:'🛡',security:'🔒',observability:'📊',supply_chain:'📦',scalability:'📈'};
+  const nfrH=Object.entries(nfrCats).map(([cat,items])=>`
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+        color:var(--dm);margin-bottom:5px">${CAT_ICONS[cat]||'•'} ${esc(cat)}</div>
+      <div class="nfr-grid">
+        ${Object.entries(items||{}).map(([k,v])=>`
+          <div class="nfr-item"><div class="nfr-k">${esc(k)}</div>
+            <div class="nfr-v" style="font-size:${String(v).length>12?'11px':'16px'}">${esc(String(v))}</div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
 
   // Quality Gates
   const qgH=Object.entries(qg).map(([cat,items])=>`
@@ -1556,8 +1605,8 @@ function renderReq(){
     </div>
 
     <div class="card req-sec">
-      <div class="req-sec-h">⚡ NFR (비기능 요구사항)</div>
-      <div class="nfr-grid">${nfrH}</div>
+      <div class="req-sec-h">⚡ NFR (비기능 요구사항) — requirements/nfr.yaml</div>
+      ${nfrH||'<div style="color:var(--dm);font-size:12px">데이터 없음</div>'}
     </div>
 
     <div class="card req-sec">
@@ -1677,7 +1726,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   renderDash(); renderPlan(); renderWPs(); renderArc(); renderDom(); renderReq(); renderADR(); renderLog();
   buildSB('dash');
   setInterval(()=>{
-    SECTIONS.forEach(s=>{ const a=$('ea-'+s.id); if(a) localStorage.setItem('wfos-'+s.id,a.value); });
+    SECTIONS.forEach(s=>{
+      const a=$('ea-'+s.id); if(a) localStorage.setItem('wfos-'+s.id,a.value);
+      if(ST.planDone[s.id]) localStorage.setItem('wfos-done-'+s.id,'1');
+    });
   },5000);
 });
 </script>
