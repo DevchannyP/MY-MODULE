@@ -225,6 +225,7 @@ def main() -> int:
 
     today = date.today().isoformat()
     allowed_stages = {"internal", "canary", "beta", "released", "archived"}
+    allowed_rollout_buckets = {"userId", "route", "method"}
     for flag_name, metadata in metadata_flags.items():
         if not isinstance(metadata, dict):
             errors.append(f"{flag_name}: metadata must be an object")
@@ -240,6 +241,19 @@ def main() -> int:
             errors.append(f"{flag_name}: metadata.expires_on is stale -> {expires_on}")
         if stage not in allowed_stages:
             errors.append(f"{flag_name}: metadata.stage invalid -> {stage}")
+        rollout = metadata.get("rollout")
+        if rollout is not None:
+            if not isinstance(rollout, dict):
+                errors.append(f"{flag_name}: metadata.rollout must be an object")
+            else:
+                percentage = rollout.get("percentage")
+                bucket_by = rollout.get("bucket_by")
+                if not isinstance(percentage, (int, float)) or percentage < 0 or percentage > 100:
+                    errors.append(f"{flag_name}: metadata.rollout.percentage must be within [0, 100]")
+                if bucket_by not in allowed_rollout_buckets:
+                    errors.append(
+                        f"{flag_name}: metadata.rollout.bucket_by must be one of {', '.join(sorted(allowed_rollout_buckets))}"
+                    )
 
     required_reviewers_min = deployment_protection.get("required_reviewers_min")
     smoke_must_pass = deployment_protection.get("smoke_must_pass")

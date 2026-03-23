@@ -25,7 +25,7 @@ function closeServer(server) {
   });
 }
 
-function jsonRequest(baseUrl, { method, path, body, permissions = [], userId = 'smoke-user' }) {
+function jsonRequest(baseUrl, { method, path, body, permissions = [], userId = 'smoke-user', headers = {} }) {
   const url = new URL(path, baseUrl);
   const payload = body ? JSON.stringify(body) : undefined;
 
@@ -36,6 +36,7 @@ function jsonRequest(baseUrl, { method, path, body, permissions = [], userId = '
         'content-type': 'application/json',
         'x-user-id': userId,
         'x-permissions': permissions.join(','),
+        ...headers,
       },
     }, (res) => {
       const chunks = [];
@@ -59,16 +60,38 @@ function jsonRequest(baseUrl, { method, path, body, permissions = [], userId = '
   });
 }
 
-test('[server wiring smoke] health endpoint and task flow succeed over HTTP transport', async () => {
+test('[server wiring smoke] probe endpoints and task flow succeed over HTTP transport', async () => {
   const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
 
   try {
+    const live = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: '/livez',
+    });
+    assert.equal(live.status, 200);
+    assert.equal(live.body.status, 'alive');
+
+    const startup = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: '/startupz',
+    });
+    assert.equal(startup.status, 200);
+    assert.equal(startup.body.status, 'started');
+
+    const ready = await jsonRequest(runtime.url, {
+      method: 'GET',
+      path: '/readyz',
+    });
+    assert.equal(ready.status, 200);
+    assert.equal(ready.body.status, 'ready');
+
     const health = await jsonRequest(runtime.url, {
       method: 'GET',
       path: '/health',
     });
     assert.equal(health.status, 200);
     assert.equal(health.body.status, 'ok');
+    assert.equal(health.body.feature_flags.flagsLoaded, true);
 
     const created = await jsonRequest(runtime.url, {
       method: 'POST',
@@ -90,6 +113,57 @@ test('[server wiring smoke] health endpoint and task flow succeed over HTTP tran
     });
     assert.equal(fetched.status, 200);
     assert.equal(fetched.body.task_id, created.body.task_id);
+  } finally {
+    await closeServer(runtime.server);
+  }
+});
+
+test('[server wiring smoke] POST idempotency replays identical task create and rejects mismatched reuse', async () => {
+  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+  const dueDate = futureDate();
+
+  try {
+    const first = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: '/tasks',
+      permissions: ['task:read', 'task:write'],
+      headers: { 'idempotency-key': 'task-create-001' },
+      body: {
+        title: 'idempotent-task',
+        assignee_id: 'user-1',
+        due_date: dueDate,
+      },
+    });
+    assert.equal(first.status, 201);
+
+    const replay = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: '/tasks',
+      permissions: ['task:read', 'task:write'],
+      headers: { 'idempotency-key': 'task-create-001' },
+      body: {
+        title: 'idempotent-task',
+        assignee_id: 'user-1',
+        due_date: dueDate,
+      },
+    });
+    assert.equal(replay.status, 201);
+    assert.equal(replay.body.task_id, first.body.task_id);
+    assert.equal(replay.headers['idempotency-replayed'], 'true');
+
+    const mismatch = await jsonRequest(runtime.url, {
+      method: 'POST',
+      path: '/tasks',
+      permissions: ['task:read', 'task:write'],
+      headers: { 'idempotency-key': 'task-create-001' },
+      body: {
+        title: 'changed-payload',
+        assignee_id: 'user-1',
+        due_date: futureDate(),
+      },
+    });
+    assert.equal(mismatch.status, 422);
+    assert.equal(mismatch.body.code, 'IDEMPOTENCY_KEY_REUSE_MISMATCH');
   } finally {
     await closeServer(runtime.server);
   }

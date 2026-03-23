@@ -15,6 +15,7 @@ const { BillingController } = require('../../domains/billing/src/interface/Billi
 const { VideoController } = require('../../domains/video/src/interface/VideoController');
 const { fromError } = require('../shared/ProblemDetails');
 const { InMemoryEventPublisher } = require('../shared/EventPublisher');
+const { InMemoryIdempotencyStore } = require('../shared/IdempotencyStore');
 const { getFeatureFlags } = require('../infrastructure/FeatureFlagProvider');
 const { tracer, metrics, logger } = require('../infrastructure/telemetry');
 const { InMemoryInvoiceRepository } = require('../../domains/billing/src/infrastructure/InMemoryInvoiceRepository');
@@ -198,7 +199,31 @@ function evaluateFlag(provider, flagName, defaultValue, context) {
   return { flagName, value: defaultValue, reason: 'NO_PROVIDER', metadata: {}, stale: false, context };
 }
 
-function sendJson(res, status, body) {
+function getRuntimeStatus(provider) {
+  if (provider && typeof provider.getRuntimeStatus === 'function') {
+    return provider.getRuntimeStatus();
+  }
+  return {
+    flagsLoaded: true,
+    metadataLoaded: true,
+    errors: [],
+    flagCount: typeof provider?.getAll === 'function' ? Object.keys(provider.getAll()).length : 0,
+    metadataCount: 0,
+  };
+}
+
+function validateIdempotencyKey(value) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null;
+  }
+  const normalized = value.trim();
+  if (normalized.length > 255) {
+    throw Object.assign(new Error('Idempotency-Key must be 255 characters or fewer'), { code: 'INVALID_IDEMPOTENCY_KEY' });
+  }
+  return normalized;
+}
+
+function sendJson(res, status, body, extraHeaders = {}) {
   const payload = JSON.stringify(body, null, 2);
   const isProblemDetails = body
     && typeof body === 'object'
@@ -210,6 +235,7 @@ function sendJson(res, status, body) {
       ? 'application/problem+json; charset=utf-8'
       : 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(payload),
+    ...extraHeaders,
   });
   res.end(payload);
 }
@@ -222,6 +248,7 @@ function createAllEnabledFlags() {
       return { flagName, value: true, reason: 'TEST_OVERRIDE', metadata: {}, stale: false, context: context || {} };
     },
     getAll: () => ({}),
+    getRuntimeStatus: () => ({ flagsLoaded: true, metadataLoaded: true, errors: [], flagCount: 0, metadataCount: 0 }),
   };
 }
 
@@ -229,8 +256,10 @@ function createAppHandler({
   taskController = createTaskController(),
   billingController = createBillingController(),
   videoController = createVideoController(),
+  idempotencyStore = new InMemoryIdempotencyStore(),
   flags = null,  // null → 파일 기반 provider 사용 (프로덕션 기본값)
 } = {}) {
+  const bootedAt = new Date().toISOString();
   return async function appHandler(req, res) {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
     const method = req.method || 'GET';
@@ -249,30 +278,99 @@ function createAppHandler({
       attributes:   { 'http.method': method, 'http.route': url.pathname },
     });
     const startMs = Date.now();
+    let idempotencyScope = null;
 
     try {
+      const resolvedFlags = flags || getFeatureFlags();
+      const runtimeStatus = getRuntimeStatus(resolvedFlags);
+
+      if (url.pathname === '/livez') {
+        metrics.httpRequestsTotal.add(1, { route: '/livez', method });
+        span.setStatus('ok').end();
+        sendJson(res, 200, { status: 'alive', service: 'my-module', transport: 'http', traceId: span.traceId });
+        return;
+      }
+
+      if (url.pathname === '/startupz') {
+        metrics.httpRequestsTotal.add(1, { route: '/startupz', method });
+        span.setStatus('ok').end();
+        sendJson(res, 200, {
+          status: 'started',
+          started_at: bootedAt,
+          service: 'my-module',
+          traceId: span.traceId,
+        });
+        return;
+      }
+
+      if (url.pathname === '/readyz') {
+        const ready = runtimeStatus.flagsLoaded && runtimeStatus.metadataLoaded && runtimeStatus.errors.length === 0;
+        metrics.httpRequestsTotal.add(1, { route: '/readyz', method, status: ready ? 200 : 503 });
+        span.setAttribute('http.status_code', ready ? 200 : 503).setStatus(ready ? 'ok' : 'error').end();
+        sendJson(res, ready ? 200 : 503, {
+          status: ready ? 'ready' : 'not_ready',
+          service: 'my-module',
+          feature_flags: runtimeStatus,
+          traceId: span.traceId,
+        });
+        return;
+      }
+
       if (url.pathname === '/health') {
         metrics.httpRequestsTotal.add(1, { route: '/health', method });
         span.setStatus('ok').end();
-        sendJson(res, 200, { status: 'ok', service: 'my-module', transport: 'http',
-          traceId: span.traceId });
+        sendJson(res, 200, {
+          status: 'ok',
+          service: 'my-module',
+          transport: 'http',
+          feature_flags: runtimeStatus,
+          traceId: span.traceId,
+        });
         return;
       }
 
       const body = method === 'GET' || method === 'HEAD' ? {} : await readRequestBody(req);
       const query = Object.fromEntries(url.searchParams.entries());
+      const idempotencyKey = method === 'POST'
+        ? validateIdempotencyKey(typeof req.headers['idempotency-key'] === 'string' ? req.headers['idempotency-key'] : null)
+        : null;
+      if (method === 'POST' && idempotencyKey) {
+        const claim = idempotencyStore.begin({
+          key: idempotencyKey,
+          method,
+          path: url.pathname,
+          callerId: caller.userId,
+          body,
+        });
+        if (claim.outcome === 'replay' && claim.response) {
+          sendJson(res, claim.response.status, claim.response.body, {
+            'idempotency-replayed': 'true',
+          });
+          return;
+        }
+        if (claim.outcome === 'in_progress') {
+          throw Object.assign(new Error('An identical request with the same Idempotency-Key is still in progress'), { code: 'IDEMPOTENCY_IN_PROGRESS' });
+        }
+        if (claim.outcome === 'mismatch') {
+          throw Object.assign(new Error('Idempotency-Key reuse detected with a different request payload'), { code: 'IDEMPOTENCY_KEY_REUSE_MISMATCH' });
+        }
+        idempotencyScope = claim.scope;
+      }
 
       // ── Feature Flag 라우트 게이트 (OpenFeature 패턴) ──────────────────────
-      const resolvedFlags = flags || getFeatureFlags();
 
       if (hasMountedPrefix(url.pathname, '/tasks')) {
         const flagDecision = evaluateFlag(resolvedFlags, 'enable_task_management', false, {
           userId: caller.userId,
+          targetingKey: caller.userId,
           permissions: caller.permissions,
           route: url.pathname,
           method,
         });
         if (!flagDecision.value) {
+          if (idempotencyScope) {
+            idempotencyStore.abort(idempotencyScope);
+          }
           sendJson(res, 404, fromError(
             Object.assign(new Error('task-management 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
@@ -288,6 +386,13 @@ function createAppHandler({
           caller,
           correlationId,
         });
+        if (idempotencyScope) {
+          if (response.status >= 200 && response.status < 300) {
+            idempotencyStore.complete(idempotencyScope, { status: response.status, body: response.body });
+          } else {
+            idempotencyStore.abort(idempotencyScope);
+          }
+        }
         sendJson(res, response.status, response.body);
         return;
       }
@@ -295,11 +400,15 @@ function createAppHandler({
       if (hasMountedPrefix(url.pathname, '/billing')) {
         const flagDecision = evaluateFlag(resolvedFlags, 'billing.enabled', false, {
           userId: caller.userId,
+          targetingKey: caller.userId,
           permissions: caller.permissions,
           route: url.pathname,
           method,
         });
         if (!flagDecision.value) {
+          if (idempotencyScope) {
+            idempotencyStore.abort(idempotencyScope);
+          }
           sendJson(res, 404, fromError(
             Object.assign(new Error('billing 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
@@ -316,6 +425,13 @@ function createAppHandler({
           caller,
           correlationId,
         });
+        if (idempotencyScope) {
+          if (response.status >= 200 && response.status < 300) {
+            idempotencyStore.complete(idempotencyScope, { status: response.status, body: response.body });
+          } else {
+            idempotencyStore.abort(idempotencyScope);
+          }
+        }
         sendJson(res, response.status, response.body);
         return;
       }
@@ -323,11 +439,15 @@ function createAppHandler({
       if (hasMountedPrefix(url.pathname, '/videos')) {
         const rootDecision = evaluateFlag(resolvedFlags, 'video.enabled', false, {
           userId: caller.userId,
+          targetingKey: caller.userId,
           permissions: caller.permissions,
           route: url.pathname,
           method,
         });
         if (!rootDecision.value) {
+          if (idempotencyScope) {
+            idempotencyStore.abort(idempotencyScope);
+          }
           sendJson(res, 404, fromError(
             Object.assign(new Error('video 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
             { path: url.pathname },
@@ -340,12 +460,16 @@ function createAppHandler({
         const scopedDecision = scopedFlag
           ? evaluateFlag(resolvedFlags, scopedFlag, false, {
             userId: caller.userId,
+            targetingKey: caller.userId,
             permissions: caller.permissions,
             route: url.pathname,
             method,
           })
           : null;
         if (scopedDecision && !scopedDecision.value) {
+          if (idempotencyScope) {
+            idempotencyStore.abort(idempotencyScope);
+          }
           sendJson(res, 404, fromError(
             Object.assign(new Error(`video 세부 기능이 비활성화 상태입니다: ${scopedFlag}`), { code: 'NOT_FOUND' }),
             { path: url.pathname },
@@ -362,10 +486,20 @@ function createAppHandler({
           caller,
           correlationId,
         });
+        if (idempotencyScope) {
+          if (response.status >= 200 && response.status < 300) {
+            idempotencyStore.complete(idempotencyScope, { status: response.status, body: response.body });
+          } else {
+            idempotencyStore.abort(idempotencyScope);
+          }
+        }
         sendJson(res, response.status, response.body);
         return;
       }
 
+      if (idempotencyScope) {
+        idempotencyStore.abort(idempotencyScope);
+      }
       metrics.httpRequestsTotal.add(1, { route: url.pathname, method, status: 404 });
       metrics.httpDurationMs.record(Date.now() - startMs, { route: url.pathname });
       span.setAttribute('http.status_code', 404).setStatus('error').end();
@@ -374,6 +508,9 @@ function createAppHandler({
         { path: url.pathname, traceId: span.traceId },
       ).body);
     } catch (error) {
+      if (idempotencyScope) {
+        idempotencyStore.abort(idempotencyScope);
+      }
       // RFC 7807 Problem Details at transport layer
       const { status, body } = fromError(error, {
         path: req.url,
@@ -394,8 +531,8 @@ function createServer(overrides = {}) {
   return http.createServer(createAppHandler(overrides));
 }
 
-function startServer({ port = 3000, host = '127.0.0.1', flags = null } = {}) {
-  const server = createServer({ flags });
+function startServer({ port = 3000, host = '127.0.0.1', flags = null, idempotencyStore = undefined } = {}) {
+  const server = createServer({ flags, idempotencyStore });
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);

@@ -26,6 +26,9 @@ const ERROR_MAP = Object.freeze({
   NOT_FOUND:        { status: 404, slug: 'not-found',         title: 'Not Found' },
   CONFLICT:         { status: 409, slug: 'conflict',          title: 'Conflict' },
   VALIDATION_ERROR: { status: 400, slug: 'validation-error',  title: 'Validation Error' },
+  IDEMPOTENCY_IN_PROGRESS: { status: 409, slug: 'idempotency-in-progress', title: 'Conflict' },
+  IDEMPOTENCY_KEY_REUSE_MISMATCH: { status: 422, slug: 'idempotency-key-reuse-mismatch', title: 'Unprocessable Content' },
+  INVALID_IDEMPOTENCY_KEY: { status: 400, slug: 'invalid-idempotency-key', title: 'Validation Error' },
   INTERNAL_ERROR:   { status: 500, slug: 'internal-error',    title: 'Internal Server Error' },
 });
 

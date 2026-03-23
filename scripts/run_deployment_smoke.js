@@ -27,6 +27,9 @@ function usage() {
     '  --flag-off-path <path>          Optional path expected to return 404 when a feature is disabled',
     '  --flag-off-permissions <csv>    Default: task:read',
     '  --require-flag-off              Fail if --flag-off-path is not provided',
+    '  --live-path <path>              Default: /livez',
+    '  --startup-path <path>           Default: /startupz',
+    '  --ready-path <path>             Default: /readyz',
     '  --health-path <path>            Default: /health',
     '  --tasks-path <path>             Default: /tasks',
     '  --billing-invoices-path <path>  Default: /billing/invoices',
@@ -49,6 +52,9 @@ function parseArgs(argv) {
     videoReadPermissions: 'video:read',
     flagOffPermissions: 'task:read',
     requireFlagOff: false,
+    livePath: '/livez',
+    startupPath: '/startupz',
+    readyPath: '/readyz',
     healthPath: '/health',
     tasksPath: '/tasks',
     billingInvoicesPath: '/billing/invoices',
@@ -106,6 +112,15 @@ function parseArgs(argv) {
         break;
       case '--health-path':
         options.healthPath = next;
+        break;
+      case '--live-path':
+        options.livePath = next;
+        break;
+      case '--startup-path':
+        options.startupPath = next;
+        break;
+      case '--ready-path':
+        options.readyPath = next;
         break;
       case '--tasks-path':
         options.tasksPath = next;
@@ -396,6 +411,9 @@ async function run(options) {
     overall_status: 'FAIL',
     target: {
       base_url: options.baseUrl,
+      live_path: options.livePath,
+      startup_path: options.startupPath,
+      ready_path: options.readyPath,
       health_path: options.healthPath,
       tasks_path: options.tasksPath,
       billing_invoices_path: options.billingInvoicesPath,
@@ -444,6 +462,96 @@ async function run(options) {
           smoke_must_pass: protection.smoke_must_pass,
           error_budget_policy: protection.error_budget_policy,
         },
+      };
+    });
+
+    await runStep(report, {
+      id: 'livez',
+      name: 'Liveness probe returns 200',
+      budgetId: 'health',
+    }, async () => {
+      const result = await requestJson(options.baseUrl, {
+        method: 'GET',
+        routePath: options.livePath,
+        permissions: [],
+        userId: options.userId,
+        timeoutMs: options.timeoutMs,
+      });
+
+      assertResponse(result, {
+        status: 200,
+        bodyCheck(body) {
+          if (!body || body.status !== 'alive') {
+            throw new SmokeAssertionError('Liveness probe must expose status=alive', {
+              body: sanitizeBody(body),
+            });
+          }
+        },
+      });
+
+      return {
+        request: { method: 'GET', path: options.livePath },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
+      };
+    });
+
+    await runStep(report, {
+      id: 'startupz',
+      name: 'Startup probe returns 200',
+      budgetId: 'health',
+    }, async () => {
+      const result = await requestJson(options.baseUrl, {
+        method: 'GET',
+        routePath: options.startupPath,
+        permissions: [],
+        userId: options.userId,
+        timeoutMs: options.timeoutMs,
+      });
+
+      assertResponse(result, {
+        status: 200,
+        bodyCheck(body) {
+          if (!body || body.status !== 'started') {
+            throw new SmokeAssertionError('Startup probe must expose status=started', {
+              body: sanitizeBody(body),
+            });
+          }
+        },
+      });
+
+      return {
+        request: { method: 'GET', path: options.startupPath },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
+      };
+    });
+
+    await runStep(report, {
+      id: 'readyz',
+      name: 'Readiness probe returns 200 and loaded runtime dependencies',
+      budgetId: 'health',
+    }, async () => {
+      const result = await requestJson(options.baseUrl, {
+        method: 'GET',
+        routePath: options.readyPath,
+        permissions: [],
+        userId: options.userId,
+        timeoutMs: options.timeoutMs,
+      });
+
+      assertResponse(result, {
+        status: 200,
+        bodyCheck(body) {
+          if (!body || body.status !== 'ready' || body.feature_flags?.flagsLoaded !== true || body.feature_flags?.metadataLoaded !== true) {
+            throw new SmokeAssertionError('Readiness probe must expose status=ready with loaded feature flag state', {
+              body: sanitizeBody(body),
+            });
+          }
+        },
+      });
+
+      return {
+        request: { method: 'GET', path: options.readyPath },
+        response: { status: result.status, headers: result.headers, body: sanitizeBody(result.body), duration_ms: result.durationMs },
       };
     });
 

@@ -45,6 +45,9 @@ test('[deployment smoke runner] executes the deployed-environment checklist and 
     const report = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
     assert.equal(report.overall_status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'deployment-protection').status, 'PASS');
+    assert.equal(report.steps.find((step) => step.id === 'livez').status, 'PASS');
+    assert.equal(report.steps.find((step) => step.id === 'startupz').status, 'PASS');
+    assert.equal(report.steps.find((step) => step.id === 'readyz').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'health').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'task-create').status, 'PASS');
     assert.equal(report.steps.find((step) => step.id === 'task-read').status, 'PASS');
@@ -62,6 +65,7 @@ test('[deployment smoke runner] executes the deployed-environment checklist and 
     );
     assert.equal(report.slo_gate.status, 'PASS');
     assert.equal(report.slo_policy.deployment_protection.required_reviewers_min, 1);
+    assert.equal(report.target.ready_path, '/readyz');
     assert.ok(report.steps.find((step) => step.id === 'task-create').slo);
     assert.ok(Array.isArray(report.pending_manual_checks));
   } finally {

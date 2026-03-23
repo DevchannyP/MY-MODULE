@@ -17,7 +17,11 @@
       "owner": "productivity-team",
       "stage": "canary",
       "expires_on": "2026-12-31",
-      "description": "작업 관리 플러그인 전체 노출 및 라우팅 활성화"
+      "description": "작업 관리 플러그인 전체 노출 및 라우팅 활성화",
+      "rollout": {
+        "percentage": 10,
+        "bucket_by": "userId"
+      }
     },
     "enable_bulk_assign": {
       "owner": "productivity-team",
@@ -29,7 +33,11 @@
       "owner": "platform-team",
       "stage": "canary",
       "expires_on": "2026-12-31",
-      "description": "정산 도메인 전체 활성화"
+      "description": "정산 도메인 전체 활성화",
+      "rollout": {
+        "percentage": 5,
+        "bucket_by": "userId"
+      }
     },
     "billing.invoice.enabled": {
       "owner": "platform-team",
@@ -58,7 +66,11 @@
       "owner": "video-team",
       "stage": "canary",
       "expires_on": "2026-12-31",
-      "description": "비디오 도메인 전체 활성화"
+      "description": "비디오 도메인 전체 활성화",
+      "rollout": {
+        "percentage": 5,
+        "bucket_by": "userId"
+      }
     },
     "video.upload.enabled": {
       "owner": "video-team",

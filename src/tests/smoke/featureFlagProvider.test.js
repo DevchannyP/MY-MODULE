@@ -15,7 +15,7 @@ test('[feature flags] evaluates metadata, targeting, hooks, and stale state', ()
 
   fs.writeFileSync(flagsPath, [
     'global_flags:',
-    '  enable_debug_mode: false',
+    '  enable_debug_mode: true',
     'plugin_flags:',
     '  billing.exception.enabled: false',
     '  video.admin.enabled: false',
@@ -31,6 +31,15 @@ test('[feature flags] evaluates metadata, targeting, hooks, and stale state', ()
         expires_on: '2026-12-31',
         allow: {
           permissions_any: ['billing.admin'],
+        },
+      },
+      'enable_debug_mode': {
+        owner: 'platform-team',
+        stage: 'canary',
+        expires_on: '2026-12-31',
+        rollout: {
+          percentage: 0,
+          bucket_by: 'userId',
         },
       },
       'video.admin.enabled': {
@@ -74,8 +83,20 @@ test('[feature flags] evaluates metadata, targeting, hooks, and stale state', ()
   assert.equal(adminDecision.reason, 'TARGET_USER');
   assert.equal(adminDecision.stale, true);
 
+  const rolloutDecision = provider.evaluate('enable_debug_mode', {
+    userId: 'canary-user',
+    targetingKey: 'canary-user',
+  });
+  assert.equal(rolloutDecision.value, false);
+  assert.equal(rolloutDecision.reason, 'ROLLOUT_SKIP');
+
+  const runtimeStatus = provider.getRuntimeStatus();
+  assert.equal(runtimeStatus.flagsLoaded, true);
+  assert.equal(runtimeStatus.metadataLoaded, true);
+  assert.equal(runtimeStatus.errors.length, 0);
+
   assert.deepEqual(
     hookCalls.map((entry) => entry.phase),
-    ['before', 'after', 'before', 'after']
+    ['before', 'after', 'before', 'after', 'before', 'after']
   );
 });

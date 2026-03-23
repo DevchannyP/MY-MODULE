@@ -17,6 +17,7 @@
 
 const fs   = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const FLAGS_PATH = path.resolve(__dirname, '../../master-shell/feature-flags/flags.yaml');
 const FLAG_METADATA_PATH = path.resolve(__dirname, '../../master-shell/feature-flags/metadata.json');
@@ -78,10 +79,15 @@ class FeatureFlagProvider {
   constructor(flagsPath = FLAGS_PATH, metadataPath = FLAG_METADATA_PATH) {
     /** @type {Record<string, boolean>} */
     this._flags = {};
-    /** @type {Record<string, { owner?: string, description?: string, expires_on?: string, stage?: string, allow?: { users?: string[], permissions_any?: string[] } }>} */
+    /** @type {Record<string, { owner?: string, description?: string, expires_on?: string, stage?: string, allow?: { users?: string[], permissions_any?: string[] }, rollout?: { percentage?: number, bucket_by?: string } }>} */
     this._metadata = {};
     /** @type {Array<{ beforeEvaluate?: Function, afterEvaluate?: Function }>} */
     this._hooks = [];
+    this._state = {
+      flagsLoaded: false,
+      metadataLoaded: false,
+      errors: [],
+    };
     this._load(flagsPath);
     this._loadMetadata(metadataPath);
   }
@@ -101,8 +107,11 @@ class FeatureFlagProvider {
           }
         }
       }
+      this._state.flagsLoaded = true;
     } catch (err) {
       process.stderr.write(`[FeatureFlagProvider] Failed to load flags: ${err.message}\n`);
+      this._state.flagsLoaded = false;
+      this._state.errors.push(`flags:${err.message}`);
       // Safe default: all flags disabled
     }
   }
@@ -114,11 +123,52 @@ class FeatureFlagProvider {
       const flags = parsed && typeof parsed === 'object' ? parsed.flags : null;
       if (flags && typeof flags === 'object') {
         this._metadata = flags;
+        this._state.metadataLoaded = true;
       }
     } catch (err) {
       process.stderr.write(`[FeatureFlagProvider] Failed to load flag metadata: ${err.message}\n`);
       this._metadata = {};
+      this._state.metadataLoaded = false;
+      this._state.errors.push(`metadata:${err.message}`);
     }
+  }
+
+  /**
+   * @param {Record<string, unknown>} metadata
+   * @returns {{ percentage?: number, bucket_by?: string }}
+   */
+  _getRollout(metadata) {
+    return metadata && typeof metadata.rollout === 'object' && metadata.rollout !== null
+      ? /** @type {{ percentage?: number, bucket_by?: string }} */ (metadata.rollout)
+      : {};
+  }
+
+  /**
+   * @param {{ userId?: string, route?: string, method?: string, targetingKey?: string }} context
+   * @param {string | undefined} bucketBy
+   * @returns {string}
+   */
+  _resolveBucketValue(context, bucketBy) {
+    if (typeof context.targetingKey === 'string' && context.targetingKey) {
+      return context.targetingKey;
+    }
+    if (bucketBy === 'route' && typeof context.route === 'string' && context.route) {
+      return context.route;
+    }
+    if (bucketBy === 'method' && typeof context.method === 'string' && context.method) {
+      return context.method;
+    }
+    return typeof context.userId === 'string' && context.userId ? context.userId : 'anonymous';
+  }
+
+  /**
+   * @param {string} flagName
+   * @param {string} bucketValue
+   * @returns {number}
+   */
+  _stableBucket(flagName, bucketValue) {
+    const digest = crypto.createHash('sha256').update(`${flagName}:${bucketValue}`).digest('hex');
+    return Number.parseInt(digest.slice(0, 8), 16) % 100;
   }
 
   /**
@@ -142,7 +192,7 @@ class FeatureFlagProvider {
 
   /**
    * @param {string} flagName
-   * @param {{ userId?: string, permissions?: string[], route?: string, method?: string }} [context]
+   * @param {{ userId?: string, permissions?: string[], route?: string, method?: string, targetingKey?: string }} [context]
    * @param {boolean} [defaultValue=false]
    * @returns {{ flagName: string, value: boolean, reason: string, metadata: Record<string, unknown>, stale: boolean, context: Record<string, unknown> }}
    */
@@ -153,6 +203,7 @@ class FeatureFlagProvider {
       permissions: Array.isArray(context.permissions) ? context.permissions : [],
       route: typeof context.route === 'string' ? context.route : undefined,
       method: typeof context.method === 'string' ? context.method : undefined,
+      targetingKey: typeof context.targetingKey === 'string' ? context.targetingKey : undefined,
     };
 
     for (const hook of this._hooks) {
@@ -181,6 +232,20 @@ class FeatureFlagProvider {
       }
     }
 
+    if (value) {
+      const rollout = this._getRollout(metadata);
+      if (typeof rollout.percentage === 'number' && rollout.percentage >= 0 && rollout.percentage < 100) {
+        const bucketValue = this._resolveBucketValue(normalizedContext, rollout.bucket_by);
+        const bucket = this._stableBucket(flagName, bucketValue);
+        if (bucket < rollout.percentage) {
+          reason = 'ROLLOUT_MATCH';
+        } else {
+          value = false;
+          reason = 'ROLLOUT_SKIP';
+        }
+      }
+    }
+
     const stale = typeof metadata.expires_on === 'string'
       && metadata.expires_on.length > 0
       && metadata.expires_on < new Date().toISOString().slice(0, 10);
@@ -198,7 +263,7 @@ class FeatureFlagProvider {
    * 플래그 활성화 여부를 반환한다.
    * @param {string} flagName
    * @param {boolean} [defaultValue=false]
-   * @param {{ userId?: string, permissions?: string[], route?: string, method?: string }} [context]
+   * @param {{ userId?: string, permissions?: string[], route?: string, method?: string, targetingKey?: string }} [context]
    * @returns {boolean}
    */
   isEnabled(flagName, defaultValue = false, context = {}) {
@@ -208,6 +273,17 @@ class FeatureFlagProvider {
   /** 전체 플래그 스냅샷 */
   getAll() {
     return { ...this._flags };
+  }
+
+  /** 런타임 readiness 판단에 사용하는 상태 스냅샷 */
+  getRuntimeStatus() {
+    return {
+      flagsLoaded: this._state.flagsLoaded,
+      metadataLoaded: this._state.metadataLoaded,
+      errors: [...this._state.errors],
+      flagCount: Object.keys(this._flags).length,
+      metadataCount: Object.keys(this._metadata).length,
+    };
   }
 }
 
