@@ -2,24 +2,26 @@
 
 ## 1. 작업 브랜치 만들기
 
-브랜치 이름은 Work Packet 단위로 쪼개고, 목적이 드러나야 한다.
+브랜치 이름은 작업 종류와 목적이 드러나야 한다.
+Work Packet id는 브랜치명보다 PR, 커밋, worklog에서 남기는 방식을 우선한다.
 
 권장 패턴:
 
 ```bash
-wp/<packet-id-lower>/<short-slug>
+feature/core-<short-topic>
+fix/core-<short-topic>
+docs/core-<short-topic>
+hotfix/core-<short-topic>
 ```
 
 예:
 
 ```bash
-git checkout -b wp/gov-002/branch-protection-ci
+git checkout -b fix/core-project-status-context-budget
 ```
 
-도메인 계약 작업이면:
-
 ```bash
-git checkout -b wp/dom-002/event-registry-contract
+git checkout -b docs/core-branch-strategy-baseline
 ```
 
 ## 2. 작업하면서 같이 고칠 것
@@ -29,6 +31,7 @@ git checkout -b wp/dom-002/event-registry-contract
 - `memory/current-state.yaml`
 - `memory/next-actions.yaml`
 - `memory/current-wp.yaml`
+- `memory/wp-queue.yaml`
 - 필요 시 `memory/project/unresolved-risks.yaml` (레거시 상세 리스크)
 - 관련 `docs/adr/`
 - 관련 `worklog/`
@@ -61,7 +64,7 @@ npm run generate:release-evidence
 ## 5. 원격 푸시
 
 ```bash
-git push -u origin feat/core-release-evidence
+git push -u origin fix/core-project-status-context-budget
 ```
 
 ## 6. PR 설명에 꼭 넣을 것
@@ -71,13 +74,14 @@ git push -u origin feat/core-release-evidence
 3. 어떤 검증을 통과했는가
 4. 다음 작업은 무엇인가
 
-한 PR에는 한 Work Packet만 담는 것을 기본으로 한다.
-한 packet이 여러 층을 건드리면, queue가 과도하게 큰 것이다.
+한 PR에는 한 설명 가능한 목적만 담는 것을 기본으로 한다.
+하나의 packet이 여러 층을 건드리더라도 변경 이유와 검증 범위를 설명할 수 있어야 한다.
 
 ## 7. GitHub branch protection 확인 항목
 
 1. `main` direct push 가 막혀 있는가
-2. 최소 1회 review 가 필요한가
-3. required checks 가 policy file 과 같은가
-4. force push 와 branch deletion 이 막혀 있는가
-5. repository CI 가 `npm run check:branch-protection-policy` 를 실제로 실행하는가
+2. `develop` 도 direct push 제한 또는 PR-only 정책인지 확인했는가
+3. 최소 1회 review 가 필요한가
+4. required checks 가 policy file 과 같은가
+5. force push 와 branch deletion 이 막혀 있는가
+6. repository CI 가 `npm run check:branch-protection-policy` 를 실제로 실행하는가

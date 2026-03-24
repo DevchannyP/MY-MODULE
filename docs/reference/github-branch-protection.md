@@ -16,7 +16,8 @@
 
 ## 2. 보호 대상
 
-- 브랜치: `main`
+- 필수 보호 브랜치: `main`
+- 권장 보호 브랜치: `develop`
 
 ## 3. 최소 보호 규칙
 
@@ -26,9 +27,14 @@
 - force push 금지
 - branch deletion 금지
 
+`develop`에는 아래 둘 중 하나를 권장한다.
+
+1. `main`과 동일한 PR-only 정책
+2. 제한된 maintainer만 direct push 가능, 그 외에는 PR-only
+
 ## 4. required checks
 
-코어 저장소 기준 최소 required checks:
+코어 저장소 기준 `main` 최소 required checks:
 
 1. `npm run lint`
 2. `npm run test:contract`
@@ -42,6 +48,8 @@
 
 - 정책 파일: `artifacts/github/branch-protection-policy.yaml`
 - 정책 검증: `npm run check:branch-protection-policy`
+
+`develop` 보호 규칙은 원격 GitHub 설정에서 별도로 운영하되, 문서 기준은 이 문서와 [branch-strategy.md](/root/workspace/my-module/docs/branch-strategy.md)를 따른다.
 
 ## 6. 원격 설정과 저장소 문서의 관계
 
