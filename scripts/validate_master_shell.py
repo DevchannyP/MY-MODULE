@@ -190,6 +190,18 @@ def main() -> int:
         feature_flag = plugin.get("feature_flag")
         if feature_flag not in feature_flags:
             errors.append(f"{plugin_id}: feature flag not registered -> {feature_flag}")
+        else:
+            # flag value ↔ plugin status consistency check
+            flag_value = flags.get("plugin_flags", {}).get(feature_flag)
+            plugin_status = plugin.get("status")
+            if flag_value is True and plugin_status != "active":
+                errors.append(
+                    f"{plugin_id}: feature flag {feature_flag}=true but plugin status is {plugin_status!r} (expected 'active')"
+                )
+            elif flag_value is False and plugin_status not in ("inactive", None):
+                errors.append(
+                    f"{plugin_id}: feature flag {feature_flag}=false but plugin status is {plugin_status!r} (expected 'inactive')"
+                )
 
         architecture_profile = plugin.get("architecture_profile")
         if architecture_profile not in profile_map:

@@ -15,7 +15,15 @@
       "details": "payment 3 UseCase 신설 + Clean Arch 위반 수정 + 36 테스트 추가",
       "prev_hash": "c75a2ccf65e1432a33369600a7b06ad9f4830e3e124d832dc8f1389ce2298219",
       "hash": "e20338b4677db7b6c817a08dccf01ca9c6ab50571e7e87240e82f04e614d72e3"
+    },
+    {
+      "seq": 3,
+      "timestamp": "2026-03-25T11:28:00.434Z",
+      "action": "C/core",
+      "details": "video event registry gap 해소 + 3도메인 full rollout 활성화 + health 84→100",
+      "prev_hash": "e20338b4677db7b6c817a08dccf01ca9c6ab50571e7e87240e82f04e614d72e3",
+      "hash": "02a258814583319851a625434ffcd23bbc8763770fc63cfaa6e98e6e4f961b7c"
     }
   ],
-  "last_hash": "e20338b4677db7b6c817a08dccf01ca9c6ab50571e7e87240e82f04e614d72e3"
+  "last_hash": "02a258814583319851a625434ffcd23bbc8763770fc63cfaa6e98e6e4f961b7c"
 }
