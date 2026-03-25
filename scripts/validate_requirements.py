@@ -303,9 +303,39 @@ def validate_requirements(target_path: Path) -> list[str]:
     return errors
 
 
+def discover_domain_requirements() -> list[Path]:
+    """Return paths of all requirements/*.yaml files that declare a module.id."""
+    results: list[Path] = []
+    for path in sorted((ROOT / "requirements").glob("*.yaml")):
+        try:
+            data = load_yaml(path)
+            if isinstance(data, dict) and isinstance(data.get("module", {}).get("id"), str):
+                results.append(path)
+        except Exception:
+            pass
+    return results
+
+
 def main(argv: list[str]) -> int:
+    # --all scans every requirements/*.yaml with a module.id
+    if "--all" in argv:
+        domain_files = discover_domain_requirements()
+        if not domain_files:
+            print("No domain requirements files found.", file=sys.stderr)
+            return 1
+        exit_code = 0
+        for path in domain_files:
+            errors = validate_requirements(path)
+            if errors:
+                for error in errors:
+                    print(f"ERROR: {error}")
+                exit_code = 1
+            else:
+                print(f"requirements validation PASS: {relative_path(path)}")
+        return exit_code
+
     if len(argv) > 2:
-        print("usage: validate_requirements.py [requirements-path]")
+        print("usage: validate_requirements.py [requirements-path | --all]")
         return 2
 
     target_path = resolve_input_path(argv[1] if len(argv) == 2 else None)

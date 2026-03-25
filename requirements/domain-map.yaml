@@ -1,7 +1,7 @@
 # Workflow OS - 도메인 맵
 # Stage B 진입 전 반드시 확정해야 하는 도메인 구성도.
 version: "0.1.0"
-last_updated: "2026-03-21"
+last_updated: "2026-03-25"
 
 domains:
   - id: "productivity"

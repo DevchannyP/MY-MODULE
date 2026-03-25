@@ -31,7 +31,7 @@
     "check:observability": "python3 scripts/validate_operations.py observability",
     "smoke:deployment": "node scripts/run_deployment_smoke.js",
     "generate:deployment-environment-audit-template": "python3 scripts/generate_deployment_environment_audit_template.py",
-    "validate:requirements": "python3 scripts/validate_requirements.py && python3 scripts/validate_requirements.py requirements/billing.yaml && python3 scripts/validate_requirements.py requirements/video.yaml",
+    "validate:requirements": "python3 scripts/validate_requirements.py --all",
     "validate:fitness": "node scripts/architecture-fitness.js",
     "boundary:check": "node scripts/architecture-fitness.js",
     "validate:contracts": "node scripts/validate-contracts.js && python3 scripts/validate_openapi_governance.py",
