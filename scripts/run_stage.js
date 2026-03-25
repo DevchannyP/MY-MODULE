@@ -74,14 +74,35 @@ function parseArgs(argv) {
   const [, , stageArg, ...flags] = argv;
   const stage = String(stageArg || '').toUpperCase();
   if (!STAGE_ORDER.includes(stage)) {
-    return { error: 'usage: node scripts/run_stage.js [A|B|C|D|E] [--dry-run] [--json]' };
+    return { error: 'usage: node scripts/run_stage.js [A|B|C|D|E] [--module <id>] [--dry-run] [--json]' };
+  }
+
+  // --module <id> selects which requirements file to use (e.g. billing, video)
+  let moduleId = null;
+  const modIdx = flags.indexOf('--module');
+  if (modIdx !== -1 && modIdx + 1 < flags.length) {
+    moduleId = flags[modIdx + 1];
   }
 
   return {
     stage,
+    moduleId,
     dryRun: flags.includes('--dry-run') || !flags.includes('--execute'),
     json: true,
   };
+}
+
+function resolveRequirementsPath(moduleId) {
+  if (!moduleId) return 'requirements/requirements.yaml';
+  // Try requirements/<moduleId>.yaml first, then requirements/requirements.yaml
+  const candidates = [
+    `requirements/${moduleId}.yaml`,
+    'requirements/requirements.yaml',
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(ROOT, candidate))) return candidate;
+  }
+  return 'requirements/requirements.yaml';
 }
 
 function getLegacyStageStates() {
@@ -129,6 +150,7 @@ function evaluateStage(stage, requirements, rootState, currentWp, legacyStageSta
       'This command does not mutate repository state.',
       'Use the referenced how-to document and validators to perform the real stage work.',
       `requirements.yaml currently routes the repository to stage ${routedStage}.`,
+      'Use --module <id> to target a specific domain (e.g. --module billing, --module video).',
     ],
     current_wp: typeof currentWp.id === 'string' ? currentWp.id : 'UNKNOWN',
   };
@@ -141,11 +163,13 @@ function main() {
     process.exit(2);
   }
 
-  const requirements = readYaml('requirements/requirements.yaml');
+  const requirementsPath = resolveRequirementsPath(args.moduleId);
+  const requirements = readYaml(requirementsPath);
   const rootState = readYaml('memory/current-state.yaml');
   const currentWp = readYaml('memory/current-wp.yaml');
   const legacyStageStates = getLegacyStageStates();
   const report = evaluateStage(args.stage, requirements, rootState, currentWp, legacyStageStates);
+  report.requirements_file = requirementsPath;
 
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 }
@@ -159,4 +183,5 @@ module.exports = {
   readYaml,
   getLegacyStageStates,
   evaluateStage,
+  resolveRequirementsPath,
 };

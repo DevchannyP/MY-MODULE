@@ -3,7 +3,7 @@
 # root memory/current-state.yaml 이 canonical state 이며, 이 파일은 legacy stage-era 상세 기록이다.
 # 갱신 시점: root current-state 와 충돌하지 않는 범위에서만 상세 히스토리를 보강한다.
 
-as_of: "2026-03-21"
+as_of: "2026-03-25"
 schema_version: "0.1.0"
 
 repository:
@@ -30,9 +30,12 @@ active_modules:
     stage_b_memory: "memory/stageB/task-management-composition.yaml"
     stage_c_memory: "memory/stageC/task-management-plugin.yaml"
     contract_dir: "domains/productivity/task-tracking/contract/"
-    plugin_status: "inactive"
+    plugin_status: "active"
     feature_flag: "enable_task_management"
-    feature_flag_value: false
+    feature_flag_value: true
+    rollout_phase: "full"
+    rollout_percentage: 100
+    activated_at: "2026-03-25"
     interface_layer: "PASS (TaskController.js — 5경로, authz regression suite PASS, smoke PASS)"
 
   - module_id: "billing"
@@ -48,9 +51,12 @@ active_modules:
       - "memory/stageA/billing.exception.yaml"
     stage_b_memory: "memory/stageB/billing.yaml"
     contract_dir: "domains/billing/contracts/"
-    plugin_status: "inactive"
+    plugin_status: "active"
     feature_flag: "billing.enabled"
-    feature_flag_value: false
+    feature_flag_value: true
+    rollout_phase: "full"
+    rollout_percentage: 100
+    activated_at: "2026-03-25"
     unit_tests: "PASS (89/89)"
     stage_a: "PASS"
     stage_b: "PASS"
@@ -88,13 +94,34 @@ active_modules:
         status: "FIXED"
         fix: "null로 명시 반환"
 
-quality_gate_last_run: "2026-03-23"
+  - module_id: "video"
+    domain: "video"
+    bounded_context: "video-content"
+    plugin_id: "video-plugin"
+    stage_a_memory: "memory/stageA/video.yaml"
+    stage_b_memory: "memory/stageB/video.yaml"
+    contract_dir: "domains/video/contract/"
+    plugin_status: "active"
+    feature_flag: "video.enabled"
+    feature_flag_value: true
+    rollout_phase: "full"
+    rollout_percentage: 100
+    activated_at: "2026-03-25"
+    stage_a: "PASS"
+    stage_b: "PASS"
+    stage_c: "PASS"
+    stage_d: "PASS"
+    stage_e: "PASS"
+    interface_layer: "PASS (VideoController.js — 7경로, authz regression suite PASS, smoke PASS)"
+    event_registry: "PASS (8개 이벤트 contracts/events/registry.yaml 등록 완료 2026-03-25)"
+
+quality_gate_last_run: "2026-03-25"
 quality_gate_result: "PASS"
 quality_gate_detail:
-  unit_tests: "PASS (550/550)"        # 500 (이전) + 50 신규 (InMemoryTaskRepository 계약 테스트 + video infra 이동)
+  unit_tests: "PASS (570/570)"        # 550 + 20 신규 (BillingPorts.contract.test.js + smoke 추가)
   integration_tests: "PASS (유스케이스 수준)"
-  adversarial_tests: "PASS (43/43, Stage E)"
-  contract_tests: "PASS (test:contract — task-management+billing drift validator)"
+  adversarial_tests: "PASS (Stage E 3도메인)"
+  contract_tests: "PASS (test:contract — task-management+billing+video drift validator)"
   e2e_smoke: "PASS (controller-level smoke suites 2/2, scenarios 6)"
   lint_syntax: "PASS (repo-wide node --check: domains + src + scripts)"
   type_check: "PASS (JSDoc + @ts-check boundary validator)"

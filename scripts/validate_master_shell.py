@@ -905,6 +905,38 @@ def main() -> int:
         if plugin_id not in slo_budgets:
             errors.append(f"slo-policy: missing budget for plugin -> {plugin_id}")
 
+    # ── Requirements ↔ plugin-registry cross-check ──────────────────────────────
+    # Every requirements/*.yaml with a module.id must have a matching plugin
+    # (plugin.module_id) registered in the plugin-registry. This enforces that
+    # Stage C (master-shell registration) is completed for every declared domain.
+    req_dir = REPO_ROOT / "requirements"
+    for req_path in sorted(req_dir.glob("*.yaml")):
+        try:
+            req_data = yaml.safe_load(req_path.read_text(encoding="utf-8")) or {}
+        except Exception:
+            continue
+        req_module_id = req_data.get("module", {}).get("id") if isinstance(req_data, dict) else None
+        if not isinstance(req_module_id, str) or not req_module_id:
+            continue
+        if req_module_id not in module_ids:
+            errors.append(
+                f"requirements/{req_path.name}: module.id '{req_module_id}' has no matching "
+                f"plugin in plugin-registry (plugin.module_id). Stage C not completed?"
+            )
+        else:
+            # Also verify routing.entry_point matches plugin.entry_point
+            req_entry = req_data.get("routing", {}).get("entry_point")
+            for plugin in plugins:
+                if plugin.get("module_id") == req_module_id:
+                    plugin_entry = plugin.get("entry_point")
+                    if req_entry and plugin_entry and req_entry != plugin_entry:
+                        errors.append(
+                            f"requirements/{req_path.name}: routing.entry_point '{req_entry}' "
+                            f"does not match plugin entry_point '{plugin_entry}' "
+                            f"for module '{req_module_id}'"
+                        )
+                    break
+
     if errors:
         for error in errors:
             print(f"ERROR: {error}")
