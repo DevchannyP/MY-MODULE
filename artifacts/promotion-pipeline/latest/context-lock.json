@@ -1,0 +1,145 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-03-25T10:56:58.521207+00:00",
+  "goal": "plan-and-learn",
+  "profile_id": "plan-and-learn-routing",
+  "current_wp": {
+    "id": "WP-RUN-004",
+    "goal": "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.",
+    "type": "governance",
+    "stage": "E"
+  },
+  "protected_core": [
+    "domains/",
+    "src/server/"
+  ],
+  "core_guardrails": [],
+  "requested_paths": {
+    "primary": [
+      "memory/checkpoint.yaml",
+      "memory/current-wp.yaml",
+      "requirements/requirements.yaml",
+      "requirements/constraints.yaml",
+      "master-shell/catalog/project-intake-canvas.yaml"
+    ],
+    "secondary": [
+      "master-shell/catalog/project-blueprints.yaml",
+      "master-shell/catalog/planning-studio-modes.yaml",
+      "master-shell/catalog/ai-learning-map.yaml",
+      "master-shell/catalog/master-os-relations.yaml"
+    ],
+    "deferred": [
+      "domains/",
+      "artifacts/deployment-smoke/",
+      "worklog/reports/"
+    ]
+  },
+  "locked_files": {
+    "primary": [
+      {
+        "requested_path": "memory/checkpoint.yaml",
+        "path": "memory/checkpoint.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 2081,
+        "estimated_tokens": 694,
+        "sha256": "1b27238678a7bde2081a7f4b96f46634acb686edb305114446aaeef9113d3486"
+      },
+      {
+        "requested_path": "memory/current-wp.yaml",
+        "path": "memory/current-wp.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 2274,
+        "estimated_tokens": 758,
+        "sha256": "3e4285bcabbe9c3f80f542b97fc5919df425afaaca85f80f208f76f099c798ac"
+      },
+      {
+        "requested_path": "requirements/requirements.yaml",
+        "path": "requirements/requirements.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 2425,
+        "estimated_tokens": 808,
+        "sha256": "9664a02d9a9e1273b7542ecc119c72826503e4c6219c96af24b727ac89d7f970"
+      },
+      {
+        "requested_path": "requirements/constraints.yaml",
+        "path": "requirements/constraints.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 1921,
+        "estimated_tokens": 640,
+        "sha256": "b9a693d9fb61e580f998c85c78ffc42b98cc7ea07fb56642cb875801202971f5"
+      },
+      {
+        "requested_path": "master-shell/catalog/project-intake-canvas.yaml",
+        "path": "master-shell/catalog/project-intake-canvas.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 7547,
+        "estimated_tokens": 2516,
+        "sha256": "45c8c0b44a02a5539cd4bd2c011bc7d8c565bde6473f5ce1174574d3adc1767d"
+      }
+    ],
+    "secondary": [
+      {
+        "requested_path": "master-shell/catalog/project-blueprints.yaml",
+        "path": "master-shell/catalog/project-blueprints.yaml",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 6170,
+        "estimated_tokens": 2057,
+        "sha256": "5b42050551051b09046959de147159c66d2ac3b67ea7dd8989265b223f7d60fe"
+      },
+      {
+        "requested_path": "master-shell/catalog/planning-studio-modes.yaml",
+        "path": "master-shell/catalog/planning-studio-modes.yaml",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 3544,
+        "estimated_tokens": 1181,
+        "sha256": "27aa5637e264c37da3956db726c8a90fbbd5904488cd03d88ef7a9ca0d8b101b"
+      },
+      {
+        "requested_path": "master-shell/catalog/ai-learning-map.yaml",
+        "path": "master-shell/catalog/ai-learning-map.yaml",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 4502,
+        "estimated_tokens": 1501,
+        "sha256": "da518ee1e017543c18628fd426dfa34f9d7b18a3c305d8d0dc81680562b29410"
+      },
+      {
+        "requested_path": "master-shell/catalog/master-os-relations.yaml",
+        "path": "master-shell/catalog/master-os-relations.yaml",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 2285,
+        "estimated_tokens": 762,
+        "sha256": "8dee9742a63028db6ec11b35dc9322167e27ff1046ca1a2fb3db2337327e6b67"
+      }
+    ]
+  },
+  "summary": {
+    "primary": {
+      "file_count": 5,
+      "total_bytes": 16248,
+      "estimated_tokens": 5416
+    },
+    "secondary": {
+      "file_count": 4,
+      "total_bytes": 16501,
+      "estimated_tokens": 5501
+    },
+    "total": {
+      "file_count": 9,
+      "total_bytes": 32749,
+      "estimated_tokens": 10917
+    }
+  },
+  "commands": {
+    "context_bundle_json": "python3 scripts/export_context_bundle.py --goal plan-and-learn --json",
+    "context_lock_json": "python3 scripts/export_context_lock.py --goal plan-and-learn --json"
+  }
+}

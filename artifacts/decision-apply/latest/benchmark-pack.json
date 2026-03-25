@@ -1,0 +1,413 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-03-25T10:49:36.737858+00:00",
+  "goal": "stateful-ops",
+  "current_wp": {
+    "id": "WP-RUN-004",
+    "type": "governance",
+    "stage": "E",
+    "status": "completed"
+  },
+  "benchmark_review": {
+    "reviewed_on": "2026-03-25",
+    "source_policy": "official-docs-and-product-pages",
+    "notes": [
+      "모든 신호는 공식 문서 또는 공식 제품 페이지 기준으로 유지한다.",
+      "필수 개선 3종은 마스터 UI 기획성, 최소 문맥 성능, 학습형 운영 관측을 강제한다."
+    ]
+  },
+  "recommended_focuses": [
+    {
+      "id": "guided-learning-live-ops-cockpit",
+      "title": "학습형 Live Ops 콕핏 강화",
+      "outcome": "GUI만 보더라도 AI 흐름, adapter 전환 근거, 실시간 로그, replay 기반 다음 packet을 학습 가능한 구조로 읽게 만든다.",
+      "preserve_essence": "모든 GUI는 다루기 쉽고 학습과 로그 관측을 함께 해야 한다는 본질을 유지한다.",
+      "delivered_by": [
+        "Live Ops Feed, Study Replay, Replay Next Packet을 같은 학습형 운영축으로 강조한다.",
+        "Project Status가 guided learning / live ops readiness를 별도 개선축으로 요약한다.",
+        "질문지에서 GUI 학습 + 실시간 로그 우선순위를 직접 선택하게 만든다."
+      ],
+      "why_now": [
+        "학습 surface와 운영 surface가 분리되면 사용자는 흐름은 이해해도 실제 시스템 상태를 따라가기 어렵다.",
+        "adapter 확장성과 운영 안전을 같이 배우게 해야 새 프로젝트를 추가해도 코어를 흔들지 않는다."
+      ],
+      "related_focuses": [
+        {
+          "id": "guided-learning-and-adapter-cockpit",
+          "title": "학습 경로 + 어댑터/컨텍스트 콕핏"
+        },
+        {
+          "id": "constraint-fit-handoff-and-replay-loop",
+          "title": "제약 적합성 + handoff bundle + replay-driven next packet"
+        },
+        {
+          "id": "launch-autopilot-routing-ledger-and-kickoff-gate",
+          "title": "launch autopilot + routing learning ledger + kickoff ready gate"
+        }
+      ],
+      "benchmark_signals": [
+        {
+          "id": "miro-ai-diagramming",
+          "region": "global",
+          "product": "Miro AI Diagramming",
+          "category": "visualization",
+          "source_url": "https://miro.com/ai/brainstorming/",
+          "signal": "브레인스토밍 결과와 기술 문서를 빠르게 시각 구조로 바꾸고 팀이 같은 화면에서 이해하게 만든다.",
+          "lessons": [
+            "문서형 구조를 바로 학습용 flow와 relation으로 번역해야 한다.",
+            "복잡한 시스템일수록 텍스트보다 guided visual path가 중요하다."
+          ],
+          "adopted_into": [
+            "AI 학습 여정",
+            "AI flow/relations 시각화",
+            "도메인/어댑터 설명"
+          ]
+        },
+        {
+          "id": "github-project-views",
+          "region": "global",
+          "product": "GitHub Projects",
+          "category": "execution",
+          "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects",
+          "signal": "table, board, roadmap, custom fields를 같은 프로젝트 안에서 유연하게 바꿔 보며 계획과 실행을 연결한다.",
+          "lessons": [
+            "planner는 하나의 truth surface를 여러 view로 읽게 해야 한다.",
+            "실행 packet과 로그 view는 같은 데이터에서 파생돼야 한다."
+          ],
+          "adopted_into": [
+            "Planning Studio",
+            "Alert Cockpit",
+            "Execution Packet Draft"
+          ]
+        },
+        {
+          "id": "openai-agentkit-observability",
+          "region": "global",
+          "product": "OpenAI AgentKit",
+          "category": "observability",
+          "source_url": "https://openai.github.io/openai-agents-js/ko/guides/tracing/",
+          "signal": "에이전트 workflow를 시각적으로 설계하고 trace grading, 최적화, 실행 흐름 개선까지 한 체계로 묶는다.",
+          "lessons": [
+            "planner는 기획 surface와 runtime/observability surface를 분리하지 말아야 한다.",
+            "최근 실행 흐름과 품질 시그널을 한 화면에서 복기할 수 있어야 학습 속도가 올라간다."
+          ],
+          "adopted_into": [
+            "Live Ops Feed",
+            "Starter Focus Cycle",
+            "어댑터/운영 학습 surface"
+          ]
+        },
+        {
+          "id": "clova-safe-ai-lifecycle",
+          "region": "korea",
+          "product": "NAVER CLOVA",
+          "category": "ai-safety",
+          "source_url": "https://clova.ai/en/ai-research",
+          "signal": "안전성, 신뢰성, 벤치마크, 에이전트 연구를 AI 시스템 생애주기와 함께 다룬다.",
+          "lessons": [
+            "학습 경로와 quality gate에 안전성과 신뢰성 관점을 함께 연결해야 한다.",
+            "AI 흐름 설명은 기능뿐 아니라 운영 안전 관점도 포함해야 한다."
+          ],
+          "adopted_into": [
+            "학습 숙련도 로드맵",
+            "quality gate narrative",
+            "guided learning path"
+          ]
+        }
+      ],
+      "score": 6,
+      "reasons": [
+        "stateful-ops 목표에 직접 맞는 focus입니다.",
+        "코어 운영 흐름을 학습과 로그 surface로 같이 보여줄 가치가 큽니다."
+      ]
+    },
+    {
+      "id": "minimum-context-routing-performance",
+      "title": "최소 문맥 라우팅 성능 강화",
+      "outcome": "작은 작업단위마다 read-first/read-next/deferred를 더 엄격히 나누고, exact context lock과 drift 상태를 같은 surface에서 읽게 만든다.",
+      "preserve_essence": "필요한 파일만 읽는 원칙으로 토큰 효율과 AI 성능을 높이되, 코어 OS는 고정한다.",
+      "delivered_by": [
+        "Benchmark Action Pack이 최소 문맥, context lock, reread loop를 항상 top-3 개선으로 묶는다.",
+        "Project Status가 locked token, drift, context readiness를 별도 개선축으로 요약한다.",
+        "Planner는 strict context budget 성향을 intake 단계에서 바로 반영한다."
+      ],
+      "why_now": [
+        "토큰 효율이 낮아지면 마스터 OS 전체 성능과 학습 속도가 같이 무너진다.",
+        "context routing, lock, reread가 분리돼 보이면 운영자가 실제 최소 문맥 원칙을 체감하기 어렵다."
+      ],
+      "related_focuses": [
+        {
+          "id": "verified-promotion-context-lock-and-benchmark-pack",
+          "title": "검증된 packet 승격 + 문맥 잠금 + 벤치마크 액션 팩"
+        },
+        {
+          "id": "adaptive-starter-roi-routing-and-kickoff-evidence",
+          "title": "adaptive starter + ROI routing patch + kickoff evidence bundle"
+        },
+        {
+          "id": "promotion-gate-exception-ledger-and-packet-hierarchy",
+          "title": "승격 게이트 + 예외 문맥 ledger + 패킷 계층 렌즈"
+        }
+      ],
+      "benchmark_signals": [
+        {
+          "id": "openai-file-search-context",
+          "region": "global",
+          "product": "OpenAI File Search",
+          "category": "ai-runtime",
+          "source_url": "https://platform.openai.com/docs/guides/tools/file-search",
+          "signal": "필요한 파일만 검색·회수해 모델 입력을 줄이고, retrieval을 응답 흐름 안에 자연스럽게 넣는다.",
+          "lessons": [
+            "작은 작업단위일수록 read-first와 read-later를 분리해 토큰 낭비를 줄여야 한다.",
+            "planner가 context packet을 artifact로 내보내야 AI와 사람이 같은 최소 문맥을 공유할 수 있다."
+          ],
+          "adopted_into": [
+            "Context Packet",
+            "AI Runtime Recipes",
+            "planner export artifact"
+          ]
+        },
+        {
+          "id": "github-issues-breakdown",
+          "region": "global",
+          "product": "GitHub Issues",
+          "category": "execution",
+          "source_url": "https://docs.github.com/articles/about-issues",
+          "signal": "issue, sub-issue, dependency를 통해 큰 계획을 작은 작업단위로 안전하게 쪼갠다.",
+          "lessons": [
+            "planner는 큰 계획을 current-wp compatible draft로 바로 쪼갤 수 있어야 한다.",
+            "작업단위가 작을수록 필요한 파일만 읽는 context budget 설계가 쉬워진다."
+          ],
+          "adopted_into": [
+            "Execution Packet Draft",
+            "Context Routing Profile",
+            "work packet planning"
+          ]
+        },
+        {
+          "id": "github-issue-fields",
+          "region": "global",
+          "product": "GitHub Issue Fields",
+          "category": "execution",
+          "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields/about-issue-fields",
+          "signal": "priority, effort, dates 같은 typed metadata를 프로젝트와 이슈 전반에 일관되게 붙여 구조화된 실행 판단을 가능하게 한다.",
+          "lessons": [
+            "코어 보호 범위, edge touchpoint, read bundle budget 같은 메타데이터도 같은 truth surface 안에서 구조적으로 보여줘야 한다.",
+            "수정 가능한 계획은 바로 typed packet/context metadata로 내려갈 수 있어야 한다."
+          ],
+          "adopted_into": [
+            "Core Impact Boundary Map",
+            "Context Bundle Export",
+            "Execution Packet metadata"
+          ]
+        },
+        {
+          "id": "clova-think-small-units",
+          "region": "korea",
+          "product": "HyperCLOVA X",
+          "category": "ai-runtime",
+          "source_url": "https://clova.ai/en/tech-blog/hyperclova-x-omni-koreas-flagship-ai-on-the-road-to-omnimodality",
+          "signal": "복잡한 문제를 작은 단위로 나누고, 적절한 도구를 고르고, 스스로 반성·수정하는 에이전트 능력을 전면에 둔다.",
+          "lessons": [
+            "작업 packet은 작게 쪼개고 읽을 파일 수와 비용을 함께 보여줘야 한다.",
+            "기획에서 실행으로 넘어갈 때도 작은 handoff 단위와 검증 가능한 apply 흐름이 필요하다."
+          ],
+          "adopted_into": [
+            "Planning Variant Comparator",
+            "Token Budget Meter",
+            "Apply Handoff Kit"
+          ]
+        }
+      ],
+      "score": 6,
+      "reasons": [
+        "stateful-ops 목표에 직접 맞는 focus입니다.",
+        "운영/검증형 current-wp에서 context lock과 reread 흐름의 ROI가 특히 큽니다."
+      ]
+    },
+    {
+      "id": "master-planning-truth-surface",
+      "title": "마스터 UI 기획 진실면 강화",
+      "outcome": "새 프로젝트 시작 전, planner 한 화면에서 질문지·추천 조합·launch brief·planning mode를 쉽게 고르고 바로 수정한다.",
+      "preserve_essence": "마스터 OS 코어는 건드리지 않고, 시작 전 기획 truth surface만 더 강하게 만든다.",
+      "delivered_by": [
+        "확장된 Project Intake Canvas로 core policy, 학습 surface, context budget 우선순위를 시작점에서 고른다.",
+        "Benchmark Action Pack은 항상 이 축을 포함한 필수 개선 3종을 먼저 제안한다.",
+        "Project Status가 planner truth surface 준비도를 별도 readiness로 요약한다."
+      ],
+      "why_now": [
+        "프로젝트 시작 전 최고의 기획 툴이라는 본질을 첫 화면에서 더 분명하게 만들어야 한다.",
+        "질문지, planning mode, launch brief가 같은 결정 흐름으로 이어져야 사용자가 배우면서 선택할 수 있다."
+      ],
+      "related_focuses": [
+        {
+          "id": "project-intake-launch-brief",
+          "title": "프로젝트 시작 추천을 실행 브리프로 승격"
+        },
+        {
+          "id": "seed-tuning-scorecard-and-blueprint-launch",
+          "title": "seed 튜닝 + apply 성과 점수표 + blueprint launch deck"
+        },
+        {
+          "id": "launch-autopilot-routing-ledger-and-kickoff-gate",
+          "title": "launch autopilot + routing learning ledger + kickoff ready gate"
+        }
+      ],
+      "benchmark_signals": [
+        {
+          "id": "figjam-strategy-planning",
+          "region": "global",
+          "product": "Figma FigJam",
+          "category": "planning",
+          "source_url": "https://www.figma.com/figjam/",
+          "signal": "전략 수립, 브레인스토밍, 다이어그램, 액션 정렬을 한 화면에서 연결한다.",
+          "lessons": [
+            "질문지와 starter sequence를 한 흐름으로 보여줘야 한다.",
+            "아이디어를 즉시 실행 항목으로 환원하는 planner가 필요하다."
+          ],
+          "adopted_into": [
+            "프로젝트 시작 질문지",
+            "블루프린트 starter sequence",
+            "planner requirements 탭"
+          ]
+        },
+        {
+          "id": "jira-product-discovery",
+          "region": "global",
+          "product": "Jira Product Discovery",
+          "category": "planning",
+          "source_url": "https://www.atlassian.com/software/jira/product-discovery/guides/getting-started/introduction",
+          "signal": "idea, insight, priority, roadmap를 연결해 기획의 왜와 실행의 무엇을 같이 관리한다.",
+          "lessons": [
+            "planner는 단순 task list가 아니라 why, impact, priority를 함께 담아야 한다.",
+            "기획 surface가 실행 packet 생성의 상위 truth surface가 되어야 한다."
+          ],
+          "adopted_into": [
+            "Planning Studio",
+            "Execution Packet Draft",
+            "launch brief"
+          ]
+        },
+        {
+          "id": "linear-focus-priority",
+          "region": "global",
+          "product": "Linear",
+          "category": "execution",
+          "source_url": "https://linear.app/docs/my-issues",
+          "signal": "가장 중요한 작업을 큐레이션된 우선순위로 보여주고 다음 행동을 빠르게 결정하게 만든다.",
+          "lessons": [
+            "추천 결과는 하나의 top choice와 이유를 먼저 보여줘야 한다.",
+            "현재 focus와 next action을 짧고 선명하게 노출해야 한다."
+          ],
+          "adopted_into": [
+            "추천 조합 상단 요약",
+            "launch brief",
+            "work packet focus 표현"
+          ]
+        },
+        {
+          "id": "figjam-project-status-template",
+          "region": "global",
+          "product": "FigJam Project Status Template",
+          "category": "planning",
+          "source_url": "https://www.figma.com/templates/project-status-report-template/",
+          "signal": "상태, 범위, 리스크, 타임라인을 한 템플릿에서 짧고 공유 가능하게 정리한다.",
+          "lessons": [
+            "planner는 긴 문서보다 한 화면에서 수정 가능한 status canvas를 제공해야 한다.",
+            "리스크, 범위, 다음 단계는 독립 문단이 아니라 같은 planning surface에 있어야 한다."
+          ],
+          "adopted_into": [
+            "Planning Studio",
+            "launch brief",
+            "log-to-plan review"
+          ]
+        }
+      ],
+      "score": 5,
+      "reasons": [
+        "stateful-ops 목표에 직접 맞는 focus입니다.",
+        "직전 packet이 completed 상태라 다음 계획 선택과 launch brief 고도화에 바로 이어지기 좋습니다."
+      ]
+    }
+  ],
+  "commands": {
+    "benchmark_pack_json": "python3 scripts/generate_benchmark_pack.py --goal stateful-ops --json",
+    "check_fit_json": "python3 scripts/check_planning_fit.py --goal stateful-ops --json",
+    "context_lock_json": "python3 scripts/export_context_lock.py --goal stateful-ops --json",
+    "promote_json": "python3 scripts/promote_packet.py --goal stateful-ops --json"
+  },
+  "benchmark_sources": [
+    {
+      "id": "miro-ai-diagramming",
+      "product": "Miro AI Diagramming",
+      "region": "global",
+      "source_url": "https://miro.com/ai/brainstorming/"
+    },
+    {
+      "id": "github-project-views",
+      "product": "GitHub Projects",
+      "region": "global",
+      "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects"
+    },
+    {
+      "id": "openai-agentkit-observability",
+      "product": "OpenAI AgentKit",
+      "region": "global",
+      "source_url": "https://openai.github.io/openai-agents-js/ko/guides/tracing/"
+    },
+    {
+      "id": "clova-safe-ai-lifecycle",
+      "product": "NAVER CLOVA",
+      "region": "korea",
+      "source_url": "https://clova.ai/en/ai-research"
+    },
+    {
+      "id": "openai-file-search-context",
+      "product": "OpenAI File Search",
+      "region": "global",
+      "source_url": "https://platform.openai.com/docs/guides/tools/file-search"
+    },
+    {
+      "id": "github-issues-breakdown",
+      "product": "GitHub Issues",
+      "region": "global",
+      "source_url": "https://docs.github.com/articles/about-issues"
+    },
+    {
+      "id": "github-issue-fields",
+      "product": "GitHub Issue Fields",
+      "region": "global",
+      "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects/understanding-fields/about-issue-fields"
+    },
+    {
+      "id": "clova-think-small-units",
+      "product": "HyperCLOVA X",
+      "region": "korea",
+      "source_url": "https://clova.ai/en/tech-blog/hyperclova-x-omni-koreas-flagship-ai-on-the-road-to-omnimodality"
+    },
+    {
+      "id": "figjam-strategy-planning",
+      "product": "Figma FigJam",
+      "region": "global",
+      "source_url": "https://www.figma.com/figjam/"
+    },
+    {
+      "id": "jira-product-discovery",
+      "product": "Jira Product Discovery",
+      "region": "global",
+      "source_url": "https://www.atlassian.com/software/jira/product-discovery/guides/getting-started/introduction"
+    },
+    {
+      "id": "linear-focus-priority",
+      "product": "Linear",
+      "region": "global",
+      "source_url": "https://linear.app/docs/my-issues"
+    },
+    {
+      "id": "figjam-project-status-template",
+      "product": "FigJam Project Status Template",
+      "region": "global",
+      "source_url": "https://www.figma.com/templates/project-status-report-template/"
+    }
+  ]
+}

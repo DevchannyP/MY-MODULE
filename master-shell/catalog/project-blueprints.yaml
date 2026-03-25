@@ -22,6 +22,21 @@ blueprints:
         focus: "plugin-registry, navigation, feature-flags, planner guide를 연결한다"
       - step: "운영 게이트 고정"
         focus: "smoke, slo, rollout, rollback, observability를 활성화한다"
+    starter_deliverables:
+      - "requirements/requirements.yaml 기준선"
+      - "프로젝트 시작 launch brief"
+      - "OpenAPI + ui-contract + capability 초안"
+      - "plugin-registry 등록 계획"
+    focus_cycle:
+      now:
+        - "requirements, constraints, domain-map을 현재 프로젝트 목적에 맞게 정렬한다"
+        - "기획서와 planner가 같은 용어를 쓰도록 유비쿼터스 언어를 확정한다"
+      next:
+        - "OpenAPI, ui-contract, capability를 먼저 닫고 adapter profile을 선택한다"
+        - "master-shell 편입 경로와 feature flag를 같이 설계한다"
+      later:
+        - "smoke, rollout, rollback, observability를 연결해 운영 기준선을 닫는다"
+        - "planner artifact를 학습 surface와 운영 surface로 재사용한다"
     success_checks:
       - "planner에서 기획/학습/어댑터 구조가 한 화면에서 읽힌다"
       - "validate:composition이 plugin, blueprint, adapter 정합성을 보장한다"
@@ -48,6 +63,21 @@ blueprints:
         focus: "plugin-registry와 nav에 entry point를 연결한다"
       - step: "feature rollout 준비"
         focus: "flag metadata와 smoke 시나리오를 추가한다"
+    starter_deliverables:
+      - "Stage A 설계 메모"
+      - "bounded context 계약 세트"
+      - "adapter 선택 근거"
+      - "plugin/nav/flag 편입 체크리스트"
+    focus_cycle:
+      now:
+        - "새 bounded context의 INV, 권한, 이벤트를 Stage A 문서로 먼저 고정한다"
+        - "workflow-domain-module 또는 stateful-domain-module 중 하나를 선택한다"
+      next:
+        - "OpenAPI, ui-contract, capability와 adapter stack을 함께 정렬한다"
+        - "plugin-registry, navigation, feature flag, smoke를 동시에 연결한다"
+      later:
+        - "학습 플로우와 planner guide까지 같이 붙여 GUI로 이해 가능하게 만든다"
+        - "회귀 테스트와 contract drift를 닫아 기존 프로젝트 퇴행을 차단한다"
     success_checks:
       - "module 코어가 외부 프레임워크에 직접 의존하지 않는다"
       - "ui-contract만으로 planner에 새 화면 설명이 노출된다"
@@ -69,6 +99,21 @@ blueprints:
         focus: "trace, request id, deployment smoke를 먼저 연결한다"
       - step: "운영 안전장치"
         focus: "idempotency, timeout, drain, rate limit을 transport에 고정한다"
+    starter_deliverables:
+      - "repository port 유지 전략"
+      - "persistent adapter 적용 계획"
+      - "deployment smoke 기준선"
+      - "운영 가드레일 체크리스트"
+    focus_cycle:
+      now:
+        - "현재 메모리 저장소 경계를 보존한 채 영속 저장소 전환 범위를 한정한다"
+        - "transport 레이어의 readiness, timeout, idempotency 요구를 먼저 명시한다"
+      next:
+        - "persistent adapter를 연결하고 smoke와 observability를 같이 검증한다"
+        - "planner evidence와 운영 증적 경로를 같이 정의한다"
+      later:
+        - "rollout, rollback, error budget 기준까지 연결해 실서비스 posture를 완성한다"
+        - "학습 surface에서도 운영 선택 근거를 설명 가능하게 만든다"
     success_checks:
       - "storage 교체가 use case 변경 없이 가능하다"
       - "smoke 테스트가 persistent mode에서도 통과한다"

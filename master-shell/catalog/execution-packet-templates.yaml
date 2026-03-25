@@ -1,0 +1,71 @@
+# Master Shell - Execution Packet Templates
+# planning surface에서 바로 current-wp compatible draft를 만들기 위한 템플릿
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+templates:
+  - id: "planner-implementation"
+    title: "Planner Implementation Packet"
+    when_to_use: "기획서에서 바로 실행용 packet을 만들 때"
+    benchmark_refs:
+      - "github-issues-breakdown"
+      - "jira-product-discovery"
+      - "linear-cycles"
+    packet_defaults:
+      type: "planning"
+      stage: "A"
+      constraints:
+        - "master OS 코어를 직접 수정하지 않는다"
+        - "planner, catalog, memory surface에서 먼저 구현한다"
+      validation:
+        - "python3 scripts/validate_master_shell.py"
+        - "python3 scripts/generate-master-planner.py --silent"
+        - "node --test src/tests/smoke/masterPlannerGuides.smoke.test.js src/tests/smoke/masterShellBenchmarkCatalog.smoke.test.js"
+      context_budget:
+        estimated_turns: 3
+        max_new_files: 3
+        max_modified_files: 6
+
+  - id: "module-extension-packet"
+    title: "Module Extension Packet"
+    when_to_use: "새 bounded context 또는 adapter 전환을 안전하게 추가할 때"
+    benchmark_refs:
+      - "github-issues-breakdown"
+      - "miro-ai-diagramming"
+      - "openai-file-search-context"
+    packet_defaults:
+      type: "domain"
+      stage: "B"
+      constraints:
+        - "도메인 코어는 기존 포트와 계약을 유지한다"
+        - "직접 import 결합을 만들지 않는다"
+      validation:
+        - "npm run validate:composition"
+        - "npm run validate:contracts"
+        - "npm run test:e2e-smoke"
+      context_budget:
+        estimated_turns: 4
+        max_new_files: 5
+        max_modified_files: 8
+
+  - id: "ops-hardening-packet"
+    title: "Ops Hardening Packet"
+    when_to_use: "로그, observability, deployment smoke를 강화할 때"
+    benchmark_refs:
+      - "openai-agentkit-observability"
+      - "clova-safe-ai-lifecycle"
+      - "github-project-views"
+    packet_defaults:
+      type: "governance"
+      stage: "D"
+      constraints:
+        - "운영 증적 없이 완료로 선언하지 않는다"
+        - "로그, alert, dashboard를 같은 surface에서 검증한다"
+      validation:
+        - "npm run check:observability"
+        - "npm run smoke:deployment"
+        - "npm run test:e2e-smoke"
+      context_budget:
+        estimated_turns: 3
+        max_new_files: 2
+        max_modified_files: 6

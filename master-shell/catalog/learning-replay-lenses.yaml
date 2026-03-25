@@ -1,0 +1,50 @@
+# Master Shell - Learning Replay Lenses
+# 로그/알림/리플렉션을 학습 surface로 다시 연결하는 규칙
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+lenses:
+  - id: "audit-trace-lens"
+    event_tag: "audit"
+    title: "Audit Trace Replay"
+    teaches: "운영 증적이 어떤 결정 경로를 거쳐 남는지 복기한다."
+    track_ref: "runtime-operations"
+    next_reads:
+      - "worklog/audit-chain.json"
+      - "master-shell/observability/config.yaml"
+
+  - id: "reflection-improvement-lens"
+    event_tag: "reflection"
+    title: "Reflection Improvement Replay"
+    teaches: "실패와 개선 메모를 다음 planning packet으로 환원한다."
+    track_ref: "master-os-foundation"
+    next_reads:
+      - "memory/L0-hot/reflection-log.yaml"
+      - "master-shell/catalog/planning-studio-modes.yaml"
+
+  - id: "report-study-lens"
+    event_tag: "report"
+    title: "Report Study Replay"
+    teaches: "학습 보고서를 읽고 planner와 launch brief에 다시 연결한다."
+    track_ref: "project-bootstrap"
+    next_reads:
+      - "worklog/reports/"
+      - "artifacts/master-planner/index.html"
+
+  - id: "git-change-lens"
+    event_tag: "git"
+    title: "Change Delta Replay"
+    teaches: "최근 변경이 어떤 bounded context, adapter, gate에 영향을 주는지 추적한다."
+    track_ref: "module-extension-lab"
+    next_reads:
+      - "master-shell/catalog/adapter-transition-playbooks.yaml"
+      - "requirements/domain-map.yaml"
+
+  - id: "timeline-ops-lens"
+    event_tag: "timeline"
+    title: "Ops Timeline Replay"
+    teaches: "실시간 로그를 운영/학습 순서로 해석하는 방법을 익힌다."
+    track_ref: "runtime-operations"
+    next_reads:
+      - "master-shell/observability/timeline.jsonl"
+      - "master-shell/catalog/learning-replay-lenses.yaml"

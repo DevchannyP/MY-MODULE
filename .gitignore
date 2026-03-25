@@ -38,5 +38,9 @@ sbom.cyclonedx.json
 # 임시 생성물 (artifacts/는 의도적으로 추적 — 설계 산출물)
 # artifacts/master-planner/index.html → 의도적으로 커밋 (design deliverable)
 # artifacts/catalog/  → 의도적으로 커밋 (domain catalog)
+# artifacts/*/latest/ → 의도적으로 커밋 (현재 상태 대표 스냅샷)
+# artifacts/*/history/ → 런타임 실행 로그, 커밋하지 않음 (무한 증가 방지)
+artifacts/decision-apply/history/
+artifacts/promotion-pipeline/history/
 tmp/
 *.tmp

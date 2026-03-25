@@ -1,0 +1,78 @@
+# Master Shell - Context Routing Profiles
+# 작은 작업단위에서 필요한 파일만 읽게 하는 목표별 read routing 규칙
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+profiles:
+  - id: "plan-and-learn-routing"
+    intake_goal: "plan-and-learn"
+    objective: "기획, 학습, planner editing에 필요한 최소 문맥만 우선 읽는다."
+    benchmark_refs:
+      - "openai-file-search-context"
+      - "figjam-strategy-planning"
+    max_primary_files: 5
+    max_secondary_files: 6
+    must_read:
+      - "memory/checkpoint.yaml"
+      - "memory/current-wp.yaml"
+      - "requirements/requirements.yaml"
+      - "requirements/constraints.yaml"
+      - "master-shell/catalog/project-intake-canvas.yaml"
+    expand_if_needed:
+      - "master-shell/catalog/project-blueprints.yaml"
+      - "master-shell/catalog/planning-studio-modes.yaml"
+      - "master-shell/catalog/ai-learning-map.yaml"
+      - "master-shell/catalog/master-os-relations.yaml"
+    defer_until_execution:
+      - "domains/"
+      - "artifacts/deployment-smoke/"
+      - "worklog/reports/"
+
+  - id: "module-extension-routing"
+    intake_goal: "module-extension"
+    objective: "새 모듈 확장에 직접 필요한 계약과 adapter 경계만 읽는다."
+    benchmark_refs:
+      - "openai-file-search-context"
+      - "github-issues-breakdown"
+    max_primary_files: 6
+    max_secondary_files: 8
+    must_read:
+      - "memory/checkpoint.yaml"
+      - "requirements/requirements.yaml"
+      - "requirements/domain-map.yaml"
+      - "master-shell/catalog/adapter-registry.yaml"
+      - "master-shell/catalog/adapter-compatibility-matrix.yaml"
+      - "worklog/contract-matrix.md"
+    expand_if_needed:
+      - "master-shell/catalog/adapter-transition-playbooks.yaml"
+      - "master-shell/plugin-registry/registry.yaml"
+      - "master-shell/catalog/execution-packet-templates.yaml"
+    defer_until_execution:
+      - "artifacts/master-planner/index.html"
+      - "master-shell/observability/timeline.jsonl"
+      - "worklog/reports/"
+
+  - id: "stateful-ops-routing"
+    intake_goal: "stateful-ops"
+    objective: "운영 안전장치, 로그, smoke 기준을 우선 읽고 구현 세부는 나중에 읽는다."
+    benchmark_refs:
+      - "openai-agentkit-observability"
+      - "clova-safe-ai-lifecycle"
+      - "github-project-views"
+    max_primary_files: 6
+    max_secondary_files: 7
+    must_read:
+      - "memory/checkpoint.yaml"
+      - "memory/current-wp.yaml"
+      - "master-shell/observability/config.yaml"
+      - "master-shell/operations/rollback-playbook.yaml"
+      - "master-shell/catalog/execution-packet-templates.yaml"
+      - "master-shell/catalog/context-routing-profiles.yaml"
+    expand_if_needed:
+      - "master-shell/observability/health-scores.yaml"
+      - "master-shell/operations/deployment-environments.yaml"
+      - "artifacts/deployment-smoke/target-resolution.json"
+    defer_until_execution:
+      - "domains/"
+      - "worklog/reports/"
+      - "artifacts/catalog-site/index.html"

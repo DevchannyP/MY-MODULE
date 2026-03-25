@@ -82,7 +82,88 @@ questions:
           profiles: { stateful-domain-module: 3 }
           recipes: { stateful-ops-guarded: 2 }
 
+  - id: "core_change_policy"
+    title: "코어와 확장 경계를 어떻게 가져갈 것인가?"
+    prompt: "시스템 OS 코어를 고정할지, 모듈/런타임 확장을 우선할지 고른다."
+    options:
+      - id: "core-fixed-edge-extend"
+        label: "코어 고정, edge 확장"
+        description: "마스터 OS 코어는 보호하고 planner, adapter, packet 흐름만 강화한다."
+        boosts:
+          blueprints: { master-os-ai-studio: 4 }
+          profiles: { master-os-shell: 4 }
+          recipes: { planner-first-hybrid: 3 }
+      - id: "module-first-extension"
+        label: "모듈 확장 우선"
+        description: "새 bounded context와 계약을 먼저 늘리고 조합으로 확장한다."
+        boosts:
+          blueprints: { domain-module-extension: 4 }
+          profiles: { workflow-domain-module: 4 }
+          recipes: { contract-first-module-builder: 3 }
+      - id: "runtime-hardening"
+        label: "런타임 안전 우선"
+        description: "서비스 운영성과 안전장치를 우선 설계한다."
+        boosts:
+          blueprints: { stateful-workflow-service: 4 }
+          profiles: { stateful-domain-module: 4 }
+          recipes: { stateful-ops-guarded: 3 }
+
+  - id: "learning_surface"
+    title: "어떤 학습 surface가 가장 중요한가?"
+    prompt: "GUI 학습, 계약/코드 이해, 운영 런북 중 핵심 학습면을 고른다."
+    options:
+      - id: "gui-learning-live-ops"
+        label: "GUI 학습 + 실시간 로그"
+        description: "planner, guided learning, live ops feed를 함께 읽는 구조가 중요하다."
+        boosts:
+          blueprints: { master-os-ai-studio: 4 }
+          profiles: { master-os-shell: 3 }
+          recipes: { planner-first-hybrid: 3 }
+      - id: "contract-code-study"
+        label: "계약 + 코드 학습"
+        description: "bounded context, port, adapter, capability를 중심으로 익힌다."
+        boosts:
+          blueprints: { domain-module-extension: 3 }
+          profiles: { workflow-domain-module: 3 }
+          recipes: { contract-first-module-builder: 3 }
+      - id: "ops-runbook-learning"
+        label: "운영 런북 학습"
+        description: "관측, smoke, rollout, rollback을 먼저 이해한다."
+        boosts:
+          blueprints: { stateful-workflow-service: 3 }
+          profiles: { stateful-domain-module: 3 }
+          recipes: { stateful-ops-guarded: 3 }
+
+  - id: "context_budget_priority"
+    title: "문맥 예산은 얼마나 엄격하게 관리할 것인가?"
+    prompt: "토큰 효율과 성능을 위해 읽기 범위를 얼마나 강하게 제한할지 고른다."
+    options:
+      - id: "strict-minimum-context"
+        label: "최소 문맥 엄수"
+        description: "작업단위마다 필요한 파일만 읽고 lock/reread를 강하게 쓴다."
+        boosts:
+          blueprints: { master-os-ai-studio: 3 }
+          profiles: { master-os-shell: 3 }
+          recipes: { planner-first-hybrid: 4 }
+      - id: "balanced-context"
+        label: "균형 문맥"
+        description: "계획과 구현 모두를 보되, 실행 전후로 읽기 범위를 나눈다."
+        boosts:
+          blueprints: { domain-module-extension: 3 }
+          profiles: { workflow-domain-module: 3 }
+          recipes: { contract-first-module-builder: 3 }
+      - id: "execution-heavy-context"
+        label: "실행 우선 문맥"
+        description: "운영과 검증 때문에 더 넓은 문맥을 허용하되 가드레일을 둔다."
+        boosts:
+          blueprints: { stateful-workflow-service: 3 }
+          profiles: { stateful-domain-module: 3 }
+          recipes: { stateful-ops-guarded: 4 }
+
 defaults:
   primary_goal: "plan-and-learn"
   interaction_mode: "document-first"
   delivery_shape: "planner-artifact"
+  core_change_policy: "core-fixed-edge-extend"
+  learning_surface: "gui-learning-live-ops"
+  context_budget_priority: "strict-minimum-context"

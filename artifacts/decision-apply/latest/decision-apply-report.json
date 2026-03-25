@@ -1,0 +1,27 @@
+{
+  "schema_version": "1",
+  "recorded_at": "2026-03-25T10:49:36.891715+00:00",
+  "goal": "stateful-ops",
+  "decision_gate": "blocked",
+  "ready_to_apply": false,
+  "starter_signature": {
+    "planning_mode_id": "change-control",
+    "routing_profile_id": "stateful-ops-routing",
+    "execution_template_id": "ops-hardening-packet",
+    "blueprint_id": "stateful-workflow-service"
+  },
+  "recommended_next_command": "python3 scripts/run_promotion_pipeline.py --goal stateful-ops --json",
+  "artifacts": {
+    "context_lock": "/root/workspace/my-module/artifacts/decision-apply/latest/context-lock.json",
+    "handoff_bundle": "/root/workspace/my-module/artifacts/decision-apply/latest/handoff-bundle.json",
+    "benchmark_pack": "/root/workspace/my-module/artifacts/decision-apply/latest/benchmark-pack.json",
+    "promoted_packet": "/root/workspace/my-module/artifacts/decision-apply/latest/promoted-packet.yaml",
+    "decision_apply_report": "/root/workspace/my-module/artifacts/decision-apply/latest/decision-apply-report.json"
+  },
+  "commands": {
+    "decision_json": "python3 scripts/generate_promotion_decision.py --json",
+    "decision_apply_json": "python3 scripts/run_decision_apply.py --goal stateful-ops --json",
+    "decision_apply_execute_json": "python3 scripts/run_decision_apply.py --goal stateful-ops --apply --json"
+  },
+  "result": "dry-run"
+}

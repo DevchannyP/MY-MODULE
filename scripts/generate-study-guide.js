@@ -430,7 +430,14 @@ function renderLessons(lessonsData) {
 // HTML 템플릿
 // ---------------------------------------------------------------------------
 function buildHtml(opts) {
-  const { milestones, adrs, capabilities, lessons, generatedAt } = opts;
+  const {
+    milestones,
+    adrs,
+    capabilities,
+    lessons,
+    generatedAt,
+    summary,
+  } = opts;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -442,36 +449,39 @@ function buildHtml(opts) {
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:          #0d1117;
-    --bg-card:     #161b22;
-    --bg-card2:    #1c2128;
-    --border:      #30363d;
-    --text:        #c9d1d9;
-    --text-muted:  #8b949e;
-    --accent:      #1f6feb;
-    --accent-light:#388bfd;
-    --green:       #3fb950;
-    --yellow:      #d29922;
-    --red:         #f85149;
-    --sidebar-w:   240px;
+    --bg: #f5efe4;
+    --bg-card: #fffdf8;
+    --bg-card2: #fbf6ec;
+    --border: #ddcfb9;
+    --text: #1f2937;
+    --text-muted: #667085;
+    --accent: #0f766e;
+    --accent-light: #1d4ed8;
+    --green: #0f766e;
+    --yellow: #b45309;
+    --red: #c2410c;
+    --sidebar-w: 260px;
+    --shadow: 0 18px 40px rgba(66, 51, 32, 0.08);
   }
 
   html { scroll-behavior: smooth; }
 
   body {
-    background: var(--bg);
+    background:
+      radial-gradient(circle at top left, rgba(15,118,110,0.13), transparent 20%),
+      linear-gradient(180deg, #fcf8f0 0%, var(--bg) 100%);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.65;
     display: flex;
     min-height: 100vh;
   }
 
-  /* Sidebar */
   nav#sidebar {
     position: fixed;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     width: var(--sidebar-w);
     height: 100vh;
     background: var(--bg-card);
@@ -480,23 +490,24 @@ function buildHtml(opts) {
     display: flex;
     flex-direction: column;
     z-index: 100;
+    box-shadow: var(--shadow);
   }
 
   .sidebar-logo {
-    padding: 20px 16px 12px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent-light);
-    letter-spacing: 0.5px;
+    padding: 24px 18px 16px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.02em;
     border-bottom: 1px solid var(--border);
   }
 
   .sidebar-logo small {
     display: block;
-    font-weight: 400;
+    font-weight: 500;
     font-size: 11px;
     color: var(--text-muted);
-    margin-top: 2px;
+    margin-top: 4px;
   }
 
   nav#sidebar ul {
@@ -507,18 +518,18 @@ function buildHtml(opts) {
 
   nav#sidebar ul li a {
     display: block;
-    padding: 8px 16px;
+    padding: 10px 18px;
     color: var(--text-muted);
     text-decoration: none;
     font-size: 13px;
     transition: color 0.15s, background 0.15s;
-    border-left: 2px solid transparent;
+    border-left: 3px solid transparent;
   }
 
   nav#sidebar ul li a:hover,
   nav#sidebar ul li a.active {
     color: var(--text);
-    background: rgba(56,139,253,0.1);
+    background: rgba(29,78,216,0.08);
     border-left-color: var(--accent-light);
   }
 
@@ -529,31 +540,119 @@ function buildHtml(opts) {
     border-top: 1px solid var(--border);
   }
 
-  /* Main */
   main {
     margin-left: var(--sidebar-w);
     flex: 1;
-    padding: 40px 48px;
-    max-width: 1100px;
+    padding: 28px 40px 56px;
+    max-width: 1160px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+    padding: 14px 18px;
+    border-radius: 999px;
+    background: rgba(255, 253, 248, 0.9);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 16px;
+    z-index: 40;
+    backdrop-filter: blur(10px);
+  }
+
+  .topbar strong { display: block; }
+  .topbar span { color: var(--text-muted); font-size: 12px; }
+
+  .topbar-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topbar-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    background: white;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(249,241,226,0.96));
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    border-radius: 26px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(15,118,110,0.08);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 16px;
   }
 
   .page-title {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 38px;
+    font-weight: 800;
     color: var(--text);
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    letter-spacing: -0.04em;
   }
 
   .page-subtitle {
     color: var(--text-muted);
-    font-size: 14px;
-    margin-bottom: 48px;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .overview-card {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .overview-card span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .overview-card strong {
+    font-size: 28px;
+    letter-spacing: -0.04em;
   }
 
   section { margin-bottom: 64px; }
 
   section h2 {
-    font-size: 20px;
+    font-size: 23px;
     font-weight: 700;
     color: var(--accent-light);
     border-bottom: 1px solid var(--border);
@@ -561,7 +660,6 @@ function buildHtml(opts) {
     margin-bottom: 24px;
   }
 
-  /* Badge */
   .badge {
     display: inline-block;
     padding: 2px 8px;
@@ -571,28 +669,37 @@ function buildHtml(opts) {
     margin-right: 6px;
   }
 
-  /* Milestone */
   .level-group { margin-bottom: 28px; }
 
   .level-title {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-muted);
     margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
-  .milestone-card {
+  .milestone-card,
+  .adr-card,
+  .domain-card,
+  .lesson-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin-bottom: 12px;
-    transition: border-color 0.15s;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
   }
 
-  .milestone-card:hover { border-color: var(--accent); }
+  .milestone-card {
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .milestone-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
 
   .ms-header {
     display: flex;
@@ -602,15 +709,15 @@ function buildHtml(opts) {
   }
 
   .ms-id {
-    font-family: monospace;
+    font-family: "JetBrains Mono", "D2Coding", monospace;
     font-size: 11px;
     color: var(--text-muted);
     background: var(--bg-card2);
     padding: 2px 6px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
-  .ms-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .ms-title { font-size: 15px; font-weight: 700; color: var(--text); }
   .ms-objective { color: var(--text-muted); font-size: 13px; margin-bottom: 8px; }
   .prereq { font-size: 12px; color: var(--yellow); margin-bottom: 8px; }
   .proof-section { margin-top: 10px; }
@@ -618,11 +725,7 @@ function buildHtml(opts) {
   .proof-list { margin-top: 6px; padding-left: 20px; }
   .proof-list li { font-size: 13px; color: var(--text); margin-bottom: 4px; }
 
-  /* ADR */
   .adr-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
     padding: 20px 24px;
     margin-bottom: 20px;
   }
@@ -636,27 +739,27 @@ function buildHtml(opts) {
   }
 
   .adr-num {
-    font-family: monospace;
+    font-family: "JetBrains Mono", "D2Coding", monospace;
     font-size: 12px;
     color: var(--accent-light);
-    background: rgba(31,111,235,0.1);
+    background: rgba(29,78,216,0.08);
     padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(31,111,235,0.3);
+    border-radius: 6px;
+    border: 1px solid rgba(29,78,216,0.18);
   }
 
-  .adr-title { font-size: 16px; font-weight: 600; color: var(--text); flex: 1; }
+  .adr-title { font-size: 16px; font-weight: 700; color: var(--text); flex: 1; }
 
   .adr-status {
     font-size: 11px;
     padding: 2px 8px;
     border-radius: 10px;
-    font-weight: 600;
+    font-weight: 700;
   }
 
-  .status-accepted { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
-  .status-archived { background: rgba(139,148,158,0.15); color: var(--text-muted); border: 1px solid var(--border); }
-  .status-other    { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+  .status-accepted { background: rgba(15,118,110,0.1); color: var(--green); border: 1px solid rgba(15,118,110,0.18); }
+  .status-archived { background: rgba(102,112,133,0.1); color: var(--text-muted); border: 1px solid var(--border); }
+  .status-other    { background: rgba(180,83,9,0.1); color: var(--yellow); border: 1px solid rgba(180,83,9,0.18); }
 
   .adr-date { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
 
@@ -669,13 +772,13 @@ function buildHtml(opts) {
   .adr-section {
     background: var(--bg-card2);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 12px;
     padding: 14px 16px;
   }
 
   .adr-section h4 {
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--accent-light);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -688,16 +791,12 @@ function buildHtml(opts) {
   .adr-content p { margin-bottom: 8px; }
   .adr-content ul { padding-left: 18px; margin-bottom: 8px; }
   .adr-content li { margin-bottom: 4px; }
-  .adr-content pre { background: var(--bg); padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; margin: 8px 0; }
-  .adr-content code { background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 12px; }
+  .adr-content pre { background: #f4ecdd; padding: 10px; border-radius: 8px; overflow-x: auto; font-size: 12px; margin: 8px 0; }
+  .adr-content code { background: rgba(180,83,9,0.1); padding: 1px 4px; border-radius: 6px; font-family: "JetBrains Mono", "D2Coding", monospace; font-size: 12px; }
   .adr-content pre code { background: transparent; padding: 0; }
   .adr-content em { color: var(--text-muted); }
 
-  /* Domain Capabilities */
   .domain-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
     padding: 20px 24px;
     margin-bottom: 20px;
   }
@@ -705,16 +804,16 @@ function buildHtml(opts) {
   .domain-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 
   .domain-key {
-    font-family: monospace;
+    font-family: "JetBrains Mono", "D2Coding", monospace;
     font-size: 12px;
-    background: rgba(63,185,80,0.1);
+    background: rgba(15,118,110,0.1);
     color: var(--green);
-    border: 1px solid rgba(63,185,80,0.3);
+    border: 1px solid rgba(15,118,110,0.18);
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
-  .domain-name { font-size: 16px; font-weight: 600; }
+  .domain-name { font-size: 16px; font-weight: 700; }
   .domain-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
 
   .cap-table {
@@ -731,7 +830,7 @@ function buildHtml(opts) {
     border: 1px solid var(--border);
     color: var(--text-muted);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.3px;
   }
@@ -742,14 +841,16 @@ function buildHtml(opts) {
     vertical-align: top;
   }
 
-  .cap-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .cap-table tr:hover td { background: rgba(255,255,255,0.65); }
 
-  .cap-table code {
-    background: rgba(255,255,255,0.06);
+  .cap-table code,
+  .domain-invs code,
+  .domain-events code {
+    background: rgba(180,83,9,0.1);
     padding: 1px 5px;
-    border-radius: 3px;
+    border-radius: 6px;
     font-size: 11px;
-    font-family: monospace;
+    font-family: "JetBrains Mono", "D2Coding", monospace;
   }
 
   .type-badge {
@@ -757,42 +858,31 @@ function buildHtml(opts) {
     padding: 2px 8px;
     border-radius: 10px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
   }
 
-  .type-command { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
-  .type-query   { background: rgba(56,139,253,0.15); color: var(--accent-light); border: 1px solid rgba(56,139,253,0.3); }
+  .type-command { background: rgba(194,65,12,0.1); color: var(--red); border: 1px solid rgba(194,65,12,0.18); }
+  .type-query { background: rgba(29,78,216,0.1); color: var(--accent-light); border: 1px solid rgba(29,78,216,0.18); }
 
   .domain-invs, .domain-events {
     font-size: 13px;
     margin-top: 10px;
     padding: 10px 14px;
     background: var(--bg-card2);
-    border-radius: 6px;
+    border-radius: 12px;
     border: 1px solid var(--border);
   }
 
   .domain-invs ul { padding-left: 18px; margin-top: 6px; }
   .domain-invs li { margin-bottom: 4px; }
-  .domain-invs code, .domain-events code {
-    background: rgba(255,255,255,0.06);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 11px;
-    font-family: monospace;
-  }
 
-  /* Lessons */
   .lesson-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
     border-left: 3px solid var(--yellow);
-    border-radius: 8px;
     padding: 16px 20px;
     margin-bottom: 12px;
   }
 
-  .lesson-header { font-weight: 600; color: var(--yellow); margin-bottom: 8px; }
+  .lesson-header { font-weight: 700; color: var(--yellow); margin-bottom: 8px; }
 
   .empty {
     color: var(--text-muted);
@@ -801,7 +891,41 @@ function buildHtml(opts) {
     text-align: center;
     background: var(--bg-card);
     border: 1px dashed var(--border);
-    border-radius: 8px;
+    border-radius: 14px;
+  }
+
+  @media (max-width: 980px) {
+    nav#sidebar {
+      position: static;
+      width: 100%;
+      height: auto;
+    }
+
+    body {
+      display: block;
+    }
+
+    main {
+      margin-left: 0;
+      padding: 20px 16px 40px;
+      max-width: none;
+    }
+
+    .topbar {
+      display: block;
+    }
+
+    .topbar-links {
+      margin-top: 12px;
+    }
+
+    .overview-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .adr-sections {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 </head>
@@ -810,7 +934,7 @@ function buildHtml(opts) {
 <nav id="sidebar">
   <div class="sidebar-logo">
     Workflow OS
-    <small>학습 가이드</small>
+    <small>한국어 학습 가이드</small>
   </div>
   <ul>
     <li><a href="#roadmap">학습 로드맵</a></li>
@@ -822,8 +946,29 @@ function buildHtml(opts) {
 </nav>
 
 <main>
-  <h1 class="page-title">Workflow OS 학습 가이드</h1>
-  <p class="page-subtitle">아키텍처 패턴, 도메인 역량, 결정 이력을 한 곳에서 탐색하세요.</p>
+  <div class="topbar">
+    <div>
+      <strong>Workflow OS 학습 화면</strong>
+      <span>ADR, 로드맵, 도메인 역량을 한국어 중심으로 정리한 온보딩 화면</span>
+    </div>
+    <div class="topbar-links">
+      <a href="../index.html">홈</a>
+      <a href="../master-planner/index.html">플래너</a>
+      <a href="../catalog-site/index.html">카탈로그</a>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="eyebrow">신규 참여자 추천 시작점</div>
+    <h1 class="page-title">Workflow OS 학습 가이드</h1>
+    <p class="page-subtitle">아키텍처 패턴, 도메인 역량, 결정 이력을 한국어 중심으로 탐색하세요. 로드맵부터 보고, 필요한 순간에 ADR과 도메인 역량으로 깊이를 더하면 됩니다.</p>
+    <div class="overview-grid">
+      <div class="overview-card"><span>학습 단계</span><strong>${summary.milestoneCount}</strong></div>
+      <div class="overview-card"><span>ADR 문서</span><strong>${summary.adrCount}</strong></div>
+      <div class="overview-card"><span>도메인 역량</span><strong>${summary.capabilityCount}</strong></div>
+      <div class="overview-card"><span>교훈 항목</span><strong>${summary.lessonCount}</strong></div>
+    </div>
+  </section>
 
   <section id="roadmap">
     <h2>학습 로드맵</h2>
@@ -849,7 +994,7 @@ function buildHtml(opts) {
 <script>
 (function () {
   const links = document.querySelectorAll('nav#sidebar a');
-  const sections = document.querySelectorAll('main section');
+  const sections = document.querySelectorAll('main section[id]');
 
   function setActive() {
     let current = '';
@@ -881,6 +1026,8 @@ function main() {
 
   const adrs = loadAdrs(adrDir, adrIndex);
   const capabilities = loadCapabilities();
+  const milestoneLevels = Array.isArray(masteryMap?.levels) ? masteryMap.levels : [];
+  const lessonItems = Array.isArray(lessonsData?.lessons) ? lessonsData.lessons : [];
 
   const generatedAt = new Date().toISOString().slice(0, 10);
 
@@ -890,6 +1037,12 @@ function main() {
     capabilities: renderCapabilities(capabilities),
     lessons: renderLessons(lessonsData),
     generatedAt,
+    summary: {
+      milestoneCount: milestoneLevels.length,
+      adrCount: adrs.length,
+      capabilityCount: capabilities.length,
+      lessonCount: lessonItems.length,
+    },
   });
 
   if (!fs.existsSync(OUT_DIR)) {

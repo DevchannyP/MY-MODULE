@@ -15,13 +15,16 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
+import hashlib
 
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 QUEUE_FILE = ROOT / "memory" / "wp-queue.yaml"
+PROMOTION_ARTIFACT_DIR = ROOT / "artifacts" / "promotion-pipeline" / "latest"
 
 # Tier execution order: infra runs first, meta runs last
 TIER_ORDER = {"infra": 0, "arch": 1, "governance": 2, "domain": 3, "meta": 4}
@@ -63,6 +66,114 @@ def get_ready_wps(wps: list[dict], done_ids: set[str]) -> list[dict]:
         w.get("_cap_priority", 99),
     ))
     return ready
+
+
+def estimate_tokens_from_bytes(byte_count: int) -> int:
+    # 3 bytes/token: conservative estimate for Korean/English mixed content.
+    if byte_count <= 0:
+        return 0
+    return max(1, round(byte_count / 3))
+
+
+def collect_path_metric(relative_path: str) -> dict:
+    if not relative_path:
+        return {"path": "", "file_count": 0, "estimated_tokens": 0}
+
+    target = ROOT / relative_path.rstrip("/")
+    if not target.exists():
+        return {"path": relative_path, "file_count": 0, "estimated_tokens": 0}
+
+    if target.is_file():
+        total_bytes = target.stat().st_size
+        return {
+            "path": relative_path,
+            "file_count": 1,
+            "estimated_tokens": estimate_tokens_from_bytes(total_bytes),
+        }
+
+    file_count = 0
+    total_bytes = 0
+    for base, _, files in os.walk(target):
+        for file_name in files:
+            file_count += 1
+            try:
+                total_bytes += (Path(base) / file_name).stat().st_size
+            except OSError:
+                continue
+    return {
+        "path": relative_path,
+        "file_count": file_count,
+        "estimated_tokens": estimate_tokens_from_bytes(total_bytes),
+    }
+
+
+def summarize_budget(context_budget: dict) -> dict:
+    tier_reads = context_budget.get("tier_reads", []) if isinstance(context_budget, dict) else []
+    context_reads = context_budget.get("context_reads", []) if isinstance(context_budget, dict) else []
+
+    def total(paths: list[str]) -> tuple[int, int]:
+        files = 0
+        tokens = 0
+        for metric in (collect_path_metric(path) for path in paths):
+            files += metric["file_count"]
+            tokens += metric["estimated_tokens"]
+        return files, tokens
+
+    tier_files, tier_tokens = total(tier_reads)
+    context_files, context_tokens = total(context_reads)
+    return {
+        "tier_reads_count": len(tier_reads),
+        "context_reads_count": len(context_reads),
+        "tier_files": tier_files,
+        "context_files": context_files,
+        "estimated_tokens": tier_tokens + context_tokens,
+    }
+
+
+def load_json_file(path: Path):
+    if not path.exists():
+        return {}
+    with path.open(encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def sha256_for_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def summarize_pipeline_readiness() -> dict:
+    pipeline_report = load_json_file(PROMOTION_ARTIFACT_DIR / "pipeline-report.json")
+    context_lock = load_json_file(PROMOTION_ARTIFACT_DIR / "context-lock.json")
+    locked_files = []
+    for tier in ("primary", "secondary"):
+        for item in context_lock.get("locked_files", {}).get(tier, []):
+            if isinstance(item, dict) and item.get("exists", True):
+                locked_files.append(item)
+
+    changed = 0
+    missing = 0
+    for item in locked_files:
+        relative_path = item.get("path", "")
+        target = ROOT / relative_path
+        if not target.exists():
+            missing += 1
+            continue
+        if sha256_for_file(target) != item.get("sha256", ""):
+            changed += 1
+
+    return {
+        "available": bool(pipeline_report or context_lock),
+        "promotion_ready": bool(pipeline_report.get("promotion_ready")),
+        "locked_tokens": int((pipeline_report.get("locked_context_budget") or {}).get("locked_total_estimated_tokens", 0)),
+        "locked_files": len(locked_files),
+        "drift_status": "drifted" if changed or missing else "clean",
+        "changed_files": changed,
+        "missing_files": missing,
+    }
 
 
 def validate_dag(wps: list[dict]) -> list[str]:
@@ -120,13 +231,18 @@ def main() -> None:
             return
 
     if as_json:
+        readiness = summarize_pipeline_readiness()
         print(json.dumps({
             "schema_version": "2",
             "total": len(all_wps),
             "done": len(done_ids),
+            "promotion_pipeline": readiness,
             "ready": [
                 {"id": w["id"], "goal": w["goal"], "tier": w.get("tier"),
-                 "estimated_turns": w.get("context_budget", {}).get("estimated_turns")}
+                 "estimated_turns": w.get("context_budget", {}).get("estimated_turns"),
+                 "tier_reads": w.get("context_budget", {}).get("tier_reads", []),
+                 "context_reads": w.get("context_budget", {}).get("context_reads", []),
+                 **summarize_budget(w.get("context_budget", {}))}
                 for w in ready
             ],
             "blocked": len(blocked),
@@ -140,6 +256,19 @@ def main() -> None:
     print(f"  Total   : {len(all_wps)}  |  Done : {len(done_ids)}  |"
           f"  Ready : {len(ready)}  |  Blocked : {len(blocked)}")
     print()
+    readiness = summarize_pipeline_readiness()
+    if readiness["available"]:
+        print("  PROMOTION READINESS:")
+        print(
+            f"    ready={str(readiness['promotion_ready']).lower()} | drift={readiness['drift_status']}"
+            f" | locked files {readiness['locked_files']} | locked tokens {readiness['locked_tokens']}"
+        )
+        if readiness["changed_files"] or readiness["missing_files"]:
+            print(
+                f"    changed {readiness['changed_files']} | missing {readiness['missing_files']}"
+                "  → context-drift 우선 확인"
+            )
+        print()
 
     if ready:
         print("  READY TO EXECUTE (priority order):")
@@ -148,8 +277,22 @@ def main() -> None:
             est = budget.get("estimated_turns", "?")
             tier = wp.get("tier", "—")
             deps = wp.get("depends_on", [])
+            tier_reads = budget.get("tier_reads", [])
+            context_reads = budget.get("context_reads", [])
+            budget_summary = summarize_budget(budget)
             print(f"    [{i}] {wp['id']}  [tier:{tier}]  ~{est} turns")
             print(f"         {wp['goal']}")
+            if tier_reads or context_reads:
+                print(
+                    f"         reads: tier {len(tier_reads)} / context {len(context_reads)}"
+                    f" | est tokens {budget_summary['estimated_tokens']}"
+                    f"{' | first tier: ' + ', '.join(tier_reads[:2]) if tier_reads else ''}"
+                )
+                if readiness["available"]:
+                    print(
+                        f"         promotion: {'ready' if readiness['promotion_ready'] else 'review'}"
+                        f" | drift {readiness['drift_status']} | locked {readiness['locked_tokens']} tok"
+                    )
             if deps:
                 print(f"         deps: {deps}")
         print()

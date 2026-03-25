@@ -112,8 +112,8 @@ function readJsonIfExists(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
-function sha1ForFile(filePath) {
-  return crypto.createHash('sha1').update(fs.readFileSync(filePath)).digest('hex');
+function sha256ForFile(filePath) {
+  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
 function summarizePromotionPipeline() {
@@ -140,7 +140,7 @@ function summarizePromotionPipeline() {
       missing += 1;
       return;
     }
-    if (sha1ForFile(target) !== entry.sha1) {
+    if (sha256ForFile(target) !== entry.sha256) {
       changed += 1;
     }
   });

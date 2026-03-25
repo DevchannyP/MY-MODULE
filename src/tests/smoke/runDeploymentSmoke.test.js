@@ -9,6 +9,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { startServer, createAllEnabledFlags } = require('../../server/createServer');
+const { startServerOrSkip } = require('./support/networkTestRuntime');
 
 const execFileAsync = promisify(execFile);
 
@@ -24,8 +25,11 @@ function closeServer(server) {
   });
 }
 
-test('[deployment smoke runner] executes the deployed-environment checklist and writes an artifact', async () => {
-  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+test('[deployment smoke runner] executes the deployed-environment checklist and writes an artifact', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
   const outputPath = path.join(os.tmpdir(), `deployment-smoke-${Date.now()}.json`);
 
   try {

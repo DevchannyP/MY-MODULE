@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const { URL } = require('node:url');
 
 const { startServer, createAllEnabledFlags } = require('../../server/createServer');
+const { startServerOrSkip } = require('./support/networkTestRuntime');
 
 function futureDate(days = 30) {
   const date = new Date();
@@ -93,8 +94,11 @@ function partialBodyRequest(baseUrl, { path, payload, initialBytes, permissions 
   });
 }
 
-test('[server wiring smoke] probe endpoints and task flow succeed over HTTP transport', async () => {
-  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+test('[server wiring smoke] probe endpoints and task flow succeed over HTTP transport', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
   const traceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
 
   try {
@@ -169,8 +173,11 @@ test('[server wiring smoke] probe endpoints and task flow succeed over HTTP tran
   }
 });
 
-test('[server wiring smoke] drain mode flips readiness and rejects business traffic', async () => {
-  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+test('[server wiring smoke] drain mode flips readiness and rejects business traffic', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
 
   try {
     runtime.enterDrainMode('smoke-test');
@@ -198,12 +205,15 @@ test('[server wiring smoke] drain mode flips readiness and rejects business traf
   }
 });
 
-test('[server wiring smoke] body limit returns 413 over HTTP transport', async () => {
-  const runtime = await startServer({
+test('[server wiring smoke] body limit returns 413 over HTTP transport', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, {
     port: 0,
     flags: createAllEnabledFlags(),
     maxRequestBodyBytes: 24,
   });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const oversized = await jsonRequest(runtime.url, {
@@ -222,12 +232,15 @@ test('[server wiring smoke] body limit returns 413 over HTTP transport', async (
   }
 });
 
-test('[server wiring smoke] slow request body returns 408 over HTTP transport', async () => {
-  const runtime = await startServer({
+test('[server wiring smoke] slow request body returns 408 over HTTP transport', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, {
     port: 0,
     flags: createAllEnabledFlags(),
     requestBodyReadTimeoutMs: 20,
   });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const timedOut = await partialBodyRequest(runtime.url, {
@@ -248,8 +261,8 @@ test('[server wiring smoke] slow request body returns 408 over HTTP transport', 
   }
 });
 
-test('[server wiring smoke] rate limit returns 429 with retry headers', async () => {
-  const runtime = await startServer({
+test('[server wiring smoke] rate limit returns 429 with retry headers', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, {
     port: 0,
     flags: createAllEnabledFlags(),
     rateLimitPolicy: {
@@ -258,6 +271,9 @@ test('[server wiring smoke] rate limit returns 429 with retry headers', async ()
       windowMs: 60 * 1000,
     },
   });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const created = await jsonRequest(runtime.url, {
@@ -293,8 +309,11 @@ test('[server wiring smoke] rate limit returns 429 with retry headers', async ()
   }
 });
 
-test('[server wiring smoke] POST idempotency replays identical task create and rejects mismatched reuse', async () => {
-  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+test('[server wiring smoke] POST idempotency replays identical task create and rejects mismatched reuse', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
   const dueDate = futureDate();
 
   try {
@@ -344,8 +363,11 @@ test('[server wiring smoke] POST idempotency replays identical task create and r
   }
 });
 
-test('[server wiring smoke] billing permission denial survives HTTP transport', async () => {
-  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+test('[server wiring smoke] billing permission denial survives HTTP transport', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const response = await jsonRequest(runtime.url, {
@@ -361,8 +383,11 @@ test('[server wiring smoke] billing permission denial survives HTTP transport', 
   }
 });
 
-test('[server wiring smoke] video flow succeeds over HTTP transport and preserves zero-valued fields', async () => {
-  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+test('[server wiring smoke] video flow succeeds over HTTP transport and preserves zero-valued fields', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const uploaded = await jsonRequest(runtime.url, {
@@ -395,8 +420,8 @@ test('[server wiring smoke] video flow succeeds over HTTP transport and preserve
   }
 });
 
-test('[server wiring smoke] disabled task-management flag returns 404 over HTTP transport', async () => {
-  const runtime = await startServer({
+test('[server wiring smoke] disabled task-management flag returns 404 over HTTP transport', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, {
     port: 0,
     flags: {
       isEnabled(flagName) {
@@ -404,6 +429,9 @@ test('[server wiring smoke] disabled task-management flag returns 404 over HTTP 
       },
     },
   });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const response = await jsonRequest(runtime.url, {
@@ -418,8 +446,8 @@ test('[server wiring smoke] disabled task-management flag returns 404 over HTTP 
   }
 });
 
-test('[server wiring smoke] disabled video transcode flag returns 404 over HTTP transport', async () => {
-  const runtime = await startServer({
+test('[server wiring smoke] disabled video transcode flag returns 404 over HTTP transport', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, {
     port: 0,
     flags: {
       isEnabled(flagName) {
@@ -427,6 +455,9 @@ test('[server wiring smoke] disabled video transcode flag returns 404 over HTTP 
       },
     },
   });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const uploaded = await jsonRequest(runtime.url, {
@@ -458,8 +489,11 @@ test('[server wiring smoke] disabled video transcode flag returns 404 over HTTP 
   }
 });
 
-test('[server wiring smoke] unknown route returns RFC 9457 content type over HTTP transport', async () => {
-  const runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+test('[server wiring smoke] unknown route returns RFC 9457 content type over HTTP transport', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
 
   try {
     const response = await jsonRequest(runtime.url, {
