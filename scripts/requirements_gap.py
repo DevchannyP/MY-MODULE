@@ -51,7 +51,22 @@ def load_yaml(path: Path) -> dict:
 
 
 def load_requirements() -> dict:
+    """Load the canonical task-management requirements file (backward-compat)."""
     return load_yaml(ROOT / "requirements" / "requirements.yaml")
+
+
+def discover_domain_requirements() -> list[tuple[Path, dict]]:
+    """Return (path, data) for every requirements/*.yaml that declares a module.id."""
+    results: list[tuple[Path, dict]] = []
+    req_dir = ROOT / "requirements"
+    for path in sorted(req_dir.glob("*.yaml")):
+        try:
+            data = load_yaml(path)
+            if isinstance(data, dict) and data.get("module", {}).get("id"):
+                results.append((path, data))
+        except Exception:
+            pass
+    return results
 
 
 def load_current_state() -> dict:
@@ -142,7 +157,7 @@ def check_gaps(req: dict, state: dict) -> list[dict]:
     return gaps
 
 
-def generate_wp_skeleton(gap: dict, idx: int) -> dict:
+def generate_wp_skeleton(gap: dict, idx: int, req_path: str = "requirements/requirements.yaml") -> dict:
     today = date.today().isoformat()
     return {
         "id": f"WP-{today}-AUTO-{idx:02d}",
@@ -152,7 +167,7 @@ def generate_wp_skeleton(gap: dict, idx: int) -> dict:
         "depends_on": [],
         "context_budget": {
             "tier_reads": ["memory/checkpoint.yaml", "memory/current-wp.yaml"],
-            "context_reads": ["requirements/requirements.yaml"],
+            "context_reads": [req_path],
             "estimated_turns": 2,
         },
         "source": "requirements_gap_auto",
@@ -160,56 +175,118 @@ def generate_wp_skeleton(gap: dict, idx: int) -> dict:
     }
 
 
-def main() -> None:
-    as_json = "--json" in sys.argv
-    gen_wps = "--gen" in sys.argv
-    strict = "--strict" in sys.argv
-
-    req = load_requirements()
-    state = load_current_state()
-    gaps = check_gaps(req, state)
+def _report_module(req: dict, gaps: list[dict], req_rel: str, *,
+                   as_json: bool, gen_wps: bool, wp_offset: int = 0) -> int:
+    """Print report for a single module. Returns number of gaps."""
+    module_id = req.get("module", {}).get("id", "unknown")
 
     if as_json:
         result: dict = {
-            "module": req.get("module", {}).get("id"),
+            "module": module_id,
+            "requirements_file": req_rel,
             "stage": req.get("stage"),
             "gap_count": len(gaps),
             "gaps": gaps,
         }
         if gen_wps:
-            result["generated_wps"] = [generate_wp_skeleton(g, i + 1) for i, g in enumerate(gaps)]
+            result["generated_wps"] = [
+                generate_wp_skeleton(g, wp_offset + i + 1, req_rel)
+                for i, g in enumerate(gaps)
+            ]
         print(json.dumps(result, indent=2, ensure_ascii=False))
-        if strict and gaps:
-            sys.exit(1)
-        return
+        return len(gaps)
 
     W = 62
     print(f"\n{'='*W}")
     print(f"  Requirements Gap Detector")
-    print(f"  Module : {req.get('module', {}).get('id', 'unknown')}")
+    print(f"  Module : {module_id}")
+    print(f"  File   : {req_rel}")
     print(f"  Stage  : {req.get('stage', '?')}")
     print(f"{'='*W}")
 
     if not gaps:
-        print("  ✓ No gaps. All requirements have working capability coverage.")
+        print("  No gaps. All requirements have working capability coverage.")
     else:
         print(f"  {len(gaps)} gap(s) found:\n")
         for i, gap in enumerate(gaps, 1):
             sev = gap["severity"].upper()
             print(f"  [{i}] [{sev}] {gap['type']}")
             print(f"       {gap['description']}")
-            print(f"       → Suggested WP: {gap['suggested_wp_goal']}")
+            print(f"       Suggested WP: {gap['suggested_wp_goal']}")
             print()
 
     if gen_wps and gaps:
         print("\n  --- Generated WP Skeletons (add to wp-queue.yaml) ---\n")
         for i, gap in enumerate(gaps, 1):
-            wp = generate_wp_skeleton(gap, i)
+            wp = generate_wp_skeleton(gap, wp_offset + i, req_rel)
             print(yaml.dump(wp, allow_unicode=True, default_flow_style=False))
 
-    print(f"{'='*W}\n")
+    print(f"{'='*W}")
+    return len(gaps)
 
-    if strict and gaps:
+
+def main() -> None:
+    as_json = "--json" in sys.argv
+    gen_wps = "--gen" in sys.argv
+    strict = "--strict" in sys.argv
+    # --module <id> limits scanning to a single module
+    module_filter: str | None = None
+    if "--module" in sys.argv:
+        idx = sys.argv.index("--module")
+        if idx + 1 < len(sys.argv):
+            module_filter = sys.argv[idx + 1]
+
+    state = load_current_state()
+    domain_files = discover_domain_requirements()
+
+    if not domain_files:
+        print("No domain requirements files found in requirements/", file=sys.stderr)
+        sys.exit(1)
+
+    if module_filter:
+        domain_files = [(p, d) for p, d in domain_files
+                        if d.get("module", {}).get("id") == module_filter]
+        if not domain_files:
+            print(f"Module '{module_filter}' not found in requirements/", file=sys.stderr)
+            sys.exit(1)
+
+    total_gaps = 0
+    all_results: list[dict] = []
+    wp_offset = 0
+
+    for path, req in domain_files:
+        req_rel = str(path.relative_to(ROOT))
+        gaps = check_gaps(req, state)
+
+        if as_json:
+            module_id = req.get("module", {}).get("id", "unknown")
+            result: dict = {
+                "module": module_id,
+                "requirements_file": req_rel,
+                "stage": req.get("stage"),
+                "gap_count": len(gaps),
+                "gaps": gaps,
+            }
+            if gen_wps:
+                result["generated_wps"] = [
+                    generate_wp_skeleton(g, wp_offset + i + 1, req_rel)
+                    for i, g in enumerate(gaps)
+                ]
+            all_results.append(result)
+        else:
+            _report_module(req, gaps, req_rel, as_json=False, gen_wps=gen_wps, wp_offset=wp_offset)
+
+        total_gaps += len(gaps)
+        wp_offset += len(gaps)
+
+    if as_json:
+        print(json.dumps({"domains": len(domain_files), "total_gaps": total_gaps, "results": all_results},
+                         indent=2, ensure_ascii=False))
+    else:
+        if len(domain_files) > 1:
+            print(f"\n  TOTAL: {total_gaps} gap(s) across {len(domain_files)} domain(s)\n")
+
+    if strict and total_gaps:
         sys.exit(1)
 
 

@@ -1,0 +1,68 @@
+# Workflow OS - Requirements: billing
+# 이 파일만 교체하면 Stage A→E 전체가 반복 실행된다.
+# Schema: requirements/requirements.schema.json
+
+version: "0.1.0"
+
+module:
+  id: "billing"
+  name: "정산관리"
+  domain: "billing"
+  bounded_context: "billing"
+  owner: "platform-team"
+  description: |
+    인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 금융 도메인.
+    financial-ledger 아키타입: 합계 불변(INV-B001), 관리자 승인(INV-B005) 적용.
+    인보이스는 DRAFT→PENDING→PAID|CANCELLED|DISPUTED 단방향 전이.
+    DISPUTED→PAID는 billing.admin 권한 전용 (INV-B005).
+
+stage: "D"
+
+contracts:
+  http: "domains/billing/contracts/openapi.yaml"
+  events: "domains/billing/contracts/events.schema.json"
+  ui: "domains/billing/contracts/ui-contract.yaml"
+  capability: "domains/billing/contracts/capability.yaml"
+
+nfr:
+  latency_p99_ms: 300
+  availability_percent: 99.9
+  rpo_minutes: 15
+  rto_minutes: 30
+
+quality_gates:
+  correctness:
+    - "unit-tests"
+    - "contract-tests"
+    - "integration-tests"
+    - "e2e-smoke"
+  code_health:
+    - "lint"
+    - "type-check"
+    - "static-analysis"
+  security:
+    - "secret-scan"
+    - "dependency-scan"
+    - "authn-authz-regression"
+    - "input-validation"
+  supply_chain:
+    - "sbom"
+    - "provenance-evidence"
+    - "rollback-verification"
+    - "observability-check"
+
+composition:
+  depends_on: []
+  provides:
+    - "domains/billing/contracts/capability.yaml"
+
+feature_flags:
+  billing.enabled: true
+  billing.invoice.enabled: true
+  billing.payment.enabled: true
+  billing.exception.enabled: true
+
+routing:
+  entry_point: "/billing"
+  navigation_group: "billing"
+  plugin_slot: "main-content"
