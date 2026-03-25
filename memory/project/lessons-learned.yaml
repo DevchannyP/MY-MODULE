@@ -1,2 +1,94 @@
 # 교훈 축적소 — Reflexion 패턴에 의해 자동 갱신
-lessons: []
+# 형식: what_happened / root_cause_category / lesson / applies_to
+
+lessons:
+  - id: "LESSON-001"
+    discovered_at: "2026-03-18"
+    domain: "billing"
+    stage: "D"
+    root_cause_category: "test-coverage-gap"
+    what_happened: >
+      billing testScore가 96%로 고정됨.
+      health-dashboard가 src/*.js 파일 수 대비 *.test.js 파일 수로 비율을 계산하는데,
+      port 인터페이스 파일 3개(InvoiceRepository, BillingExceptionRepository, PaymentRepository)에
+      대응하는 테스트 파일이 없어서 비율이 23/24 = 96%로 산정됨.
+    lesson: >
+      포트 인터페이스(abstract class) 파일도 src 파일로 카운트된다.
+      InMemory 구현체가 포트 계약을 완전히 이행하는지 검증하는 계약 테스트를
+      BillingPorts.contract.test.js로 추가하면 24/24 = 100% 달성.
+    applies_to: "health-dashboard testScore, port interface coverage"
+    fix: "domains/billing/tests/application/ports/BillingPorts.contract.test.js 추가"
+
+  - id: "LESSON-002"
+    discovered_at: "2026-03-25"
+    domain: "video"
+    stage: "D"
+    root_cause_category: "contract-guard-gap"
+    what_happened: >
+      video 도메인이 Stage A~E 완전 구현(500+ 테스트 PASS)되었음에도
+      validate_contract_drift.py의 main()에서 validate_video()가 호출되지 않아
+      계약 드리프트 검증에서 video가 완전히 누락됨.
+      "계약이 깨지면 빌드가 멈춘다" 원칙이 billing/task-management에만 적용되고
+      video에는 미적용 상태였음.
+    lesson: >
+      새 도메인을 Stage A~E로 온보딩할 때, validate_contract_drift.py에
+      해당 도메인의 validate_[domain]() 함수를 추가하고 main()에서 호출해야 한다.
+      이를 누락하면 Stage D 품질 게이트가 사실상 불완전한 상태가 된다.
+      도메인 추가 체크리스트에 이 항목을 반드시 포함해야 한다.
+    applies_to: "contract drift validation, domain onboarding checklist"
+    fix: "validate_contract_drift.py에 validate_video() 추가 + main()에서 호출"
+
+  - id: "LESSON-003"
+    discovered_at: "2026-03-25"
+    domain: "core"
+    stage: "D"
+    root_cause_category: "security-consistency"
+    what_happened: >
+      audit-chain.js는 SHA-256을 사용하는데, export_context_lock.py와
+      check_context_drift.py, wp_scheduler.py, project_status.js는 SHA1을 사용.
+      보안 일관성 위반이지만 테스트가 이를 잡지 못하고 있었음.
+      contextDrift smoke 테스트도 SHA1 픽스처를 사용하고 있었음.
+    lesson: >
+      해시 함수는 저장소 전체에서 단일 표준을 사용해야 한다.
+      이 저장소의 표준은 SHA-256. 새 스크립트가 파일 해시를 계산할 때는
+      반드시 hashlib.sha256()을 사용하고 필드명을 sha256으로 통일해야 한다.
+      smoke 테스트 픽스처도 64자 SHA-256 값 형식으로 맞춰야 한다.
+    applies_to: "export_context_lock.py, check_context_drift.py, any file-hashing script"
+    fix: "4개 파일 SHA1→SHA256 전환, contextDrift 테스트 픽스처 갱신"
+
+  - id: "LESSON-004"
+    discovered_at: "2026-03-25"
+    domain: "core"
+    stage: "D"
+    root_cause_category: "estimation-accuracy"
+    what_happened: >
+      export_context_lock.py, export_context_bundle.py, wp_scheduler.py가
+      4 bytes/token으로 토큰 수를 추정함.
+      이 저장소는 한국어와 영어가 혼용되어 있으며, 한국어 UTF-8 문자는
+      3 bytes/char이지만 LLM 토크나이저에서 약 1.5 tokens/char 소비 → 2 bytes/token.
+      4 bytes/token 기준으로 한국어 파일의 토큰 수를 ~33% 과소추정함.
+    lesson: >
+      한국어/영어 혼용 저장소에서는 3 bytes/token을 보수적 추정값으로 사용해야 한다.
+      과소추정은 컨텍스트 예산 초과 위험으로 이어진다.
+      정확한 토큰 카운트가 필요하면 tiktoken 같은 실제 토크나이저를 사용해야 하지만,
+      보수적 상수 3은 합리적인 근사값이다.
+    applies_to: "estimate_tokens_from_bytes, token budget planning"
+    fix: "3개 파일의 byte_count / 4 → byte_count / 3 변경"
+
+  - id: "LESSON-005"
+    discovered_at: "2026-03-18"
+    domain: "core"
+    stage: "C"
+    root_cause_category: "git-hygiene"
+    what_happened: >
+      artifacts/decision-apply/history/ 디렉토리에 런타임 실행 로그 52건+이
+      git untracked 상태로 쌓여 있었음. .gitignore가 "artifacts/는 의도적으로 추적"이라는
+      주석만 있고 history/ 서브디렉토리를 명시적으로 제외하지 않았음.
+      이를 커밋하면 git history가 런타임 로그로 오염되고 무한 증가함.
+    lesson: >
+      artifacts/ 디렉토리에서 latest/ (현재 상태 대표 스냅샷)만 커밋하고,
+      history/ (런타임 실행 로그)는 .gitignore로 제외해야 한다.
+      새 artifacts/ 서브디렉토리를 만들 때는 항상 history/ 제외 규칙을
+      .gitignore에 함께 추가해야 한다.
+    applies_to: ".gitignore, artifacts directory management"
+    fix: ".gitignore에 artifacts/decision-apply/history/, artifacts/promotion-pipeline/history/ 추가"

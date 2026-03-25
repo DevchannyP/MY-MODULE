@@ -70,6 +70,14 @@ def task_event_ids(events_schema: dict) -> set[str]:
     return set(events_schema.get("definitions", {}).keys())
 
 
+def video_event_ids(events_schema: dict) -> set[str]:
+    return {
+        name
+        for name in events_schema.get("definitions", {}).keys()
+        if name != "EventEnvelope"
+    }
+
+
 def billing_event_ids(events_schema: dict) -> set[str]:
     definitions = {
         name
@@ -212,6 +220,39 @@ def validate_billing(errors: list[str]) -> None:
         )
 
 
+def validate_video(errors: list[str]) -> None:
+    capability = load_yaml("domains/video/contract/capability.yaml")
+    ui = load_yaml("domains/video/contract/ui-contract.yaml")
+    openapi_spec = load_yaml("domains/video/contract/openapi.yaml")
+    events_schema = load_json("domains/video/contract/events.schema.json")
+    controller_source = load_text("domains/video/src/interface/VideoController.js")
+
+    operations = operation_map(openapi_spec)
+    ui_module_keys = {screen["module_key"] for screen in ui.get("screens", [])}
+
+    for item in capability.get("capabilities", []):
+        for operation_id in item.get("http_operations", []):
+            if operation_id not in operations:
+                errors.append(f"video: capability {item['id']} references unknown operationId {operation_id}")
+        for screen_key in item.get("screens", []):
+            if screen_key not in ui_module_keys:
+                errors.append(f"video: capability {item['id']} references unknown screen {screen_key}")
+
+    defined_event_ids = video_event_ids(events_schema)
+    for event_id in capability.get("events_emitted", []):
+        if event_id not in defined_event_ids:
+            errors.append(f"video: events.schema.json missing event definition {event_id}")
+
+    for operation_id, detail in operations.items():
+        normalized_path = re.sub(r"\{([^}]+)\}", r":\1", detail["path"])
+        assert_contains(
+            errors,
+            controller_source,
+            f"path === '{normalized_path}'",
+            f"video controller routing for {operation_id}",
+        )
+
+
 def validate_event_registry(errors: list[str]) -> None:
     registry = load_yaml("contracts/events/registry.yaml")
     envelope_path = registry.get("envelope")
@@ -287,6 +328,7 @@ def main() -> int:
     errors: list[str] = []
     validate_task_management(errors)
     validate_billing(errors)
+    validate_video(errors)
     validate_event_registry(errors)
 
     if errors:
