@@ -1,7 +1,7 @@
 # Master Shell - 도메인 카탈로그
 # 마스터 UI 포털에서 탐색 가능한 도메인 목록
-version: "0.2.0"
-last_updated: "2026-03-21"
+version: "0.3.0"
+last_updated: "2026-03-25"
 
 domains:
   - id: "productivity"
@@ -18,7 +18,8 @@ domains:
     domain_map_ref: "requirements/domain-map.yaml"
     status: "active"
     registered_at: "2026-03-17"
-    note: "task-management 플러그인은 feature_flag=false 상태. Stage D PASS 후 활성화 예정."
+    activated_at: "2026-03-25"
+    note: "B_review PASS → full(100%) rollout 완료. enable_task_management: true."
 
   - id: "video"
     name: "콘텐츠 관리"
@@ -32,9 +33,10 @@ domains:
     plugins:
       - "video-plugin"
     domain_map_ref: "requirements/domain-map.yaml"
-    status: "inactive"
+    status: "active"
     registered_at: "2026-03-20"
-    note: "video 플러그인은 feature_flag=false 상태. Stage D PASS 후 internal 5% rollout 시작."
+    activated_at: "2026-03-25"
+    note: "B_review PASS → full(100%) rollout 완료. video.enabled: true. 8개 이벤트 중앙 레지스트리 등록 완료."
 
   - id: "billing"
     name: "정산관리"
@@ -56,6 +58,7 @@ domains:
     plugins:
       - "billing-plugin"
     domain_map_ref: "requirements/domain-map.yaml"
-    status: "inactive"
+    status: "active"
     registered_at: "2026-03-18"
-    note: "billing 플러그인은 feature_flag=false 상태. Stage D PASS 후 internal 5% rollout 시작."
+    activated_at: "2026-03-25"
+    note: "B_review PASS → full(100%) rollout 완료. billing.enabled: true."

@@ -2,31 +2,30 @@
 # 플러그인별 feature flag를 여기에 전역 등록한다.
 # 기본값은 반드시 false (안전한 쪽).
 # 변경은 Stage C 범위. 활성화는 Stage D PASS 후.
-version: "0.2.0"
-last_updated: "2026-03-21"
+version: "0.3.0"
+last_updated: "2026-03-25"
+# B_review PASS → full(100%) rollout 규칙에 따라 3개 도메인 전체 활성화
 
 global_flags:
   enable_experimental_features: false
   enable_debug_mode: false
 
 plugin_flags:
-  # task-management 플러그인
-  enable_task_management: false         # true: 마스터 UI 메뉴 노출 + 플러그인 활성화
-                                        # false: 마스터 UI 미노출 (Stage D PASS 전)
-  enable_bulk_assign: false             # true: 작업 목록에서 여러 작업을 동시에 담당자 변경
-                                        # false: 단일 작업 담당자 변경만 허용 (기본)
+  # task-management 플러그인 — Stage D+E+B_review PASS → full rollout
+  enable_task_management: true          # B_review PASS → 마스터 UI 메뉴 노출
+  enable_bulk_assign: true              # B_review PASS → 일괄 담당자 변경 활성화
 
-  # billing 플러그인
-  billing.enabled: false               # true: 정산 도메인 전체 활성화 (홈 화면 노출)
-  billing.invoice.enabled: false       # true: 인보이스 목록·상세 활성화
-  billing.payment.enabled: false       # true: 결제상태 추적 화면 활성화
-  billing.exception.enabled: false     # true: 정산 예외처리 화면 활성화 (billing.admin 전용)
+  # billing 플러그인 — Stage D+E+B_review PASS → full rollout
+  billing.enabled: true                # B_review PASS → 정산 도메인 전체 활성화
+  billing.invoice.enabled: true        # 인보이스 목록·상세 활성화
+  billing.payment.enabled: true        # 결제상태 추적 화면 활성화
+  billing.exception.enabled: true      # 정산 예외처리 화면 활성화
 
-  # video 플러그인
-  video.enabled: false                 # true: 비디오 도메인 전체 활성화 (영상 목록·업로드 노출)
-  video.upload.enabled: false          # true: 영상 업로드 화면/API 활성화
-  video.transcode.enabled: false       # true: 트랜스코딩 기능 활성화 (내부 환경 전용)
-  video.admin.enabled: false           # true: 영상 관리자 화면/API 활성화
+  # video 플러그인 — Stage D+E+B_review PASS → full rollout
+  video.enabled: true                  # 비디오 도메인 전체 활성화
+  video.upload.enabled: true           # 영상 업로드 화면/API 활성화
+  video.transcode.enabled: true        # 트랜스코딩 기능 활성화
+  video.admin.enabled: true            # 영상 관리자 화면/API 활성화
 
 # ── 활성화 절차 ──────────────────────────────────────────────────────────
 # 1. Stage D 품질 게이트 전체 PASS

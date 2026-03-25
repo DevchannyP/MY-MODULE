@@ -1,14 +1,14 @@
 domains:
   "billing":
-    score: 84
-    trend: "→"
+    score: 100
+    trend: "↑"
     ejectable: true
   "productivity/task-tracking":
-    score: 84
-    trend: "→"
+    score: 100
+    trend: "↑"
     ejectable: true
   "video":
-    score: 84
-    trend: "→"
+    score: 100
+    trend: "↑"
     ejectable: true
-last_calculated: "2026-03-25T11:12:25.371Z"
+last_calculated: "2026-03-25T11:27:14.199Z"

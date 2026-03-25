@@ -268,8 +268,10 @@ def validate_event_registry(errors: list[str]) -> None:
 
     task_events_schema = load_json("domains/productivity/task-tracking/contract/events.schema.json")
     billing_events_schema = load_json("domains/billing/contracts/events.schema.json")
+    video_events_schema = load_json("domains/video/contract/events.schema.json")
     registry_task_defs: set[str] = set()
     registry_billing_defs: set[str] = set()
+    registry_video_defs: set[str] = set()
     seen_types: set[str] = set()
 
     for event in registry.get("events", []):
@@ -310,6 +312,8 @@ def validate_event_registry(errors: list[str]) -> None:
             registry_task_defs.add(definition_name)
         if normalized_schema_path == "domains/billing/contracts/events.schema.json":
             registry_billing_defs.add(definition_name)
+        if normalized_schema_path == "domains/video/contract/events.schema.json":
+            registry_video_defs.add(definition_name)
 
         for producer in event.get("produced_by", []):
             if not (REPO_ROOT / producer).exists():
@@ -322,6 +326,10 @@ def validate_event_registry(errors: list[str]) -> None:
     missing_billing = sorted(billing_event_ids(billing_events_schema) - registry_billing_defs)
     if missing_billing:
         errors.append(f"events-registry: billing registry coverage missing {missing_billing}")
+
+    missing_video = sorted(video_event_ids(video_events_schema) - registry_video_defs)
+    if missing_video:
+        errors.append(f"events-registry: video registry coverage missing {missing_video}")
 
 
 def main() -> int:

@@ -2,8 +2,8 @@
 # 마스터 UI에 탑재된 플러그인 목록
 # Stage C에서만 수정한다.
 # 마스터 UI는 이 파일 → ui_contract → capability_contract 순서로 읽는다. 모듈 코드는 읽지 않는다.
-version: "0.2.0"
-last_updated: "2026-03-20"
+version: "0.3.0"
+last_updated: "2026-03-25"
 
 plugins:
   - id: "task-management-plugin"
@@ -20,7 +20,8 @@ plugins:
     feature_flag: "enable_task_management"
     rollout:
       strategy: "canary"
-      percentage: 0                   # Stage D PASS 전까지 0%. PASS 후 단계적 확대.
+      current_phase: "full"
+      percentage: 100                 # B_review PASS → full(100%) rollout 완료 (2026-03-25)
       full_rollout_condition: "Stage D 품질 게이트 전체 PASS 후"
     rollback:
       strategy: "disable_flag"
@@ -32,7 +33,7 @@ plugins:
     observability:
       dashboard: "master-shell/observability/config.yaml#task-management-dashboard"
       alert_group: "task-management-alerts"
-    status: "inactive"               # feature_flag=false 동안 inactive. PASS 후 active로 변경.
+    status: "active"                 # B_review PASS → active (2026-03-25)
     registered_at: "2026-03-17"
     owner: "productivity-team"
     architecture_profile: "stateful-domain-module"
@@ -63,6 +64,8 @@ plugins:
     feature_flag: "billing.enabled"
     rollout:
       strategy: "canary"
+      current_phase: "full"
+      percentage: 100                 # B_review PASS → full(100%) rollout 완료 (2026-03-25)
       phases:
         - phase: internal
           percentage: 5
@@ -83,7 +86,7 @@ plugins:
     observability:
       dashboard: "master-shell/observability/config.yaml#billing-dashboard"
       alert_group: "billing-alerts"
-    status: "inactive"
+    status: "active"                 # B_review PASS → active (2026-03-25)
     registered_at: "2026-03-18"
     owner: "platform-team"
     architecture_profile: "workflow-domain-module"
@@ -114,6 +117,8 @@ plugins:
     feature_flag: "video.enabled"
     rollout:
       strategy: "canary"
+      current_phase: "full"
+      percentage: 100                 # B_review PASS → full(100%) rollout 완료 (2026-03-25)
       phases:
         - phase: internal
           percentage: 5
@@ -134,7 +139,7 @@ plugins:
     observability:
       dashboard: "master-shell/observability/config.yaml#video-dashboard"
       alert_group: "video-alerts"
-    status: "inactive"
+    status: "active"                 # B_review PASS → active (2026-03-25)
     registered_at: "2026-03-20"
     owner: "video-team"
     architecture_profile: "workflow-domain-module"

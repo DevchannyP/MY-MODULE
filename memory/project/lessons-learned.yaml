@@ -92,3 +92,43 @@ lessons:
       .gitignore에 함께 추가해야 한다.
     applies_to: ".gitignore, artifacts directory management"
     fix: ".gitignore에 artifacts/decision-apply/history/, artifacts/promotion-pipeline/history/ 추가"
+
+  - id: "LESSON-006"
+    discovered_at: "2026-03-25"
+    domain: "video"
+    stage: "C"
+    root_cause_category: "event-registry-gap"
+    what_happened: >
+      video 도메인이 Stage A~E 완전 구현(500+ 테스트 PASS)되었음에도
+      contracts/events/registry.yaml에 video 이벤트 8개가 전혀 등록되지 않았음.
+      validate_event_registry()도 task/billing만 커버리지 검사하고 video를 누락.
+      결과적으로 중앙 이벤트 레지스트리가 video 도메인을 완전히 모르는 상태였음.
+    lesson: >
+      새 도메인을 온보딩할 때, contracts/events/registry.yaml에
+      해당 도메인의 모든 events_emitted 항목을 등록해야 한다.
+      또한 validate_event_registry()에 해당 도메인의 커버리지 검사를 추가해야 한다.
+      도메인 추가 체크리스트에 이 두 항목을 반드시 포함해야 한다.
+    applies_to: "contracts/events/registry.yaml, validate_event_registry, domain onboarding checklist"
+    fix: >
+      contracts/events/registry.yaml에 video 이벤트 8개 등록.
+      validate_contract_drift.py의 validate_event_registry()에 video_events_schema 로드 및
+      registry_video_defs 카운팅, missing_video 오류 검사 추가.
+
+  - id: "LESSON-007"
+    discovered_at: "2026-03-25"
+    domain: "core"
+    stage: "C"
+    root_cause_category: "rollout-stale"
+    what_happened: >
+      모든 도메인(billing, video, task-management)이 Stage D+E+B_review PASS 완료 후에도
+      feature_flags.yaml과 plugin-registry.yaml의 status가 inactive, percentage: 0으로 남아 있었음.
+      CLAUDE.md 규칙: "B_review PASS → full(100%)"가 자동 적용되지 않은 채 방치됨.
+      운영 관점에서 검증 완료 도메인이 실제로는 비활성화된 모순 상태였음.
+    lesson: >
+      Stage E + B_review PASS 직후, 반드시 다음을 수행해야 한다:
+      1. master-shell/feature-flags/flags.yaml의 해당 플러그인 flags를 true로 변경
+      2. master-shell/plugin-registry/registry.yaml의 status를 active로 변경
+      3. rollout.current_phase: full, percentage: 100으로 갱신
+      4. master-shell/catalog/domains.yaml의 status와 note도 갱신
+    applies_to: "feature-flags/flags.yaml, plugin-registry/registry.yaml, catalog/domains.yaml"
+    fix: "3개 도메인 flags true, status active, rollout 100% 갱신 (2026-03-25)"
