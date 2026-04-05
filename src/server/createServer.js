@@ -719,6 +719,7 @@ function createAppHandler({
         const blueprintArg = typeof reqBody.blueprint === 'string' ? reqBody.blueprint.trim() : '';
         const SLUG_RE = /^[a-z][a-z0-9-]{1,62}$/;
         if (!SLUG_RE.test(domainArg) || !SLUG_RE.test(blueprintArg)) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
           sendResponse(req, res, 400, fromError(
             Object.assign(new Error('domain and blueprint must match ^[a-z][a-z0-9-]{1,62}$'), { code: 'VALIDATION_ERROR' }),
             { path: url.pathname },
@@ -736,6 +737,7 @@ function createAppHandler({
         if (isDryRun) scaffoldArgs.push('--dry-run');
         const scaffoldResult = spawnSync('node', scaffoldArgs, { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
         if (scaffoldResult.status !== 0) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
           const errMsg = (scaffoldResult.stderr || '').trim() || 'scaffold failed';
           const isConflict = errMsg.includes('이미 존재합니다');
           sendResponse(req, res, isConflict ? 409 : 400, fromError(
@@ -747,7 +749,7 @@ function createAppHandler({
           return;
         }
         const scaffoldStdout = (scaffoldResult.stdout || '').trim();
-        sendResponse(req, res, 200, {
+        const scaffoldResponseBody = {
           ok: true,
           data: {
             ok: true,
@@ -757,7 +759,9 @@ function createAppHandler({
             requirements_path: `requirements/${domainArg}.yaml`,
             created: !isDryRun,
           },
-        }, mergeHeaders(responseBaseHeaders, responseHeaders));
+        };
+        if (idempotencyScope) idempotencyStore.complete(idempotencyScope, { status: 200, body: scaffoldResponseBody });
+        sendResponse(req, res, 200, scaffoldResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 

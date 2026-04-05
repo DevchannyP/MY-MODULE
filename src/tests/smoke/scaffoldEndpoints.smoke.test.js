@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { startServer, createAllEnabledFlags } = require('../../server/createServer');
 const { startServerOrSkip } = require('./support/networkTestRuntime');
 
-function jsonPost(port, pathname, body) {
+function jsonPost(port, pathname, body, extraHeaders = {}) {
   const payload = JSON.stringify(body);
   return new Promise((resolve, reject) => {
     const req = http.request({
@@ -17,6 +17,7 @@ function jsonPost(port, pathname, body) {
         'content-length': Buffer.byteLength(payload),
         'x-user-id': 'smoke',
         'x-permissions': 'system.admin',
+        ...extraHeaders,
       },
     }, (res) => {
       const chunks = [];
@@ -25,7 +26,7 @@ function jsonPost(port, pathname, body) {
         const raw = Buffer.concat(chunks).toString('utf8');
         let json = null;
         try { json = JSON.parse(raw); } catch { /* raw only */ }
-        resolve({ status: res.statusCode, json });
+        resolve({ status: res.statusCode, headers: res.headers, json });
       });
     });
     req.on('error', reject);
@@ -69,6 +70,29 @@ test('[scaffold smoke] POST /api/planning-studio/scaffold-create with missing bl
   try {
     const res = await jsonPost(handle.port, '/api/planning-studio/scaffold-create', { domain: 'my-domain' });
     assert.equal(res.status, 400);
+  } finally {
+    await handle.shutdown();
+  }
+});
+
+test('[scaffold smoke] scaffold-preview idempotency replay returns same 200 on second call', async (t) => {
+  const handle = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!handle) return;
+  const idemKey = `scaffold-preview-idem-${Date.now()}`;
+  const requestBody = { domain: 'idem-test-domain', blueprint: 'domain-module-extension' };
+  try {
+    const first = await jsonPost(handle.port, '/api/planning-studio/scaffold-preview', requestBody, {
+      'idempotency-key': idemKey,
+    });
+    assert.equal(first.status, 200, `first call: expected 200, got ${first.status}`);
+    assert.ok(first.json.ok);
+
+    const second = await jsonPost(handle.port, '/api/planning-studio/scaffold-preview', requestBody, {
+      'idempotency-key': idemKey,
+    });
+    assert.equal(second.status, 200, `idempotency replay: expected 200, got ${second.status}`);
+    assert.equal(second.headers['idempotency-replayed'], 'true', 'replay must set Idempotency-Replayed: true');
+    assert.deepEqual(second.json, first.json, 'replayed response body must match original');
   } finally {
     await handle.shutdown();
   }
