@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Workflow OS - requirements 기반 초격리 모듈 저장소",
   "main": "src/index.js",
+  "packageManager": "npm@10.9.4",
   "scripts": {
     "test": "node --test 'domains/**/tests/**/*.test.js'",
     "test:contract": "python3 scripts/validate_contract_drift.py",
@@ -30,6 +31,7 @@
     "test:rollback": "python3 scripts/validate_operations.py rollback",
     "check:observability": "python3 scripts/validate_operations.py observability",
     "smoke:deployment": "node scripts/run_deployment_smoke.js",
+    "smoke:deployment:manual": "node scripts/run_deployment_smoke.js --output artifacts/deployment-smoke/manual-validation.json",
     "generate:deployment-environment-audit-template": "python3 scripts/generate_deployment_environment_audit_template.py",
     "validate:requirements": "python3 scripts/validate_requirements.py --all",
     "validate:fitness": "node scripts/architecture-fitness.js",
@@ -47,12 +49,10 @@
     "health": "node scripts/health-dashboard.js",
     "health:json": "node scripts/health-dashboard.js --json",
     "error-budget": "node scripts/error-budget-check.js",
-    "release:evidence": "node scripts/generate-release-evidence.js",
+    "release:evidence": "python3 scripts/generate_release_evidence.py",
     "catalog": "node scripts/generate-catalog-site.js",
     "ui:home": "node scripts/generate-ui-home.js",
     "ui:build": "node scripts/build-static-ui.js",
-    "planner": "python3 scripts/generate-master-planner.py",
-    "planner:watch": "python3 -c \"import time,subprocess,os; [subprocess.run(['python3','scripts/generate-master-planner.py']) or time.sleep(10) for _ in iter(int,1)]\"",
     "project:status": "node scripts/project_status.js",
     "stage:a": "node scripts/run_stage.js A --dry-run",
     "stage:b": "node scripts/run_stage.js B --dry-run",
@@ -111,9 +111,10 @@
     "prepare": "husky",
     "test:turbo": "turbo run test",
     "gate:turbo": "turbo run gate",
-    "gate:all": "turbo run gate --parallel",
+    "gate:all": "turbo run gate",
     "study-guide": "node scripts/generate-study-guide.js",
-    "scaffold": "node scripts/generate-domain-scaffold.js"
+    "scaffold": "node scripts/generate-domain-scaffold.js",
+    "mindmap": "node scripts/generate-mindmap.js"
   },
   "keywords": [
     "workflow-os",
