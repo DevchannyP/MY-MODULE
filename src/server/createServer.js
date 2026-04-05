@@ -2,6 +2,8 @@
 
 const http = require('node:http');
 const crypto = require('node:crypto');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 const { URL } = require('node:url');
 
 const { TaskController } = require('../../domains/productivity/task-tracking/src/interface/TaskController');
@@ -702,6 +704,60 @@ function createAppHandler({
           }
         }
         sendResponse(req, res, response.status, response.body, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      // ── Planning Studio — domain scaffold preview / create ────────────────
+      if (
+        method === 'POST' &&
+        (url.pathname === '/api/planning-studio/scaffold-preview' ||
+          url.pathname === '/api/planning-studio/scaffold-create')
+      ) {
+        const isDryRun = url.pathname.endsWith('/scaffold-preview');
+        const reqBody = body || {};
+        const domainArg = typeof reqBody.domain === 'string' ? reqBody.domain.trim() : '';
+        const blueprintArg = typeof reqBody.blueprint === 'string' ? reqBody.blueprint.trim() : '';
+        const SLUG_RE = /^[a-z][a-z0-9-]{1,62}$/;
+        if (!SLUG_RE.test(domainArg) || !SLUG_RE.test(blueprintArg)) {
+          sendResponse(req, res, 400, fromError(
+            Object.assign(new Error('domain and blueprint must match ^[a-z][a-z0-9-]{1,62}$'), { code: 'VALIDATION_ERROR' }),
+            { path: url.pathname },
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+        const scaffoldArgs = [
+          path.resolve(__dirname, '../../scripts/generate-domain-scaffold.js'),
+          '--domain', domainArg,
+          '--blueprint', blueprintArg,
+        ];
+        if (typeof reqBody.recipe === 'string' && reqBody.recipe.trim()) {
+          scaffoldArgs.push('--recipe', reqBody.recipe.trim());
+        }
+        if (isDryRun) scaffoldArgs.push('--dry-run');
+        const scaffoldResult = spawnSync('node', scaffoldArgs, { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
+        if (scaffoldResult.status !== 0) {
+          const errMsg = (scaffoldResult.stderr || '').trim() || 'scaffold failed';
+          const isConflict = errMsg.includes('이미 존재합니다');
+          sendResponse(req, res, isConflict ? 409 : 400, fromError(
+            Object.assign(new Error(isConflict ? `requirements/${domainArg}.yaml already exists` : errMsg), {
+              code: isConflict ? 'CONFLICT' : 'SCAFFOLD_ERROR',
+            }),
+            { path: url.pathname },
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+        const scaffoldStdout = (scaffoldResult.stdout || '').trim();
+        sendResponse(req, res, 200, {
+          ok: true,
+          data: {
+            ok: true,
+            command: `node scripts/generate-domain-scaffold.js --domain ${domainArg} --blueprint ${blueprintArg}${isDryRun ? ' --dry-run' : ''}`,
+            stdout: scaffoldStdout,
+            preview: isDryRun ? scaffoldStdout : '',
+            requirements_path: `requirements/${domainArg}.yaml`,
+            created: !isDryRun,
+          },
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
