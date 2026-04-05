@@ -4,6 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const { buildReport } = require('./project_status');
 const { readYamlMany } = require('./run_stage');
 
 const ROOT = path.join(__dirname, '..');
@@ -46,9 +47,261 @@ function flagPositions(dx, dy, awayAngleDeg, count) {
   });
 }
 
+function uniqueStrings(values) {
+  return Array.from(new Set((Array.isArray(values) ? values : [])
+    .flatMap((value) => Array.isArray(value) ? value : [value])
+    .map((value) => String(value || '').trim())
+    .filter(Boolean)));
+}
+
+function stageProgress(stageValue) {
+  const stage = String(stageValue || '').toUpperCase();
+  if (stage === 'A') return 20;
+  if (stage === 'B') return 35;
+  if (stage === 'C') return 55;
+  if (stage === 'D') return 80;
+  if (stage === 'E') return 100;
+  return 10;
+}
+
+function laneStatusByStage(stageValue, laneId) {
+  const stage = String(stageValue || '').toUpperCase();
+  const order = ['A', 'B', 'C', 'D', 'E'];
+  const currentIndex = Math.max(order.indexOf(stage), 0);
+  const laneThresholds = {
+    'control-intake': 0,
+    'control-planning': 1,
+    'control-execution': 2,
+    'control-validation': 3,
+    'control-complete': 4,
+    'control-module': 1,
+  };
+  const threshold = laneThresholds[laneId];
+  if (laneId === 'control-module') {
+    return currentIndex >= 1 ? 'ready' : 'pending';
+  }
+  if (currentIndex > threshold) return 'completed';
+  if (currentIndex === threshold) return 'in_progress';
+  return 'pending';
+}
+
+function buildControlCenterMeta(report, bundle) {
+  const currentWp = bundle['memory/current-wp.yaml'] || {};
+  const nextActions = bundle['memory/next-actions.yaml'] || {};
+  const plannerDraft = bundle['memory/project/master-planner-draft.yaml'] || {};
+  const blueprintsYaml = bundle['master-shell/catalog/project-blueprints.yaml'] || {};
+  const recipesYaml = bundle['master-shell/catalog/ai-runtime-recipes.yaml'] || {};
+  const matrixYaml = bundle['master-shell/catalog/adapter-compatibility-matrix.yaml'] || {};
+
+  const currentGoal = String(report?.current_wp_goal || currentWp.goal || '통합 통제 허브 정리').trim();
+  const currentStage = String(report?.current_wp_stage || currentWp.stage || 'B').trim().toUpperCase() || 'B';
+  const nextTask = String(report?.next_wp || nextActions.next_wp || 'NONE').trim() || 'NONE';
+  const issues = Array.isArray(report?.known_issues) ? report.known_issues : [];
+  const blockerLabel = report?.promotion_pipeline?.drift_status === 'clean'
+    ? (issues.length > 0 ? `확인 필요 ${issues.length}건` : '정상')
+    : `드리프트 ${String(report?.promotion_pipeline?.drift_status || 'unknown')}`;
+
+  const controlNodes = [
+    {
+      id: 'control-intake',
+      label: '입력 이해',
+      owner: 'Planner',
+      purpose: '사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.',
+      inputs: ['사용자 요청', '현재 Work Packet', 'next-actions'],
+      outputs: ['정리된 목표', '제약 목록', '누락 정보'],
+      issues: issues.length ? issues.map((item) => `${item.id}: ${item.severity}`) : ['현재 알려진 차단 이슈 없음'],
+      nextAction: '계획 수립으로 연결',
+      status: laneStatusByStage(currentStage, 'control-intake'),
+      kind: 'control',
+    },
+    {
+      id: 'control-planning',
+      label: '계획 수립',
+      owner: 'Planner',
+      purpose: '작업을 분해하고 우선순위와 성공조건을 확정한다.',
+      inputs: ['current-wp', 'planner draft', 'promotion pipeline'],
+      outputs: ['실행 계획', '우선순위', '성공조건'],
+      issues: [report?.promotion_pipeline?.drift_status === 'clean' ? 'promotion drift 없음' : `promotion drift: ${report?.promotion_pipeline?.drift_status || 'unknown'}`],
+      nextAction: '실행 카드와 계획표 동기화',
+      status: laneStatusByStage(currentStage, 'control-planning'),
+      kind: 'control',
+    },
+    {
+      id: 'control-execution',
+      label: '실행',
+      owner: 'Builder',
+      purpose: '자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.',
+      inputs: ['현재 packet 목표', 'CLI 허브', 'system API'],
+      outputs: ['산출물', '실행 로그', '적용 결과'],
+      issues: ['기존 홈의 CLI 허브와 runtime bridge를 그대로 사용'],
+      nextAction: '검증 단계로 넘길 evidence 준비',
+      status: laneStatusByStage(currentStage, 'control-execution'),
+      kind: 'control',
+    },
+    {
+      id: 'control-validation',
+      label: '검증',
+      owner: 'Reviewer',
+      purpose: '드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.',
+      inputs: ['quality gate', 'drift control', 'recent runtime'],
+      outputs: ['PASS/FAIL 판정', '수정 필요 항목'],
+      issues: ['기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가'],
+      nextAction: '완료 조건 충족 여부 판정',
+      status: laneStatusByStage(currentStage, 'control-validation'),
+      kind: 'control',
+    },
+    {
+      id: 'control-complete',
+      label: '완료',
+      owner: 'Reporter',
+      purpose: '지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.',
+      inputs: ['검증 결과', '완료 artifact', '다음 packet'],
+      outputs: ['완료 보고', '다음 작업', '결과 요약'],
+      issues: ['사용자에게는 지금/결과/다음만 강하게 노출'],
+      nextAction: '홈 또는 다음 packet으로 이동',
+      status: laneStatusByStage(currentStage, 'control-complete'),
+      kind: 'control',
+    },
+    {
+      id: 'control-module',
+      label: '모듈 생성',
+      owner: 'Builder',
+      purpose: '새 모듈 추가를 GUI에서 preview -> dry-run -> confirm -> create로 통제한다.',
+      inputs: ['project blueprints', 'runtime recipes', 'generate-domain-scaffold.js'],
+      outputs: ['requirements preview', '신규 requirements 파일', '다음 단계 안내'],
+      issues: ['실제 생성 전 preview를 먼저 강제'],
+      nextAction: 'blueprint와 recipe를 고른 뒤 dry-run preview 실행',
+      status: laneStatusByStage(currentStage, 'control-module'),
+      kind: 'module',
+    },
+  ];
+
+  const planRows = [
+    {
+      id: 'plan-intake',
+      nodeId: 'control-intake',
+      step: '1',
+      task: '입력 이해',
+      purpose: '현재 목표와 제약을 빠르게 고정',
+      input: '사용자 요청 / current-wp / next-actions',
+      output: currentGoal || '정리된 목표',
+      status: laneStatusByStage(currentStage, 'control-intake'),
+      priority: '최고',
+      owner: 'Planner',
+      nextAction: '계획 수립',
+    },
+    {
+      id: 'plan-planning',
+      nodeId: 'control-planning',
+      step: '2',
+      task: '계획 수립',
+      purpose: '작업 분해와 성공조건 고정',
+      input: 'planner draft / promotion pipeline',
+      output: `현재 단계 ${currentStage} / 다음 ${nextTask}`,
+      status: laneStatusByStage(currentStage, 'control-planning'),
+      priority: '최고',
+      owner: 'Planner',
+      nextAction: '실행 패널 동기화',
+    },
+    {
+      id: 'plan-execution',
+      nodeId: 'control-execution',
+      step: '3',
+      task: '실행',
+      purpose: '자료 수집, 생성/수정, CLI 실행',
+      input: 'system API / CLI hub / packet focus',
+      output: String(report?.current_wp || currentWp.id || 'NONE'),
+      status: laneStatusByStage(currentStage, 'control-execution'),
+      priority: '최고',
+      owner: 'Builder',
+      nextAction: '검증 evidence 적재',
+    },
+    {
+      id: 'plan-validation',
+      nodeId: 'control-validation',
+      step: '4',
+      task: '검증',
+      purpose: 'drift, gate, smoke 상태 확인',
+      input: 'quality / runtime / changed files',
+      output: `drift ${String(report?.promotion_pipeline?.drift_status || 'unknown')}`,
+      status: laneStatusByStage(currentStage, 'control-validation'),
+      priority: '최고',
+      owner: 'Reviewer',
+      nextAction: '완료 판정',
+    },
+    {
+      id: 'plan-complete',
+      nodeId: 'control-complete',
+      step: '5',
+      task: '완료',
+      purpose: '결과와 다음 작업을 사용자 기준으로 정리',
+      input: '검증 결과 / completed work',
+      output: `다음 packet ${nextTask}`,
+      status: laneStatusByStage(currentStage, 'control-complete'),
+      priority: '높음',
+      owner: 'Reporter',
+      nextAction: '홈 또는 다음 작업 이동',
+    },
+    {
+      id: 'plan-module',
+      nodeId: 'control-module',
+      step: '6',
+      task: '모듈 생성',
+      purpose: '새 모듈 추가를 안전하게 preview',
+      input: 'blueprint / recipe / domain id',
+      output: `blueprints ${(Array.isArray(blueprintsYaml.blueprints) ? blueprintsYaml.blueprints.length : 0)}개`,
+      status: laneStatusByStage(currentStage, 'control-module'),
+      priority: '최고',
+      owner: 'Builder',
+      nextAction: 'dry-run preview 실행',
+    },
+  ];
+
+  return {
+    statusBar: {
+      goal: currentGoal,
+      currentStage,
+      progress: stageProgress(currentStage),
+      blocker: blockerLabel,
+      nextTask,
+      autoSendEnabled: false,
+      currentLaneId: controlNodes.find((item) => item.status === 'in_progress')?.id || 'control-planning',
+      summary: `현재 packet ${String(report?.current_wp || currentWp.id || 'NONE')} 기준 통제 상태`,
+    },
+    controlNodes,
+    planRows,
+    roadmapSections: Array.isArray(plannerDraft.sections) ? plannerDraft.sections : [],
+    scaffoldCatalog: {
+      blueprints: (Array.isArray(blueprintsYaml.blueprints) ? blueprintsYaml.blueprints : []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        summary: item.summary,
+        architecture_profile: item.architecture_profile,
+        starter_sequence: Array.isArray(item.starter_sequence) ? item.starter_sequence : [],
+      })),
+      recipes: (Array.isArray(recipesYaml.recipes) ? recipesYaml.recipes : []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        objective: item.objective,
+        architecture_profile: item.architecture_profile,
+        blueprint_refs: Array.isArray(item.blueprint_refs) ? item.blueprint_refs : [],
+      })),
+      profiles: (Array.isArray(matrixYaml.profiles) ? matrixYaml.profiles : []).map((item) => ({
+        id: item.profile_id,
+        notes: Array.isArray(item.notes) ? item.notes : [],
+        recommended_recipes: Array.isArray(item.recommended_recipes) ? item.recommended_recipes : [],
+      })),
+      defaultBlueprint: 'domain-module-extension',
+      defaultRecipe: 'contract-first-module-builder',
+    },
+  };
+}
+
 // ─── Build graph data ────────────────────────────────────────────────────────
 
 function buildGraphData(bundle) {
+  const report = buildReport();
+  const controlCenter = buildControlCenterMeta(report, bundle);
   const flagsYaml = bundle['master-shell/feature-flags/flags.yaml'] || {};
   const domainsYaml = bundle['master-shell/catalog/domains.yaml'] || {};
   const healthYaml = bundle['master-shell/observability/health-scores.yaml'] || {};
@@ -178,7 +431,6 @@ function buildGraphData(bundle) {
   }
 
   // Contract nodes near system domain
-  const systemPos = domainPosition(270, 180);
   nodes.push({
     id: 'contract-system-api',
     type: 'contract',
@@ -198,6 +450,23 @@ function buildGraphData(bundle) {
   edges.push({ id: 'system-contract-api', source: 'system', target: 'contract-system-api', type: 'contract' });
   edges.push({ id: 'system-contract-ui',  source: 'system', target: 'contract-ui-shell',   type: 'contract' });
 
+  controlCenter.controlNodes.forEach((node) => {
+    nodes.push({
+      id: node.id,
+      type: 'control',
+      label: node.label,
+      hiddenInGraph: true,
+      status: node.status,
+      owner: node.owner,
+      purpose: node.purpose,
+      inputs: uniqueStrings(node.inputs),
+      outputs: uniqueStrings(node.outputs),
+      issues: uniqueStrings(node.issues),
+      nextAction: String(node.nextAction || ''),
+      controlKind: node.kind,
+    });
+  });
+
   // Meta
   const meta = {
     generatedAt: new Date().toISOString(),
@@ -209,6 +478,9 @@ function buildGraphData(bundle) {
     },
     apiBase: '/api/v1',
     sseUrl: '/api/v1/system/events',
+    planningApiBase: '/api/planning-studio',
+    report,
+    controlCenter,
   };
 
   return { nodes, edges, meta };
@@ -257,6 +529,11 @@ function buildHtml(graphData) {
   --health-green: #0f766e;
   --health-amber: #b45309;
   --health-red: #dc2626;
+  --topbar-h: 56px;
+  --masterbar-h: 74px;
+  --sidebar-w: 248px;
+  --detail-w: 360px;
+  --plan-board-h: 230px;
   --panel-width: 340px;
   --status-bar-h: 40px;
   --canvas-bg: #f0ebe0;
@@ -265,7 +542,7 @@ function buildHtml(graphData) {
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
-body { font-family: var(--font-ui); color: var(--text); background: var(--bg); display: flex; flex-direction: column; }
+body { font-family: var(--font-ui); color: var(--text); background: var(--bg); display: flex; flex-direction: column; position: relative; }
 
 #topbar {
   display: flex;
@@ -275,7 +552,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   background: rgba(255, 253, 248, 0.9);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(8px);
-  height: 56px;
+  height: var(--topbar-h);
   z-index: 30;
   flex-shrink: 0;
 }
@@ -290,7 +567,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .brand-copy strong { display: block; font-size: 14px; letter-spacing: -0.02em; }
 .brand-copy span { color: var(--muted); font-size: 11px; }
 
-.topbar-actions { display: flex; gap: 8px; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
 .tb-btn {
   padding: 6px 12px;
   background: var(--surface-strong);
@@ -304,17 +581,160 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   align-items: center;
 }
 .tb-btn:hover { background: var(--line); }
+.tb-btn-studio {
+  background: rgba(15,118,110,0.10);
+  border-color: rgba(15,118,110,0.35);
+  color: var(--green);
+  font-weight: 600;
+}
+.tb-btn-studio:hover { background: rgba(15,118,110,0.18); }
+.tb-auto-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.tb-auto-on {
+  background: rgba(15,118,110,0.12);
+  border-color: rgba(15,118,110,0.45);
+  color: var(--green);
+}
+.tb-auto-off {
+  background: rgba(148,163,184,0.12);
+  border-color: rgba(148,163,184,0.45);
+  color: var(--slate);
+}
 
-#canvas-wrap { flex: 1; position: relative; overflow: hidden; background: var(--canvas-bg); }
+#master-status {
+  height: var(--masterbar-h);
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,253,248,0.96), rgba(255,247,234,0.92));
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 16px;
+  z-index: 25;
+  flex-shrink: 0;
+}
+.master-card {
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.72);
+  padding: 10px 12px;
+  min-width: 0;
+}
+.master-card-auto {
+  border-color: rgba(148,163,184,0.5);
+  background: rgba(248,250,252,0.85);
+}
+.master-card span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.master-card strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.master-card strong.status-attention { color: var(--amber); }
+.master-card strong.status-ok { color: var(--green); }
+.master-card strong.status-blocked { color: var(--accent-2); }
+.master-auto-on { color: var(--green); font-weight: 700; }
+.master-auto-off { color: var(--slate); }
+
+#control-sidebar {
+  position: fixed;
+  left: 0;
+  top: calc(var(--topbar-h) + var(--masterbar-h));
+  bottom: calc(var(--status-bar-h) + var(--plan-board-h));
+  width: var(--sidebar-w);
+  padding: 16px 12px 18px 16px;
+  border-right: 1px solid var(--line);
+  background: rgba(255, 251, 245, 0.96);
+  overflow-y: auto;
+  z-index: 18;
+}
+.sidebar-section + .sidebar-section { margin-top: 18px; }
+.sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.sidebar-stack {
+  display: grid;
+  gap: 8px;
+}
+.control-entry {
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: linear-gradient(180deg, #fffefb, #fff8ef);
+  padding: 12px;
+  cursor: pointer;
+}
+.control-entry:hover,
+.control-entry.active {
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 10px 20px rgba(15, 118, 110, 0.10);
+}
+.control-entry strong {
+  display: block;
+  font-size: 13px;
+}
+.control-entry span {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.control-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.control-pill.is-completed { background: rgba(15,118,110,0.12); color: var(--green); }
+.control-pill.is-in_progress { background: rgba(29,78,216,0.12); color: var(--accent-3); }
+.control-pill.is-pending { background: rgba(148,163,184,0.14); color: var(--slate); }
+.control-pill.is-ready { background: rgba(245,158,11,0.16); color: var(--amber); }
+.control-pill.is-blocked { background: rgba(220,38,38,0.14); color: var(--accent-2); }
+
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--canvas-bg);
+  margin-left: var(--sidebar-w);
+  margin-right: var(--detail-w);
+  margin-bottom: calc(var(--plan-board-h) + var(--status-bar-h));
+}
 #mindmap-svg { width: 100%; height: 100%; cursor: grab; display: block; }
 #mindmap-svg:active { cursor: grabbing; }
 
 #detail-panel {
   position: fixed;
   right: 0;
-  top: 56px;
-  bottom: var(--status-bar-h);
-  width: var(--panel-width);
+  top: calc(var(--topbar-h) + var(--masterbar-h));
+  bottom: calc(var(--status-bar-h) + var(--plan-board-h));
+  width: var(--detail-w);
   background: var(--panel-bg);
   border-left: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -352,7 +772,92 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 
 #panel-body { flex: 1; overflow-y: auto; padding: 16px; }
 
+#plan-board {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--status-bar-h);
+  height: var(--plan-board-h);
+  border-top: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.97);
+  padding: 14px 16px 18px;
+  z-index: 22;
+  box-shadow: 0 -12px 24px rgba(70, 52, 28, 0.08);
+}
+.plan-board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.plan-board-head h3 {
+  font-size: 15px;
+}
+.plan-board-head p {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.plan-board-wrap {
+  height: calc(100% - 42px);
+  overflow: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: #fffdfa;
+}
+.plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.plan-table th,
+.plan-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(220, 207, 186, 0.68);
+  vertical-align: top;
+  white-space: nowrap;
+}
+.plan-table td.plan-cell-wrap {
+  white-space: normal;
+  min-width: 160px;
+}
+.plan-table th {
+  position: sticky;
+  top: 0;
+  background: #fff7ea;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.plan-row {
+  cursor: pointer;
+}
+.plan-row:hover,
+.plan-row.active {
+  background: rgba(15, 118, 110, 0.06);
+}
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.status-chip.is-completed { background: rgba(15,118,110,0.12); color: var(--green); }
+.status-chip.is-in_progress { background: rgba(29,78,216,0.12); color: var(--accent-3); }
+.status-chip.is-pending { background: rgba(148,163,184,0.14); color: var(--slate); }
+.status-chip.is-ready { background: rgba(245,158,11,0.16); color: var(--amber); }
+.status-chip.is-blocked { background: rgba(220,38,38,0.14); color: var(--accent-2); }
+
 #status-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: var(--status-bar-h);
   background: var(--surface);
   border-top: 1px solid var(--line);
@@ -362,7 +867,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   gap: 8px;
   font-size: 11px;
   color: var(--muted);
-  z-index: 10;
+  z-index: 30;
   flex-shrink: 0;
 }
 
@@ -514,6 +1019,194 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .audit-seq { color: var(--muted); min-width: 28px; }
 .audit-ts { color: var(--muted); min-width: 90px; font-family: var(--font-mono); }
 .audit-action { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-grid-cards { display: grid; gap: 10px; }
+.detail-card {
+  border-radius: 16px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: #fffdf8;
+  padding: 14px;
+}
+.detail-card span {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.detail-card strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+.detail-card p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.module-workbench {
+  margin-top: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: linear-gradient(180deg, #fffefb, #fff8ef);
+  padding: 14px;
+}
+.module-grid {
+  display: grid;
+  gap: 10px;
+}
+.module-field {
+  display: grid;
+  gap: 6px;
+}
+.module-field span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.module-input,
+.module-select,
+.module-preview {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: #fffdf8;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+.module-preview {
+  min-height: 180px;
+  max-height: 280px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.module-status {
+  border-radius: 14px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: #fffdf8;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+.module-status.is-idle {
+  background: #fffdf8;
+}
+.module-status.is-success {
+  background: #f3fbf7;
+  border-color: rgba(15, 118, 110, 0.28);
+}
+.module-status.is-warning {
+  background: #fff8ef;
+  border-color: rgba(180, 83, 9, 0.32);
+}
+.module-status.is-error {
+  background: #fff4f3;
+  border-color: rgba(220, 38, 38, 0.22);
+}
+.module-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.module-status-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.module-status-badge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(122, 109, 91, 0.12);
+  color: var(--muted);
+}
+.module-status-grid {
+  display: grid;
+  gap: 8px;
+}
+.module-status-row {
+  display: grid;
+  gap: 3px;
+}
+.module-status-row span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.module-status-row strong {
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.module-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.module-button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.module-button.primary { background: linear-gradient(135deg, #0f766e, #1d4ed8); color: white; }
+.module-button.secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
+.module-button.warn { background: #c2410c; color: white; }
+.module-note {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 1180px) {
+  :root {
+    --sidebar-w: 220px;
+    --detail-w: 320px;
+  }
+}
+
+@media (max-width: 980px) {
+  :root {
+    --masterbar-h: 120px;
+    --plan-board-h: 260px;
+  }
+  #master-status {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #control-sidebar {
+    width: 100%;
+    top: calc(var(--topbar-h) + var(--masterbar-h));
+    bottom: auto;
+    height: 164px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  #canvas-wrap {
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 164px;
+  }
+  #detail-panel {
+    left: 0;
+    width: 100%;
+    top: auto;
+    bottom: calc(var(--status-bar-h) + var(--plan-board-h));
+    height: 42vh;
+  }
+}
 `;
 
   const js = `(function() {
@@ -521,6 +1214,11 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 
 // ─── Parse embedded data ─────────────────────────────────────────────────────
 const RAW = JSON.parse(document.getElementById('mindmap-data').textContent);
+const CONTROL = RAW.meta.controlCenter || {};
+const AUTH_HEADERS = {
+  'x-user-id': 'master-ui-operator',
+  'x-permissions': 'domain.viewer,system.admin',
+};
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const S = {
@@ -542,6 +1240,29 @@ const S = {
   lastUpdate: null,
   totalTests: 570,
   passingTests: 570,
+  planningApiBase: RAW.meta.planningApiBase || '/api/planning-studio',
+  statusSummary: Object.assign({ autoSendEnabled: false }, CONTROL.statusBar || {}),
+  controlNodes: Array.isArray(CONTROL.controlNodes) ? CONTROL.controlNodes.slice() : [],
+  planRows: Array.isArray(CONTROL.planRows) ? CONTROL.planRows.slice() : [],
+  scaffoldCatalog: CONTROL.scaffoldCatalog || { blueprints: [], recipes: [], profiles: [], defaultBlueprint: '', defaultRecipe: '' },
+  roadmapSections: Array.isArray(CONTROL.roadmapSections) ? CONTROL.roadmapSections.slice() : [],
+  planningSnapshot: null,
+  scaffoldForm: {
+    domain: '',
+    blueprint: (CONTROL.scaffoldCatalog && CONTROL.scaffoldCatalog.defaultBlueprint) || 'domain-module-extension',
+    recipe: (CONTROL.scaffoldCatalog && CONTROL.scaffoldCatalog.defaultRecipe) || 'contract-first-module-builder',
+  },
+  scaffoldPreview: '',
+  scaffoldTranscript: '',
+  scaffoldError: '',
+  scaffoldStatus: {
+    tone: 'idle',
+    title: 'preview 대기',
+    currentState: 'preview를 아직 실행하지 않았습니다.',
+    nextAction: 'dry-run preview를 먼저 누르세요.',
+    retryable: '가능',
+    detail: 'domain, blueprint, recipe를 고른 뒤 preview를 실행하면 결과가 여기에 표시됩니다.',
+  },
 };
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
@@ -558,13 +1279,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
   runForce(120);
   render();
+  renderMasterStatus();
+  renderSidebar();
+  renderPlanBoard();
   updateStatusBar();
   setupPanZoom();
   setupNodeInteractions();
   setupKeyboard();
   hydrateFromApi();
+  hydratePlanningSnapshot();
   connectSSE();
 
+  selectNode(S.statusSummary.currentLaneId || 'root');
   setTimeout(fitView, 50);
 });
 
@@ -715,6 +1441,7 @@ function renderNodes() {
 
   for (var ni = 0; ni < S.nodes.length; ni++) {
     var node = S.nodes[ni];
+    if (node.hiddenInGraph) continue;
     var g = svgEl('g', {
       transform: 'translate(' + node.x + ',' + node.y + ')',
       class: 'node node-' + node.type + (S.selected === node.id ? ' node-selected' : ''),
@@ -853,6 +1580,127 @@ function renderNodes() {
 function applyTransform() {
   var root = document.getElementById('graph-root');
   root.setAttribute('transform', 'translate(' + S.tx + ',' + S.ty + ') scale(' + S.tk + ')');
+}
+
+function statusClassName(status) {
+  return 'is-' + String(status || 'pending').replace(/[^a-z_]/gi, '_');
+}
+
+function stageProgress(stageValue) {
+  var stage = String(stageValue || '').toUpperCase();
+  if (stage === 'A') return 20;
+  if (stage === 'B') return 35;
+  if (stage === 'C') return 55;
+  if (stage === 'D') return 80;
+  if (stage === 'E') return 100;
+  return 10;
+}
+
+function laneStatusByStage(stageValue, laneId) {
+  var stage = String(stageValue || '').toUpperCase();
+  var order = ['A', 'B', 'C', 'D', 'E'];
+  var currentIndex = Math.max(order.indexOf(stage), 0);
+  var laneThresholds = {
+    'control-intake': 0,
+    'control-planning': 1,
+    'control-execution': 2,
+    'control-validation': 3,
+    'control-complete': 4,
+    'control-module': 1,
+  };
+  var threshold = laneThresholds[laneId];
+  if (laneId === 'control-module') {
+    return currentIndex >= 1 ? 'ready' : 'pending';
+  }
+  if (currentIndex > threshold) return 'completed';
+  if (currentIndex === threshold) return 'in_progress';
+  return 'pending';
+}
+
+function statusLabel(status) {
+  var value = String(status || 'pending');
+  return value === 'completed' ? '완료'
+    : value === 'in_progress' ? '진행 중'
+      : value === 'ready' ? '준비'
+        : value === 'blocked' ? '차단'
+          : '대기';
+}
+
+function renderMasterStatus() {
+  var goalEl = document.getElementById('master-goal');
+  var stageEl = document.getElementById('master-stage');
+  var progressEl = document.getElementById('master-progress');
+  var blockerEl = document.getElementById('master-blocker');
+  var nextEl = document.getElementById('master-next');
+  var autoSendEl = document.getElementById('master-auto-send');
+  var topbarBadgeEl = document.getElementById('topbar-auto-send-badge');
+  if (!goalEl) return;
+
+  goalEl.textContent = S.statusSummary.goal || '현재 목표 미정';
+  stageEl.textContent = S.statusSummary.currentStage || '-';
+  progressEl.textContent = String(S.statusSummary.progress || 0) + '%';
+  blockerEl.textContent = S.statusSummary.blocker || '정상';
+  blockerEl.className = 'master-value ' + (
+    String(S.statusSummary.blocker || '').includes('정상') ? 'status-ok'
+      : String(S.statusSummary.blocker || '').includes('차단') ? 'status-blocked'
+        : 'status-attention'
+  );
+  nextEl.textContent = S.statusSummary.nextTask || 'NONE';
+
+  var autoOn = S.statusSummary.autoSendEnabled === true;
+  if (autoSendEl) {
+    autoSendEl.textContent = autoOn ? 'ON' : 'OFF';
+    autoSendEl.className = autoOn ? 'master-auto-on' : 'master-auto-off';
+  }
+  if (topbarBadgeEl) {
+    topbarBadgeEl.textContent = autoOn ? '자동전송 ON' : '자동전송 OFF';
+    topbarBadgeEl.className = 'tb-auto-badge ' + (autoOn ? 'tb-auto-on' : 'tb-auto-off');
+  }
+}
+
+function renderSidebar() {
+  var controlList = document.getElementById('control-sidebar-list');
+  var domainList = document.getElementById('domain-sidebar-list');
+  if (!controlList || !domainList) return;
+
+  controlList.innerHTML = S.controlNodes.map(function(item) {
+    return '<button type="button" class="control-entry ' + (S.selected === item.id ? 'active' : '') + '" data-control-id="' + escHtml(item.id) + '" onclick="selectControlNode(\\'' + escHtml(item.id) + '\\')">' +
+      '<div class="control-pill ' + statusClassName(item.status) + '">' + statusLabel(item.status) + '</div>' +
+      '<strong>' + escHtml(item.label) + '</strong>' +
+      '<span>' + escHtml(item.purpose || '') + '</span>' +
+      '</button>';
+  }).join('');
+
+  var domains = S.nodes.filter(function(node) { return node.type === 'domain'; });
+  domainList.innerHTML = domains.map(function(item) {
+    return '<button type="button" class="control-entry ' + (S.selected === item.id ? 'active' : '') + '" data-domain-id="' + escHtml(item.id) + '" onclick="selectControlNode(\\'' + escHtml(item.id) + '\\')">' +
+      '<div class="control-pill ' + statusClassName(item.flagActive === false ? 'blocked' : 'ready') + '">' + (item.flagActive === false ? '비활성' : '도메인') + '</div>' +
+      '<strong>' + escHtml(item.label) + '</strong>' +
+      '<span>헬스 ' + escHtml(String(item.healthScore || 0)) + ' / stage ' + escHtml(String(item.stageStatus || 'UNKNOWN')) + '</span>' +
+      '</button>';
+  }).join('');
+}
+
+function renderPlanBoard() {
+  var table = document.getElementById('plan-table-body');
+  if (!table) return;
+  table.innerHTML = S.planRows.map(function(row) {
+    return '<tr class="plan-row ' + (S.selected === row.nodeId ? 'active' : '') + '" data-node-id="' + escHtml(row.nodeId || '') + '" onclick="selectControlNode(\\'' + escHtml(row.nodeId || 'root') + '\\')">' +
+      '<td>' + escHtml(row.step || '') + '</td>' +
+      '<td>' + escHtml(row.task || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.purpose || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.input || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.output || '') + '</td>' +
+      '<td><span class="status-chip ' + statusClassName(row.status) + '">' + statusLabel(row.status) + '</span></td>' +
+      '<td>' + escHtml(row.priority || '') + '</td>' +
+      '<td>' + escHtml(row.owner || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.nextAction || '') + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function selectControlNode(id) {
+  selectNode(id);
 }
 
 // ─── Fit view ─────────────────────────────────────────────────────────────────
@@ -1014,6 +1862,8 @@ function selectNode(id) {
       circle.setAttribute('stroke-width', isSelected ? '3' : '1.5');
     }
   });
+  renderSidebar();
+  renderPlanBoard();
   openPanel(id);
 }
 
@@ -1027,6 +1877,8 @@ function deselectNode() {
       circle.setAttribute('stroke-width', '1.5');
     }
   });
+  renderSidebar();
+  renderPlanBoard();
   closePanel();
 }
 
@@ -1045,7 +1897,7 @@ function renderPanel(id) {
   var n = S.byId[id];
   if (!n) return;
 
-  var typeLabels = { root: '\\ub8e8\\ud2b8', domain: '\\ub3c4\\uba54\\uc778', stage: '\\uc2a4\\ud14c\\uc774\\uc9c0', contract: '\\uacc4\\uc57d', flag: '\\ud53c\\uc2a4\\uccb4 \\ud50c\\ub798\\uadf8' };
+  var typeLabels = { root: '\\ub8e8\\ud2b8', domain: '\\ub3c4\\uba54\\uc778', stage: '\\uc2a4\\ud14c\\uc774\\uc9c0', contract: '\\uacc4\\uc57d', flag: '\\ud53c\\uc2a4\\uccb4 \\ud50c\\ub798\\uadf8', control: '\\ud1b5\\uc81c \\ub178\\ub4dc' };
   document.getElementById('panel-header').innerHTML =
     '<div class="ph-type">' + (typeLabels[n.type] || n.type) + '</div>' +
     '<div class="ph-title">' + escHtml(n.label) + '</div>' +
@@ -1094,16 +1946,16 @@ function renderPanelTab(n, tab) {
 
 function renderOverviewTab(n) {
   if (n.type === 'root') {
-    return '<div class="ov-section">' +
-      '<div class="ov-label">\\uc2dc\\uc2a4\\ud15c \\uc0c1\\ud0dc</div>' +
-      '<div class="ov-value ov-pass">HEALTHY</div>' +
-      '<div class="ov-label mt8">\\ud65c\\uc131 \\ub3c4\\uba54\\uc778</div>' +
-      '<div class="ov-value">4\\uac1c (billing / productivity / video / system)</div>' +
-      '<div class="ov-label mt8">\\uc804\\uccb4 \\ud14c\\uc2a4\\ud2b8</div>' +
-      '<div class="ov-value">' + S.passingTests + ' / ' + S.totalTests + ' PASS</div>' +
-      '<div class="ov-label mt8">SSE \\uc2a4\\ud2b8\\ub9bc</div>' +
-      '<div class="ov-value">' + S.sseStatus + '</div>' +
+    return '<div class="detail-grid-cards">' +
+      renderDetailCard('\\ud604\\uc7ac \\ubaa9\\ud45c', S.statusSummary.goal || '\\ud604\\uc7ac \\ubaa9\\ud45c \\ubbf8\\uc815', '\\ud1b5\\ud569 \\ud1b5\\uc81c \\uc13c\\ud130\\uc758 \\uae30\\uc900 \\ubaa9\\ud45c\\ub97c \\uace0\\uc815\\ud569\\ub2c8\\ub2e4.') +
+      renderDetailCard('\\ud604\\uc7ac \\uc791\\uc5c5', 'Stage ' + escHtml(S.statusSummary.currentStage || '-') + ' / packet ' + escHtml(String((RAW.meta.report || {}).current_wp || 'NONE')), '\\ud604\\uc7ac packet \\uae30\\uc900 \\ud3ec\\ucee4\\uc2a4\\ub97c \\ubcf4\\uc5ec\\uc90d\\ub2c8\\ub2e4.') +
+      renderDetailCard('\\uacb0\\uacfc \\ubbf8\\ub9ac\\ubcf4\\uae30', S.passingTests + ' / ' + S.totalTests + ' PASS', 'system API, planning snapshot, quality gate\\ub97c \\ud569\\uce5c \\uae30\\uc900 \\uac12\\uc785\\ub2c8\\ub2e4.') +
+      renderDetailCard('\\ubb38\\uc81c\\uc810', S.statusSummary.blocker || '\\uc815\\uc0c1', 'drift, known issues, \\ud655\\uc778 \\ud544\\uc694 \\ud56d\\ubaa9\\uc744 \\ud55c \\uc904\\ub85c \\ubd84\\ub9ac\\ud569\\ub2c8\\ub2e4.') +
+      renderDetailCard('\\ub2e4\\uc74c \\ud589\\ub3d9', S.statusSummary.nextTask || 'NONE', '\\ub2e4\\uc74c packet \\ub610\\ub294 module preview \\uc2e4\\ud589\\uc73c\\ub85c \\uc774\\uc5b4\\uc9d1\\ub2c8\\ub2e4.') +
       '</div>';
+  }
+  if (n.type === 'control') {
+    return renderControlOverview(n);
   }
   if (n.type === 'flag') {
     return '<div class="ov-section">' +
@@ -1170,6 +2022,353 @@ function renderOverviewTab(n) {
     '</div>';
 }
 
+function renderDetailCard(title, strongValue, description) {
+  return '<article class="detail-card">' +
+    '<span>' + escHtml(title) + '</span>' +
+    '<strong>' + escHtml(strongValue || '') + '</strong>' +
+    '<p>' + escHtml(description || '') + '</p>' +
+    '</article>';
+}
+
+function renderControlOverview(n) {
+  var inputs = Array.isArray(n.inputs) ? n.inputs.join(' / ') : '';
+  var outputs = Array.isArray(n.outputs) ? n.outputs.join(' / ') : '';
+  var issues = Array.isArray(n.issues) ? n.issues.join('\\n') : '';
+  var cards = [
+    renderDetailCard('\\ubaa9\\ud45c', n.purpose || '', '\\uc774 \\ub178\\ub4dc\\uac00 \\ub2f4\\ub2f9\\ud558\\ub294 \\ucc45\\uc784\\uc744 \\uc124\\uba85\\ud569\\ub2c8\\ub2e4.'),
+    renderDetailCard('\\ud604\\uc7ac \\uc791\\uc5c5', statusLabel(n.status), '\\uc9c0\\uae08 \\uc5b4\\ub514\\uae4c\\uc9c0 \\uc9c4\\ud589\\ub410\\ub294\\uc9c0 \\ubcf4\\uc5ec\\uc90d\\ub2c8\\ub2e4.'),
+    renderDetailCard('\\uc785\\ub825 \\uc870\\uac74', inputs || '\\uc785\\ub825 \\uc815\\uc758 \\uc5c6\\uc74c', '\\uc774 \\ub2e8\\uacc4\\uac00 \\ucc38\\uc870\\ud558\\ub294 \\uc18c\\uc2a4\\ub97c \\uc694\\uc57d\\ud569\\ub2c8\\ub2e4.'),
+    renderDetailCard('\\uacb0\\uacfc \\ubbf8\\ub9ac\\ubcf4\\uae30', outputs || '\\ucd9c\\ub825 \\uc815\\uc758 \\uc5c6\\uc74c', '\\ub2e8\\uacc4\\uac00 \\ub05d\\ub098\\uba74 \\uc5bb\\uc5b4\\uc57c \\ud560 \\uc0b0\\ucd9c\\ubb3c\\uc785\\ub2c8\\ub2e4.'),
+    renderDetailCard('\\ubb38\\uc81c\\uc810', issues || '\\ubb38\\uc81c\\uc810 \\uc5c6\\uc74c', '\\ucc28\\ub2e8 \\uc0ac\\uc720\\ub098 \\uc8fc\\uc758\\ud560 \\uc810\\uc744 \\ubd84\\ub9ac\\ud569\\ub2c8\\ub2e4.'),
+    renderDetailCard('\\ub2e4\\uc74c \\ud589\\ub3d9', n.nextAction || '', '\\ub2e4\\uc74c \\ub178\\ub4dc\\ub85c \\uc5b4\\ub5bb\\uac8c \\ub118\\uc5b4\\uac00\\ub294\\uc9c0 \\ubc14\\ub85c \\ubcf4\\uc5ec\\uc90d\\ub2c8\\ub2e4.'),
+  ];
+
+  return '<div class="detail-grid-cards">' +
+    cards.join('') +
+    (n.controlKind === 'module' ? renderModuleWorkbench() : '') +
+    '</div>';
+}
+
+function selectedBlueprint() {
+  var list = Array.isArray(S.scaffoldCatalog.blueprints) ? S.scaffoldCatalog.blueprints : [];
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i].id) === String(S.scaffoldForm.blueprint)) return list[i];
+  }
+  return list[0] || null;
+}
+
+function selectedRecipe() {
+  var list = Array.isArray(S.scaffoldCatalog.recipes) ? S.scaffoldCatalog.recipes : [];
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i].id) === String(S.scaffoldForm.recipe)) return list[i];
+  }
+  return list[0] || null;
+}
+
+function syncScaffoldForm() {
+  var domainEl = document.getElementById('module-domain');
+  var blueprintEl = document.getElementById('module-blueprint');
+  var recipeEl = document.getElementById('module-recipe');
+  if (domainEl) S.scaffoldForm.domain = String(domainEl.value || '').trim();
+  if (blueprintEl) S.scaffoldForm.blueprint = String(blueprintEl.value || '');
+  if (recipeEl) S.scaffoldForm.recipe = String(recipeEl.value || '');
+}
+
+function setScaffoldStatus(tone, title, currentState, nextAction, retryable, detail) {
+  S.scaffoldStatus = {
+    tone: String(tone || 'idle'),
+    title: String(title || ''),
+    currentState: String(currentState || ''),
+    nextAction: String(nextAction || ''),
+    retryable: String(retryable || ''),
+    detail: String(detail || ''),
+  };
+}
+
+function statusToneBadge(tone) {
+  if (tone === 'success') return '정상';
+  if (tone === 'warning') return '확인 필요';
+  if (tone === 'error') return '차단';
+  return '대기';
+}
+
+function normalizeScaffoldFailure(body, actionLabel, retryAfterSeconds) {
+  var code = String(body && body.code || '');
+  var message = String(body && (body.detail || body.message) || actionLabel + ' failed');
+  var retryAfter = retryAfterSeconds ? String(retryAfterSeconds) + '초 후 재시도' : '원인 확인 후 재시도';
+
+  if (code === 'RESOURCE_BUSY') {
+    return {
+      tone: 'warning',
+      title: actionLabel + ' 대기 필요',
+      currentState: '같은 리소스에서 다른 작업이 이미 진행 중입니다.',
+      nextAction: retryAfter + ' 다시 시도하거나 다른 domain으로 실행하세요.',
+      retryable: '가능',
+      detail: message,
+    };
+  }
+
+  if (code === 'FORBIDDEN') {
+    return {
+      tone: 'error',
+      title: actionLabel + ' 권한 부족',
+      currentState: '현재 권한으로는 이 작업을 실행할 수 없습니다.',
+      nextAction: actionLabel === 'create'
+        ? 'system.admin 권한으로 다시 시도하세요.'
+        : 'domain.viewer 또는 system.admin 권한으로 다시 시도하세요.',
+      retryable: '권한 확보 후 가능',
+      detail: message,
+    };
+  }
+
+  if (code === 'VALIDATION_ERROR') {
+    return {
+      tone: 'warning',
+      title: actionLabel + ' 입력 확인 필요',
+      currentState: '입력값 형식이 올바르지 않습니다.',
+      nextAction: 'domain, blueprint, recipe를 다시 확인한 뒤 실행하세요.',
+      retryable: '가능',
+      detail: message,
+    };
+  }
+
+  if (code === 'CONFLICT') {
+    return {
+      tone: 'warning',
+      title: actionLabel + ' 충돌 감지',
+      currentState: '같은 이름의 대상이나 기존 산출물과 충돌했습니다.',
+      nextAction: '기존 requirements 파일을 확인하거나 다른 domain으로 시도하세요.',
+      retryable: '조건 해소 후 가능',
+      detail: message,
+    };
+  }
+
+  return {
+    tone: 'error',
+    title: actionLabel + ' 실패',
+    currentState: '요청은 전달됐지만 정상 완료되지 않았습니다.',
+    nextAction: '상세 메시지를 확인하고 입력값 또는 서버 상태를 점검하세요.',
+    retryable: '확인 후 가능',
+    detail: message,
+  };
+}
+
+function renderScaffoldStatus() {
+  var status = S.scaffoldStatus || {};
+  return '<section class="module-status is-' + escHtml(status.tone || 'idle') + '">' +
+    '<div class="module-status-head">' +
+    '<strong class="module-status-title">' + escHtml(status.title || 'preview 대기') + '</strong>' +
+    '<span class="module-status-badge">' + escHtml(statusToneBadge(status.tone || 'idle')) + '</span>' +
+    '</div>' +
+    '<div class="module-status-grid">' +
+    '<div class="module-status-row"><span>현재 상태</span><strong>' + escHtml(status.currentState || '-') + '</strong></div>' +
+    '<div class="module-status-row"><span>다음 행동</span><strong>' + escHtml(status.nextAction || '-') + '</strong></div>' +
+    '<div class="module-status-row"><span>재시도</span><strong>' + escHtml(status.retryable || '-') + '</strong></div>' +
+    '<div class="module-status-row"><span>상세</span><strong>' + escHtml(status.detail || '-') + '</strong></div>' +
+    '</div>' +
+    '</section>';
+}
+
+function renderModuleWorkbench() {
+  var blueprint = selectedBlueprint();
+  var recipe = selectedRecipe();
+  var profile = blueprint ? String(blueprint.architecture_profile || '') : '';
+  var steps = blueprint && Array.isArray(blueprint.starter_sequence)
+    ? blueprint.starter_sequence.map(function(item) {
+      return '- ' + String(item.step || '') + ': ' + String(item.focus || '');
+    }).join('\\n')
+    : 'starter sequence 없음';
+  var previewText = S.scaffoldPreview || 'preview를 아직 실행하지 않았습니다. dry-run preview를 먼저 누르세요.';
+
+  var blueprintOptions = (Array.isArray(S.scaffoldCatalog.blueprints) ? S.scaffoldCatalog.blueprints : []).map(function(item) {
+    return '<option value="' + escHtml(item.id) + '"' + (String(item.id) === String(S.scaffoldForm.blueprint) ? ' selected' : '') + '>' +
+      escHtml(item.name + ' (' + item.id + ')') + '</option>';
+  }).join('');
+  var recipeOptions = (Array.isArray(S.scaffoldCatalog.recipes) ? S.scaffoldCatalog.recipes : []).map(function(item) {
+    return '<option value="' + escHtml(item.id) + '"' + (String(item.id) === String(S.scaffoldForm.recipe) ? ' selected' : '') + '>' +
+      escHtml(item.name + ' (' + item.id + ')') + '</option>';
+  }).join('');
+
+  return '<section class="module-workbench">' +
+    '<div class="module-grid">' +
+    '<div class="module-field"><span>domain id</span><input id="module-domain" class="module-input" value="' + escHtml(S.scaffoldForm.domain || '') + '" placeholder="예: ordering" oninput="handleScaffoldInput()"></div>' +
+    '<div class="module-field"><span>blueprint</span><select id="module-blueprint" class="module-select" onchange="handleScaffoldBlueprint()">' + blueprintOptions + '</select></div>' +
+    '<div class="module-field"><span>architecture profile</span><input class="module-input" value="' + escHtml(profile || 'unknown') + '" readonly></div>' +
+    '<div class="module-field"><span>recipe</span><select id="module-recipe" class="module-select" onchange="handleScaffoldInput()">' + recipeOptions + '</select></div>' +
+    '<div class="module-toolbar">' +
+    '<button type="button" class="module-button primary" onclick="previewModuleScaffold()">dry-run preview</button>' +
+    '<button type="button" class="module-button secondary" onclick="loadScaffoldCommand()">명령 미리보기</button>' +
+    '<button type="button" class="module-button warn" onclick="createModuleScaffold()">confirm 후 create</button>' +
+    '</div>' +
+    renderScaffoldStatus() +
+    '<div class="module-note">starter sequence\\n' + escHtml(steps) + '</div>' +
+    '<pre class="module-preview">' + escHtml(previewText) + '</pre>' +
+    '</div>' +
+    '</section>';
+}
+
+function handleScaffoldInput() {
+  syncScaffoldForm();
+}
+
+function handleScaffoldBlueprint() {
+  syncScaffoldForm();
+  var blueprint = selectedBlueprint();
+  if (!blueprint) return;
+  var recipes = Array.isArray(S.scaffoldCatalog.recipes) ? S.scaffoldCatalog.recipes : [];
+  for (var i = 0; i < recipes.length; i++) {
+    var refs = Array.isArray(recipes[i].blueprint_refs) ? recipes[i].blueprint_refs : [];
+    if (refs.indexOf(blueprint.id) !== -1) {
+      S.scaffoldForm.recipe = recipes[i].id;
+      break;
+    }
+  }
+  renderPanel('control-module');
+}
+
+function loadScaffoldCommand() {
+  syncScaffoldForm();
+  S.scaffoldError = '';
+  S.scaffoldPreview = 'node scripts/generate-domain-scaffold.js --domain ' +
+    (S.scaffoldForm.domain || '<domain>') +
+    ' --blueprint ' + (S.scaffoldForm.blueprint || '<blueprint>') +
+    (S.scaffoldForm.recipe ? ' --recipe ' + S.scaffoldForm.recipe : '') +
+    ' --dry-run';
+  setScaffoldStatus(
+    'idle',
+    '명령 미리보기 준비',
+    'CLI 실행 명령이 준비되었습니다.',
+    'dry-run preview를 실행해 실제 preview 결과를 확인하세요.',
+    '가능',
+    '명령 미리보기는 실행하지 않고 입력값만 조합합니다.'
+  );
+  renderPanel('control-module');
+}
+
+function previewModuleScaffold() {
+  syncScaffoldForm();
+  S.scaffoldError = '';
+  if (!S.scaffoldForm.domain || !S.scaffoldForm.blueprint) {
+    S.scaffoldError = 'domain 과 blueprint 를 먼저 입력하세요.';
+    setScaffoldStatus(
+      'warning',
+      'preview 입력 확인 필요',
+      '필수 입력값이 비어 있습니다.',
+      'domain 과 blueprint 를 채운 뒤 다시 preview를 실행하세요.',
+      '가능',
+      'domain 과 blueprint 는 필수입니다.'
+    );
+    renderPanel('control-module');
+    return;
+  }
+
+  fetchJson(S.planningApiBase + '/scaffold-preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(S.scaffoldForm),
+  })
+    .then(function(r) {
+      return r.json().then(function(body) {
+        return {
+          ok: r.ok,
+          body: body,
+          retryAfter: r.headers.get('retry-after'),
+        };
+      });
+    })
+    .then(function(result) {
+      if (!result.ok) {
+        throw normalizeScaffoldFailure(result.body, 'preview', result.retryAfter);
+      }
+      S.scaffoldTranscript = String((result.body.data && result.body.data.stdout) || '');
+      S.scaffoldPreview = String((result.body.data && (result.body.data.preview || result.body.data.stdout)) || '');
+      S.scaffoldError = '';
+      setScaffoldStatus(
+        'success',
+        'preview 준비 완료',
+        'dry-run preview가 정상적으로 갱신되었습니다.',
+        '결과를 확인한 뒤 confirm 후 create를 실행하세요.',
+        '가능',
+        'preview는 읽기 전용이며 실제 파일을 만들지 않습니다.'
+      );
+      renderPanel('control-module');
+      showToast('module dry-run preview 갱신 완료');
+    })
+    .catch(function(error) {
+      var normalized = error && error.tone ? error : normalizeScaffoldFailure({ message: String(error && error.message || 'preview failed') }, 'preview');
+      S.scaffoldError = normalized.detail;
+      setScaffoldStatus(normalized.tone, normalized.title, normalized.currentState, normalized.nextAction, normalized.retryable, normalized.detail);
+      renderPanel('control-module');
+    });
+}
+
+function createModuleScaffold() {
+  syncScaffoldForm();
+  if (!S.scaffoldForm.domain || !S.scaffoldForm.blueprint) {
+    S.scaffoldError = 'domain 과 blueprint 를 먼저 입력하세요.';
+    setScaffoldStatus(
+      'warning',
+      'create 입력 확인 필요',
+      '필수 입력값이 비어 있습니다.',
+      'domain 과 blueprint 를 채운 뒤 다시 create를 실행하세요.',
+      '가능',
+      'domain 과 blueprint 는 필수입니다.'
+    );
+    renderPanel('control-module');
+    return;
+  }
+  if (!window.confirm('requirements/' + S.scaffoldForm.domain + '.yaml 을 실제로 생성할까요?')) {
+    setScaffoldStatus(
+      'idle',
+      'create 대기',
+      '실제 생성은 아직 실행되지 않았습니다.',
+      'preview 결과를 다시 확인한 뒤 confirm 후 create를 누르세요.',
+      '가능',
+      '사용자 확인이 있어야 create가 실행됩니다.'
+    );
+    return;
+  }
+
+  fetchJson(S.planningApiBase + '/scaffold-create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(S.scaffoldForm),
+  })
+    .then(function(r) {
+      return r.json().then(function(body) {
+        return {
+          ok: r.ok,
+          body: body,
+          retryAfter: r.headers.get('retry-after'),
+        };
+      });
+    })
+    .then(function(result) {
+      if (!result.ok) {
+        throw normalizeScaffoldFailure(result.body, 'create', result.retryAfter);
+      }
+      S.scaffoldTranscript = String((result.body.data && result.body.data.stdout) || '');
+      S.scaffoldPreview = String((result.body.data && result.body.data.stdout) || '');
+      S.scaffoldError = '';
+      setScaffoldStatus(
+        'success',
+        'requirements 생성 완료',
+        'requirements/' + S.scaffoldForm.domain + '.yaml 생성이 완료되었습니다.',
+        'diff와 다음 work packet 연결 상태를 확인하세요.',
+        '불필요',
+        '실제 파일 생성이 끝났으므로 후속 검증 단계로 넘어가면 됩니다.'
+      );
+      renderPanel('control-module');
+      showToast('requirements/' + S.scaffoldForm.domain + '.yaml 생성 완료');
+    })
+    .catch(function(error) {
+      var normalized = error && error.tone ? error : normalizeScaffoldFailure({ message: String(error && error.message || 'create failed') }, 'create');
+      S.scaffoldError = normalized.detail;
+      setScaffoldStatus(normalized.tone, normalized.title, normalized.currentState, normalized.nextAction, normalized.retryable, normalized.detail);
+      renderPanel('control-module');
+    });
+}
+
 function renderFlagsTab(n) {
   var domainFlags = S.nodes.filter(function(node) {
     return node.type === 'flag' && node.parentId === n.id;
@@ -1218,8 +2417,22 @@ function renderQualityTab(n) {
     '<div class="ov-value ov-pass mt8">5/5 PASS</div>';
 }
 
+function mergeHeaders(base, extra) {
+  var next = {};
+  var key;
+  for (key in base) next[key] = base[key];
+  for (key in (extra || {})) next[key] = extra[key];
+  return next;
+}
+
+function fetchJson(url, options) {
+  var opts = options || {};
+  var headers = mergeHeaders(AUTH_HEADERS, opts.headers || {});
+  return fetch(url, Object.assign({}, opts, { headers: headers }));
+}
+
 function fetchAuditLog(domainId) {
-  fetch(S.apiBase + '/system/audit?domain=' + encodeURIComponent(domainId) + '&page_size=20')
+  fetchJson(S.apiBase + '/system/audit?domain=' + encodeURIComponent(domainId) + '&page_size=20')
     .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function(data) {
       var entries = Array.isArray(data.entries) ? data.entries : [];
@@ -1255,7 +2468,7 @@ function toggleFlag(flagId, newVal) {
     if (flagRect) flagRect.setAttribute('fill', newVal ? 'var(--node-flag-on)' : 'var(--node-flag-off)');
   }
 
-  fetch(S.apiBase + '/system/flags/' + encodeURIComponent(flagId), {
+  fetchJson(S.apiBase + '/system/flags/' + encodeURIComponent(flagId), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ value: newVal }),
@@ -1283,7 +2496,7 @@ function confirmRollback() {
   var reason = modal.querySelector('.modal-reason').value || '';
   modal.style.display = 'none';
 
-  fetch(S.apiBase + '/system/rollback/' + encodeURIComponent(domainId), {
+  fetchJson(S.apiBase + '/system/rollback/' + encodeURIComponent(domainId), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason: reason }),
@@ -1309,8 +2522,8 @@ function pulseNode(nodeId, color) {
 function hydrateFromApi() {
   var base = S.apiBase;
   Promise.all([
-    fetch(base + '/system/health').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
-    fetch(base + '/system/flags').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson(base + '/system/health').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson(base + '/system/flags').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
   ]).then(function(results) {
     var healthData = results[0], flagsData = results[1];
     if (healthData) applyHealthData(healthData);
@@ -1318,6 +2531,128 @@ function hydrateFromApi() {
     S.lastUpdate = new Date();
     updateStatusBar();
   });
+}
+
+function hydratePlanningSnapshot() {
+  fetchJson(S.planningApiBase + '/snapshot')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(payload) {
+      if (!payload) return;
+      var snapshot = payload.data || payload;
+      S.planningSnapshot = snapshot;
+      applyPlanningSnapshot(snapshot);
+    })
+    .catch(function() {
+      return null;
+    });
+}
+
+function applyPlanningSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return;
+  var currentWp = snapshot.current_wp || {};
+  var nextActions = snapshot.next_actions || {};
+  var completedCount = Array.isArray(snapshot.completed_packets) ? snapshot.completed_packets.length : 0;
+  var changedCount = snapshot.code_status && typeof snapshot.code_status.changed_count === 'number'
+    ? snapshot.code_status.changed_count
+    : 0;
+
+  if (currentWp.goal) S.statusSummary.goal = String(currentWp.goal);
+  if (currentWp.stage) {
+    S.statusSummary.currentStage = String(currentWp.stage).toUpperCase();
+    S.statusSummary.progress = Math.max(S.statusSummary.progress || 0, stageProgress(currentWp.stage));
+  }
+  if (nextActions.next_wp) S.statusSummary.nextTask = String(nextActions.next_wp);
+  if (changedCount > 0) S.statusSummary.blocker = '확인 필요 ' + changedCount + '개 변경';
+
+  var automationConfig = snapshot.automation || snapshot.automation_config || null;
+  if (automationConfig && typeof automationConfig.enabled === 'boolean') {
+    S.statusSummary.autoSendEnabled = automationConfig.enabled;
+  }
+
+  S.planRows = [
+    {
+      id: 'plan-intake',
+      nodeId: 'control-intake',
+      step: '1',
+      task: '입력 이해',
+      purpose: '사용자 요청과 packet 범위를 정리',
+      input: String(currentWp.id || 'NONE'),
+      output: String(currentWp.goal || '목표 미정'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-intake'),
+      priority: '최고',
+      owner: 'Planner',
+      nextAction: '계획 수립',
+    },
+    {
+      id: 'plan-planning',
+      nodeId: 'control-planning',
+      step: '2',
+      task: '계획 수립',
+      purpose: 'active packet과 draft를 동기화',
+      input: String(snapshot.default_packet_id || currentWp.id || 'NONE'),
+      output: String((snapshot.planner_sections_draft || {}).updated_at || 'draft ready'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-planning'),
+      priority: '최고',
+      owner: 'Planner',
+      nextAction: '실행 포커스 이동',
+    },
+    {
+      id: 'plan-execution',
+      nodeId: 'control-execution',
+      step: '3',
+      task: '실행',
+      purpose: '현재 packet 실행과 runtime bridge 연결',
+      input: String(currentWp.id || 'NONE'),
+      output: String(currentWp.status || 'pending'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-execution'),
+      priority: '최고',
+      owner: 'Builder',
+      nextAction: '검증 evidence 확보',
+    },
+    {
+      id: 'plan-validation',
+      nodeId: 'control-validation',
+      step: '4',
+      task: '검증',
+      purpose: 'drift와 changed files 확인',
+      input: String(changedCount) + ' changed',
+      output: changedCount > 0 ? '재검토 필요' : 'clean',
+      status: changedCount > 0 ? 'ready' : laneStatusByStage(S.statusSummary.currentStage, 'control-validation'),
+      priority: '최고',
+      owner: 'Reviewer',
+      nextAction: '완료 판정',
+    },
+    {
+      id: 'plan-complete',
+      nodeId: 'control-complete',
+      step: '5',
+      task: '완료',
+      purpose: '완료 packet과 다음 실행 연결',
+      input: String(completedCount) + ' completed',
+      output: String(nextActions.next_wp || 'NONE'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-complete'),
+      priority: '높음',
+      owner: 'Reporter',
+      nextAction: '다음 packet 이동',
+    },
+    {
+      id: 'plan-module',
+      nodeId: 'control-module',
+      step: '6',
+      task: '모듈 생성',
+      purpose: 'preview -> dry-run -> confirm -> create',
+      input: 'blueprint / recipe / domain',
+      output: 'requirements preview',
+      status: 'ready',
+      priority: '최고',
+      owner: 'Builder',
+      nextAction: 'dry-run preview 실행',
+    },
+  ];
+
+  renderMasterStatus();
+  renderPlanBoard();
+  if (S.selected) renderPanel(S.selected);
 }
 
 function applyHealthData(data) {
@@ -1458,7 +2793,10 @@ function updateStatusBar() {
     updateEl.textContent = secs !== null ? '\\uc5c5\\ub370\\uc774\\ud2b8: ' + secs + '\\ucd08 \\uc804' : '\\uc5c5\\ub370\\uc774\\ud2b8: -';
   }
   if (zoomEl)  zoomEl.textContent  = 'Zoom: ' + Math.round(S.tk * 100) + '%';
-  if (countEl) countEl.textContent = 'Nodes: ' + S.nodes.length;
+  if (countEl) {
+    var visibleCount = S.nodes.filter(function(node) { return !node.hiddenInGraph; }).length;
+    countEl.textContent = 'Nodes: ' + visibleCount;
+  }
 }
 
 function updateZoomDisplay() {
@@ -1540,6 +2878,12 @@ window.toggleFlag         = toggleFlag;
 window.openRollbackModal  = openRollbackModal;
 window.confirmRollback    = confirmRollback;
 window.fitView            = fitView;
+window.selectControlNode  = selectControlNode;
+window.handleScaffoldInput = handleScaffoldInput;
+window.handleScaffoldBlueprint = handleScaffoldBlueprint;
+window.previewModuleScaffold = previewModuleScaffold;
+window.createModuleScaffold = createModuleScaffold;
+window.loadScaffoldCommand = loadScaffoldCommand;
 
 setInterval(updateStatusBar, 10000);
 
@@ -1550,7 +2894,7 @@ setInterval(updateStatusBar, 10000);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workflow OS \u2014 \ub9c8\uc778\ub4dc\ub9f5 \ucee8\ud2b8\ub864 \uc13c\ud130</title>
+<title>Workflow OS \u2014 \ud1b5\ud569 \ud1b5\uc81c \uc13c\ud130</title>
 <style>
 ${css}
 </style>
@@ -1559,14 +2903,36 @@ ${css}
 <div id="topbar">
   <div class="brand">
     <div class="brand-mark">WF</div>
-    <div class="brand-copy"><strong>Workflow OS</strong><span>\ub9c8\uc778\ub4dc\ub9f5 \ucee8\ud2b8\ub864 \uc13c\ud130</span></div>
+    <div class="brand-copy"><strong>Workflow OS</strong><span>\ud1b5\ud569 \ud1b5\uc81c \uc13c\ud130</span></div>
   </div>
   <div class="topbar-actions">
+    <span id="topbar-auto-send-badge" class="tb-auto-badge tb-auto-off" title="\uc790\ub3d9 \uc804\uc1a1 \uc0c1\ud0dc">\uc790\ub3d9\uc804\uc1a1 OFF</span>
     <button class="tb-btn" onclick="fitView()">\u21ba \ub9de\ucda4</button>
+    <a class="tb-btn tb-btn-studio" href="../index.html#automation-bridge">Planning Studio</a>
     <a class="tb-btn" href="../index.html">\u2190 \ud648</a>
     <a class="tb-btn" href="../catalog-site/index.html">\uce74\ud0c8\ub85c\uadf8</a>
   </div>
 </div>
+
+<section id="master-status">
+  <article class="master-card"><span>\ud604\uc7ac \ubaa9\ud45c</span><strong id="master-goal">-</strong></article>
+  <article class="master-card"><span>\ud604\uc7ac \ub2e8\uacc4</span><strong id="master-stage">-</strong></article>
+  <article class="master-card"><span>\uc9c4\ud589\ub960</span><strong id="master-progress">0%</strong></article>
+  <article class="master-card"><span>\ucc28\ub2e8 \uc5ec\ubd80</span><strong id="master-blocker" class="master-value">-</strong></article>
+  <article class="master-card"><span>\ub2e4\uc74c \uc791\uc5c5</span><strong id="master-next">-</strong></article>
+  <article class="master-card master-card-auto"><span>\uc790\ub3d9 \uc804\uc1a1</span><strong id="master-auto-send" class="master-auto-off">OFF</strong></article>
+</section>
+
+<aside id="control-sidebar">
+  <section class="sidebar-section">
+    <div class="sidebar-title">\ud1b5\uc81c \ud750\ub984</div>
+    <div id="control-sidebar-list" class="sidebar-stack"></div>
+  </section>
+  <section class="sidebar-section">
+    <div class="sidebar-title">\ub3c4\uba54\uc778 \ucd08\uc810</div>
+    <div id="domain-sidebar-list" class="sidebar-stack"></div>
+  </section>
+</aside>
 
 <div id="canvas-wrap">
   <svg id="mindmap-svg">
@@ -1601,6 +2967,33 @@ ${css}
   <div id="panel-tabs"></div>
   <div id="panel-body"></div>
 </div>
+
+<section id="plan-board">
+  <div class="plan-board-head">
+    <div>
+      <h3>\uc2e4\ud589 \uacc4\ud68d\ud45c</h3>
+      <p>\ub178\ub4dc \uc120\ud0dd\uacfc \uac19\uc740 \ub370\uc774\ud130 \ubaa8\ub378\uc744 \ubcf4\ub294 \ud558\ub2e8 \ud1b5\uc81c\ud45c</p>
+    </div>
+  </div>
+  <div class="plan-board-wrap">
+    <table class="plan-table">
+      <thead>
+        <tr>
+          <th>\ub2e8\uacc4</th>
+          <th>\uc791\uc5c5\uba85</th>
+          <th>\ubaa9\uc801</th>
+          <th>\uc785\ub825</th>
+          <th>\ucd9c\ub825</th>
+          <th>\uc0c1\ud0dc</th>
+          <th>\uc6b0\uc120\uc21c\uc704</th>
+          <th>\ub2f4\ub2f9 \uc5d0\uc774\uc804\ud2b8</th>
+          <th>\ub2e4\uc74c \uc561\uc158</th>
+        </tr>
+      </thead>
+      <tbody id="plan-table-body"></tbody>
+    </table>
+  </div>
+</section>
 
 <div id="status-bar">
   <span id="sb-sse" class="sb-item sb-red">SSE: DISCONNECTED</span>
@@ -1646,18 +3039,39 @@ function buildData() {
     'master-shell/observability/health-scores.yaml',
     'master-shell/plugin-registry/registry.yaml',
     'master-shell/navigation/nav.yaml',
+    'memory/current-wp.yaml',
+    'memory/next-actions.yaml',
+    'memory/project/master-planner-draft.yaml',
+    'master-shell/catalog/project-blueprints.yaml',
+    'master-shell/catalog/ai-runtime-recipes.yaml',
+    'master-shell/catalog/adapter-compatibility-matrix.yaml',
   ]);
   return buildGraphData(bundle);
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-function main() {
+function buildMindmapRuntime() {
   const graphData = buildData();
-  const html = buildHtml(graphData);
+  return {
+    graphData,
+    html: buildHtml(graphData),
+  };
+}
+
+function main() {
+  const runtime = buildMindmapRuntime();
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  fs.writeFileSync(OUT_FILE, html, 'utf8');
+  fs.writeFileSync(OUT_FILE, runtime.html, 'utf8');
   process.stdout.write('[ui:build] \ub9c8\uc778\ub4dc\ub9f5 \ucee8\ud2b8\ub864 \uc13c\ud130 \uc0dd\uc131 \uc644\ub8cc\n');
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  buildData,
+  buildHtml,
+  buildMindmapRuntime,
+};

@@ -31,11 +31,14 @@ export default [
         Math: "readonly",
         Symbol: "readonly",
         crypto: "readonly",
+        URL: "readonly",
+        fetch: "readonly",
+        globalThis: "readonly",
       },
     },
     rules: {
       // 오류 방지
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
       "no-undef": "error",
 
       // 코드 품질

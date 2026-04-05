@@ -178,9 +178,26 @@ if (require.main === module) {
   main();
 }
 
+/**
+ * Read multiple YAML files at once.
+ * Returns a map of { relativePath → parsed data }.
+ * Missing files return {} without error.
+ *
+ * @param {string[]} relativePaths
+ * @returns {Record<string, Record<string, unknown>>}
+ */
+function readYamlMany(relativePaths) {
+  const output = {};
+  for (const relativePath of relativePaths.filter(Boolean)) {
+    output[relativePath] = readYaml(relativePath);
+  }
+  return output;
+}
+
 module.exports = {
   STAGE_ORDER,
   readYaml,
+  readYamlMany,
   getLegacyStageStates,
   evaluateStage,
   resolveRequirementsPath,
