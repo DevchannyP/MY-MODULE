@@ -391,8 +391,20 @@ function createAllEnabledFlags() {
   };
 }
 
+// ── Shared domain event publisher — wired to observable ring buffer ───────────
+const DOMAIN_EVENT_RING_MAX = 100;
+const _domainEventRingBuffer = [];
+
+const _sharedDomainEventPublisher = new InMemoryEventPublisher();
+_sharedDomainEventPublisher.onPublish((evt) => {
+  _domainEventRingBuffer.push(Object.assign({ _observed_at: new Date().toISOString() }, evt));
+  if (_domainEventRingBuffer.length > DOMAIN_EVENT_RING_MAX) {
+    _domainEventRingBuffer.shift();
+  }
+});
+
 function createAppHandler({
-  taskController = createTaskController(),
+  taskController = createTaskController(new InMemoryTaskRepository(), _sharedDomainEventPublisher),
   billingController = createBillingController(),
   videoController = createVideoController(),
   idempotencyStore = new InMemoryIdempotencyStore(),
@@ -693,6 +705,15 @@ function createAppHandler({
         return;
       }
 
+      // ── Domain Event Bus — observable ring buffer ──────────────────────────
+      if (url.pathname === '/api/v1/domain-events' && method === 'GET') {
+        const limit = Math.min(parseInt(query.limit || '50', 10) || 50, 100);
+        const snapshot = _domainEventRingBuffer.slice(-limit);
+        sendResponse(req, res, 200, { total: _domainEventRingBuffer.length, events: snapshot },
+          mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
       if (idempotencyScope) {
         idempotencyStore.abort(idempotencyScope);
       }
@@ -818,4 +839,5 @@ module.exports = {
   createServer,
   startServer,
   createAllEnabledFlags,
+  _domainEventRingBuffer,
 };

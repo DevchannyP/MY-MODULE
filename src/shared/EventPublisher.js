@@ -60,12 +60,28 @@ class InMemoryEventPublisher extends EventPublisher {
     super();
     /** @type {Array<Record<string,unknown>>} */
     this._published = [];
+    /** @type {Array<(evt: Record<string,unknown>) => void>} */
+    this._subscribers = [];
+  }
+
+  /**
+   * Subscribe to events as they are published.
+   * Errors thrown by callbacks are swallowed to preserve publisher stability.
+   * @param {(evt: Record<string,unknown>) => void} callback
+   */
+  onPublish(callback) {
+    this._subscribers.push(callback);
   }
 
   /** @param {Array<Record<string,unknown>>} events */
   async publish(events) {
     const arr = Array.isArray(events) ? events : [events];
     this._published.push(...arr);
+    for (const evt of arr) {
+      for (const cb of this._subscribers) {
+        try { cb(evt); } catch { /* subscriber errors must not break the publisher */ }
+      }
+    }
   }
 
   /** @returns {Array<Record<string,unknown>>} */
