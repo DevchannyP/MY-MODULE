@@ -808,6 +808,37 @@ function createAppHandler({
         return;
       }
 
+      // ── Planning Studio — save-packet / save-sections / save-automation ──
+      if (
+        method === 'POST' &&
+        (url.pathname === '/api/planning-studio/save-packet' ||
+          url.pathname === '/api/planning-studio/save-sections' ||
+          url.pathname === '/api/planning-studio/save-automation')
+      ) {
+        const commandName = url.pathname.split('/').pop();
+        const saveResult = spawnSync('python3', [
+          path.resolve(__dirname, '../../scripts/planning_studio_api.py'), commandName,
+        ], {
+          cwd: path.resolve(__dirname, '../..'),
+          encoding: 'utf8',
+          input: JSON.stringify(body || {}),
+        });
+        if (saveResult.status !== 0) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          sendResponse(req, res, 500, fromError(
+            Object.assign(new Error(`${commandName} failed`), { code: 'INTERNAL_ERROR' }),
+            { path: url.pathname },
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+        let saveData = {};
+        try { saveData = JSON.parse(saveResult.stdout || '{}'); } catch (_) { saveData = {}; }
+        const saveResponseBody = { ok: true, data: saveData };
+        if (idempotencyScope) idempotencyStore.complete(idempotencyScope, { status: 200, body: saveResponseBody });
+        sendResponse(req, res, 200, saveResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
       // ── Dynamic UI serving (static artifacts catch-all) ──────────────────
       if (method === 'GET' || method === 'HEAD') {
         if (tryServeDynamicUi(req, res, url.pathname)) {

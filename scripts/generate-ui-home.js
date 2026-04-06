@@ -542,6 +542,7 @@ function buildHtml({ report, navSummary, currentState }) {
       </div>
       <button class="chip-link" aria-controls="home-stat-detail" style="cursor:pointer;border:none;background:rgba(15,118,110,0.08);border:1px solid rgba(15,118,110,0.3);border-radius:999px;padding:6px 12px;font-size:12px;color:#0f766e;" onclick="document.getElementById('home-stat-detail').scrollIntoView({behavior:'smooth'})">운영 상태 보기</button>
       <span id="live-autosend-badge" style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;background:rgba(220,207,186,0.4);color:#61707f;border:1px solid rgba(220,207,186,0.6);">상태 로딩...</span>
+      <button id="btn-autosend-toggle" style="display:none;padding:4px 10px;border-radius:999px;font-size:11px;background:transparent;border:1px solid rgba(15,118,110,0.4);color:#0f766e;cursor:pointer;margin-left:4px;" aria-label="자동 전송 ON/OFF 전환">전환</button>
       <nav aria-label="주요 운영 화면">
       <div class="top-actions">
         <a class="chip-link" href="master-planner/index.html">마스터 플래너</a>
@@ -722,12 +723,28 @@ function buildHtml({ report, navSummary, currentState }) {
     <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
   </div>
 <script>
-async function callPlanningApi(endpoint) {
+async function callPlanningApi(endpoint, body) {
   try {
-    const resp = await fetch('/api/planning-studio/' + endpoint);
+    const opts = body
+      ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
+      : {};
+    const resp = await fetch('/api/planning-studio/' + endpoint, opts);
     if (!resp.ok) return null;
     return await resp.json();
   } catch (_) { return null; }
+}
+function updateAutosendUi(autoSend) {
+  const badge = document.getElementById('live-autosend-badge');
+  const stateEl = document.getElementById('live-autosend-state');
+  const toggleBtn = document.getElementById('btn-autosend-toggle');
+  if (badge) {
+    const on = !!autoSend.enabled;
+    badge.textContent = on ? '자동 전송 ON' : '자동 전송 OFF';
+    badge.style.background = on ? 'rgba(15,118,110,0.15)' : 'rgba(220,207,186,0.4)';
+    badge.style.color = on ? '#0f766e' : '#61707f';
+  }
+  if (stateEl) stateEl.textContent = autoSend.enabled ? 'ON' : 'OFF';
+  if (toggleBtn) toggleBtn.style.display = 'inline-block';
 }
 document.addEventListener('DOMContentLoaded', async () => {
   const result = await callPlanningApi('snapshot');
@@ -737,21 +754,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   const d = result.data || {};
-  const autoSend = d.automation_config || {};
-  const badge = document.getElementById('live-autosend-badge');
-  if (badge) {
-    const on = autoSend.enabled;
-    badge.textContent = on ? '자동 전송 ON' : '자동 전송 OFF';
-    badge.style.background = on ? 'rgba(15,118,110,0.15)' : 'rgba(220,207,186,0.4)';
-    badge.style.color = on ? '#0f766e' : '#61707f';
-  }
-  const stateEl = document.getElementById('live-autosend-state');
-  if (stateEl) stateEl.textContent = autoSend.enabled ? 'ON' : 'OFF';
+  let autoSend = d.automation_config || {};
+  updateAutosendUi(autoSend);
   const wpEl = document.getElementById('live-current-wp');
   if (wpEl && d.current_wp) wpEl.textContent = d.current_wp.id || '—';
   const branchEl = document.getElementById('live-branch-status');
   if (branchEl && d.code_status) {
     branchEl.textContent = (d.code_status.dirty ? '⚡ ' : '') + (d.code_status.branch || '—');
+  }
+  const toggleBtn = document.getElementById('btn-autosend-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', async () => {
+      toggleBtn.disabled = true;
+      const saveResult = await callPlanningApi('save-automation', {
+        enabled: !autoSend.enabled,
+        cycle_minutes: autoSend.cycle_minutes || 30,
+        enter_seconds: autoSend.enter_seconds || 10,
+        workers: autoSend.workers || [],
+      });
+      if (saveResult && saveResult.ok) {
+        autoSend = (saveResult.data || {}).automation_config || autoSend;
+        updateAutosendUi(autoSend);
+      }
+      toggleBtn.disabled = false;
+    });
+  }
+  const currentWpId = (d.current_wp || {}).id;
+  if (currentWpId) {
+    const wpEl2 = document.getElementById('live-current-wp');
+    if (wpEl2) {
+      wpEl2.title = '클릭하여 현재 패킷을 다음 실행 대상으로 설정';
+      wpEl2.style.cursor = 'pointer';
+      wpEl2.addEventListener('click', async () => {
+        await callPlanningApi('save-packet', { id: currentWpId, set_as_next: true });
+      });
+    }
   }
 });
 </script>
