@@ -2,6 +2,7 @@
 
 const http = require('node:http');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { URL } = require('node:url');
@@ -391,7 +392,19 @@ function createAllEnabledFlags() {
       return { flagName, value: true, reason: 'TEST_OVERRIDE', metadata: {}, stale: false, context: context || {} };
     },
     getAll: () => ({}),
-    getRuntimeStatus: () => ({ flagsLoaded: true, metadataLoaded: true, errors: [], flagCount: 0, metadataCount: 0 }),
+    getRuntimeStatus: () => ({
+      flagsLoaded: true,
+      metadataLoaded: true,
+      errors: [],
+      flagCount: 0,
+      metadataCount: 0,
+      envOverridesApplied: 0,
+      env_overridden_flags: [],
+      enabled_flags: ['TEST_ALL_ENABLED'],
+    }),
+    getFullFlagDetails: () => [
+      { flag: 'TEST_ALL_ENABLED', enabled: true, env_overridden: false, source: 'flags.yaml' },
+    ],
   };
 }
 
@@ -407,6 +420,197 @@ _sharedDomainEventPublisher.onPublish((evt) => {
   }
 });
 
+function buildControlBridgePrompt(snapshotData = {}) {
+  const currentWp = snapshotData.current_wp || {};
+  const nextActions = snapshotData.next_actions || {};
+  const plannerSections = ((snapshotData.planner_sections_draft || {}).sections || [])
+    .filter((section) => section && !section.done)
+    .slice(0, 3)
+    .map((section) => String(section.title || section.id || '').trim())
+    .filter(Boolean);
+
+  const goal = String(currentWp.goal || '현재 목표 미정').trim();
+  const packetId = String(currentWp.id || nextActions.next_wp || 'NONE').trim();
+  const nextTask = plannerSections[0] || String(nextActions.next_wp || '다음 작업 검토 필요').trim();
+
+  return [
+    '[실행 지시]',
+    `현재 목표: ${goal}`,
+    `현재 패킷: ${packetId}`,
+    `다음 작업: ${nextTask || '다음 작업 검토 필요'}`,
+    '계약과 기존 동작을 유지하면서 다음 액션만 진행하라.',
+  ].join('\n');
+}
+
+function createNodePtyBridge(runtimeRoot) {
+  const virtualSession = {
+    pid: process.pid,
+    ppid: process.ppid,
+    pts: 'node-control-center',
+    label: 'Node Runtime Control Bridge',
+    command: 'virtual-control-center',
+    cwd: runtimeRoot,
+  };
+
+  return {
+    sessions: [virtualSession],
+    scheduler: {
+      running: false,
+      startedAt: null,
+      workers: [],
+      lastActivity: null,
+      log: [],
+    },
+    lastPromptText: '',
+  };
+}
+
+function bridgePromptPreview(promptText, limit = 80) {
+  return String(promptText || '').replace(/\s+/g, ' ').trim().slice(0, limit);
+}
+
+function buildBridgeActivity(action, worker, pts, promptText, ok, error, packetId) {
+  return {
+    action,
+    worker,
+    pts,
+    packet_id: packetId || '',
+    prompt_preview: bridgePromptPreview(promptText, 120),
+    ok,
+    error: error || null,
+  };
+}
+
+function appendBridgeLog(scheduler, entry) {
+  scheduler.log.unshift(entry);
+  if (scheduler.log.length > 30) {
+    scheduler.log.length = 30;
+  }
+}
+
+function buildBridgeSchedulerStatus(bridgeState) {
+  const now = Date.now();
+  const scheduler = bridgeState.scheduler;
+  const workers = scheduler.workers.map((worker) => ({
+    name: worker.name,
+    plan_id: worker.plan_id,
+    pts: worker.pts,
+    prompt_preview: bridgePromptPreview(worker.prompt),
+    active_issue: worker.plan_id || '',
+    use_home_operator_prompt: Boolean(worker.use_home_operator_prompt),
+    cycle_min: worker.cycle_minutes,
+    enter_sec: worker.enter_seconds,
+    next_enter_in: Math.max(0, Math.round((worker.nextEnterAt - now) / 1000)),
+    next_prompt_in: Math.max(0, Math.round((worker.nextPromptAt - now) / 1000)),
+  }));
+
+  const currentWorker = scheduler.running ? workers.find((worker) => String(worker.pts || '').trim()) || null : null;
+  const currentActivity = currentWorker
+    ? {
+      action: 'running',
+      worker: currentWorker.name,
+      pts: currentWorker.pts,
+      packet_id: currentWorker.plan_id || '',
+      prompt_preview: currentWorker.prompt_preview,
+      ok: true,
+      error: null,
+      next_enter_in: currentWorker.next_enter_in,
+      next_prompt_in: currentWorker.next_prompt_in,
+    }
+    : null;
+
+  return {
+    running: scheduler.running,
+    started_at: scheduler.startedAt,
+    workers,
+    current_activity: currentActivity,
+    last_activity: scheduler.lastActivity,
+    log: scheduler.log,
+  };
+}
+
+function recordControlCenterOperation({
+  parentSpan,
+  operation,
+  route,
+  method,
+  correlationId,
+  requestId,
+  attributes = {},
+  level = 'info',
+  message = '',
+}) {
+  const childSpan = tracer.startSpan(operation, {
+    traceId: parentSpan.traceId,
+    parentSpanId: parentSpan.spanId,
+    attributes: {
+      'http.route': route,
+      'http.request.method': method,
+      'code.function': 'createAppHandler',
+      ...attributes,
+    },
+  });
+
+  const startedAt = Date.now();
+  return {
+    succeed(extraAttributes = {}) {
+      const duration = Date.now() - startedAt;
+      childSpan
+        .setStatus('ok')
+        .setAttribute('control_center.operation.duration_ms', duration);
+      Object.entries(extraAttributes).forEach(([key, value]) => childSpan.setAttribute(key, value));
+      childSpan.end();
+      metrics.controlCenterOperationDurationMs.record(duration, {
+        operation,
+        route,
+        method,
+      });
+      logger.info('control_center.operation', {
+        trace_id: parentSpan.traceId,
+        parent_span_id: parentSpan.spanId,
+        span_id: childSpan.spanId,
+        correlation_id: correlationId,
+        request_id: requestId,
+        operation,
+        route,
+        method,
+        duration_ms: duration,
+        message: message || 'ok',
+        ...attributes,
+        ...extraAttributes,
+      });
+    },
+    fail(error, extraAttributes = {}) {
+      const duration = Date.now() - startedAt;
+      childSpan
+        .recordException(error)
+        .setAttribute('control_center.operation.duration_ms', duration);
+      Object.entries(extraAttributes).forEach(([key, value]) => childSpan.setAttribute(key, value));
+      childSpan.end();
+      metrics.controlCenterOperationDurationMs.record(duration, {
+        operation,
+        route,
+        method,
+        error: true,
+      });
+      logger[level]('control_center.operation.failed', {
+        trace_id: parentSpan.traceId,
+        parent_span_id: parentSpan.spanId,
+        span_id: childSpan.spanId,
+        correlation_id: correlationId,
+        request_id: requestId,
+        operation,
+        route,
+        method,
+        duration_ms: duration,
+        error_message: error.message,
+        ...attributes,
+        ...extraAttributes,
+      });
+    },
+  };
+}
+
 function createAppHandler({
   taskController = createTaskController(new InMemoryTaskRepository(), _sharedDomainEventPublisher),
   billingController = createBillingController(),
@@ -418,7 +622,10 @@ function createAppHandler({
   requestBodyReadTimeoutMs = 5000,
   lifecycleState = createLifecycleState(),
   flags = null,  // null → 파일 기반 provider 사용 (프로덕션 기본값)
+  runtimeRoot = path.resolve(__dirname, '../..'),
 } = {}) {
+  const nodePtyBridge = createNodePtyBridge(runtimeRoot);
+
   return async function appHandler(req, res) {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
     const method = req.method || 'GET';
@@ -516,6 +723,22 @@ function createAppHandler({
             drain_started_at: lifecycleState.drainStartedAt,
             shutdown_reason: lifecycleState.shutdownReason,
           },
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      // ── Feature Flag 상태 조회 (/flags) ─────────────────────────────────
+      if (url.pathname === '/flags' && method === 'GET') {
+        metrics.httpRequestsTotal.add(1, { route: '/flags', method });
+        const currentFlags = resolvedFlags || getFeatureFlags();
+        const flagDetails = currentFlags.getFullFlagDetails();
+        span.setStatus('ok').end();
+        sendResponse(req, res, 200, {
+          as_of: new Date().toISOString(),
+          env_overrides_applied: currentFlags.getRuntimeStatus().envOverridesApplied,
+          env_overridden_flags: currentFlags.getRuntimeStatus().env_overridden_flags,
+          enabled_flags: currentFlags.getRuntimeStatus().enabled_flags,
+          flags: flagDetails,
         }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
@@ -730,6 +953,7 @@ function createAppHandler({
         }
         const scaffoldArgs = [
           path.resolve(__dirname, '../../scripts/generate-domain-scaffold.js'),
+          '--root', runtimeRoot,
           '--domain', domainArg,
           '--blueprint', blueprintArg,
         ];
@@ -737,7 +961,7 @@ function createAppHandler({
           scaffoldArgs.push('--recipe', reqBody.recipe.trim());
         }
         if (isDryRun) scaffoldArgs.push('--dry-run');
-        const scaffoldResult = spawnSync('node', scaffoldArgs, { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
+        const scaffoldResult = spawnSync('node', scaffoldArgs, { cwd: runtimeRoot, encoding: 'utf8' });
         if (scaffoldResult.status !== 0) {
           if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
           const errMsg = (scaffoldResult.stderr || '').trim() || 'scaffold failed';
@@ -749,6 +973,30 @@ function createAppHandler({
             { path: url.pathname },
           ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
           return;
+        }
+        if (!isDryRun) {
+          const registrationArgs = [
+            path.resolve(__dirname, '../../scripts/register_stage_c_plugin.py'),
+            '--root', runtimeRoot,
+            '--requirements', `requirements/${domainArg}.yaml`,
+          ];
+          const registrationResult = spawnSync('python3', registrationArgs, { cwd: runtimeRoot, encoding: 'utf8' });
+          if (registrationResult.status !== 0) {
+            const requirementsPath = path.resolve(runtimeRoot, `requirements/${domainArg}.yaml`);
+            if (fs.existsSync(requirementsPath)) {
+              fs.unlinkSync(requirementsPath);
+            }
+            if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+            const errMsg = (registrationResult.stderr || '').trim() || 'stage c registration failed';
+            const isConflict = errMsg.includes('conflict') || errMsg.includes('already registered');
+            sendResponse(req, res, isConflict ? 409 : 500, fromError(
+              Object.assign(new Error(errMsg), {
+                code: isConflict ? 'CONFLICT' : 'STAGE_C_ERROR',
+              }),
+              { path: url.pathname },
+            ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+            return;
+          }
         }
         const scaffoldStdout = (scaffoldResult.stdout || '').trim();
         const scaffoldResponseBody = {
@@ -793,7 +1041,7 @@ function createAppHandler({
       if (method === 'GET' && url.pathname === '/api/planning-studio/snapshot') {
         const snapshotResult = spawnSync('python3', [
           path.resolve(__dirname, '../../scripts/planning_studio_api.py'), 'snapshot',
-        ], { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
+        ], { cwd: runtimeRoot, encoding: 'utf8' });
         if (snapshotResult.status !== 0) {
           if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
           sendResponse(req, res, 500, fromError(
@@ -808,6 +1056,349 @@ function createAppHandler({
         return;
       }
 
+      if (method === 'POST' && url.pathname === '/api/planning-studio/stage-run') {
+        const stageRunObservation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'planning_studio.stage_run',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+        const requestedStage = typeof body.stage === 'string' ? body.stage.trim().toUpperCase() : '';
+        const requestedModule = typeof body.module === 'string' ? body.module.trim() : '';
+        const executeStage = body.execute === true;
+        const modulePattern = /^[a-z][a-z0-9-]{0,62}$/;
+
+        if (!['A', 'B', 'C', 'D', 'E'].includes(requestedStage)) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          const validationErr = Object.assign(new Error('stage must be one of A, B, C, D, E'), { code: 'VALIDATION_ERROR' });
+          stageRunObservation.fail(validationErr, { 'stage_run.reason': 'invalid_stage', 'stage_run.stage': requestedStage });
+          sendResponse(req, res, 400, fromError(validationErr, { path: url.pathname }).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+
+        if (requestedModule && !modulePattern.test(requestedModule)) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          const moduleErr = Object.assign(new Error('module must match ^[a-z][a-z0-9-]{0,62}$'), { code: 'VALIDATION_ERROR' });
+          stageRunObservation.fail(moduleErr, { 'stage_run.reason': 'invalid_module', 'stage_run.module': requestedModule });
+          sendResponse(req, res, 400, fromError(moduleErr, { path: url.pathname }).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+
+        // execute 모드는 system.admin 전용 — 계약 execute_requires 준수
+        if (executeStage && !caller.permissions.includes('system.admin')) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          const authzErr = Object.assign(new Error('stage execute 모드는 system.admin 권한이 필요합니다.'), { code: 'FORBIDDEN' });
+          stageRunObservation.fail(authzErr, { 'stage_run.reason': 'forbidden_execute', 'stage_run.stage': requestedStage });
+          sendResponse(req, res, 403, fromError(authzErr, { path: url.pathname, correlationId }).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+
+        const stageArgs = [
+          path.resolve(__dirname, '../../scripts/run_stage.js'),
+          requestedStage,
+          '--root', runtimeRoot,
+          executeStage ? '--execute' : '--dry-run',
+        ];
+        if (requestedModule) {
+          stageArgs.push('--module', requestedModule);
+        }
+
+        const stageResult = spawnSync('node', stageArgs, {
+          cwd: runtimeRoot,
+          encoding: 'utf8',
+          timeout: 30_000,
+        });
+
+        let stageReport = null;
+        try {
+          stageReport = JSON.parse(stageResult.stdout || '{}');
+        } catch (_) {
+          stageReport = null;
+        }
+
+        if (!stageReport || typeof stageReport !== 'object') {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          const errMsg = stageResult.signal === 'SIGTERM'
+            ? 'stage run timed out after 30s'
+            : (stageResult.stderr || '').trim() || 'stage run failed';
+          const stageRunErr = Object.assign(new Error(errMsg), {
+            code: stageResult.signal === 'SIGTERM' ? 'STAGE_RUN_TIMEOUT' : 'STAGE_RUN_ERROR',
+          });
+          stageRunObservation.fail(stageRunErr, {
+            'stage_run.stage': requestedStage,
+            'stage_run.exit_code': stageResult.status,
+            'stage_run.timed_out': stageResult.signal === 'SIGTERM',
+          });
+          sendResponse(req, res, 500, fromError(stageRunErr, { path: url.pathname }).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+
+        stageRunObservation.succeed({
+          'stage_run.stage': requestedStage,
+          'stage_run.module': requestedModule || 'all',
+          'stage_run.mode': executeStage ? 'execute' : 'dry-run',
+          'stage_run.status': stageReport.status || 'unknown',
+        });
+        const stageRunResponseBody = {
+          ok: true,
+          data: stageReport,
+        };
+        if (idempotencyScope) {
+          idempotencyStore.complete(idempotencyScope, { status: 200, body: stageRunResponseBody });
+        }
+        sendResponse(req, res, 200, stageRunResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      // ── Control Center — prompt recommendation / virtual PTY bridge ──────
+      if (method === 'GET' && url.pathname === '/api/automation/optimize-prompt') {
+        const observation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'control_center.optimize_prompt',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+        const snapshotResult = spawnSync('python3', [
+          path.resolve(__dirname, '../../scripts/planning_studio_api.py'), 'snapshot',
+        ], { cwd: runtimeRoot, encoding: 'utf8' });
+        let snapshotData = {};
+        try { snapshotData = JSON.parse(snapshotResult.stdout || '{}'); } catch (_) { snapshotData = {}; }
+        metrics.controlCenterPromptRecommendationsTotal.add(1, {
+          route: url.pathname,
+          method,
+        });
+        observation.succeed({
+          'control_center.prompt.source': 'planning-studio-snapshot',
+          'control_center.snapshot.ok': snapshotResult.status === 0,
+        });
+        sendResponse(req, res, 200, {
+          prompt: buildControlBridgePrompt(snapshotData),
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/api/pty/sessions') {
+        const observation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'pty.bridge.sessions',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+        metrics.ptyBridgeSessionsReadTotal.add(1, {
+          route: url.pathname,
+          method,
+        });
+        observation.succeed({
+          'pty.session.count': nodePtyBridge.sessions.length,
+        });
+        sendResponse(req, res, 200, {
+          sessions: nodePtyBridge.sessions,
+          count: nodePtyBridge.sessions.length,
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'POST' && url.pathname === '/api/pty/send') {
+        const observation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'pty.bridge.send',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+        const pts = typeof body.pts === 'string' ? body.pts.trim() : '';
+        const text = typeof body.text === 'string' ? body.text : '';
+        if (!pts) {
+          metrics.ptyBridgeFailuresTotal.add(1, {
+            route: url.pathname,
+            method,
+            reason: 'missing_pts',
+          });
+          observation.fail(new Error('pts required'), {
+            'pty.send.reason': 'missing_pts',
+          });
+          const missingPtsErr = Object.assign(new Error('pts 필드가 필수입니다.'), { code: 'VALIDATION_ERROR' });
+          const { status: missingPtsStatus, body: missingPtsBody } = fromError(missingPtsErr, { path: url.pathname, correlationId });
+          sendResponse(req, res, missingPtsStatus, missingPtsBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+        const session = nodePtyBridge.sessions.find((item) => String(item.pts || '') === pts);
+        if (!session) {
+          metrics.ptyBridgeFailuresTotal.add(1, {
+            route: url.pathname,
+            method,
+            reason: 'unknown_pts',
+          });
+          observation.fail(new Error('unknown pts'), {
+            'pty.send.reason': 'unknown_pts',
+            'pty.session.pts': pts,
+          });
+          const unknownPtsErr = Object.assign(new Error(`알 수 없는 PTY 세션입니다: ${pts}`), { code: 'NOT_FOUND' });
+          const { status: unknownPtsStatus, body: unknownPtsBody } = fromError(unknownPtsErr, { path: url.pathname, correlationId });
+          sendResponse(req, res, unknownPtsStatus, unknownPtsBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+        const action = typeof body.action === 'string' && body.action.trim()
+          ? body.action.trim()
+          : (text === '\r' ? 'enter' : 'prompt');
+        const promptText = typeof body.prompt === 'string' && body.prompt.trim()
+          ? body.prompt.trim()
+          : (text.endsWith('\r') ? text.slice(0, -1) : text);
+        const packetId = typeof body.packet_id === 'string' ? body.packet_id : '';
+        nodePtyBridge.lastPromptText = promptText || nodePtyBridge.lastPromptText;
+        nodePtyBridge.scheduler.lastActivity = buildBridgeActivity(
+          action,
+          typeof body.name === 'string' && body.name.trim() ? body.name.trim() : 'Control Center',
+          pts,
+          promptText,
+          true,
+          null,
+          packetId,
+        );
+        appendBridgeLog(nodePtyBridge.scheduler, {
+          ts: new Date().toISOString(),
+          worker: typeof body.name === 'string' && body.name.trim() ? body.name.trim() : 'Control Center',
+          action,
+          pts,
+          packet_id: packetId || '',
+          ok: true,
+          error: null,
+        });
+        metrics.ptyBridgeSendTotal.add(1, {
+          route: url.pathname,
+          method,
+          action,
+        });
+        observation.succeed({
+          'pty.session.pts': pts,
+          'pty.send.action': action,
+          'pty.packet.id': packetId || '',
+        });
+        const ptyResponseBody = { ok: true, error: null };
+        if (idempotencyScope) {
+          idempotencyStore.complete(idempotencyScope, { status: 200, body: ptyResponseBody });
+        }
+        sendResponse(req, res, 200, ptyResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/api/pty/scheduler/status') {
+        const observation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'pty.scheduler.status',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+        metrics.ptySchedulerStatusReadTotal.add(1, {
+          route: url.pathname,
+          method,
+        });
+        observation.succeed({
+          'pty.scheduler.running': nodePtyBridge.scheduler.running,
+          'pty.scheduler.worker_count': nodePtyBridge.scheduler.workers.length,
+        });
+        sendResponse(req, res, 200, buildBridgeSchedulerStatus(nodePtyBridge), mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'POST' && url.pathname === '/api/pty/scheduler/start') {
+        const observation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'pty.scheduler.start',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+        const workers = Array.isArray(body.workers) ? body.workers : [];
+        const cycleMinutes = Number(body.cycle_minutes || 30);
+        const enterSeconds = Number(body.enter_seconds || 10);
+        const now = Date.now();
+        nodePtyBridge.scheduler.running = true;
+        nodePtyBridge.scheduler.startedAt = new Date().toISOString();
+        nodePtyBridge.scheduler.workers = workers
+          .map((worker, index) => ({
+            name: typeof worker.name === 'string' && worker.name.trim() ? worker.name.trim() : `Worker ${index + 1}`,
+            plan_id: typeof worker.plan_id === 'string' ? worker.plan_id : '',
+            pts: typeof worker.pts === 'string' ? worker.pts : '',
+            prompt: typeof worker.prompt === 'string' && worker.prompt.trim()
+              ? worker.prompt.trim()
+              : (nodePtyBridge.lastPromptText || '계속'),
+            use_home_operator_prompt: worker.use_home_operator_prompt === true,
+            cycle_minutes: Number(worker.cycle_minutes || cycleMinutes),
+            enter_seconds: Number(worker.enter_seconds || enterSeconds),
+            nextEnterAt: now + (Number(worker.enter_seconds || enterSeconds) * 1000),
+            nextPromptAt: now + (Number(worker.cycle_minutes || cycleMinutes) * 60 * 1000),
+          }))
+          .filter((worker) => String(worker.pts || '').trim());
+        appendBridgeLog(nodePtyBridge.scheduler, {
+          ts: 'system',
+          worker: 'scheduler',
+          action: 'start',
+          pts: '',
+          packet_id: '',
+          ok: true,
+          error: null,
+        });
+        metrics.ptySchedulerStartTotal.add(1, {
+          route: url.pathname,
+          method,
+        });
+        observation.succeed({
+          'pty.scheduler.worker_count': nodePtyBridge.scheduler.workers.length,
+        });
+        const startResponseBody = { ok: true, workers: nodePtyBridge.scheduler.workers.length };
+        if (idempotencyScope) {
+          idempotencyStore.complete(idempotencyScope, { status: 200, body: startResponseBody });
+        }
+        sendResponse(req, res, 200, startResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'POST' && url.pathname === '/api/pty/scheduler/stop') {
+        const observation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'pty.scheduler.stop',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+        nodePtyBridge.scheduler.running = false;
+        nodePtyBridge.scheduler.startedAt = null;
+        appendBridgeLog(nodePtyBridge.scheduler, {
+          ts: 'system',
+          worker: 'scheduler',
+          action: 'stop',
+          pts: '',
+          packet_id: '',
+          ok: true,
+          error: null,
+        });
+        metrics.ptySchedulerStopTotal.add(1, {
+          route: url.pathname,
+          method,
+        });
+        observation.succeed({
+          'pty.scheduler.worker_count': nodePtyBridge.scheduler.workers.length,
+        });
+        const stopResponseBody = { ok: true };
+        if (idempotencyScope) {
+          idempotencyStore.complete(idempotencyScope, { status: 200, body: stopResponseBody });
+        }
+        sendResponse(req, res, 200, stopResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
       // ── Planning Studio — save-packet / save-sections / save-automation ──
       if (
         method === 'POST' &&
@@ -819,7 +1410,7 @@ function createAppHandler({
         const saveResult = spawnSync('python3', [
           path.resolve(__dirname, '../../scripts/planning_studio_api.py'), commandName,
         ], {
-          cwd: path.resolve(__dirname, '../..'),
+          cwd: runtimeRoot,
           encoding: 'utf8',
           input: JSON.stringify(body || {}),
         });
@@ -897,6 +1488,7 @@ function startServer({
   port = 3000,
   host = '127.0.0.1',
   flags = null,
+  runtimeRoot = path.resolve(__dirname, '../..'),
   idempotencyStore = undefined,
   rateLimiter = undefined,
   rateLimitPolicy = undefined,
@@ -906,6 +1498,7 @@ function startServer({
   const lifecycleState = createLifecycleState();
   const server = createServer({
     flags,
+    runtimeRoot,
     idempotencyStore,
     rateLimiter,
     rateLimitPolicy,
