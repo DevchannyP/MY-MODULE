@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const { InMemoryEventPublisher, toCloudEvent } = require('../../shared/EventPublisher');
 const { startServer, createAllEnabledFlags } = require('../../server/createServer');
+const { startServerOrSkip } = require('./support/networkTestRuntime');
 
 describe('[domain event bus smoke] InMemoryEventPublisher observer pattern', () => {
   test('onPublish callback fires for each published event', async () => {
@@ -79,9 +80,12 @@ describe('[domain event bus smoke] InMemoryEventPublisher observer pattern', () 
 describe('[domain event bus smoke] GET /api/v1/domain-events — ring buffer observable', () => {
   let serverHandle;
 
-  test('domain events from POST /tasks appear at GET /api/v1/domain-events', async () => {
+  test('domain events from POST /tasks appear at GET /api/v1/domain-events', async (t) => {
     const flags = createAllEnabledFlags();
-    serverHandle = await startServer({ port: 0, flags });
+    serverHandle = await startServerOrSkip(t, startServer, { port: 0, flags });
+    if (!serverHandle) {
+      return;
+    }
     const { port } = serverHandle;
 
     // Create a task — this triggers TaskCreated domain event via _sharedDomainEventPublisher
