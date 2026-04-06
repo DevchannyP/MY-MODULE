@@ -1027,6 +1027,35 @@ function createAppHandler({
       // ── UI Runtime API ────────────────────────────────────────────────────
       if (method === 'GET' && url.pathname === '/ui/home-runtime') {
         const runtimeData = buildHomeRuntimeResponse();
+        // 라이브 런타임 상태 주입 — 정적 파일 기반 homeData에 없는 동적 컨텍스트
+        const flagStatus = resolvedFlags.getRuntimeStatus();
+        const sched = nodePtyBridge.scheduler;
+        runtimeData.runtime_state = {
+          feature_flags: {
+            enabled_flags: flagStatus.enabled_flags || [],
+            env_overridden_flags: flagStatus.env_overridden_flags || [],
+            env_overrides_applied: typeof flagStatus.envOverridesApplied === 'number' ? flagStatus.envOverridesApplied : 0,
+            flags_loaded: flagStatus.flagsLoaded === true,
+            flag_count: typeof flagStatus.flagCount === 'number' ? flagStatus.flagCount : 0,
+          },
+          scheduler: {
+            running: sched.running === true,
+            worker_count: Array.isArray(sched.workers) ? sched.workers.length : 0,
+            started_at: sched.startedAt || null,
+            last_activity: sched.lastActivity || null,
+          },
+          control_endpoints: {
+            send: '/api/pty/send',
+            sessions: '/api/pty/sessions',
+            scheduler_status: '/api/pty/scheduler/status',
+            scheduler_start: '/api/pty/scheduler/start',
+            scheduler_stop: '/api/pty/scheduler/stop',
+            flags: '/flags',
+            optimize_prompt: '/api/automation/optimize-prompt',
+            stage_run: '/api/planning-studio/stage-run',
+          },
+          as_of: new Date().toISOString(),
+        };
         sendResponse(req, res, 200, runtimeData, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
