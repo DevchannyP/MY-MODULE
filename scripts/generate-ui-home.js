@@ -541,6 +541,7 @@ function buildHtml({ report, navSummary, currentState }) {
         </div>
       </div>
       <button class="chip-link" aria-controls="home-stat-detail" style="cursor:pointer;border:none;background:rgba(15,118,110,0.08);border:1px solid rgba(15,118,110,0.3);border-radius:999px;padding:6px 12px;font-size:12px;color:#0f766e;" onclick="document.getElementById('home-stat-detail').scrollIntoView({behavior:'smooth'})">운영 상태 보기</button>
+      <span id="live-autosend-badge" style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;background:rgba(220,207,186,0.4);color:#61707f;border:1px solid rgba(220,207,186,0.6);">상태 로딩...</span>
       <nav aria-label="주요 운영 화면">
       <div class="top-actions">
         <a class="chip-link" href="master-planner/index.html">마스터 플래너</a>
@@ -569,9 +570,11 @@ function buildHtml({ report, navSummary, currentState }) {
         <h2>지금 상태</h2>
         <div class="side-list">
           <div class="side-item"><span class="muted">요구사항 Stage</span><strong>${esc(report.requirements_stage || '—')}</strong></div>
-          <div class="side-item"><span class="muted">현재 Work Packet</span><strong>${esc(report.current_wp || 'NONE')}</strong></div>
+          <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">${esc(report.current_wp || 'NONE')}</strong></div>
           <div class="side-item"><span class="muted">다음 Work Packet</span><strong>${esc(report.next_wp || 'NONE')}</strong></div>
           <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>${esc(report.promotion_pipeline?.drift_status || '—')}</strong></div>
+          <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
+          <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
         </div>
       </aside>
     </section>
@@ -718,6 +721,40 @@ function buildHtml({ report, navSummary, currentState }) {
     <p class="foot" style="font-size:12px;color:#61707f;margin-top:8px;">같은 자동화 저장 재시도는 안전하게 재사용됩니다. 같은 계획 초안을 다시 저장해도 중복 기록되지 않습니다.</p>
     <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
   </div>
+<script>
+async function callPlanningApi(endpoint) {
+  try {
+    const resp = await fetch('/api/planning-studio/' + endpoint);
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch (_) { return null; }
+}
+document.addEventListener('DOMContentLoaded', async () => {
+  const result = await callPlanningApi('snapshot');
+  if (!result || !result.ok) {
+    const badge = document.getElementById('live-autosend-badge');
+    if (badge) { badge.textContent = '서버 오프라인'; }
+    return;
+  }
+  const d = result.data || {};
+  const autoSend = d.automation_config || {};
+  const badge = document.getElementById('live-autosend-badge');
+  if (badge) {
+    const on = autoSend.enabled;
+    badge.textContent = on ? '자동 전송 ON' : '자동 전송 OFF';
+    badge.style.background = on ? 'rgba(15,118,110,0.15)' : 'rgba(220,207,186,0.4)';
+    badge.style.color = on ? '#0f766e' : '#61707f';
+  }
+  const stateEl = document.getElementById('live-autosend-state');
+  if (stateEl) stateEl.textContent = autoSend.enabled ? 'ON' : 'OFF';
+  const wpEl = document.getElementById('live-current-wp');
+  if (wpEl && d.current_wp) wpEl.textContent = d.current_wp.id || '—';
+  const branchEl = document.getElementById('live-branch-status');
+  if (branchEl && d.code_status) {
+    branchEl.textContent = (d.code_status.dirty ? '⚡ ' : '') + (d.code_status.branch || '—');
+  }
+});
+</script>
 </body>
 </html>`;
 }
