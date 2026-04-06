@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Workflow OS 운영 홈</title>
+<style>.skip-link{position:absolute;left:-9999px;top:8px;padding:6px 12px;background:#0f766e;color:#fff;border-radius:6px;font-size:13px;z-index:9999}.skip-link:focus{left:8px}</style>
 <style>
   :root {
     --bg: #f7f3ea;
@@ -466,6 +467,7 @@
 </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
   <div class="shell">
     <header class="topbar">
       <div class="brand">
@@ -475,14 +477,19 @@
           <span>한국어 중심으로 다시 정리한 정적 포털 첫 화면</span>
         </div>
       </div>
+      <button class="chip-link" aria-controls="home-stat-detail" style="cursor:pointer;border:none;background:rgba(15,118,110,0.08);border:1px solid rgba(15,118,110,0.3);border-radius:999px;padding:6px 12px;font-size:12px;color:#0f766e;" onclick="document.getElementById('home-stat-detail').scrollIntoView({behavior:'smooth'})">운영 상태 보기</button>
+      <span id="live-autosend-badge" style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;background:rgba(220,207,186,0.4);color:#61707f;border:1px solid rgba(220,207,186,0.6);">상태 로딩...</span>
+      <button id="btn-autosend-toggle" style="display:none;padding:4px 10px;border-radius:999px;font-size:11px;background:transparent;border:1px solid rgba(15,118,110,0.4);color:#0f766e;cursor:pointer;margin-left:4px;" aria-label="자동 전송 ON/OFF 전환">전환</button>
+      <nav aria-label="주요 운영 화면">
       <div class="top-actions">
         <a class="chip-link" href="master-planner/index.html">마스터 플래너</a>
         <a class="chip-link" href="catalog-site/index.html">도메인 카탈로그</a>
         <a class="chip-link" href="study-guide/index.html">학습 가이드</a>
       </div>
+      </nav>
     </header>
 
-    <section class="hero">
+    <section class="hero" id="main-content">
       <div>
         <div class="eyebrow">운영자 시작 화면</div>
         <h1>지금 필요한 화면을 바로 찾고,<br>현재 상태를 한눈에 확인합니다.</h1>
@@ -501,14 +508,20 @@
         <h2>지금 상태</h2>
         <div class="side-list">
           <div class="side-item"><span class="muted">요구사항 Stage</span><strong>D</strong></div>
-          <div class="side-item"><span class="muted">현재 Work Packet</span><strong>WP-RUN-004</strong></div>
+          <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">WP-RUN-004</strong></div>
           <div class="side-item"><span class="muted">다음 Work Packet</span><strong>NONE</strong></div>
           <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>clean</strong></div>
+          <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
+          <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
+          <div class="side-item"><span class="muted">터미널 세션</span><strong id="live-pty-sessions">—</strong></div>
+          <div class="side-item"><span class="muted">스케줄러</span><strong id="live-pty-scheduler">—</strong></div>
+          <div class="side-item"><span class="muted">활성 플래그</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
+          <div class="side-item"><span class="muted">ENV 오버라이드</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
         </div>
       </aside>
     </section>
 
-    <section class="stats">
+    <section class="stats" id="home-stat-detail">
       <article class="stat-card">
         <div class="stat-label">헬스 레이팅</div>
         <div class="stat-value">ELITE</div>
@@ -521,7 +534,7 @@
       </article>
       <article class="stat-card">
         <div class="stat-label">잠금 토큰</div>
-        <div class="stat-value">8186</div>
+        <div class="stat-value">10917</div>
         <div class="stat-note">프로모션 파이프라인 context lock 기준</div>
       </article>
       <article class="stat-card">
@@ -538,6 +551,11 @@
       </div>
     </div>
     <section class="page-grid">
+      <article class="page-card">
+        <h3>통합 통제 센터</h3>
+        <p>도메인 라이프사이클, 피처 플래그, 실행 계획표, 롤백 제어를 한 화면에서 직접 조작하는 마스터 컨트롤 패널입니다.</p>
+        <a class="page-link" href="mindmap/index.html">열기</a>
+      </article>
       <article class="page-card">
         <h3>마스터 플래너</h3>
         <p>Work Packet, stage, AI planning surface, benchmark 흐름을 한 화면에서 보는 메인 운영 콘솔입니다.</p>
@@ -660,7 +678,7 @@
                   <span>owner productivity-team</span>
                 </div>
               </div>
-              <span class="tag tone-amber">inactive</span>
+              <span class="tag tone-green">active</span>
             </div>
           
         </div>
@@ -677,7 +695,7 @@
                   <span>owner platform-team</span>
                 </div>
               </div>
-              <span class="tag tone-amber">inactive</span>
+              <span class="tag tone-green">active</span>
             </div>
           
             <div class="nav-item">
@@ -689,7 +707,7 @@
                   <span>owner platform-team</span>
                 </div>
               </div>
-              <span class="tag tone-amber">inactive</span>
+              <span class="tag tone-green">active</span>
             </div>
           
             <div class="nav-item">
@@ -701,7 +719,7 @@
                   <span>owner platform-team</span>
                 </div>
               </div>
-              <span class="tag tone-amber">inactive</span>
+              <span class="tag tone-green">active</span>
             </div>
           
             <div class="nav-item">
@@ -713,7 +731,7 @@
                   <span>owner platform-team</span>
                 </div>
               </div>
-              <span class="tag tone-amber">inactive</span>
+              <span class="tag tone-green">active</span>
             </div>
           
         </div>
@@ -730,7 +748,7 @@
                   <span>owner video-team</span>
                 </div>
               </div>
-              <span class="tag tone-amber">inactive</span>
+              <span class="tag tone-green">active</span>
             </div>
           
         </div>
@@ -760,7 +778,169 @@
       </div>
     </section>
 
+    <p class="foot" style="font-size:12px;color:#61707f;margin-top:8px;">같은 자동화 저장 재시도는 안전하게 재사용됩니다. 같은 계획 초안을 다시 저장해도 중복 기록되지 않습니다.</p>
     <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
   </div>
+<script>
+const pendingIdempotencyKeys = {};
+function stableStringifyForIdempotency(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map((item) => stableStringifyForIdempotency(item)).join(',') + ']';
+  const keys = Object.keys(value).sort();
+  return '{' + keys.map((key) => JSON.stringify(key) + ':' + stableStringifyForIdempotency(value[key])).join(',') + '}';
+}
+function createIdempotencyKey(scope) {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return scope + ':' + window.crypto.randomUUID();
+  }
+  return scope + ':' + Date.now() + ':' + Math.random().toString(16).slice(2);
+}
+function reserveIdempotencyKey(scope, payload) {
+  const fingerprint = stableStringifyForIdempotency(payload || {});
+  const existing = pendingIdempotencyKeys[scope];
+  if (existing && existing.fingerprint === fingerprint) return existing.key;
+  const key = createIdempotencyKey(scope);
+  pendingIdempotencyKeys[scope] = { key, fingerprint };
+  return key;
+}
+function releaseIdempotencyKey(scope, key) {
+  const existing = pendingIdempotencyKeys[scope];
+  if (existing && existing.key === key) delete pendingIdempotencyKeys[scope];
+}
+async function callPlanningApi(endpoint, body) {
+  let idemScope = '';
+  let idemKey = '';
+  try {
+    const opts = body
+      ? (() => {
+        idemScope = 'planning-studio:' + endpoint;
+        idemKey = reserveIdempotencyKey(idemScope, body);
+        return {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'Idempotency-Key': idemKey },
+          body: JSON.stringify(body),
+        };
+      })()
+      : {};
+    const resp = await fetch('/api/planning-studio/' + endpoint, opts);
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch (_) { return null; }
+  finally {
+    if (idemScope && idemKey) releaseIdempotencyKey(idemScope, idemKey);
+  }
+}
+async function callJson(path, { method = 'GET', body } = {}) {
+  try {
+    const opts = { method };
+    if (body) { opts.headers = { 'content-type': 'application/json' }; opts.body = JSON.stringify(body); }
+    const resp = await fetch(path, opts);
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch (_) { return null; }
+}
+function updateAutosendUi(autoSend) {
+  const badge = document.getElementById('live-autosend-badge');
+  const stateEl = document.getElementById('live-autosend-state');
+  const toggleBtn = document.getElementById('btn-autosend-toggle');
+  if (badge) {
+    const on = !!autoSend.enabled;
+    badge.textContent = on ? '자동 전송 ON' : '자동 전송 OFF';
+    badge.style.background = on ? 'rgba(15,118,110,0.15)' : 'rgba(220,207,186,0.4)';
+    badge.style.color = on ? '#0f766e' : '#61707f';
+  }
+  if (stateEl) stateEl.textContent = autoSend.enabled ? 'ON' : 'OFF';
+  if (toggleBtn) toggleBtn.style.display = 'inline-block';
+}
+document.addEventListener('DOMContentLoaded', async () => {
+  const result = await callPlanningApi('snapshot');
+  if (!result || !result.ok) {
+    const badge = document.getElementById('live-autosend-badge');
+    if (badge) { badge.textContent = '서버 오프라인'; }
+    return;
+  }
+  const d = result.data || {};
+  let autoSend = d.automation_config || {};
+  updateAutosendUi(autoSend);
+  const wpEl = document.getElementById('live-current-wp');
+  if (wpEl && d.current_wp) wpEl.textContent = d.current_wp.id || '—';
+  const branchEl = document.getElementById('live-branch-status');
+  if (branchEl && d.code_status) {
+    branchEl.textContent = (d.code_status.dirty ? '⚡ ' : '') + (d.code_status.branch || '—');
+  }
+  const toggleBtn = document.getElementById('btn-autosend-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', async () => {
+      toggleBtn.disabled = true;
+      const saveResult = await callPlanningApi('save-automation', {
+        enabled: !autoSend.enabled,
+        cycle_minutes: autoSend.cycle_minutes || 30,
+        enter_seconds: autoSend.enter_seconds || 10,
+        workers: autoSend.workers || [],
+      });
+      if (saveResult && saveResult.ok) {
+        autoSend = (saveResult.data || {}).automation_config || autoSend;
+        updateAutosendUi(autoSend);
+      }
+      toggleBtn.disabled = false;
+    });
+  }
+  const currentWpId = (d.current_wp || {}).id;
+  if (currentWpId) {
+    const wpEl2 = document.getElementById('live-current-wp');
+    if (wpEl2) {
+      wpEl2.title = '클릭하여 현재 패킷을 다음 실행 대상으로 설정';
+      wpEl2.style.cursor = 'pointer';
+      wpEl2.addEventListener('click', async () => {
+        await callPlanningApi('save-packet', { id: currentWpId, set_as_next: true });
+      });
+    }
+  }
+
+  const ptySessions = await fetch('/api/pty/sessions').then((r) => r.ok ? r.json() : null).catch(() => null);
+  const ptySessionsEl = document.getElementById('live-pty-sessions');
+  if (ptySessionsEl) {
+    if (ptySessions && typeof ptySessions.count === 'number') {
+      ptySessionsEl.textContent = ptySessions.count > 0 ? (ptySessions.count + '개 연결됨') : '없음';
+    } else {
+      ptySessionsEl.textContent = '브리지 오프라인';
+    }
+  }
+
+  const ptyScheduler = await callJson('/api/pty/scheduler/status', { method: 'GET' });
+  const ptySchedulerEl = document.getElementById('live-pty-scheduler');
+  if (ptySchedulerEl) {
+    if (ptyScheduler && typeof ptyScheduler.running === 'boolean') {
+      ptySchedulerEl.textContent = ptyScheduler.running ? '실행 중' : '중지됨';
+    } else {
+      ptySchedulerEl.textContent = '브리지 오프라인';
+    }
+  }
+
+  // 활성 Feature Flag 상태 — .env WOS_FLAG_* 오버라이드 가시성
+  const flagsData = await callJson('/flags', { method: 'GET' }).catch(() => null);
+  const activeFlagsEl = document.getElementById('live-active-flags');
+  const envOverridesEl = document.getElementById('live-env-overrides');
+  if (flagsData && Array.isArray(flagsData.flags)) {
+    const enabledCount = (flagsData.enabled_flags || []).length;
+    const overrideCount = typeof flagsData.env_overrides_applied === 'number' ? flagsData.env_overrides_applied : 0;
+    if (activeFlagsEl) {
+      activeFlagsEl.textContent = enabledCount > 0 ? (enabledCount + '개 활성') : '모두 비활성';
+      activeFlagsEl.title = enabledCount > 0
+        ? ('활성: ' + (flagsData.enabled_flags || []).join(', ') + ' — 클릭하면 /flags 전체 목록 이동')
+        : '클릭하면 /flags 전체 목록 이동';
+    }
+    if (envOverridesEl) {
+      envOverridesEl.textContent = overrideCount > 0 ? (overrideCount + '개 .env 적용') : '없음';
+      if (overrideCount > 0 && (flagsData.env_overridden_flags || []).length > 0) {
+        envOverridesEl.title = 'ENV 오버라이드: ' + flagsData.env_overridden_flags.join(', ');
+      }
+    }
+  } else {
+    if (activeFlagsEl) activeFlagsEl.textContent = '서버 오프라인';
+    if (envOverridesEl) envOverridesEl.textContent = '—';
+  }
+});
+</script>
 </body>
 </html>

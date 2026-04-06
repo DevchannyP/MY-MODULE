@@ -55,6 +55,10 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.match(home.text, /통합 통제 센터/);
     assert.match(home.text, /같은 자동화 저장 재시도는 안전하게 재사용됩니다\./);
     assert.match(home.text, /같은 계획 초안을 다시 저장해도 중복 기록되지 않습니다\./);
+    // 활성 플래그 가시성 위젯 — .env WOS_FLAG_* 오버라이드 확인 지점
+    assert.match(home.text, /live-active-flags/, 'home must have live-active-flags element');
+    assert.match(home.text, /live-env-overrides/, 'home must have live-env-overrides element');
+    assert.match(home.text, /\/flags/, 'home must reference /flags endpoint');
 
     const mindmap = await requestText(runtime.url, '/mindmap/index.html');
     assert.equal(mindmap.status, 200);

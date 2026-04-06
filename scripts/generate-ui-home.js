@@ -576,6 +576,10 @@ function buildHtml({ report, navSummary, currentState }) {
           <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>${esc(report.promotion_pipeline?.drift_status || '—')}</strong></div>
           <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
           <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
+          <div class="side-item"><span class="muted">터미널 세션</span><strong id="live-pty-sessions">—</strong></div>
+          <div class="side-item"><span class="muted">스케줄러</span><strong id="live-pty-scheduler">—</strong></div>
+          <div class="side-item"><span class="muted">활성 플래그</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
+          <div class="side-item"><span class="muted">ENV 오버라이드</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
         </div>
       </aside>
     </section>
@@ -723,12 +727,59 @@ function buildHtml({ report, navSummary, currentState }) {
     <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
   </div>
 <script>
+const pendingIdempotencyKeys = {};
+function stableStringifyForIdempotency(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map((item) => stableStringifyForIdempotency(item)).join(',') + ']';
+  const keys = Object.keys(value).sort();
+  return '{' + keys.map((key) => JSON.stringify(key) + ':' + stableStringifyForIdempotency(value[key])).join(',') + '}';
+}
+function createIdempotencyKey(scope) {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return scope + ':' + window.crypto.randomUUID();
+  }
+  return scope + ':' + Date.now() + ':' + Math.random().toString(16).slice(2);
+}
+function reserveIdempotencyKey(scope, payload) {
+  const fingerprint = stableStringifyForIdempotency(payload || {});
+  const existing = pendingIdempotencyKeys[scope];
+  if (existing && existing.fingerprint === fingerprint) return existing.key;
+  const key = createIdempotencyKey(scope);
+  pendingIdempotencyKeys[scope] = { key, fingerprint };
+  return key;
+}
+function releaseIdempotencyKey(scope, key) {
+  const existing = pendingIdempotencyKeys[scope];
+  if (existing && existing.key === key) delete pendingIdempotencyKeys[scope];
+}
 async function callPlanningApi(endpoint, body) {
+  let idemScope = '';
+  let idemKey = '';
   try {
     const opts = body
-      ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
+      ? (() => {
+        idemScope = 'planning-studio:' + endpoint;
+        idemKey = reserveIdempotencyKey(idemScope, body);
+        return {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'Idempotency-Key': idemKey },
+          body: JSON.stringify(body),
+        };
+      })()
       : {};
     const resp = await fetch('/api/planning-studio/' + endpoint, opts);
+    if (!resp.ok) return null;
+    return await resp.json();
+  } catch (_) { return null; }
+  finally {
+    if (idemScope && idemKey) releaseIdempotencyKey(idemScope, idemKey);
+  }
+}
+async function callJson(path, { method = 'GET', body } = {}) {
+  try {
+    const opts = { method };
+    if (body) { opts.headers = { 'content-type': 'application/json' }; opts.body = JSON.stringify(body); }
+    const resp = await fetch(path, opts);
     if (!resp.ok) return null;
     return await resp.json();
   } catch (_) { return null; }
@@ -789,6 +840,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         await callPlanningApi('save-packet', { id: currentWpId, set_as_next: true });
       });
     }
+  }
+
+  const ptySessions = await fetch('/api/pty/sessions').then((r) => r.ok ? r.json() : null).catch(() => null);
+  const ptySessionsEl = document.getElementById('live-pty-sessions');
+  if (ptySessionsEl) {
+    if (ptySessions && typeof ptySessions.count === 'number') {
+      ptySessionsEl.textContent = ptySessions.count > 0 ? (ptySessions.count + '개 연결됨') : '없음';
+    } else {
+      ptySessionsEl.textContent = '브리지 오프라인';
+    }
+  }
+
+  const ptyScheduler = await callJson('/api/pty/scheduler/status', { method: 'GET' });
+  const ptySchedulerEl = document.getElementById('live-pty-scheduler');
+  if (ptySchedulerEl) {
+    if (ptyScheduler && typeof ptyScheduler.running === 'boolean') {
+      ptySchedulerEl.textContent = ptyScheduler.running ? '실행 중' : '중지됨';
+    } else {
+      ptySchedulerEl.textContent = '브리지 오프라인';
+    }
+  }
+
+  // 활성 Feature Flag 상태 — .env WOS_FLAG_* 오버라이드 가시성
+  const flagsData = await callJson('/flags', { method: 'GET' }).catch(() => null);
+  const activeFlagsEl = document.getElementById('live-active-flags');
+  const envOverridesEl = document.getElementById('live-env-overrides');
+  if (flagsData && Array.isArray(flagsData.flags)) {
+    const enabledCount = (flagsData.enabled_flags || []).length;
+    const overrideCount = typeof flagsData.env_overrides_applied === 'number' ? flagsData.env_overrides_applied : 0;
+    if (activeFlagsEl) {
+      activeFlagsEl.textContent = enabledCount > 0 ? (enabledCount + '개 활성') : '모두 비활성';
+      activeFlagsEl.title = enabledCount > 0
+        ? ('활성: ' + (flagsData.enabled_flags || []).join(', ') + ' — 클릭하면 /flags 전체 목록 이동')
+        : '클릭하면 /flags 전체 목록 이동';
+    }
+    if (envOverridesEl) {
+      envOverridesEl.textContent = overrideCount > 0 ? (overrideCount + '개 .env 적용') : '없음';
+      if (overrideCount > 0 && (flagsData.env_overridden_flags || []).length > 0) {
+        envOverridesEl.title = 'ENV 오버라이드: ' + flagsData.env_overridden_flags.join(', ');
+      }
+    }
+  } else {
+    if (activeFlagsEl) activeFlagsEl.textContent = '서버 오프라인';
+    if (envOverridesEl) envOverridesEl.textContent = '—';
   }
 });
 </script>
