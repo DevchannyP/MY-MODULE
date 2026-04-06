@@ -53,3 +53,21 @@ plugins:
       dashboard: "billing-dashboard"
       alert_group: "billing-alerts"
       expected_status: "inactive"
+
+  - plugin_id: "video-plugin"
+    owner: "video-team"
+    rollback:
+      strategy: "disable_flag"
+      disable_flags:
+        - "video.enabled"
+        - "video.upload.enabled"
+        - "video.transcode.enabled"
+        - "video.admin.enabled"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "INV-V002 상태 전이 위반 감지"
+    verification:
+      dashboard: "video-dashboard"
+      alert_group: "video-alerts"
+      expected_status: "inactive"
