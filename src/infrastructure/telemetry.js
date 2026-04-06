@@ -216,6 +216,31 @@ const metrics = {
   taskCreatedTotal:   meter.createCounter('task_created_total',    { description: 'Tasks created' }),
   taskTransitionTotal:meter.createCounter('task_transition_total', { description: 'Task status transitions' }),
   invoiceCreatedTotal:meter.createCounter('invoice_created_total', { description: 'Invoices created' }),
+  controlCenterPromptRecommendationsTotal: meter.createCounter('control_center_prompt_recommendations_total', {
+    description: 'Recommended prompt generations for the control center',
+  }),
+  ptyBridgeSessionsReadTotal: meter.createCounter('pty_bridge_sessions_read_total', {
+    description: 'PTY bridge session list reads',
+  }),
+  ptyBridgeSendTotal: meter.createCounter('pty_bridge_send_total', {
+    description: 'PTY bridge prompt or enter sends',
+  }),
+  ptyBridgeFailuresTotal: meter.createCounter('pty_bridge_failures_total', {
+    description: 'PTY bridge validation or execution failures',
+  }),
+  ptySchedulerStatusReadTotal: meter.createCounter('pty_scheduler_status_read_total', {
+    description: 'PTY scheduler status reads',
+  }),
+  ptySchedulerStartTotal: meter.createCounter('pty_scheduler_start_total', {
+    description: 'PTY scheduler start operations',
+  }),
+  ptySchedulerStopTotal: meter.createCounter('pty_scheduler_stop_total', {
+    description: 'PTY scheduler stop operations',
+  }),
+  controlCenterOperationDurationMs: meter.createHistogram('control_center_operation_duration_ms', {
+    description: 'Control center bridge operation duration',
+    unit: 'ms',
+  }),
 };
 
 module.exports = { tracer, meter, logger, metrics, Span, Counter, Histogram };

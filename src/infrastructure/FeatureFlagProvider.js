@@ -83,10 +83,13 @@ class FeatureFlagProvider {
     this._metadata = {};
     /** @type {Array<{ beforeEvaluate?: Function, afterEvaluate?: Function }>} */
     this._hooks = [];
+    /** @type {Set<string>} env 오버라이드된 플래그 집합 — evaluate() 내 롤아웃 건너뜀 */
+    this._envOverriddenFlags = new Set();
     this._state = {
       flagsLoaded: false,
       metadataLoaded: false,
       errors: [],
+      envOverridesApplied: 0,
     };
     this._load(flagsPath);
     this._loadMetadata(metadataPath);
@@ -108,12 +111,40 @@ class FeatureFlagProvider {
         }
       }
       this._state.flagsLoaded = true;
+      this._applyEnvOverrides();
     } catch (err) {
       process.stderr.write(`[FeatureFlagProvider] Failed to load flags: ${err.message}\n`);
       this._state.flagsLoaded = false;
       this._state.errors.push(`flags:${err.message}`);
       // Safe default: all flags disabled
     }
+  }
+
+  /**
+   * process.env に WOS_FLAG_ 접두어 변수가 있으면 이미 flags.yaml에 선언된 키에 한해 오버라이드한다.
+   * 변환 규칙: flag key의 dot/hyphen → underscore, 대문자 + WOS_FLAG_ 접두어
+   * 예) enable_task_management → WOS_FLAG_ENABLE_TASK_MANAGEMENT
+   *     billing.enabled       → WOS_FLAG_BILLING_ENABLED
+   * phantom flag(yaml 미선언 키)는 생성하지 않는다.
+   */
+  _applyEnvOverrides() {
+    let applied = 0;
+    for (const flagKey of Object.keys(this._flags)) {
+      const envKey = 'WOS_FLAG_' + flagKey.replace(/[.-]/g, '_').toUpperCase();
+      const envVal = process.env[envKey];
+      if (envVal === 'true' || envVal === '1') {
+        this._flags[flagKey] = true;
+        this._envOverriddenFlags.add(flagKey);
+        applied++;
+        process.stderr.write(`[FeatureFlagProvider] ENV override: ${flagKey}=true (via ${envKey}) — rollout bypassed\n`);
+      } else if (envVal === 'false' || envVal === '0') {
+        this._flags[flagKey] = false;
+        this._envOverriddenFlags.add(flagKey);
+        applied++;
+        process.stderr.write(`[FeatureFlagProvider] ENV override: ${flagKey}=false (via ${envKey}) — rollout bypassed\n`);
+      }
+    }
+    this._state.envOverridesApplied = applied;
   }
 
   _loadMetadata(metadataPath) {
@@ -215,7 +246,9 @@ class FeatureFlagProvider {
     const configured = flagName in this._flags;
     const baseValue = configured ? this._flags[flagName] : defaultValue;
     let value = baseValue;
-    let reason = configured ? (baseValue ? 'STATIC_TRUE' : 'STATIC_FALSE') : 'DEFAULT';
+    let reason = this._envOverriddenFlags.has(flagName)
+      ? (baseValue ? 'ENV_OVERRIDE_TRUE' : 'ENV_OVERRIDE_FALSE')
+      : (configured ? (baseValue ? 'STATIC_TRUE' : 'STATIC_FALSE') : 'DEFAULT');
 
     const targetedUsers = Array.isArray(metadata.allow?.users) ? metadata.allow.users : [];
     if (normalizedContext.userId && targetedUsers.includes(normalizedContext.userId)) {
@@ -232,7 +265,8 @@ class FeatureFlagProvider {
       }
     }
 
-    if (value) {
+    // env 오버라이드된 플래그는 환경 전체 강제 적용이므로 rollout을 건너뛴다
+    if (value && !this._envOverriddenFlags.has(flagName)) {
       const rollout = this._getRollout(metadata);
       if (typeof rollout.percentage === 'number' && rollout.percentage >= 0 && rollout.percentage < 100) {
         const bucketValue = this._resolveBucketValue(normalizedContext, rollout.bucket_by);
@@ -283,7 +317,28 @@ class FeatureFlagProvider {
       errors: [...this._state.errors],
       flagCount: Object.keys(this._flags).length,
       metadataCount: Object.keys(this._metadata).length,
+      envOverridesApplied: this._state.envOverridesApplied,
+      env_overridden_flags: [...this._envOverriddenFlags].sort(),
+      enabled_flags: Object.entries(this._flags)
+        .filter(([, v]) => v === true)
+        .map(([k]) => k)
+        .sort(),
     };
+  }
+
+  /**
+   * 전체 플래그 상세 목록 — /flags 엔드포인트용
+   * @returns {Array<{ flag: string, enabled: boolean, env_overridden: boolean, source: string }>}
+   */
+  getFullFlagDetails() {
+    return Object.entries(this._flags)
+      .map(([flag, enabled]) => ({
+        flag,
+        enabled,
+        env_overridden: this._envOverriddenFlags.has(flag),
+        source: this._envOverriddenFlags.has(flag) ? 'env' : 'flags.yaml',
+      }))
+      .sort((a, b) => a.flag.localeCompare(b.flag));
   }
 }
 

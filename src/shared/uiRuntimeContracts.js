@@ -161,6 +161,12 @@ function buildControlCenterRuntimeResponse() {
         blueprint_count: Array.isArray(controlCenter.scaffoldCatalog?.blueprints) ? controlCenter.scaffoldCatalog.blueprints.length : 0,
         recipe_count: Array.isArray(controlCenter.scaffoldCatalog?.recipes) ? controlCenter.scaffoldCatalog.recipes.length : 0,
       },
+      stage_capabilities: {
+        run_endpoint: '/api/planning-studio/stage-run',
+        execute_requires: ['system.admin'],
+        supported_stages: ['A', 'B', 'C', 'D', 'E'],
+        default_stage: String(meta.report?.requirements_stage || controlCenter.statusBar?.currentStage || 'D'),
+      },
     },
     meta: {
       contract_version: 'ui-runtime.v1',
