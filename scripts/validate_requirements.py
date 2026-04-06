@@ -261,6 +261,8 @@ def validate_requirements(target_path: Path) -> list[str]:
     depends_on = require_list(errors, "composition.depends_on", composition.get("depends_on"))
     for index, dependency_path in enumerate(depends_on):
         validate_contract_path(errors, f"composition.depends_on[{index}]", dependency_path)
+    if len(depends_on) != len(set(depends_on)):
+        add_error(errors, "composition.depends_on: schema violation -> items must be unique")
 
     provides = require_list(errors, "composition.provides", composition.get("provides"))
     if not provides:

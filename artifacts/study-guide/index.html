@@ -501,7 +501,7 @@
     <li><a href="#capabilities">도메인 역량 탐색</a></li>
     <li><a href="#lessons">교훈 모음</a></li>
   </ul>
-  <div class="sidebar-footer">생성일: 2026-03-25</div>
+  <div class="sidebar-footer">생성일: 2026-04-06</div>
 </nav>
 
 <main>
@@ -525,7 +525,7 @@
       <div class="overview-card"><span>학습 단계</span><strong>0</strong></div>
       <div class="overview-card"><span>ADR 문서</span><strong>11</strong></div>
       <div class="overview-card"><span>도메인 역량</span><strong>3</strong></div>
-      <div class="overview-card"><span>교훈 항목</span><strong>0</strong></div>
+      <div class="overview-card"><span>교훈 항목</span><strong>7</strong></div>
     </div>
   </section>
 
@@ -1068,7 +1068,43 @@
 
   <section id="lessons">
     <h2>교훈 모음</h2>
-    <p class="empty">아직 등록된 교훈이 없습니다. Reflexion Loop가 실행되면 자동으로 채워집니다.</p>
+    <div class="lesson-card">
+      <div class="lesson-header">LESSON-001</div>
+      <p>{&quot;id&quot;:&quot;LESSON-001&quot;,&quot;discovered_at&quot;:&quot;2026-03-18&quot;,&quot;domain&quot;:&quot;billing&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;test-coverage-gap&quot;,&quot;what_happened&quot;:&quot;billing testScore가 96%로 고정됨.\nhealth-dashboard가 src/*.js 파일 수 대비 *.test.js 파일 수로 비율을 계산하는데,\nport 인터페이스 파일 3개(InvoiceRepository, BillingExceptionRepository, PaymentRepository)에\n대응하는 테스트 파일이 없어서 비율이 23/24 = 96%로 산정됨.&quot;,&quot;lesson&quot;:&quot;포트 인터페이스(abstract class) 파일도 src 파일로 카운트된다.\nInMemory 구현체가 포트 계약을 완전히 이행하는지 검증하는 계약 테스트를\nBillingPorts.contract.test.js로 추가하면 24/24 = 100% 달성.&quot;,&quot;applies_to&quot;:&quot;health-dashboard testScore, port interface coverage&quot;,&quot;fix&quot;:&quot;domains/billing/tests/application/ports/BillingPorts.contract.test.js 추가&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-002</div>
+      <p>{&quot;id&quot;:&quot;LESSON-002&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;video&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;contract-guard-gap&quot;,&quot;what_happened&quot;:&quot;video 도메인이 Stage A~E 완전 구현(500+ 테스트 PASS)되었음에도\nvalidate_contract_drift.py의 main()에서 validate_video()가 호출되지 않아\n계약 드리프트 검증에서 video가 완전히 누락됨.\n\&quot;계약이 깨지면 빌드가 멈춘다\&quot; 원칙이 billing/task-management에만 적용되고\nvideo에는 미적용 상태였음.&quot;,&quot;lesson&quot;:&quot;새 도메인을 Stage A~E로 온보딩할 때, validate_contract_drift.py에\n해당 도메인의 validate_[domain]() 함수를 추가하고 main()에서 호출해야 한다.\n이를 누락하면 Stage D 품질 게이트가 사실상 불완전한 상태가 된다.\n도메인 추가 체크리스트에 이 항목을 반드시 포함해야 한다.&quot;,&quot;applies_to&quot;:&quot;contract drift validation, domain onboarding checklist&quot;,&quot;fix&quot;:&quot;validate_contract_drift.py에 validate_video() 추가 + main()에서 호출&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-003</div>
+      <p>{&quot;id&quot;:&quot;LESSON-003&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;security-consistency&quot;,&quot;what_happened&quot;:&quot;audit-chain.js는 SHA-256을 사용하는데, export_context_lock.py와\ncheck_context_drift.py, wp_scheduler.py, project_status.js는 SHA1을 사용.\n보안 일관성 위반이지만 테스트가 이를 잡지 못하고 있었음.\ncontextDrift smoke 테스트도 SHA1 픽스처를 사용하고 있었음.&quot;,&quot;lesson&quot;:&quot;해시 함수는 저장소 전체에서 단일 표준을 사용해야 한다.\n이 저장소의 표준은 SHA-256. 새 스크립트가 파일 해시를 계산할 때는\n반드시 hashlib.sha256()을 사용하고 필드명을 sha256으로 통일해야 한다.\nsmoke 테스트 픽스처도 64자 SHA-256 값 형식으로 맞춰야 한다.&quot;,&quot;applies_to&quot;:&quot;export_context_lock.py, check_context_drift.py, any file-hashing script&quot;,&quot;fix&quot;:&quot;4개 파일 SHA1→SHA256 전환, contextDrift 테스트 픽스처 갱신&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-004</div>
+      <p>{&quot;id&quot;:&quot;LESSON-004&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;estimation-accuracy&quot;,&quot;what_happened&quot;:&quot;export_context_lock.py, export_context_bundle.py, wp_scheduler.py가\n4 bytes/token으로 토큰 수를 추정함.\n이 저장소는 한국어와 영어가 혼용되어 있으며, 한국어 UTF-8 문자는\n3 bytes/char이지만 LLM 토크나이저에서 약 1.5 tokens/char 소비 → 2 bytes/token.\n4 bytes/token 기준으로 한국어 파일의 토큰 수를 ~33% 과소추정함.&quot;,&quot;lesson&quot;:&quot;한국어/영어 혼용 저장소에서는 3 bytes/token을 보수적 추정값으로 사용해야 한다.\n과소추정은 컨텍스트 예산 초과 위험으로 이어진다.\n정확한 토큰 카운트가 필요하면 tiktoken 같은 실제 토크나이저를 사용해야 하지만,\n보수적 상수 3은 합리적인 근사값이다.&quot;,&quot;applies_to&quot;:&quot;estimate_tokens_from_bytes, token budget planning&quot;,&quot;fix&quot;:&quot;3개 파일의 byte_count / 4 → byte_count / 3 변경&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-005</div>
+      <p>{&quot;id&quot;:&quot;LESSON-005&quot;,&quot;discovered_at&quot;:&quot;2026-03-18&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;C&quot;,&quot;root_cause_category&quot;:&quot;git-hygiene&quot;,&quot;what_happened&quot;:&quot;artifacts/decision-apply/history/ 디렉토리에 런타임 실행 로그 52건+이\ngit untracked 상태로 쌓여 있었음. .gitignore가 \&quot;artifacts/는 의도적으로 추적\&quot;이라는\n주석만 있고 history/ 서브디렉토리를 명시적으로 제외하지 않았음.\n이를 커밋하면 git history가 런타임 로그로 오염되고 무한 증가함.&quot;,&quot;lesson&quot;:&quot;artifacts/ 디렉토리에서 latest/ (현재 상태 대표 스냅샷)만 커밋하고,\nhistory/ (런타임 실행 로그)는 .gitignore로 제외해야 한다.\n새 artifacts/ 서브디렉토리를 만들 때는 항상 history/ 제외 규칙을\n.gitignore에 함께 추가해야 한다.&quot;,&quot;applies_to&quot;:&quot;.gitignore, artifacts directory management&quot;,&quot;fix&quot;:&quot;.gitignore에 artifacts/decision-apply/history/, artifacts/promotion-pipeline/history/ 추가&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-006</div>
+      <p>{&quot;id&quot;:&quot;LESSON-006&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;video&quot;,&quot;stage&quot;:&quot;C&quot;,&quot;root_cause_category&quot;:&quot;event-registry-gap&quot;,&quot;what_happened&quot;:&quot;video 도메인이 Stage A~E 완전 구현(500+ 테스트 PASS)되었음에도\ncontracts/events/registry.yaml에 video 이벤트 8개가 전혀 등록되지 않았음.\nvalidate_event_registry()도 task/billing만 커버리지 검사하고 video를 누락.\n결과적으로 중앙 이벤트 레지스트리가 video 도메인을 완전히 모르는 상태였음.&quot;,&quot;lesson&quot;:&quot;새 도메인을 온보딩할 때, contracts/events/registry.yaml에\n해당 도메인의 모든 events_emitted 항목을 등록해야 한다.\n또한 validate_event_registry()에 해당 도메인의 커버리지 검사를 추가해야 한다.\n도메인 추가 체크리스트에 이 두 항목을 반드시 포함해야 한다.&quot;,&quot;applies_to&quot;:&quot;contracts/events/registry.yaml, validate_event_registry, domain onboarding checklist&quot;,&quot;fix&quot;:&quot;contracts/events/registry.yaml에 video 이벤트 8개 등록.\nvalidate_contract_drift.py의 validate_event_registry()에 video_events_schema 로드 및\nregistry_video_defs 카운팅, missing_video 오류 검사 추가.&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-007</div>
+      <p>{&quot;id&quot;:&quot;LESSON-007&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;C&quot;,&quot;root_cause_category&quot;:&quot;rollout-stale&quot;,&quot;what_happened&quot;:&quot;모든 도메인(billing, video, task-management)이 Stage D+E+B_review PASS 완료 후에도\nfeature_flags.yaml과 plugin-registry.yaml의 status가 inactive, percentage: 0으로 남아 있었음.\nCLAUDE.md 규칙: \&quot;B_review PASS → full(100%)\&quot;가 자동 적용되지 않은 채 방치됨.\n운영 관점에서 검증 완료 도메인이 실제로는 비활성화된 모순 상태였음.&quot;,&quot;lesson&quot;:&quot;Stage E + B_review PASS 직후, 반드시 다음을 수행해야 한다:\n1. master-shell/feature-flags/flags.yaml의 해당 플러그인 flags를 true로 변경\n2. master-shell/plugin-registry/registry.yaml의 status를 active로 변경\n3. rollout.current_phase: full, percentage: 100으로 갱신\n4. master-shell/catalog/domains.yaml의 status와 note도 갱신&quot;,&quot;applies_to&quot;:&quot;feature-flags/flags.yaml, plugin-registry/registry.yaml, catalog/domains.yaml&quot;,&quot;fix&quot;:&quot;3개 도메인 flags true, status active, rollout 100% 갱신 (2026-03-25)&quot;}</p>
+    </div>
+  </section>
+
+  <section id="references">
+    <h2>국내/외 공식 레퍼런스</h2>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Workflow OS 설계에 사용된 국제 표준 및 프레임워크 공식 참고 자료입니다.</p>
+    <ul style="padding-left:20px;line-height:2;font-size:14px;">
+      <li>NIST SP 800-218 — Secure Software Development Framework (SSDF)</li>
+      <li>NIST SP 800-161 — Software Bill of Materials (SBOM)</li>
+      <li>SLSA (Supply chain Levels for Software Artifacts) — slsa.dev</li>
+      <li>OpenTelemetry Semantic Conventions — opentelemetry.io</li>
+      <li>OpenAPI 3.1 Specification — spec.openapis.org</li>
+      <li>RFC 7807 — Problem Details for HTTP APIs</li>
+      <li>OWASP API Security Top 10 — owasp.org</li>
+      <li>JSON Schema 2020-12 — json-schema.org</li>
+    </ul>
   </section>
 </main>
 

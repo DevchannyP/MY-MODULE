@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.local/workflow-os/system-api/events.schema.json",
+  "title": "System OS SSE Events",
+  "definitions": {
+    "SSEEventEnvelope": {
+      "type": "object",
+      "required": ["event_id", "event_type", "domain", "timestamp", "payload"],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "description": "고유 이벤트 ID (UUID v4)"
+        },
+        "event_type": {
+          "type": "string",
+          "description": "이벤트 유형 식별자"
+        },
+        "domain": {
+          "type": "string",
+          "const": "system",
+          "description": "이벤트 발행 도메인"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "이벤트 발생 시각 (ISO 8601)"
+        }
+      }
+    },
+    "system.health.updated": {
+      "allOf": [
+        { "$ref": "#/definitions/SSEEventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "system.health.updated" },
+            "payload": {
+              "type": "object",
+              "required": ["overall_status", "changed_domains"],
+              "properties": {
+                "overall_status": {
+                  "type": "string",
+                  "enum": ["HEALTHY", "DEGRADED", "DOWN"]
+                },
+                "changed_domains": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "health_score", "previous_score", "trend"],
+                    "properties": {
+                      "id": { "type": "string" },
+                      "health_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+                      "previous_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+                      "trend": { "type": "string", "enum": ["UP", "STABLE", "DOWN"] }
+                    }
+                  }
+                },
+                "total_tests": { "type": "integer", "minimum": 0 },
+                "passing_tests": { "type": "integer", "minimum": 0 }
+              }
+            }
+          },
+          "required": ["event_type", "payload"]
+        }
+      ]
+    },
+    "system.flag.toggled": {
+      "allOf": [
+        { "$ref": "#/definitions/SSEEventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "system.flag.toggled" },
+            "payload": {
+              "type": "object",
+              "required": ["flag_id", "previous_value", "new_value", "toggled_by"],
+              "properties": {
+                "flag_id": { "type": "string" },
+                "previous_value": { "type": "boolean" },
+                "new_value": { "type": "boolean" },
+                "toggled_by": { "type": "string", "description": "토글 수행자 ID" },
+                "rollout_percentage": { "type": "integer", "minimum": 0, "maximum": 100 }
+              }
+            }
+          },
+          "required": ["event_type", "payload"]
+        }
+      ]
+    },
+    "system.rollback.triggered": {
+      "allOf": [
+        { "$ref": "#/definitions/SSEEventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "system.rollback.triggered" },
+            "payload": {
+              "type": "object",
+              "required": ["target_domain", "status", "flag_before", "flag_after", "triggered_by"],
+              "properties": {
+                "target_domain": { "type": "string" },
+                "status": { "type": "string", "enum": ["ROLLED_BACK", "ALREADY_DISABLED", "FAILED"] },
+                "flag_before": { "type": "boolean" },
+                "flag_after": { "type": "boolean" },
+                "triggered_by": { "type": "string", "description": "롤백 수행자 ID" },
+                "reason": { "type": "string" }
+              }
+            }
+          },
+          "required": ["event_type", "payload"]
+        }
+      ]
+    },
+    "system.quality-gate.updated": {
+      "allOf": [
+        { "$ref": "#/definitions/SSEEventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "system.quality-gate.updated" },
+            "payload": {
+              "type": "object",
+              "required": ["target_domain", "gate_name", "previous_status", "new_status"],
+              "properties": {
+                "target_domain": { "type": "string" },
+                "gate_name": { "type": "string" },
+                "previous_status": { "type": "string", "enum": ["PASS", "FAIL", "SKIP"] },
+                "new_status": { "type": "string", "enum": ["PASS", "FAIL", "SKIP"] },
+                "detail": { "type": "string" },
+                "summary": {
+                  "type": "object",
+                  "required": ["total", "passing", "failing"],
+                  "properties": {
+                    "total": { "type": "integer", "minimum": 0 },
+                    "passing": { "type": "integer", "minimum": 0 },
+                    "failing": { "type": "integer", "minimum": 0 }
+                  }
+                }
+              }
+            }
+          },
+          "required": ["event_type", "payload"]
+        }
+      ]
+    },
+    "system.domain.lifecycle-changed": {
+      "allOf": [
+        { "$ref": "#/definitions/SSEEventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "system.domain.lifecycle-changed" },
+            "payload": {
+              "type": "object",
+              "required": ["target_domain", "stage", "previous_status", "new_status"],
+              "properties": {
+                "target_domain": { "type": "string" },
+                "stage": { "type": "string", "enum": ["A", "B", "C", "D", "E"] },
+                "previous_status": { "type": "string", "enum": ["NOT_STARTED", "IN_PROGRESS", "PASS", "FAIL"] },
+                "new_status": { "type": "string", "enum": ["NOT_STARTED", "IN_PROGRESS", "PASS", "FAIL"] },
+                "next_action": { "type": "string" },
+                "ejectable": { "type": "boolean" }
+              }
+            }
+          },
+          "required": ["event_type", "payload"]
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/system.health.updated" },
+    { "$ref": "#/definitions/system.flag.toggled" },
+    { "$ref": "#/definitions/system.rollback.triggered" },
+    { "$ref": "#/definitions/system.quality-gate.updated" },
+    { "$ref": "#/definitions/system.domain.lifecycle-changed" }
+  ]
+}

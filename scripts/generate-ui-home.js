@@ -67,6 +67,7 @@ function buildHtml({ report, navSummary, currentState }) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Workflow OS 운영 홈</title>
+<style>.skip-link{position:absolute;left:-9999px;top:8px;padding:6px 12px;background:#0f766e;color:#fff;border-radius:6px;font-size:13px;z-index:9999}.skip-link:focus{left:8px}</style>
 <style>
   :root {
     --bg: #f7f3ea;
@@ -529,6 +530,7 @@ function buildHtml({ report, navSummary, currentState }) {
 </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
   <div class="shell">
     <header class="topbar">
       <div class="brand">
@@ -538,14 +540,17 @@ function buildHtml({ report, navSummary, currentState }) {
           <span>한국어 중심으로 다시 정리한 정적 포털 첫 화면</span>
         </div>
       </div>
+      <button class="chip-link" aria-controls="home-stat-detail" style="cursor:pointer;border:none;background:rgba(15,118,110,0.08);border:1px solid rgba(15,118,110,0.3);border-radius:999px;padding:6px 12px;font-size:12px;color:#0f766e;" onclick="document.getElementById('home-stat-detail').scrollIntoView({behavior:'smooth'})">운영 상태 보기</button>
+      <nav aria-label="주요 운영 화면">
       <div class="top-actions">
         <a class="chip-link" href="master-planner/index.html">마스터 플래너</a>
         <a class="chip-link" href="catalog-site/index.html">도메인 카탈로그</a>
         <a class="chip-link" href="study-guide/index.html">학습 가이드</a>
       </div>
+      </nav>
     </header>
 
-    <section class="hero">
+    <section class="hero" id="main-content">
       <div>
         <div class="eyebrow">운영자 시작 화면</div>
         <h1>지금 필요한 화면을 바로 찾고,<br>현재 상태를 한눈에 확인합니다.</h1>
@@ -571,7 +576,7 @@ function buildHtml({ report, navSummary, currentState }) {
       </aside>
     </section>
 
-    <section class="stats">
+    <section class="stats" id="home-stat-detail">
       <article class="stat-card">
         <div class="stat-label">헬스 레이팅</div>
         <div class="stat-value">${esc(currentState?.health_metrics?.last_known?.health_rating || '—')}</div>
@@ -601,6 +606,11 @@ function buildHtml({ report, navSummary, currentState }) {
       </div>
     </div>
     <section class="page-grid">
+      <article class="page-card">
+        <h3>통합 통제 센터</h3>
+        <p>도메인 라이프사이클, 피처 플래그, 실행 계획표, 롤백 제어를 한 화면에서 직접 조작하는 마스터 컨트롤 패널입니다.</p>
+        <a class="page-link" href="mindmap/index.html">열기</a>
+      </article>
       <article class="page-card">
         <h3>마스터 플래너</h3>
         <p>Work Packet, stage, AI planning surface, benchmark 흐름을 한 화면에서 보는 메인 운영 콘솔입니다.</p>
@@ -705,22 +715,37 @@ function buildHtml({ report, navSummary, currentState }) {
       </div>
     </section>
 
+    <p class="foot" style="font-size:12px;color:#61707f;margin-top:8px;">같은 자동화 저장 재시도는 안전하게 재사용됩니다. 같은 계획 초안을 다시 저장해도 중복 기록되지 않습니다.</p>
     <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
   </div>
 </body>
 </html>`;
 }
 
-function main() {
+function buildHomeData() {
   const report = buildReport();
   const nav = readYaml('master-shell/navigation/nav.yaml');
   const registry = readYaml('master-shell/plugin-registry/registry.yaml');
   const currentState = readYaml('memory/current-state.yaml');
   const navSummary = buildNavigationSummary(nav, registry);
+  return { report, nav, registry, currentState, navSummary };
+}
 
+function buildHomeRuntime() {
+  const { report, navSummary, currentState } = buildHomeData();
+  const html = buildHtml({ report, navSummary, currentState });
+  return { html, homeData: { report, generatedAt: new Date().toISOString() } };
+}
+
+function main() {
+  const { report, navSummary, currentState } = buildHomeData();
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
   fs.writeFileSync(OUT_PATH, buildHtml({ report, navSummary, currentState }), 'utf8');
   process.stdout.write('생성 완료: artifacts/index.html\n');
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = { buildHomeRuntime };

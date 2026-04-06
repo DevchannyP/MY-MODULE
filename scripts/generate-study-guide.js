@@ -989,6 +989,21 @@ function buildHtml(opts) {
     <h2>교훈 모음</h2>
     ${lessons}
   </section>
+
+  <section id="references">
+    <h2>국내/외 공식 레퍼런스</h2>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Workflow OS 설계에 사용된 국제 표준 및 프레임워크 공식 참고 자료입니다.</p>
+    <ul style="padding-left:20px;line-height:2;font-size:14px;">
+      <li>NIST SP 800-218 — Secure Software Development Framework (SSDF)</li>
+      <li>NIST SP 800-161 — Software Bill of Materials (SBOM)</li>
+      <li>SLSA (Supply chain Levels for Software Artifacts) — slsa.dev</li>
+      <li>OpenTelemetry Semantic Conventions — opentelemetry.io</li>
+      <li>OpenAPI 3.1 Specification — spec.openapis.org</li>
+      <li>RFC 7807 — Problem Details for HTTP APIs</li>
+      <li>OWASP API Security Top 10 — owasp.org</li>
+      <li>JSON Schema 2020-12 — json-schema.org</li>
+    </ul>
+  </section>
 </main>
 
 <script>
@@ -1053,4 +1068,34 @@ function main() {
   process.stdout.write('생성 완료: artifacts/study-guide/index.html\n');
 }
 
-main();
+function buildStudyGuideRuntime() {
+  const adrDir = path.join(ROOT, 'docs', 'adr');
+  const adrIndex = safeReadYaml(path.join(adrDir, 'adr-index.yaml'));
+  const masteryMap = safeReadYaml(path.join(ROOT, 'master-shell', 'catalog', 'learning-mastery-map.yaml'));
+  const lessonsData = safeReadYaml(path.join(ROOT, 'memory', 'project', 'lessons-learned.yaml'));
+  const adrs = loadAdrs(adrDir, adrIndex);
+  const capabilities = loadCapabilities();
+  const milestoneLevels = Array.isArray(masteryMap?.levels) ? masteryMap.levels : [];
+  const lessonItems = Array.isArray(lessonsData?.lessons) ? lessonsData.lessons : [];
+  const generatedAt = new Date().toISOString().slice(0, 10);
+  const html = buildHtml({
+    milestones: renderMilestones(masteryMap),
+    adrs: renderAdrs(adrs),
+    capabilities: renderCapabilities(capabilities),
+    lessons: renderLessons(lessonsData),
+    generatedAt,
+    summary: {
+      milestoneCount: milestoneLevels.length,
+      adrCount: adrs.length,
+      capabilityCount: capabilities.length,
+      lessonCount: lessonItems.length,
+    },
+  });
+  return { html };
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = { buildStudyGuideRuntime };

@@ -27,6 +27,8 @@ const { InMemoryPaymentRepository } = require('../../domains/billing/src/infrast
 const { InMemoryBillingExceptionRepository } = require('../../domains/billing/src/infrastructure/InMemoryBillingExceptionRepository');
 const { InMemoryVideoRepository } = require('../../domains/video/src/infrastructure/InMemoryVideoRepository');
 const { InMemoryTranscodeJobRepository } = require('../../domains/video/src/infrastructure/InMemoryTranscodeJobRepository');
+const { tryServeDynamicUi } = require('../frontend/renderDynamicUi');
+const { buildHomeRuntimeResponse, buildControlCenterRuntimeResponse } = require('../shared/uiRuntimeContracts');
 
 function createTaskController(taskRepository = new InMemoryTaskRepository(), eventPublisher = new InMemoryEventPublisher()) {
   return new TaskController({
@@ -772,6 +774,46 @@ function createAppHandler({
         sendResponse(req, res, 200, { total: _domainEventRingBuffer.length, events: snapshot },
           mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
+      }
+
+      // ── UI Runtime API ────────────────────────────────────────────────────
+      if (method === 'GET' && url.pathname === '/ui/home-runtime') {
+        const runtimeData = buildHomeRuntimeResponse();
+        sendResponse(req, res, 200, runtimeData, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/ui/control-center-runtime') {
+        const runtimeData = buildControlCenterRuntimeResponse();
+        sendResponse(req, res, 200, runtimeData, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      // ── Planning Studio — snapshot ────────────────────────────────────────
+      if (method === 'GET' && url.pathname === '/api/planning-studio/snapshot') {
+        const snapshotResult = spawnSync('python3', [
+          path.resolve(__dirname, '../../scripts/planning_studio_api.py'), 'snapshot',
+        ], { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8' });
+        if (snapshotResult.status !== 0) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          sendResponse(req, res, 500, fromError(
+            Object.assign(new Error('snapshot collection failed'), { code: 'INTERNAL_ERROR' }),
+            { path: url.pathname },
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+        let snapshotData = {};
+        try { snapshotData = JSON.parse(snapshotResult.stdout || '{}'); } catch (_) { snapshotData = {}; }
+        sendResponse(req, res, 200, { ok: true, data: snapshotData }, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      // ── Dynamic UI serving (static artifacts catch-all) ──────────────────
+      if (method === 'GET' || method === 'HEAD') {
+        if (tryServeDynamicUi(req, res, url.pathname)) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          return;
+        }
       }
 
       if (idempotencyScope) {
