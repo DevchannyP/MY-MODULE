@@ -5,6 +5,8 @@
   "main": "src/index.js",
   "packageManager": "npm@10.9.4",
   "scripts": {
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "start:dev": "node --env-file-if-exists=.env --env-file-if-exists=.env.local src/index.js",
     "test": "node --test 'domains/**/tests/**/*.test.js'",
     "test:contract": "python3 scripts/validate_contract_drift.py",
     "test:integration": "node --test 'domains/**/tests/application/**/*.test.js'",
@@ -114,7 +116,10 @@
     "gate:all": "turbo run gate",
     "study-guide": "node scripts/generate-study-guide.js",
     "scaffold": "node scripts/generate-domain-scaffold.js",
-    "mindmap": "node scripts/generate-mindmap.js"
+    "mindmap": "node scripts/generate-mindmap.js",
+    "env:init": "node scripts/env-init.js",
+    "env:init:force": "node scripts/env-init.js --force",
+    "env:check": "node scripts/env-init.js --dry-run"
   },
   "keywords": [
     "workflow-os",

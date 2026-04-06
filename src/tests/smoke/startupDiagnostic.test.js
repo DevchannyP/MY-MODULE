@@ -17,7 +17,7 @@ test('[startup diagnostic] shows env-absent hint when .env not found', () => {
 
   const text = lines.join('\n');
   assert.match(text, /없음.*flags\.yaml 기본값 사용/);
-  assert.match(text, /cp \.env\.example \.env/);
+  assert.match(text, /npm run env:init/);
   assert.match(text, /활성 플래그\s*:.*없음/);
   assert.match(text, /WOS_FLAG_\* 변수\s*:.*없음/);
 });
@@ -37,8 +37,8 @@ test('[startup diagnostic] shows loaded flags when .env present with overrides',
   assert.match(text, /WOS_FLAG_\* 변수\s*:.*2개 설정됨/);
   assert.match(text, /ENV 오버라이드\s*:.*enable_task_management/);
   assert.match(text, /활성 플래그\s*:.*billing\.enabled/);
-  // 파일이 있으니 .env.example 힌트 없어야 함
-  assert.doesNotMatch(text, /cp \.env\.example/);
+  // 플래그 설정됐으니 env:init 힌트 없어야 함
+  assert.doesNotMatch(text, /npm run env:init/);
 });
 
 test('[startup diagnostic] shows hint when .env present but no WOS_FLAG_ vars', () => {
@@ -54,7 +54,7 @@ test('[startup diagnostic] shows hint when .env present but no WOS_FLAG_ vars', 
   const text = lines.join('\n');
   assert.match(text, /\.env 파일\s*:.*로드됨/);
   assert.match(text, /WOS_FLAG_\* 변수\s*:.*없음/);
-  assert.match(text, /\.env\.example.*참고/);
+  assert.match(text, /npm run env:init/);
 });
 
 test('[startup diagnostic] shows flags.yaml load failure warning', () => {

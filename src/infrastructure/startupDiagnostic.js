@@ -45,10 +45,10 @@ function buildStartupDiagnosticLines(opts) {
 
   if (!envExists) {
     lines.push('');
-    lines.push('  ⓘ  cp .env.example .env 후 WOS_FLAG_* 주석을 해제하면 플래그를 활성화할 수 있습니다.');
+    lines.push('  ⓘ  npm run env:init  →  .env 자동 생성 후 주석 해제하면 플래그 활성화');
   } else if (envExists && wosVarCount === 0) {
     lines.push('');
-    lines.push('  ⓘ  .env 파일이 있지만 WOS_FLAG_* 변수가 없습니다. .env.example을 참고하세요.');
+    lines.push('  ⓘ  npm run env:init  →  .env에 누락된 WOS_FLAG_* 변수 자동 추가');
   }
 
   lines.push(sep);
