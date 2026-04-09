@@ -7,8 +7,8 @@ info:
   x-api-version-policy: "semver-with-explicit-breaking-review"
   description: |
     Workflow OS 마스터 UI가 Planning Studio와 PTY 브리지를 제어할 때 사용하는 내부 API 계약.
-    현재 범위는 계획 저장, 자동 전송 설정, 스캐폴드 미리보기/생성, PTY 세션 조회,
-    프롬프트 전송, 스케줄러 제어를 포함한다.
+    현재 범위는 계획 저장, 자동 전송 설정, 스캐폴드 미리보기/생성, Stage A~E 실행/dry-run,
+    추천 프롬프트 조회, PTY 세션 조회, 프롬프트 전송, 스케줄러 제어를 포함한다.
 
 servers:
   - url: /api
@@ -16,12 +16,18 @@ servers:
 tags:
   - name: planning-studio
     description: Planning Studio 상태 조회 및 저장
+  - name: planning-stage
+    description: Stage A~E 실행 또는 dry-run 보고서 조회
   - name: scaffold
     description: 도메인 스캐폴드 미리보기 및 생성
+  - name: automation
+    description: Control Center 자동화 제어 및 추천 프롬프트
   - name: pty
     description: PTY 세션과 프롬프트 전송
   - name: scheduler
     description: 자동 전송 스케줄러 제어
+  - name: flags
+    description: 런타임 Feature Flag 상태 조회
 
 paths:
   /planning-studio/snapshot:
@@ -131,6 +137,8 @@ paths:
       summary: "도메인 스캐폴드 미리보기"
       operationId: "previewDomainScaffold"
       tags: [scaffold]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       requestBody:
         required: true
         content:
@@ -140,6 +148,9 @@ paths:
       responses:
         "200":
           description: "미리보기 성공"
+          headers:
+            Idempotency-Replayed:
+              $ref: "#/components/headers/IdempotencyReplayed"
           content:
             application/json:
               schema:
@@ -178,6 +189,33 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableContent" }
         "500": { $ref: "#/components/responses/InternalError" }
 
+  /planning-studio/stage-run:
+    post:
+      summary: "Stage A~E 실행 또는 dry-run 보고서 조회"
+      operationId: "runPlanningStage"
+      tags: [planning-stage]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StageRunRequest"
+      responses:
+        "200":
+          description: "stage 실행 결과"
+          headers:
+            Idempotency-Replayed:
+              $ref: "#/components/headers/IdempotencyReplayed"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StageRunEnvelope"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
   /pty/sessions:
     get:
       summary: "감지된 PTY 세션 목록 조회"
@@ -192,11 +230,27 @@ paths:
                 $ref: "#/components/schemas/PtySessionsResponse"
         "500": { $ref: "#/components/responses/LegacyInternalError" }
 
+  /automation/optimize-prompt:
+    get:
+      summary: "Control Center 추천 프롬프트 조회"
+      operationId: "getRecommendedPrompt"
+      tags: [automation]
+      responses:
+        "200":
+          description: "성공"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptimizedPromptResponse"
+        "500": { $ref: "#/components/responses/LegacyInternalError" }
+
   /pty/send:
     post:
       summary: "선택한 PTY 세션으로 프롬프트 또는 Enter 전송"
       operationId: "sendPromptToPty"
       tags: [pty]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       requestBody:
         required: true
         content:
@@ -206,6 +260,9 @@ paths:
       responses:
         "200":
           description: "전송 성공"
+          headers:
+            Idempotency-Replayed:
+              $ref: "#/components/headers/IdempotencyReplayed"
           content:
             application/json:
               schema:
@@ -232,6 +289,8 @@ paths:
       summary: "자동 전송 스케줄러 시작"
       operationId: "startPtyScheduler"
       tags: [scheduler]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       requestBody:
         required: true
         content:
@@ -241,6 +300,9 @@ paths:
       responses:
         "200":
           description: "시작 성공"
+          headers:
+            Idempotency-Replayed:
+              $ref: "#/components/headers/IdempotencyReplayed"
           content:
             application/json:
               schema:
@@ -253,9 +315,14 @@ paths:
       summary: "자동 전송 스케줄러 중지"
       operationId: "stopPtyScheduler"
       tags: [scheduler]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       responses:
         "200":
           description: "중지 성공"
+          headers:
+            Idempotency-Replayed:
+              $ref: "#/components/headers/IdempotencyReplayed"
           content:
             application/json:
               schema:
@@ -280,6 +347,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SchedulerDispatchResponse"
+        "500": { $ref: "#/components/responses/LegacyInternalError" }
+
+  /flags:
+    servers:
+      - url: /
+    get:
+      summary: "런타임 Feature Flag 상태 조회"
+      operationId: "getRuntimeFlags"
+      tags: [flags]
+      responses:
+        "200":
+          description: "성공"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlagsResponse"
         "500": { $ref: "#/components/responses/LegacyInternalError" }
 
   /pty/enter-now:
@@ -563,6 +646,86 @@ components:
         data: { $ref: "#/components/schemas/ScaffoldCommandResult" }
       additionalProperties: true
 
+    StageRunRequest:
+      type: object
+      required: [stage]
+      properties:
+        stage:
+          type: string
+          enum: [A, B, C, D, E]
+        module:
+          type: string
+          pattern: "^[a-z][a-z0-9-]{0,62}$"
+        execute:
+          type: boolean
+      additionalProperties: false
+
+    StageCommandResult:
+      type: object
+      required: [command, ok, exit_code, stdout, stderr]
+      properties:
+        command: { type: string }
+        ok: { type: boolean }
+        exit_code: { type: integer }
+        signal:
+          oneOf:
+            - type: string
+            - type: "null"
+        stdout: { type: string }
+        stderr: { type: string }
+      additionalProperties: true
+
+    StageRunReport:
+      type: object
+      required: [requested_stage, execution_mode, status, run_now, requirements_stage, recommended_commands]
+      properties:
+        requested_stage:
+          type: string
+          enum: [A, B, C, D, E]
+        execution_mode:
+          type: string
+          enum: [dry-run-only, execute]
+        status: { type: string }
+        run_now: { type: boolean }
+        requirements_stage: { type: string }
+        legacy_stage_state: { type: string }
+        prerequisites:
+          type: array
+          description: "이 stage 실행 전에 확인해야 할 전체 선행 조건 목록"
+          items: { type: string }
+        unmet_prerequisites:
+          type: array
+          items: { type: string }
+        summary: { type: string }
+        docs_ref: { type: string }
+        recommended_commands:
+          type: array
+          items: { type: string }
+        notes:
+          type: array
+          items: { type: string }
+        current_wp: { type: string }
+        requirements_file: { type: string }
+        runtime_root: { type: string }
+        quality_gate_result:
+          oneOf:
+            - type: string
+            - type: "null"
+        executed_command_count: { type: integer }
+        failed_command_count: { type: integer }
+        command_results:
+          type: array
+          items: { $ref: "#/components/schemas/StageCommandResult" }
+      additionalProperties: true
+
+    StageRunEnvelope:
+      type: object
+      required: [ok, data]
+      properties:
+        ok: { type: boolean, const: true }
+        data: { $ref: "#/components/schemas/StageRunReport" }
+      additionalProperties: true
+
     PtySession:
       type: object
       required: [pts]
@@ -573,6 +736,13 @@ components:
         label: { type: string }
         command: { type: string }
         cwd: { type: string }
+      additionalProperties: true
+
+    OptimizedPromptResponse:
+      type: object
+      required: [prompt]
+      properties:
+        prompt: { type: string }
       additionalProperties: true
 
     PtySessionsResponse:
@@ -747,6 +917,35 @@ components:
           type: array
           items: { $ref: "#/components/schemas/SchedulerDispatchResult" }
       additionalProperties: true
+
+    FlagDetail:
+      type: object
+      required: [flag, enabled, env_overridden, source]
+      properties:
+        flag: { type: string }
+        enabled: { type: boolean }
+        env_overridden: { type: boolean }
+        source:
+          type: string
+          enum: [env, "flags.yaml"]
+      additionalProperties: false
+
+    FlagsResponse:
+      type: object
+      required: [as_of, env_overrides_applied, env_overridden_flags, enabled_flags, flags]
+      properties:
+        as_of: { type: string }
+        env_overrides_applied: { type: integer, minimum: 0 }
+        env_overridden_flags:
+          type: array
+          items: { type: string }
+        enabled_flags:
+          type: array
+          items: { type: string }
+        flags:
+          type: array
+          items: { $ref: "#/components/schemas/FlagDetail" }
+      additionalProperties: false
 
   responses:
     BadRequest:

@@ -40,6 +40,7 @@
     "boundary:check": "node scripts/architecture-fitness.js",
     "validate:contracts": "node scripts/validate-contracts.js && python3 scripts/validate_openapi_governance.py",
     "check:feature-flags": "python3 scripts/validate_master_shell.py",
+    "validate:feature-flags": "python3 scripts/validate_feature_flags.py",
     "check:benchmark-catalog": "python3 scripts/validate_master_shell.py",
     "generate:graph": "node scripts/generate-dep-graph.js",
     "generate:from-contracts": "node scripts/generate-from-contracts.js",
@@ -119,7 +120,9 @@
     "mindmap": "node scripts/generate-mindmap.js",
     "env:init": "node scripts/env-init.js",
     "env:init:force": "node scripts/env-init.js --force",
-    "env:check": "node scripts/env-init.js --dry-run"
+    "env:check": "node scripts/env-init.js --dry-run",
+    "env:status": "node scripts/env-status.js",
+    "env:status:json": "node scripts/env-status.js --json"
   },
   "keywords": [
     "workflow-os",
