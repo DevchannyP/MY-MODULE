@@ -127,7 +127,15 @@
       "details": "npm start --env-file-if-exists=.env 추가, .env.example 생성, WOS_FLAG_* rollout 우회 수정 (ENV_OVERRIDE_TRUE/FALSE reason), 4 FeatureFlagProvider 테스트 PASS",
       "prev_hash": "8a433e88a33ea6afa71a7bfd1cdfd16936e3501827fa47c27f4b7355bbc45107",
       "hash": "e1c3728210592be6489540b7ee82d17e52190fb824418c832c1906d8b529a41f"
+    },
+    {
+      "seq": 17,
+      "timestamp": "2026-04-09T14:02:50.383Z",
+      "action": "gate/L5-full",
+      "details": "전체 품질 게이트 PASS: contract-drift PASS, openapi-governance PASS, feature-flags 12/12, ui-shell-contract 16/16, architecture-fitness 0위반, requirements PASS, ESLint PASS, 570/570 domain, 110/110 smoke",
+      "prev_hash": "e1c3728210592be6489540b7ee82d17e52190fb824418c832c1906d8b529a41f",
+      "hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd"
     }
   ],
-  "last_hash": "e1c3728210592be6489540b7ee82d17e52190fb824418c832c1906d8b529a41f"
+  "last_hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd"
 }

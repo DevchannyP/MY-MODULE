@@ -44,3 +44,8 @@ artifacts/decision-apply/history/
 artifacts/promotion-pipeline/history/
 tmp/
 *.tmp
+
+# 도구 캐시 / 임시
+.turbo/
+.codex
+.env.bak
