@@ -71,5 +71,5 @@ context_budget:
   budget_total_tokens: 199464
 template_id: ops-hardening-packet
 planning_mode: ''
-generated_at: '2026-04-09T14:11:13.530088+00:00'
-applied_at: '2026-04-09T14:11:13.530104+00:00'
+generated_at: '2026-04-09T14:19:10.189776+00:00'
+applied_at: '2026-04-09T14:19:10.189794+00:00'

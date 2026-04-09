@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-09T14:11:13.908891+00:00",
+  "generated_at_utc": "2026-04-09T14:19:10.580635+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "1967efe3d950c80ebb9e107ecff02c9dfaa3ae17",
+  "head_commit": "9e2ae6eebd6ebc80b4a6d86581e8cb1daf83eef5",
   "build_environment": {
     "ci": "false",
-    "github_sha": "1967efe3d950c80ebb9e107ecff02c9dfaa3ae17",
+    "github_sha": "9e2ae6eebd6ebc80b4a6d86581e8cb1daf83eef5",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -28,7 +28,7 @@
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
       "artifacts/release-evidence/release-evidence.json",
       "contracts/ui-shell/openapi.yaml",
-      "scripts/validate_ui_shell_contract.py",
+      "src/server/createServer.js",
       "src/tests/smoke/mindmapControlCenterBrowserInteraction.smoke.test.js"
     ],
     "untracked_paths": []
