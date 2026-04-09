@@ -62,6 +62,114 @@ function normalizeControlNode(node) {
   };
 }
 
+function normalizeExecutionActivity(activity) {
+  if (!activity || typeof activity !== 'object') {
+    return null;
+  }
+
+  return {
+    action: String(activity.action || ''),
+    worker: String(activity.worker || ''),
+    pts: String(activity.pts || ''),
+    packet_id: String(activity.packet_id || ''),
+    prompt_preview: String(activity.prompt_preview || ''),
+    ok: activity.ok !== false,
+    error: typeof activity.error === 'string' && activity.error.trim() ? activity.error : null,
+    next_enter_in: typeof activity.next_enter_in === 'number' ? activity.next_enter_in : null,
+    next_prompt_in: typeof activity.next_prompt_in === 'number' ? activity.next_prompt_in : null,
+  };
+}
+
+function deriveExecutionNextAction({ sessionCount, schedulerRunning, lastError, lastPromptText }) {
+  if (sessionCount < 1) {
+    return 'PTY 세션을 확인한 뒤 다시 새로고침하세요.';
+  }
+  if (lastError && lastError.error) {
+    return lastPromptText
+      ? '실패 원인을 해소한 뒤 이전 프롬프트 재실행 또는 자동 전송 중지를 선택하세요.'
+      : '실패 원인을 해소한 뒤 다시 전송하세요.';
+  }
+  if (schedulerRunning) {
+    return '자동 전송이 실행 중입니다. 필요하면 중지 후 프롬프트를 조정하세요.';
+  }
+  if (lastPromptText) {
+    return '마지막 프롬프트를 재실행하거나 자동 전송을 시작할 수 있습니다.';
+  }
+  return '추천 프롬프트를 불러오거나 직접 입력한 뒤 전송하세요.';
+}
+
+function buildControlCenterRuntimeState({
+  flagStatus = {},
+  bridgeState = {},
+  schedulerStatus = {},
+} = {}) {
+  const sessions = Array.isArray(bridgeState.sessions) ? bridgeState.sessions : [];
+  const enabledFlags = Array.isArray(flagStatus.enabled_flags) ? flagStatus.enabled_flags : [];
+  const normalizedLastError = normalizeExecutionActivity(bridgeState.lastError);
+  const normalizedLastActivity = normalizeExecutionActivity(schedulerStatus.last_activity);
+  const normalizedCurrentActivity = normalizeExecutionActivity(schedulerStatus.current_activity);
+  const rollbackEnabled = enabledFlags.includes('system_api.rollback_ui.enabled');
+
+  return {
+    feature_flags: {
+      enabled_flags: enabledFlags,
+      env_overridden_flags: Array.isArray(flagStatus.env_overridden_flags) ? flagStatus.env_overridden_flags : [],
+      env_overrides_applied: typeof flagStatus.envOverridesApplied === 'number' ? flagStatus.envOverridesApplied : 0,
+      flags_loaded: flagStatus.flagsLoaded === true,
+      flag_count: typeof flagStatus.flagCount === 'number' ? flagStatus.flagCount : 0,
+    },
+    execution: {
+      runtime_available: sessions.length > 0,
+      session_count: sessions.length,
+      selected_pts_hint: String(
+        normalizedCurrentActivity?.pts
+        || normalizedLastActivity?.pts
+        || sessions[0]?.pts
+        || '',
+      ),
+      last_prompt_text: String(bridgeState.lastPromptText || ''),
+      current_activity: normalizedCurrentActivity,
+      last_activity: normalizedLastActivity,
+      last_error: normalizedLastError,
+      next_action: deriveExecutionNextAction({
+        sessionCount: sessions.length,
+        schedulerRunning: schedulerStatus.running === true,
+        lastError: normalizedLastError,
+        lastPromptText: String(bridgeState.lastPromptText || ''),
+      }),
+    },
+    scheduler: {
+      running: schedulerStatus.running === true,
+      started_at: schedulerStatus.started_at || null,
+      worker_count: Array.isArray(schedulerStatus.workers) ? schedulerStatus.workers.length : 0,
+      workers: Array.isArray(schedulerStatus.workers) ? schedulerStatus.workers : [],
+      current_activity: normalizedCurrentActivity,
+      last_activity: normalizedLastActivity,
+    },
+    control_endpoints: {
+      sessions: '/api/pty/sessions',
+      send: '/api/pty/send',
+      scheduler_status: '/api/pty/scheduler/status',
+      scheduler_start: '/api/pty/scheduler/start',
+      scheduler_stop: '/api/pty/scheduler/stop',
+      flags: '/flags',
+      optimize_prompt: '/api/automation/optimize-prompt',
+      stage_run: '/api/planning-studio/stage-run',
+      rollback_base: '/api/v1/system/rollback',
+    },
+    user_controls: {
+      send_prompt: sessions.length > 0,
+      auto_send_toggle: sessions.length > 0,
+      stop: schedulerStatus.running === true,
+      retry_last_prompt: Boolean(String(bridgeState.lastPromptText || '').trim()),
+      rollback: rollbackEnabled,
+      terminal_status_visible: true,
+      failure_reason_visible: Boolean(normalizedLastError?.error || normalizedLastActivity?.error),
+    },
+    as_of: new Date().toISOString(),
+  };
+}
+
 function buildHomeRuntimeResponse() {
   const runtime = buildHomeRuntime();
   const report = runtime.homeData?.report || {};
@@ -128,12 +236,12 @@ function buildHomeRuntimeResponse() {
   };
 }
 
-function buildControlCenterRuntimeResponse() {
+function buildControlCenterRuntimeResponse(options = {}) {
   const runtime = buildMindmapRuntime();
   const meta = runtime.graphData?.meta || {};
   const controlCenter = meta.controlCenter || {};
 
-  return {
+  const response = {
     ok: true,
     data: {
       status: normalizeMasterStatus({
@@ -174,9 +282,16 @@ function buildControlCenterRuntimeResponse() {
       generated_at: String(meta.generatedAt || new Date().toISOString()),
     },
   };
+
+  if (options.runtime_state && typeof options.runtime_state === 'object') {
+    response.runtime_state = options.runtime_state;
+  }
+
+  return response;
 }
 
 module.exports = {
   buildHomeRuntimeResponse,
   buildControlCenterRuntimeResponse,
+  buildControlCenterRuntimeState,
 };

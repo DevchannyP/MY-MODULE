@@ -112,6 +112,19 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(typeof controlRuntime.body.data.scaffold_capabilities.default_blueprint, 'string');
     assert.equal(controlRuntime.body.data.stage_capabilities.run_endpoint, '/api/planning-studio/stage-run');
     assert.ok(Array.isArray(controlRuntime.body.data.stage_capabilities.supported_stages));
+    assert.ok(controlRuntime.body.runtime_state, 'control-center runtime_state must be present');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.feature_flags.enabled_flags));
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.runtime_available, 'boolean');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.session_count, 'number');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.next_action, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.scheduler.running, 'boolean');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.scheduler.workers));
+    assert.equal(controlRuntime.body.runtime_state.control_endpoints.send, '/api/pty/send');
+    assert.equal(controlRuntime.body.runtime_state.control_endpoints.rollback_base, '/api/v1/system/rollback');
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.send_prompt, 'boolean');
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.retry_last_prompt, 'boolean');
+    assert.equal(controlRuntime.body.runtime_state.user_controls.terminal_status_visible, true);
+    assert.equal(typeof controlRuntime.body.runtime_state.as_of, 'string');
 
     const snapshotResponse = await fetch(new URL('/api/planning-studio/snapshot', runtime.url));
     assert.equal(snapshotResponse.status, 200);
@@ -144,6 +157,12 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     });
     assert.equal(ptySend.status, 200);
     assert.equal(ptySend.body.ok, true);
+
+    const controlRuntimeAfterSend = await requestJson(runtime.url, '/ui/control-center-runtime');
+    assert.equal(controlRuntimeAfterSend.status, 200);
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.execution.last_prompt_text, 'Roundtrip prompt');
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.retry_last_prompt, true);
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.failure_reason_visible, false);
 
     const ptySendReplay = await postJson(runtime.url, '/api/pty/send', {
       pts: selectedSession.pts,
@@ -207,6 +226,29 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(schedulerRunning.body.workers.length, 1);
     assert.equal(schedulerRunning.body.current_activity.action, 'running');
 
+    const schedulerSendNow = await postJson(runtime.url, '/api/pty/send-now', {});
+    assert.equal(schedulerSendNow.status, 200);
+    assert.ok(Array.isArray(schedulerSendNow.body.results));
+    assert.equal(schedulerSendNow.body.results.length, 1);
+    assert.equal(schedulerSendNow.body.results[0].worker, 'Control Center Worker');
+    assert.equal(schedulerSendNow.body.results[0].ok, true);
+    assert.equal(schedulerSendNow.body.results[0].error, null);
+
+    const schedulerSendNowInvalid = await postJson(runtime.url, '/api/pty/send-now', {
+      worker_index: 99,
+    });
+    assert.equal(schedulerSendNowInvalid.status, 200);
+    assert.equal(schedulerSendNowInvalid.body.results[0].ok, false);
+    assert.match(String(schedulerSendNowInvalid.body.results[0].error || ''), /index 99/);
+
+    const schedulerEnterNow = await postJson(runtime.url, '/api/pty/enter-now', {});
+    assert.equal(schedulerEnterNow.status, 200);
+    assert.ok(Array.isArray(schedulerEnterNow.body.results));
+    assert.equal(schedulerEnterNow.body.results.length, 1);
+    assert.equal(schedulerEnterNow.body.results[0].worker, 'Control Center Worker');
+    assert.equal(schedulerEnterNow.body.results[0].ok, true);
+    assert.equal(schedulerEnterNow.body.results[0].error, null);
+
     const schedulerStop = await postJson(runtime.url, '/api/pty/scheduler/stop', {}, {
       'idempotency-key': 'dynamic-scheduler-stop-idem',
     });
@@ -248,6 +290,12 @@ test('[dynamic frontend server smoke] PTY send errors return RFC 7807 Problem De
     assert.equal(typeof missingPts.body.title, 'string');
     assert.equal(typeof missingPts.body.detail, 'string');
 
+    const controlRuntimeAfterMissingPts = await requestJson(runtime.url, '/ui/control-center-runtime');
+    assert.equal(controlRuntimeAfterMissingPts.status, 200);
+    assert.equal(controlRuntimeAfterMissingPts.body.runtime_state.execution.last_error.error, 'pts 필드가 필수입니다.');
+    assert.equal(controlRuntimeAfterMissingPts.body.runtime_state.user_controls.failure_reason_visible, true);
+    assert.match(controlRuntimeAfterMissingPts.body.runtime_state.execution.next_action, /실패 원인/);
+
     // Case 2: 존재하지 않는 pts → NOT_FOUND (404)
     const unknownPts = await postJson(runtime.url, '/api/pty/send', {
       pts: '/dev/pts/99999',
@@ -261,6 +309,11 @@ test('[dynamic frontend server smoke] PTY send errors return RFC 7807 Problem De
     assert.ok(unknownPts.body.type.includes('not-found'), `type should include not-found, got: ${unknownPts.body.type}`);
     assert.equal(typeof unknownPts.body.title, 'string');
     assert.equal(typeof unknownPts.body.detail, 'string');
+
+    const controlRuntimeAfterUnknownPts = await requestJson(runtime.url, '/ui/control-center-runtime');
+    assert.equal(controlRuntimeAfterUnknownPts.status, 200);
+    assert.equal(controlRuntimeAfterUnknownPts.body.runtime_state.execution.last_error.error, '알 수 없는 PTY 세션입니다: /dev/pts/99999');
+    assert.equal(controlRuntimeAfterUnknownPts.body.runtime_state.execution.last_activity.ok, false);
   } finally {
     await runtime.shutdown({ reason: 'test' });
   }

@@ -29,7 +29,11 @@ const { InMemoryBillingExceptionRepository } = require('../../domains/billing/sr
 const { InMemoryVideoRepository } = require('../../domains/video/src/infrastructure/InMemoryVideoRepository');
 const { InMemoryTranscodeJobRepository } = require('../../domains/video/src/infrastructure/InMemoryTranscodeJobRepository');
 const { tryServeDynamicUi } = require('../frontend/renderDynamicUi');
-const { buildHomeRuntimeResponse, buildControlCenterRuntimeResponse } = require('../shared/uiRuntimeContracts');
+const {
+  buildHomeRuntimeResponse,
+  buildControlCenterRuntimeResponse,
+  buildControlCenterRuntimeState,
+} = require('../shared/uiRuntimeContracts');
 
 function createTaskController(taskRepository = new InMemoryTaskRepository(), eventPublisher = new InMemoryEventPublisher()) {
   return new TaskController({
@@ -462,6 +466,7 @@ function createNodePtyBridge(runtimeRoot) {
       log: [],
     },
     lastPromptText: '',
+    lastError: null,
   };
 }
 
@@ -486,6 +491,85 @@ function appendBridgeLog(scheduler, entry) {
   if (scheduler.log.length > 30) {
     scheduler.log.length = 30;
   }
+}
+
+function clearBridgeFailure(bridgeState) {
+  bridgeState.lastError = null;
+}
+
+function recordBridgeFailure(bridgeState, {
+  action = 'prompt',
+  worker = 'Control Center',
+  pts = '',
+  promptText = '',
+  error = 'unknown error',
+  packetId = '',
+} = {}) {
+  const activity = buildBridgeActivity(action, worker, pts, promptText, false, error, packetId);
+  bridgeState.lastError = activity;
+  bridgeState.scheduler.lastActivity = activity;
+  appendBridgeLog(bridgeState.scheduler, {
+    ts: new Date().toISOString(),
+    worker,
+    action,
+    pts,
+    packet_id: packetId || '',
+    ok: false,
+    error,
+  });
+  return activity;
+}
+
+function dispatchBridgeAction(bridgeState, {
+  action = 'prompt',
+  workerName = 'Control Center',
+  pts = '',
+  promptText = '',
+  packetId = '',
+} = {}) {
+  const session = bridgeState.sessions.find((item) => String(item.pts || '') === String(pts || ''));
+  if (!session) {
+    recordBridgeFailure(bridgeState, {
+      action,
+      worker: workerName,
+      pts,
+      promptText,
+      error: `알 수 없는 PTY 세션입니다: ${pts}`,
+      packetId,
+    });
+    return {
+      ok: false,
+      error: `알 수 없는 PTY 세션입니다: ${pts}`,
+    };
+  }
+
+  clearBridgeFailure(bridgeState);
+  if (promptText) {
+    bridgeState.lastPromptText = promptText;
+  }
+  bridgeState.scheduler.lastActivity = buildBridgeActivity(
+    action,
+    workerName,
+    pts,
+    promptText,
+    true,
+    null,
+    packetId,
+  );
+  appendBridgeLog(bridgeState.scheduler, {
+    ts: new Date().toISOString(),
+    worker: workerName,
+    action,
+    pts,
+    packet_id: packetId || '',
+    ok: true,
+    error: null,
+  });
+
+  return {
+    ok: true,
+    error: null,
+  };
 }
 
 function buildBridgeSchedulerStatus(bridgeState) {
@@ -1061,7 +1145,13 @@ function createAppHandler({
       }
 
       if (method === 'GET' && url.pathname === '/ui/control-center-runtime') {
-        const runtimeData = buildControlCenterRuntimeResponse();
+        const runtimeData = buildControlCenterRuntimeResponse({
+          runtime_state: buildControlCenterRuntimeState({
+            flagStatus: resolvedFlags.getRuntimeStatus(),
+            bridgeState: nodePtyBridge,
+            schedulerStatus: buildBridgeSchedulerStatus(nodePtyBridge),
+          }),
+        });
         sendResponse(req, res, 200, runtimeData, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
@@ -1244,7 +1334,23 @@ function createAppHandler({
         });
         const pts = typeof body.pts === 'string' ? body.pts.trim() : '';
         const text = typeof body.text === 'string' ? body.text : '';
+        const action = typeof body.action === 'string' && body.action.trim()
+          ? body.action.trim()
+          : (text === '\r' ? 'enter' : 'prompt');
+        const promptText = typeof body.prompt === 'string' && body.prompt.trim()
+          ? body.prompt.trim()
+          : (text.endsWith('\r') ? text.slice(0, -1) : text);
+        const packetId = typeof body.packet_id === 'string' ? body.packet_id : '';
+        const workerName = typeof body.name === 'string' && body.name.trim() ? body.name.trim() : 'Control Center';
         if (!pts) {
+          recordBridgeFailure(nodePtyBridge, {
+            action,
+            worker: workerName,
+            pts,
+            promptText,
+            error: 'pts 필드가 필수입니다.',
+            packetId,
+          });
           metrics.ptyBridgeFailuresTotal.add(1, {
             route: url.pathname,
             method,
@@ -1258,8 +1364,14 @@ function createAppHandler({
           sendResponse(req, res, missingPtsStatus, missingPtsBody, mergeHeaders(responseBaseHeaders, responseHeaders));
           return;
         }
-        const session = nodePtyBridge.sessions.find((item) => String(item.pts || '') === pts);
-        if (!session) {
+        const dispatchResult = dispatchBridgeAction(nodePtyBridge, {
+          action,
+          workerName,
+          pts,
+          promptText,
+          packetId,
+        });
+        if (!dispatchResult.ok) {
           metrics.ptyBridgeFailuresTotal.add(1, {
             route: url.pathname,
             method,
@@ -1269,37 +1381,11 @@ function createAppHandler({
             'pty.send.reason': 'unknown_pts',
             'pty.session.pts': pts,
           });
-          const unknownPtsErr = Object.assign(new Error(`알 수 없는 PTY 세션입니다: ${pts}`), { code: 'NOT_FOUND' });
+          const unknownPtsErr = Object.assign(new Error(dispatchResult.error), { code: 'NOT_FOUND' });
           const { status: unknownPtsStatus, body: unknownPtsBody } = fromError(unknownPtsErr, { path: url.pathname, correlationId });
           sendResponse(req, res, unknownPtsStatus, unknownPtsBody, mergeHeaders(responseBaseHeaders, responseHeaders));
           return;
         }
-        const action = typeof body.action === 'string' && body.action.trim()
-          ? body.action.trim()
-          : (text === '\r' ? 'enter' : 'prompt');
-        const promptText = typeof body.prompt === 'string' && body.prompt.trim()
-          ? body.prompt.trim()
-          : (text.endsWith('\r') ? text.slice(0, -1) : text);
-        const packetId = typeof body.packet_id === 'string' ? body.packet_id : '';
-        nodePtyBridge.lastPromptText = promptText || nodePtyBridge.lastPromptText;
-        nodePtyBridge.scheduler.lastActivity = buildBridgeActivity(
-          action,
-          typeof body.name === 'string' && body.name.trim() ? body.name.trim() : 'Control Center',
-          pts,
-          promptText,
-          true,
-          null,
-          packetId,
-        );
-        appendBridgeLog(nodePtyBridge.scheduler, {
-          ts: new Date().toISOString(),
-          worker: typeof body.name === 'string' && body.name.trim() ? body.name.trim() : 'Control Center',
-          action,
-          pts,
-          packet_id: packetId || '',
-          ok: true,
-          error: null,
-        });
         metrics.ptyBridgeSendTotal.add(1, {
           route: url.pathname,
           method,
@@ -1352,6 +1438,7 @@ function createAppHandler({
         const cycleMinutes = Number(body.cycle_minutes || 30);
         const enterSeconds = Number(body.enter_seconds || 10);
         const now = Date.now();
+        clearBridgeFailure(nodePtyBridge);
         nodePtyBridge.scheduler.running = true;
         nodePtyBridge.scheduler.startedAt = new Date().toISOString();
         nodePtyBridge.scheduler.workers = workers
@@ -1402,6 +1489,7 @@ function createAppHandler({
           correlationId,
           requestId,
         });
+        clearBridgeFailure(nodePtyBridge);
         nodePtyBridge.scheduler.running = false;
         nodePtyBridge.scheduler.startedAt = null;
         appendBridgeLog(nodePtyBridge.scheduler, {
@@ -1425,6 +1513,116 @@ function createAppHandler({
           idempotencyStore.complete(idempotencyScope, { status: 200, body: stopResponseBody });
         }
         sendResponse(req, res, 200, stopResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'POST' && url.pathname === '/api/pty/send-now') {
+        const workerIndex = Number.isInteger(body.worker_index) ? body.worker_index : 0;
+        const worker = nodePtyBridge.scheduler.workers[workerIndex];
+        let results;
+
+        if (!worker) {
+          recordBridgeFailure(nodePtyBridge, {
+            action: 'prompt',
+            worker: 'scheduler',
+            pts: '',
+            promptText: '',
+            error: `유효한 scheduler worker가 없습니다: index ${workerIndex}`,
+            packetId: '',
+          });
+          results = [{
+            worker: `worker-${workerIndex}`,
+            ok: false,
+            error: `유효한 scheduler worker가 없습니다: index ${workerIndex}`,
+          }];
+        } else {
+          const dispatchResult = dispatchBridgeAction(nodePtyBridge, {
+            action: 'prompt',
+            workerName: worker.name,
+            pts: worker.pts,
+            promptText: worker.prompt,
+            packetId: worker.plan_id,
+          });
+          results = [{
+            worker: worker.name,
+            ok: dispatchResult.ok,
+            error: dispatchResult.error,
+          }];
+          if (dispatchResult.ok) {
+            metrics.ptyBridgeSendTotal.add(1, {
+              route: url.pathname,
+              method,
+              action: 'prompt',
+            });
+          } else {
+            metrics.ptyBridgeFailuresTotal.add(1, {
+              route: url.pathname,
+              method,
+              reason: 'scheduler_send_now_failed',
+            });
+          }
+        }
+
+        const sendNowResponseBody = { results };
+        if (idempotencyScope) {
+          idempotencyStore.complete(idempotencyScope, { status: 200, body: sendNowResponseBody });
+        }
+        sendResponse(req, res, 200, sendNowResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      if (method === 'POST' && url.pathname === '/api/pty/enter-now') {
+        const workers = Array.isArray(nodePtyBridge.scheduler.workers) ? nodePtyBridge.scheduler.workers : [];
+        const results = workers.length
+          ? workers.map((worker) => {
+            const dispatchResult = dispatchBridgeAction(nodePtyBridge, {
+              action: 'enter',
+              workerName: worker.name,
+              pts: worker.pts,
+              promptText: worker.prompt,
+              packetId: worker.plan_id,
+            });
+            if (dispatchResult.ok) {
+              metrics.ptyBridgeSendTotal.add(1, {
+                route: url.pathname,
+                method,
+                action: 'enter',
+              });
+            } else {
+              metrics.ptyBridgeFailuresTotal.add(1, {
+                route: url.pathname,
+                method,
+                reason: 'scheduler_enter_now_failed',
+              });
+            }
+            return {
+              worker: worker.name,
+              ok: dispatchResult.ok,
+              error: dispatchResult.error,
+            };
+          })
+          : [{
+            worker: 'scheduler',
+            ok: false,
+            error: '즉시 엔터를 보낼 scheduler worker가 없습니다.',
+          }];
+
+        if (!workers.length) {
+          recordBridgeFailure(nodePtyBridge, {
+            action: 'enter',
+            worker: 'scheduler',
+            pts: '',
+            promptText: '',
+            error: '즉시 엔터를 보낼 scheduler worker가 없습니다.',
+            packetId: '',
+          });
+        }
+
+        const enterNowResponseBody = { results };
+        if (idempotencyScope) {
+          idempotencyStore.complete(idempotencyScope, { status: 200, body: enterNowResponseBody });
+        }
+        sendResponse(req, res, 200, enterNowResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
 
