@@ -1572,7 +1572,11 @@ function createAppHandler({
       }
 
       if (method === 'POST' && url.pathname === '/api/pty/enter-now') {
-        const workers = Array.isArray(nodePtyBridge.scheduler.workers) ? nodePtyBridge.scheduler.workers : [];
+        const allWorkers = Array.isArray(nodePtyBridge.scheduler.workers) ? nodePtyBridge.scheduler.workers : [];
+        const workerIndex = body && Number.isInteger(body.worker_index) ? body.worker_index : null;
+        const workers = workerIndex !== null
+          ? [allWorkers[workerIndex]].filter(Boolean)
+          : allWorkers;
         const results = workers.length
           ? workers.map((worker) => {
             const dispatchResult = dispatchBridgeAction(nodePtyBridge, {
@@ -1602,18 +1606,23 @@ function createAppHandler({
             };
           })
           : [{
-            worker: 'scheduler',
+            worker: workerIndex !== null ? `worker-${workerIndex}` : 'scheduler',
             ok: false,
-            error: '즉시 엔터를 보낼 scheduler worker가 없습니다.',
+            error: workerIndex !== null
+              ? `유효한 scheduler worker가 없습니다: index ${workerIndex}`
+              : '즉시 엔터를 보낼 scheduler worker가 없습니다.',
           }];
 
         if (!workers.length) {
+          const enterNowError = workerIndex !== null
+            ? `유효한 scheduler worker가 없습니다: index ${workerIndex}`
+            : '즉시 엔터를 보낼 scheduler worker가 없습니다.';
           recordBridgeFailure(nodePtyBridge, {
             action: 'enter',
-            worker: 'scheduler',
+            worker: workerIndex !== null ? `worker-${workerIndex}` : 'scheduler',
             pts: '',
             promptText: '',
-            error: '즉시 엔터를 보낼 scheduler worker가 없습니다.',
+            error: enterNowError,
             packetId: '',
           });
         }

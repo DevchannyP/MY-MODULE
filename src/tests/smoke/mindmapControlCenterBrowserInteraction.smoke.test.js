@@ -252,3 +252,48 @@ test('[mindmap control center browser interaction smoke] send-now idempotency ke
     await runtime.shutdown({ reason: 'test' });
   }
 });
+
+test('[mindmap control center browser interaction smoke] enter-now worker_index targets single worker', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
+
+  try {
+    const ptySessions = await requestJson(runtime.url, '/api/pty/sessions');
+    assert.equal(ptySessions.status, 200);
+    assert.ok(ptySessions.body.sessions.length >= 1);
+    const selectedSession = ptySessions.body.sessions[0];
+
+    await postJson(runtime.url, '/api/pty/scheduler/start', {
+      cycle_minutes: 15,
+      enter_seconds: 5,
+      workers: [
+        { name: 'Enter Alpha', plan_id: 'WP-ENTER-A', pts: selectedSession.pts, prompt: 'alpha', cycle_minutes: 15, enter_seconds: 5 },
+        { name: 'Enter Beta', plan_id: 'WP-ENTER-B', pts: selectedSession.pts, prompt: 'beta', cycle_minutes: 15, enter_seconds: 5 },
+      ],
+    });
+
+    // No worker_index — should target ALL workers (2 results)
+    const allWorkers = await postJson(runtime.url, '/api/pty/enter-now', {});
+    assert.equal(allWorkers.status, 200);
+    assert.equal(allWorkers.body.results.length, 2, 'no worker_index → all workers');
+    assert.ok(allWorkers.body.results.every((r) => r.ok === true));
+
+    // worker_index: 1 — should target only Beta
+    const specificWorker = await postJson(runtime.url, '/api/pty/enter-now', { worker_index: 1 });
+    assert.equal(specificWorker.status, 200);
+    assert.equal(specificWorker.body.results.length, 1, 'worker_index:1 → single worker');
+    assert.equal(specificWorker.body.results[0].worker, 'Enter Beta');
+    assert.equal(specificWorker.body.results[0].ok, true);
+
+    // worker_index out of range — should return error result
+    const invalidWorker = await postJson(runtime.url, '/api/pty/enter-now', { worker_index: 99 });
+    assert.equal(invalidWorker.status, 200);
+    assert.equal(invalidWorker.body.results.length, 1);
+    assert.equal(invalidWorker.body.results[0].ok, false);
+    assert.match(String(invalidWorker.body.results[0].error || ''), /99/);
+  } finally {
+    await runtime.shutdown({ reason: 'test' });
+  }
+});

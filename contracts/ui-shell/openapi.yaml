@@ -372,11 +372,17 @@ paths:
 
   /pty/enter-now:
     post:
-      summary: "모든 worker에 Enter 즉시 전송"
+      summary: "Enter 즉시 전송 (worker_index 지정 시 해당 worker만, 생략 시 전체)"
       operationId: "dispatchSchedulerEnterNow"
       tags: [scheduler]
       parameters:
         - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnterNowRequest"
       responses:
         "200":
           description: "전송 결과"
@@ -903,6 +909,15 @@ components:
 
     SendNowRequest:
       type: object
+      properties:
+        worker_index: { type: integer, minimum: 0 }
+      additionalProperties: false
+
+    EnterNowRequest:
+      type: object
+      description: |
+        worker_index를 지정하면 해당 worker에만 Enter를 전송한다.
+        생략하면 현재 등록된 모든 scheduler worker에 Enter를 전송한다.
       properties:
         worker_index: { type: integer, minimum: 0 }
       additionalProperties: false
