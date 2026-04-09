@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-03-25T10:57:09.537408+00:00",
+  "generated_at": "2026-04-09T13:53:40.872739+00:00",
   "goal": "stateful-ops",
   "profile_id": "stateful-ops-routing",
   "current_wp": {
@@ -68,9 +68,9 @@
         "path": "master-shell/operations/rollback-playbook.yaml",
         "tier": "primary",
         "exists": true,
-        "bytes": 1568,
-        "estimated_tokens": 523,
-        "sha256": "89cb046ee86f4561b46f9107232c87d6827a7d0a96450aa794e319cbf9b21dc3"
+        "bytes": 2072,
+        "estimated_tokens": 691,
+        "sha256": "39e0f2f54ad7414513f68b65bbc4eeb248e3a20187cd6240dbf19b2824ca61cb"
       },
       {
         "requested_path": "master-shell/catalog/execution-packet-templates.yaml",
@@ -97,9 +97,9 @@
         "path": "master-shell/observability/health-scores.yaml",
         "tier": "secondary",
         "exists": true,
-        "bytes": 262,
-        "estimated_tokens": 87,
-        "sha256": "813cc556fa5a93253409c2e44f7241d7c5e139a92f91e43133cc74f53bfb97f3"
+        "bytes": 265,
+        "estimated_tokens": 88,
+        "sha256": "a50cb20bd900c5e35d84d60d947b5f2ac6d0d535caf7fb0853828c52814719d1"
       },
       {
         "requested_path": "master-shell/operations/deployment-environments.yaml",
@@ -124,18 +124,18 @@
   "summary": {
     "primary": {
       "file_count": 6,
-      "total_bytes": 16170,
-      "estimated_tokens": 5391
+      "total_bytes": 16674,
+      "estimated_tokens": 5559
     },
     "secondary": {
       "file_count": 3,
-      "total_bytes": 2800,
-      "estimated_tokens": 933
+      "total_bytes": 2803,
+      "estimated_tokens": 934
     },
     "total": {
       "file_count": 9,
-      "total_bytes": 18970,
-      "estimated_tokens": 6324
+      "total_bytes": 19477,
+      "estimated_tokens": 6493
     }
   },
   "commands": {

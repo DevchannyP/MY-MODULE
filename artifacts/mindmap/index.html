@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workflow OS — 마인드맵 컨트롤 센터</title>
+<title>Workflow OS — 통합 통제 센터</title>
 <style>
 
 :root {
@@ -40,6 +40,11 @@
   --health-green: #0f766e;
   --health-amber: #b45309;
   --health-red: #dc2626;
+  --topbar-h: 56px;
+  --masterbar-h: 74px;
+  --sidebar-w: 248px;
+  --detail-w: 360px;
+  --plan-board-h: 230px;
   --panel-width: 340px;
   --status-bar-h: 40px;
   --canvas-bg: #f0ebe0;
@@ -48,7 +53,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
-body { font-family: var(--font-ui); color: var(--text); background: var(--bg); display: flex; flex-direction: column; }
+body { font-family: var(--font-ui); color: var(--text); background: var(--bg); display: flex; flex-direction: column; position: relative; }
 
 #topbar {
   display: flex;
@@ -58,7 +63,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   background: rgba(255, 253, 248, 0.9);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(8px);
-  height: 56px;
+  height: var(--topbar-h);
   z-index: 30;
   flex-shrink: 0;
 }
@@ -73,7 +78,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .brand-copy strong { display: block; font-size: 14px; letter-spacing: -0.02em; }
 .brand-copy span { color: var(--muted); font-size: 11px; }
 
-.topbar-actions { display: flex; gap: 8px; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
 .tb-btn {
   padding: 6px 12px;
   background: var(--surface-strong);
@@ -87,17 +92,374 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   align-items: center;
 }
 .tb-btn:hover { background: var(--line); }
+.tb-btn-studio {
+  background: rgba(15,118,110,0.10);
+  border-color: rgba(15,118,110,0.35);
+  color: var(--green);
+  font-weight: 600;
+}
+.tb-btn-studio:hover { background: rgba(15,118,110,0.18); }
+.tb-auto-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.tb-auto-on {
+  background: rgba(15,118,110,0.12);
+  border-color: rgba(15,118,110,0.45);
+  color: var(--green);
+}
+.tb-auto-off {
+  background: rgba(148,163,184,0.12);
+  border-color: rgba(148,163,184,0.45);
+  color: var(--slate);
+}
 
-#canvas-wrap { flex: 1; position: relative; overflow: hidden; background: var(--canvas-bg); }
+#master-status {
+  height: var(--masterbar-h);
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,253,248,0.96), rgba(255,247,234,0.92));
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 16px;
+  z-index: 25;
+  flex-shrink: 0;
+}
+.master-card {
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.72);
+  padding: 10px 12px;
+  min-width: 0;
+}
+.master-card-auto {
+  border-color: rgba(148,163,184,0.5);
+  background: rgba(248,250,252,0.85);
+}
+.master-card span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.master-card strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.master-card strong.status-attention { color: var(--amber); }
+.master-card strong.status-ok { color: var(--green); }
+.master-card strong.status-blocked { color: var(--accent-2); }
+.master-auto-on { color: var(--green); font-weight: 700; }
+.master-auto-off { color: var(--slate); }
+
+.sidebar-console {
+  border-radius: 18px;
+  border: 1px solid rgba(220, 207, 186, 0.9);
+  background: linear-gradient(180deg, #fffefb, #fff8ef);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.execution-summary {
+  border-radius: 14px;
+  border: 1px solid rgba(220, 207, 186, 0.9);
+  background: rgba(255,255,255,0.82);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.execution-summary.is-success {
+  background: #f3fbf7;
+  border-color: rgba(15,118,110,0.26);
+}
+.execution-summary.is-warning {
+  background: #fff8ef;
+  border-color: rgba(180,83,9,0.28);
+}
+.execution-summary.is-error {
+  background: #fff4f3;
+  border-color: rgba(220,38,38,0.22);
+}
+.execution-summary strong {
+  font-size: 13px;
+}
+.execution-summary p {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.execution-grid {
+  display: grid;
+  gap: 8px;
+}
+.execution-row {
+  display: grid;
+  gap: 4px;
+}
+.execution-row span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.execution-row strong {
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-line;
+  word-break: break-word;
+}
+.execution-select,
+.execution-textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: #fffdf8;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+.execution-textarea {
+  min-height: 116px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.execution-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.execution-worker-cards {
+  display: grid;
+  gap: 8px;
+}
+.execution-worker-card {
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: rgba(255,255,255,0.82);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.execution-worker-card.is-selected {
+  border-color: rgba(29,78,216,0.36);
+  background: #f4f8ff;
+}
+.execution-worker-card.is-error {
+  border-color: rgba(220,38,38,0.28);
+  background: #fff3f2;
+}
+.execution-worker-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.execution-worker-card-title {
+  font-size: 12px;
+  font-weight: 700;
+}
+.execution-worker-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #fff8ef;
+  color: #9a3412;
+}
+.execution-worker-pill.is-selected {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.execution-worker-pill.is-error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.execution-worker-meta,
+.execution-worker-detail {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  word-break: break-word;
+}
+.execution-worker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.execution-worker-action {
+  border: none;
+  border-radius: 10px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+.execution-worker-action.secondary {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+.execution-worker-action.primary {
+  background: linear-gradient(135deg, #0f766e, #1d4ed8);
+  color: white;
+}
+.execution-worker-action.warn {
+  background: #c2410c;
+  color: white;
+}
+.execution-worker-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.execution-button {
+  border: none;
+  border-radius: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.execution-button.primary { background: linear-gradient(135deg, #0f766e, #1d4ed8); color: white; }
+.execution-button.secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
+.execution-button.warn { background: #c2410c; color: white; }
+.execution-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.execution-note {
+  border-radius: 12px;
+  border: 1px dashed rgba(220, 207, 186, 0.92);
+  background: rgba(255,255,255,0.74);
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.execution-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid rgba(148,163,184,0.42);
+  background: rgba(148,163,184,0.12);
+  color: var(--slate);
+}
+.execution-badge.is-live {
+  border-color: rgba(15,118,110,0.4);
+  background: rgba(15,118,110,0.1);
+  color: var(--green);
+}
+.execution-badge.is-error {
+  border-color: rgba(220,38,38,0.3);
+  background: rgba(220,38,38,0.08);
+  color: var(--accent-2);
+}
+
+#control-sidebar {
+  position: fixed;
+  left: 0;
+  top: calc(var(--topbar-h) + var(--masterbar-h));
+  bottom: calc(var(--status-bar-h) + var(--plan-board-h));
+  width: var(--sidebar-w);
+  padding: 16px 12px 18px 16px;
+  border-right: 1px solid var(--line);
+  background: rgba(255, 251, 245, 0.96);
+  overflow-y: auto;
+  z-index: 18;
+}
+.sidebar-section + .sidebar-section { margin-top: 18px; }
+.sidebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.sidebar-stack {
+  display: grid;
+  gap: 8px;
+}
+.control-entry {
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: linear-gradient(180deg, #fffefb, #fff8ef);
+  padding: 12px;
+  cursor: pointer;
+}
+.control-entry:hover,
+.control-entry.active {
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 10px 20px rgba(15, 118, 110, 0.10);
+}
+.control-entry strong {
+  display: block;
+  font-size: 13px;
+}
+.control-entry span {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.control-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.control-pill.is-completed { background: rgba(15,118,110,0.12); color: var(--green); }
+.control-pill.is-in_progress { background: rgba(29,78,216,0.12); color: var(--accent-3); }
+.control-pill.is-pending { background: rgba(148,163,184,0.14); color: var(--slate); }
+.control-pill.is-ready { background: rgba(245,158,11,0.16); color: var(--amber); }
+.control-pill.is-blocked { background: rgba(220,38,38,0.14); color: var(--accent-2); }
+
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--canvas-bg);
+  margin-left: var(--sidebar-w);
+  margin-right: var(--detail-w);
+  margin-bottom: calc(var(--plan-board-h) + var(--status-bar-h));
+}
 #mindmap-svg { width: 100%; height: 100%; cursor: grab; display: block; }
 #mindmap-svg:active { cursor: grabbing; }
 
 #detail-panel {
   position: fixed;
   right: 0;
-  top: 56px;
-  bottom: var(--status-bar-h);
-  width: var(--panel-width);
+  top: calc(var(--topbar-h) + var(--masterbar-h));
+  bottom: calc(var(--status-bar-h) + var(--plan-board-h));
+  width: var(--detail-w);
   background: var(--panel-bg);
   border-left: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -135,7 +497,92 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 
 #panel-body { flex: 1; overflow-y: auto; padding: 16px; }
 
+#plan-board {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--status-bar-h);
+  height: var(--plan-board-h);
+  border-top: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.97);
+  padding: 14px 16px 18px;
+  z-index: 22;
+  box-shadow: 0 -12px 24px rgba(70, 52, 28, 0.08);
+}
+.plan-board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.plan-board-head h3 {
+  font-size: 15px;
+}
+.plan-board-head p {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.plan-board-wrap {
+  height: calc(100% - 42px);
+  overflow: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: #fffdfa;
+}
+.plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.plan-table th,
+.plan-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(220, 207, 186, 0.68);
+  vertical-align: top;
+  white-space: nowrap;
+}
+.plan-table td.plan-cell-wrap {
+  white-space: normal;
+  min-width: 160px;
+}
+.plan-table th {
+  position: sticky;
+  top: 0;
+  background: #fff7ea;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.plan-row {
+  cursor: pointer;
+}
+.plan-row:hover,
+.plan-row.active {
+  background: rgba(15, 118, 110, 0.06);
+}
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.status-chip.is-completed { background: rgba(15,118,110,0.12); color: var(--green); }
+.status-chip.is-in_progress { background: rgba(29,78,216,0.12); color: var(--accent-3); }
+.status-chip.is-pending { background: rgba(148,163,184,0.14); color: var(--slate); }
+.status-chip.is-ready { background: rgba(245,158,11,0.16); color: var(--amber); }
+.status-chip.is-blocked { background: rgba(220,38,38,0.14); color: var(--accent-2); }
+
 #status-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: var(--status-bar-h);
   background: var(--surface);
   border-top: 1px solid var(--line);
@@ -145,7 +592,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   gap: 8px;
   font-size: 11px;
   color: var(--muted);
-  z-index: 10;
+  z-index: 30;
   flex-shrink: 0;
 }
 
@@ -297,6 +744,194 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .audit-seq { color: var(--muted); min-width: 28px; }
 .audit-ts { color: var(--muted); min-width: 90px; font-family: var(--font-mono); }
 .audit-action { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-grid-cards { display: grid; gap: 10px; }
+.detail-card {
+  border-radius: 16px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: #fffdf8;
+  padding: 14px;
+}
+.detail-card span {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.detail-card strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+.detail-card p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.module-workbench {
+  margin-top: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: linear-gradient(180deg, #fffefb, #fff8ef);
+  padding: 14px;
+}
+.module-grid {
+  display: grid;
+  gap: 10px;
+}
+.module-field {
+  display: grid;
+  gap: 6px;
+}
+.module-field span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.module-input,
+.module-select,
+.module-preview {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: #fffdf8;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+.module-preview {
+  min-height: 180px;
+  max-height: 280px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.module-status {
+  border-radius: 14px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: #fffdf8;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+.module-status.is-idle {
+  background: #fffdf8;
+}
+.module-status.is-success {
+  background: #f3fbf7;
+  border-color: rgba(15, 118, 110, 0.28);
+}
+.module-status.is-warning {
+  background: #fff8ef;
+  border-color: rgba(180, 83, 9, 0.32);
+}
+.module-status.is-error {
+  background: #fff4f3;
+  border-color: rgba(220, 38, 38, 0.22);
+}
+.module-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.module-status-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.module-status-badge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(122, 109, 91, 0.12);
+  color: var(--muted);
+}
+.module-status-grid {
+  display: grid;
+  gap: 8px;
+}
+.module-status-row {
+  display: grid;
+  gap: 3px;
+}
+.module-status-row span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.module-status-row strong {
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.module-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.module-button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.module-button.primary { background: linear-gradient(135deg, #0f766e, #1d4ed8); color: white; }
+.module-button.secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
+.module-button.warn { background: #c2410c; color: white; }
+.module-note {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 1180px) {
+  :root {
+    --sidebar-w: 220px;
+    --detail-w: 320px;
+  }
+}
+
+@media (max-width: 980px) {
+  :root {
+    --masterbar-h: 120px;
+    --plan-board-h: 260px;
+  }
+  #master-status {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #control-sidebar {
+    width: 100%;
+    top: calc(var(--topbar-h) + var(--masterbar-h));
+    bottom: auto;
+    height: 164px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+  #canvas-wrap {
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 164px;
+  }
+  #detail-panel {
+    left: 0;
+    width: 100%;
+    top: auto;
+    bottom: calc(var(--status-bar-h) + var(--plan-board-h));
+    height: 42vh;
+  }
+}
 
 </style>
 </head>
@@ -304,14 +939,40 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 <div id="topbar">
   <div class="brand">
     <div class="brand-mark">WF</div>
-    <div class="brand-copy"><strong>Workflow OS</strong><span>마인드맵 컨트롤 센터</span></div>
+    <div class="brand-copy"><strong>Workflow OS</strong><span>통합 통제 센터</span></div>
   </div>
   <div class="topbar-actions">
+    <span id="topbar-auto-send-badge" class="tb-auto-badge tb-auto-off" title="자동 전송 상태">자동전송 OFF</span>
     <button class="tb-btn" onclick="fitView()">↺ 맞춤</button>
+    <a class="tb-btn tb-btn-studio" href="../index.html#automation-bridge">Planning Studio</a>
     <a class="tb-btn" href="../index.html">← 홈</a>
     <a class="tb-btn" href="../catalog-site/index.html">카탈로그</a>
   </div>
 </div>
+
+<section id="master-status">
+  <article class="master-card"><span>현재 목표</span><strong id="master-goal">-</strong></article>
+  <article class="master-card"><span>현재 단계</span><strong id="master-stage">-</strong></article>
+  <article class="master-card"><span>진행률</span><strong id="master-progress">0%</strong></article>
+  <article class="master-card"><span>차단 여부</span><strong id="master-blocker" class="master-value">-</strong></article>
+  <article class="master-card"><span>다음 작업</span><strong id="master-next">-</strong></article>
+  <article class="master-card master-card-auto"><span>자동 전송</span><strong id="master-auto-send" class="master-auto-off">OFF</strong></article>
+</section>
+
+<aside id="control-sidebar">
+  <section class="sidebar-section">
+    <div class="sidebar-title">실행 제어</div>
+    <div id="execution-console"></div>
+  </section>
+  <section class="sidebar-section">
+    <div class="sidebar-title">통제 흐름</div>
+    <div id="control-sidebar-list" class="sidebar-stack"></div>
+  </section>
+  <section class="sidebar-section">
+    <div class="sidebar-title">도메인 초점</div>
+    <div id="domain-sidebar-list" class="sidebar-stack"></div>
+  </section>
+</aside>
 
 <div id="canvas-wrap">
   <svg id="mindmap-svg">
@@ -347,6 +1008,33 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   <div id="panel-body"></div>
 </div>
 
+<section id="plan-board">
+  <div class="plan-board-head">
+    <div>
+      <h3>실행 계획표</h3>
+      <p>노드 선택과 같은 데이터 모델을 보는 하단 통제표</p>
+    </div>
+  </div>
+  <div class="plan-board-wrap">
+    <table class="plan-table">
+      <thead>
+        <tr>
+          <th>단계</th>
+          <th>작업명</th>
+          <th>목적</th>
+          <th>입력</th>
+          <th>출력</th>
+          <th>상태</th>
+          <th>우선순위</th>
+          <th>담당 에이전트</th>
+          <th>다음 액션</th>
+        </tr>
+      </thead>
+      <tbody id="plan-table-body"></tbody>
+    </table>
+  </div>
+</section>
+
 <div id="status-bar">
   <span id="sb-sse" class="sb-item sb-red">SSE: DISCONNECTED</span>
   <span class="sb-sep">|</span>
@@ -376,12 +1064,17 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   </div>
 </div>
 
-<script id="mindmap-data" type="application/json">{"nodes":[{"id":"root","type":"root","label":"Workflow OS","x":800,"y":500,"fixed":true},{"id":"system","type":"domain","label":"시스템 운영","x":800,"y":320,"healthScore":95,"trend":"→","ejectable":false,"stageStatus":"E/PASS","description":"Workflow OS 전반의 운영 대시보드, 품질 게이트, 감사 로그, 피처 플래그, 롤백 제어를 담당하는 시스템 도메인","flagActive":true},{"id":"system-A","type":"stage","label":"A","status":"PASS","parentId":"system","x":687.4166975080229,"y":255},{"id":"system-B","type":"stage","label":"B","status":"PASS","parentId":"system","x":735,"y":207.416697508023},{"id":"system-C","type":"stage","label":"C","status":"PASS","parentId":"system","x":800,"y":190},{"id":"system-D","type":"stage","label":"D","status":"PASS","parentId":"system","x":865,"y":207.416697508023},{"id":"system-E","type":"stage","label":"E","status":"PASS","parentId":"system","x":912.583302491977,"y":254.99999999999994},{"id":"flag-system_api.enabled","type":"flag","label":"system_api.enabled","value":true,"parentId":"system","group":"system","x":920.208152801713,"y":199.7918471982869},{"id":"flag-system_api.sse_stream.enabled","type":"flag","label":"system_api.sse_stream.enabled","value":true,"parentId":"system","group":"system","x":964.2073904691416,"y":276.00076233257147},{"id":"flag-system_api.flag_toggle_ui.enabled","type":"flag","label":"system_api.flag_toggle_ui.enabled","value":false,"parentId":"system","group":"system","x":964.2073904691416,"y":363.9992376674284},{"id":"flag-system_api.rollback_ui.enabled","type":"flag","label":"system_api.rollback_ui.enabled","value":false,"parentId":"system","group":"system","x":920.2081528017131,"y":440.208152801713},{"id":"billing","type":"domain","label":"정산관리","x":980,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 도메인 영역","flagActive":true},{"id":"billing-A","type":"stage","label":"A","status":"PASS","parentId":"billing","x":1045,"y":387.416697508023},{"id":"billing-B","type":"stage","label":"B","status":"PASS","parentId":"billing","x":1092.583302491977,"y":435},{"id":"billing-C","type":"stage","label":"C","status":"PASS","parentId":"billing","x":1110,"y":500},{"id":"billing-D","type":"stage","label":"D","status":"PASS","parentId":"billing","x":1092.583302491977,"y":565},{"id":"billing-E","type":"stage","label":"E","status":"PASS","parentId":"billing","x":1045,"y":612.5833024919771},{"id":"flag-billing.enabled","type":"flag","label":"billing.enabled","value":true,"parentId":"billing","group":"billing","x":1100.2081528017131,"y":620.208152801713},{"id":"flag-billing.invoice.enabled","type":"flag","label":"billing.invoice.enabled","value":true,"parentId":"billing","group":"billing","x":1023.9992376674286,"y":664.2073904691416},{"id":"flag-billing.payment.enabled","type":"flag","label":"billing.payment.enabled","value":true,"parentId":"billing","group":"billing","x":936.0007623325715,"y":664.2073904691416},{"id":"flag-billing.exception.enabled","type":"flag","label":"billing.exception.enabled","value":true,"parentId":"billing","group":"billing","x":859.791847198287,"y":620.2081528017131},{"id":"productivity","type":"domain","label":"생산성 관리","x":800,"y":680,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역","flagActive":true},{"id":"productivity-A","type":"stage","label":"A","status":"PASS","parentId":"productivity","x":912.5833024919771,"y":745},{"id":"productivity-B","type":"stage","label":"B","status":"PASS","parentId":"productivity","x":865,"y":792.5833024919771},{"id":"productivity-C","type":"stage","label":"C","status":"PASS","parentId":"productivity","x":800,"y":810},{"id":"productivity-D","type":"stage","label":"D","status":"PASS","parentId":"productivity","x":735,"y":792.5833024919771},{"id":"productivity-E","type":"stage","label":"E","status":"PASS","parentId":"productivity","x":687.4166975080229,"y":745},{"id":"flag-enable_task_management","type":"flag","label":"enable_task_management","value":true,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":723.9992376674286},{"id":"flag-enable_bulk_assign","type":"flag","label":"enable_bulk_assign","value":true,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":636.0007623325715},{"id":"video","type":"domain","label":"콘텐츠 관리","x":620,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역.","flagActive":true},{"id":"video-A","type":"stage","label":"A","status":"PASS","parentId":"video","x":555,"y":612.5833024919771},{"id":"video-B","type":"stage","label":"B","status":"PASS","parentId":"video","x":507.41669750802293,"y":565},{"id":"video-C","type":"stage","label":"C","status":"PASS","parentId":"video","x":490,"y":500},{"id":"video-D","type":"stage","label":"D","status":"PASS","parentId":"video","x":507.41669750802293,"y":435.00000000000006},{"id":"video-E","type":"stage","label":"E","status":"PASS","parentId":"video","x":555,"y":387.416697508023},{"id":"flag-video.enabled","type":"flag","label":"video.enabled","value":true,"parentId":"video","group":"video","x":499.79184719828686,"y":379.7918471982869},{"id":"flag-video.upload.enabled","type":"flag","label":"video.upload.enabled","value":true,"parentId":"video","group":"video","x":576.0007623325715,"y":335.7926095308584},{"id":"flag-video.transcode.enabled","type":"flag","label":"video.transcode.enabled","value":true,"parentId":"video","group":"video","x":663.9992376674285,"y":335.7926095308584},{"id":"flag-video.admin.enabled","type":"flag","label":"video.admin.enabled","value":true,"parentId":"video","group":"video","x":740.208152801713,"y":379.79184719828686},{"id":"contract-system-api","type":"contract","label":"System API","path":"contracts/system-api/openapi.yaml","x":650,"y":220},{"id":"contract-ui-shell","type":"contract","label":"UI Shell","path":"contracts/ui-shell/ui-contract.yaml","x":950,"y":220}],"edges":[{"id":"root-system","source":"root","target":"system","type":"dependency"},{"id":"system-stage-A","source":"system","target":"system-A","type":"lifecycle"},{"id":"system-stage-B","source":"system","target":"system-B","type":"lifecycle"},{"id":"system-stage-C","source":"system","target":"system-C","type":"lifecycle"},{"id":"system-stage-D","source":"system","target":"system-D","type":"lifecycle"},{"id":"system-stage-E","source":"system","target":"system-E","type":"lifecycle"},{"id":"system-flag-system_api.enabled","source":"system","target":"flag-system_api.enabled","type":"flag"},{"id":"system-flag-system_api.sse_stream.enabled","source":"system","target":"flag-system_api.sse_stream.enabled","type":"flag"},{"id":"system-flag-system_api.flag_toggle_ui.enabled","source":"system","target":"flag-system_api.flag_toggle_ui.enabled","type":"flag"},{"id":"system-flag-system_api.rollback_ui.enabled","source":"system","target":"flag-system_api.rollback_ui.enabled","type":"flag"},{"id":"root-billing","source":"root","target":"billing","type":"dependency"},{"id":"billing-stage-A","source":"billing","target":"billing-A","type":"lifecycle"},{"id":"billing-stage-B","source":"billing","target":"billing-B","type":"lifecycle"},{"id":"billing-stage-C","source":"billing","target":"billing-C","type":"lifecycle"},{"id":"billing-stage-D","source":"billing","target":"billing-D","type":"lifecycle"},{"id":"billing-stage-E","source":"billing","target":"billing-E","type":"lifecycle"},{"id":"billing-flag-billing.enabled","source":"billing","target":"flag-billing.enabled","type":"flag"},{"id":"billing-flag-billing.invoice.enabled","source":"billing","target":"flag-billing.invoice.enabled","type":"flag"},{"id":"billing-flag-billing.payment.enabled","source":"billing","target":"flag-billing.payment.enabled","type":"flag"},{"id":"billing-flag-billing.exception.enabled","source":"billing","target":"flag-billing.exception.enabled","type":"flag"},{"id":"root-productivity","source":"root","target":"productivity","type":"dependency"},{"id":"productivity-stage-A","source":"productivity","target":"productivity-A","type":"lifecycle"},{"id":"productivity-stage-B","source":"productivity","target":"productivity-B","type":"lifecycle"},{"id":"productivity-stage-C","source":"productivity","target":"productivity-C","type":"lifecycle"},{"id":"productivity-stage-D","source":"productivity","target":"productivity-D","type":"lifecycle"},{"id":"productivity-stage-E","source":"productivity","target":"productivity-E","type":"lifecycle"},{"id":"productivity-flag-enable_task_management","source":"productivity","target":"flag-enable_task_management","type":"flag"},{"id":"productivity-flag-enable_bulk_assign","source":"productivity","target":"flag-enable_bulk_assign","type":"flag"},{"id":"root-video","source":"root","target":"video","type":"dependency"},{"id":"video-stage-A","source":"video","target":"video-A","type":"lifecycle"},{"id":"video-stage-B","source":"video","target":"video-B","type":"lifecycle"},{"id":"video-stage-C","source":"video","target":"video-C","type":"lifecycle"},{"id":"video-stage-D","source":"video","target":"video-D","type":"lifecycle"},{"id":"video-stage-E","source":"video","target":"video-E","type":"lifecycle"},{"id":"video-flag-video.enabled","source":"video","target":"flag-video.enabled","type":"flag"},{"id":"video-flag-video.upload.enabled","source":"video","target":"flag-video.upload.enabled","type":"flag"},{"id":"video-flag-video.transcode.enabled","source":"video","target":"flag-video.transcode.enabled","type":"flag"},{"id":"video-flag-video.admin.enabled","source":"video","target":"flag-video.admin.enabled","type":"flag"},{"id":"system-contract-api","source":"system","target":"contract-system-api","type":"contract"},{"id":"system-contract-ui","source":"system","target":"contract-ui-shell","type":"contract"}],"meta":{"generatedAt":"2026-04-05T09:53:11.045Z","flagStates":{"system_api.enabled":true,"system_api.sse_stream.enabled":true,"system_api.flag_toggle_ui.enabled":false,"system_api.rollback_ui.enabled":false},"apiBase":"/api/v1","sseUrl":"/api/v1/system/events"}}</script>
+<script id="mindmap-data" type="application/json">{"nodes":[{"id":"root","type":"root","label":"Workflow OS","x":800,"y":500,"fixed":true},{"id":"system","type":"domain","label":"시스템 운영","x":800,"y":320,"healthScore":95,"trend":"→","ejectable":false,"stageStatus":"E/PASS","description":"","flagActive":true},{"id":"system-A","type":"stage","label":"A","status":"PASS","parentId":"system","x":687.4166975080229,"y":255},{"id":"system-B","type":"stage","label":"B","status":"PASS","parentId":"system","x":735,"y":207.416697508023},{"id":"system-C","type":"stage","label":"C","status":"PASS","parentId":"system","x":800,"y":190},{"id":"system-D","type":"stage","label":"D","status":"PASS","parentId":"system","x":865,"y":207.416697508023},{"id":"system-E","type":"stage","label":"E","status":"PASS","parentId":"system","x":912.583302491977,"y":254.99999999999994},{"id":"billing","type":"domain","label":"정산관리","x":980,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 도메인 영역","flagActive":false},{"id":"billing-A","type":"stage","label":"A","status":"PASS","parentId":"billing","x":1045,"y":387.416697508023},{"id":"billing-B","type":"stage","label":"B","status":"PASS","parentId":"billing","x":1092.583302491977,"y":435},{"id":"billing-C","type":"stage","label":"C","status":"PASS","parentId":"billing","x":1110,"y":500},{"id":"billing-D","type":"stage","label":"D","status":"PASS","parentId":"billing","x":1092.583302491977,"y":565},{"id":"billing-E","type":"stage","label":"E","status":"PASS","parentId":"billing","x":1045,"y":612.5833024919771},{"id":"flag-billing.enabled","type":"flag","label":"billing.enabled","value":false,"parentId":"billing","group":"billing","x":1100.2081528017131,"y":620.208152801713},{"id":"flag-billing.invoice.enabled","type":"flag","label":"billing.invoice.enabled","value":false,"parentId":"billing","group":"billing","x":1023.9992376674286,"y":664.2073904691416},{"id":"flag-billing.payment.enabled","type":"flag","label":"billing.payment.enabled","value":false,"parentId":"billing","group":"billing","x":936.0007623325715,"y":664.2073904691416},{"id":"flag-billing.exception.enabled","type":"flag","label":"billing.exception.enabled","value":false,"parentId":"billing","group":"billing","x":859.791847198287,"y":620.2081528017131},{"id":"productivity","type":"domain","label":"생산성 관리","x":800,"y":680,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역","flagActive":false},{"id":"productivity-A","type":"stage","label":"A","status":"PASS","parentId":"productivity","x":912.5833024919771,"y":745},{"id":"productivity-B","type":"stage","label":"B","status":"PASS","parentId":"productivity","x":865,"y":792.5833024919771},{"id":"productivity-C","type":"stage","label":"C","status":"PASS","parentId":"productivity","x":800,"y":810},{"id":"productivity-D","type":"stage","label":"D","status":"PASS","parentId":"productivity","x":735,"y":792.5833024919771},{"id":"productivity-E","type":"stage","label":"E","status":"PASS","parentId":"productivity","x":687.4166975080229,"y":745},{"id":"flag-enable_task_management","type":"flag","label":"enable_task_management","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":723.9992376674286},{"id":"flag-enable_bulk_assign","type":"flag","label":"enable_bulk_assign","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":636.0007623325715},{"id":"video","type":"domain","label":"콘텐츠 관리","x":620,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역.","flagActive":false},{"id":"video-A","type":"stage","label":"A","status":"PASS","parentId":"video","x":555,"y":612.5833024919771},{"id":"video-B","type":"stage","label":"B","status":"PASS","parentId":"video","x":507.41669750802293,"y":565},{"id":"video-C","type":"stage","label":"C","status":"PASS","parentId":"video","x":490,"y":500},{"id":"video-D","type":"stage","label":"D","status":"PASS","parentId":"video","x":507.41669750802293,"y":435.00000000000006},{"id":"video-E","type":"stage","label":"E","status":"PASS","parentId":"video","x":555,"y":387.416697508023},{"id":"flag-video.enabled","type":"flag","label":"video.enabled","value":false,"parentId":"video","group":"video","x":499.79184719828686,"y":379.7918471982869},{"id":"flag-video.upload.enabled","type":"flag","label":"video.upload.enabled","value":false,"parentId":"video","group":"video","x":576.0007623325715,"y":335.7926095308584},{"id":"flag-video.transcode.enabled","type":"flag","label":"video.transcode.enabled","value":false,"parentId":"video","group":"video","x":663.9992376674285,"y":335.7926095308584},{"id":"flag-video.admin.enabled","type":"flag","label":"video.admin.enabled","value":false,"parentId":"video","group":"video","x":740.208152801713,"y":379.79184719828686},{"id":"contract-system-api","type":"contract","label":"System API","path":"contracts/system-api/openapi.yaml","x":650,"y":220},{"id":"contract-ui-shell","type":"contract","label":"UI Shell","path":"contracts/ui-shell/ui-contract.yaml","x":950,"y":220},{"id":"control-intake","type":"control","label":"입력 이해","hiddenInGraph":true,"status":"completed","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","controlKind":"control"},{"id":"control-planning","type":"control","label":"계획 수립","hiddenInGraph":true,"status":"completed","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","controlKind":"control"},{"id":"control-execution","type":"control","label":"실행","hiddenInGraph":true,"status":"completed","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","controlKind":"control"},{"id":"control-validation","type":"control","label":"검증","hiddenInGraph":true,"status":"completed","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","controlKind":"control"},{"id":"control-complete","type":"control","label":"완료","hiddenInGraph":true,"status":"in_progress","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","controlKind":"control"},{"id":"control-module","type":"control","label":"모듈 생성","hiddenInGraph":true,"status":"ready","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","controlKind":"module"}],"edges":[{"id":"root-system","source":"root","target":"system","type":"dependency"},{"id":"system-stage-A","source":"system","target":"system-A","type":"lifecycle"},{"id":"system-stage-B","source":"system","target":"system-B","type":"lifecycle"},{"id":"system-stage-C","source":"system","target":"system-C","type":"lifecycle"},{"id":"system-stage-D","source":"system","target":"system-D","type":"lifecycle"},{"id":"system-stage-E","source":"system","target":"system-E","type":"lifecycle"},{"id":"root-billing","source":"root","target":"billing","type":"dependency"},{"id":"billing-stage-A","source":"billing","target":"billing-A","type":"lifecycle"},{"id":"billing-stage-B","source":"billing","target":"billing-B","type":"lifecycle"},{"id":"billing-stage-C","source":"billing","target":"billing-C","type":"lifecycle"},{"id":"billing-stage-D","source":"billing","target":"billing-D","type":"lifecycle"},{"id":"billing-stage-E","source":"billing","target":"billing-E","type":"lifecycle"},{"id":"billing-flag-billing.enabled","source":"billing","target":"flag-billing.enabled","type":"flag"},{"id":"billing-flag-billing.invoice.enabled","source":"billing","target":"flag-billing.invoice.enabled","type":"flag"},{"id":"billing-flag-billing.payment.enabled","source":"billing","target":"flag-billing.payment.enabled","type":"flag"},{"id":"billing-flag-billing.exception.enabled","source":"billing","target":"flag-billing.exception.enabled","type":"flag"},{"id":"root-productivity","source":"root","target":"productivity","type":"dependency"},{"id":"productivity-stage-A","source":"productivity","target":"productivity-A","type":"lifecycle"},{"id":"productivity-stage-B","source":"productivity","target":"productivity-B","type":"lifecycle"},{"id":"productivity-stage-C","source":"productivity","target":"productivity-C","type":"lifecycle"},{"id":"productivity-stage-D","source":"productivity","target":"productivity-D","type":"lifecycle"},{"id":"productivity-stage-E","source":"productivity","target":"productivity-E","type":"lifecycle"},{"id":"productivity-flag-enable_task_management","source":"productivity","target":"flag-enable_task_management","type":"flag"},{"id":"productivity-flag-enable_bulk_assign","source":"productivity","target":"flag-enable_bulk_assign","type":"flag"},{"id":"root-video","source":"root","target":"video","type":"dependency"},{"id":"video-stage-A","source":"video","target":"video-A","type":"lifecycle"},{"id":"video-stage-B","source":"video","target":"video-B","type":"lifecycle"},{"id":"video-stage-C","source":"video","target":"video-C","type":"lifecycle"},{"id":"video-stage-D","source":"video","target":"video-D","type":"lifecycle"},{"id":"video-stage-E","source":"video","target":"video-E","type":"lifecycle"},{"id":"video-flag-video.enabled","source":"video","target":"flag-video.enabled","type":"flag"},{"id":"video-flag-video.upload.enabled","source":"video","target":"flag-video.upload.enabled","type":"flag"},{"id":"video-flag-video.transcode.enabled","source":"video","target":"flag-video.transcode.enabled","type":"flag"},{"id":"video-flag-video.admin.enabled","source":"video","target":"flag-video.admin.enabled","type":"flag"},{"id":"system-contract-api","source":"system","target":"contract-system-api","type":"contract"},{"id":"system-contract-ui","source":"system","target":"contract-ui-shell","type":"contract"}],"meta":{"generatedAt":"2026-04-09T13:53:41.398Z","flagStates":{"system_api.enabled":true,"system_api.sse_stream.enabled":true,"system_api.flag_toggle_ui.enabled":false,"system_api.rollback_ui.enabled":false},"apiBase":"/api/v1","sseUrl":"/api/v1/system/events","planningApiBase":"/api/planning-studio","report":{"execution_mode":"read-only-status","repository":"my-module","requirements_stage":"D","current_wp":"WP-RUN-004","current_wp_goal":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","current_wp_type":"governance","current_wp_stage":"E","current_wp_context_budget":{"tier_reads":2,"context_reads":3,"tier_files":2,"context_files":3,"estimated_tokens":6181},"current_wp_scope_boundary":{"scope_in":13,"scope_out":2,"protects_core":true},"promotion_pipeline":{"artifact_dir":"artifacts/promotion-pipeline/latest","available":true,"promotion_ready":true,"locked_tokens":10917,"locked_files":9,"drift_status":"clean","changed_files":0,"missing_files":0},"essential_improvements":[{"id":"master-planning-truth-surface","tracked":true,"ready":true,"detail":"planner artifact + intake canvas + benchmark-backed planning triad"},{"id":"minimum-context-routing-performance","tracked":true,"ready":true,"detail":"promotion pipeline + context lock + drift awareness"},{"id":"guided-learning-live-ops-cockpit","tracked":true,"ready":true,"detail":"timeline feed + replay lenses + observability surfaces"}],"last_completed_wp":"WP-RUN-004","next_wp":"NONE","legacy_last_completed_stage":"D(4차)","stage_summary":[{"stage":"A","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-a.md","recommended_commands":["npm run validate:requirements"]},{"stage":"B","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-b.md","recommended_commands":["npm run validate:requirements"]},{"stage":"C","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-c.md","recommended_commands":["npm run validate:requirements","npm run validate:composition"]},{"stage":"D","route_status":"ready","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"]},{"stage":"E","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-e.md","recommended_commands":["npm run validate:requirements","npm run test:e2e-smoke"]}],"capabilities":[{"id":"requirements-validation","status":"pass"},{"id":"work-packet-operator-protocol","status":"pass"},{"id":"requirements-validation-ci","status":"pass"},{"id":"root-memory-bridge","status":"pass"},{"id":"stage-executor-dry-run","status":"pass"},{"id":"project-status-runner","status":"pass"},{"id":"server-wiring-smoke","status":"pass"},{"id":"quality-gate-ci","status":"pass"},{"id":"how-to-truthfulness","status":"pass"},{"id":"video-domain-stage-a","status":"pass"},{"id":"billing-domain-contracts","status":"pass"},{"id":"dag-wp-scheduler","status":"pass"},{"id":"requirements-gap-detector","status":"pass"},{"id":"session-health-metrics","status":"pass"},{"id":"desired-state-reconciliation","status":"pass"},{"id":"wp-queue-ci-validation","status":"pass"},{"id":"release-evidence-automation","status":"pass"},{"id":"branch-protection-ci","status":"pass"},{"id":"cross-domain-event-bus","status":"pass"},{"id":"rfc7807-error-standard","status":"pass"},{"id":"feature-flag-runtime","status":"pass"},{"id":"event-publishing","status":"pass"},{"id":"opentelemetry-instrumentation","status":"pass"},{"id":"sqlite-persistence","status":"pass"},{"id":"self-improvement-loop","status":"pass"},{"id":"cloudevents-envelope","status":"pass"},{"id":"contract-drift-validation","status":"pass"},{"id":"master-shell-composition-validation","status":"pass"},{"id":"quality-gate-baseline","status":"pass"},{"id":"deployment-environment-smoke-runner","status":"pass"},{"id":"root-entry-doc-truthfulness","status":"pass"},{"id":"deployment-environment-binding","status":"pass"},{"id":"deployment-environment-provisioning-audit","status":"pass"}],"manual_placeholders":[{"id":"deployment-environment-smoke","status":"operator-triggered"},{"id":"deployment-environment-provisioning-audit","status":"operator-collected"}],"known_issues":[{"id":"KI-RUN-001","severity":"low"}],"memory_sources":{"current_state":"memory/current-state.yaml","current_wp":"memory/current-wp.yaml","next_actions":"memory/next-actions.yaml","legacy_project_state":"memory/project/current-state.yaml"}},"controlCenter":{"statusBar":{"goal":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","currentStage":"E","progress":100,"blocker":"확인 필요 1건","nextTask":"NONE","autoSendEnabled":false,"currentLaneId":"control-complete","summary":"현재 packet WP-RUN-004 기준 통제 상태"},"controlNodes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","status":"completed","kind":"control"},{"id":"control-planning","label":"계획 수립","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","status":"completed","kind":"control"},{"id":"control-execution","label":"실행","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","status":"completed","kind":"control"},{"id":"control-validation","label":"검증","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","status":"completed","kind":"control"},{"id":"control-complete","label":"완료","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","status":"in_progress","kind":"control"},{"id":"control-module","label":"모듈 생성","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","status":"ready","kind":"module"}],"planRows":[{"id":"plan-intake","nodeId":"control-intake","step":"1","task":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","status":"completed","priority":"최고","owner":"Planner","nextAction":"계획 수립"},{"id":"plan-planning","nodeId":"control-planning","step":"2","task":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 E / 다음 NONE","status":"completed","priority":"최고","owner":"Planner","nextAction":"실행 패널 동기화"},{"id":"plan-execution","nodeId":"control-execution","step":"3","task":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"WP-RUN-004","status":"completed","priority":"최고","owner":"Builder","nextAction":"검증 evidence 적재"},{"id":"plan-validation","nodeId":"control-validation","step":"4","task":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","status":"completed","priority":"최고","owner":"Reviewer","nextAction":"완료 판정"},{"id":"plan-complete","nodeId":"control-complete","step":"5","task":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","status":"in_progress","priority":"높음","owner":"Reporter","nextAction":"홈 또는 다음 작업 이동"},{"id":"plan-module","nodeId":"control-module","step":"6","task":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","status":"ready","priority":"최고","owner":"Builder","nextAction":"dry-run preview 실행"}],"roadmapSections":[],"scaffoldCatalog":{"blueprints":[{"id":"master-os-ai-studio","name":"마스터 OS AI 스튜디오","summary":"하나의 마스터 UI에서 AI 계획, 학습, 운영, 모듈 확장을 함께 다루는 기본 청사진","architecture_profile":"master-os-shell","starter_sequence":[{"step":"요구사항 정의","focus":"requirements, constraints, domain-map을 먼저 확정한다"},{"step":"도메인 포트 생성","focus":"OpenAPI, events, ui-contract, capability를 먼저 만든다"},{"step":"마스터 UI 편입","focus":"plugin-registry, navigation, feature-flags, planner guide를 연결한다"},{"step":"운영 게이트 고정","focus":"smoke, slo, rollout, rollback, observability를 활성화한다"}]},{"id":"domain-module-extension","name":"도메인 모듈 확장","summary":"기존 마스터 OS에 새 bounded context를 안전하게 추가하는 확장 청사진","architecture_profile":"workflow-domain-module","starter_sequence":[{"step":"Stage A 설계 메모 생성","focus":"유비쿼터스 언어, INV, 권한, 이벤트를 먼저 합의한다"},{"step":"어댑터 선택","focus":"transport, observability, storage를 profile로 선택한다"},{"step":"master-shell 등록","focus":"plugin-registry와 nav에 entry point를 연결한다"},{"step":"feature rollout 준비","focus":"flag metadata와 smoke 시나리오를 추가한다"}]},{"id":"stateful-workflow-service","name":"상태 저장형 워크플로우 서비스","summary":"영속 저장소와 운영 지표를 갖춘 실서비스형 워크플로우 모듈 청사진","architecture_profile":"stateful-domain-module","starter_sequence":[{"step":"포트 유지","focus":"repository port를 유지한 채 in-memory와 SQLite를 병행한다"},{"step":"관측 강화","focus":"trace, request id, deployment smoke를 먼저 연결한다"},{"step":"운영 안전장치","focus":"idempotency, timeout, drain, rate limit을 transport에 고정한다"}]}],"recipes":[{"id":"planner-first-hybrid","name":"Planner-First Hybrid","objective":"기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피","architecture_profile":"master-os-shell","blueprint_refs":["master-os-ai-studio"]},{"id":"contract-first-module-builder","name":"Contract-First Module Builder","objective":"새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피","architecture_profile":"workflow-domain-module","blueprint_refs":["domain-module-extension"]},{"id":"stateful-ops-guarded","name":"Stateful Ops Guarded","objective":"상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피","architecture_profile":"stateful-domain-module","blueprint_refs":["stateful-workflow-service"]}],"profiles":[{"id":"master-os-shell","notes":["마스터 UI와 planner를 동시에 가져가야 기획/학습 일관성이 유지된다."],"recommended_recipes":["planner-first-hybrid"]},{"id":"workflow-domain-module","notes":["도메인 확장 단계에서는 메모리 저장소로 빠르게 검증하고, 영속 저장소는 별도 profile로 분리한다."],"recommended_recipes":["contract-first-module-builder"]},{"id":"stateful-domain-module","notes":["영속 저장소를 쓰더라도 memory adapter를 유지해 테스트와 smoke를 빠르게 돌릴 수 있어야 한다."],"recommended_recipes":["stateful-ops-guarded"]}],"defaultBlueprint":"domain-module-extension","defaultRecipe":"contract-first-module-builder"}}}}</script>
 <script>(function() {
 'use strict';
 
 // ─── Parse embedded data ─────────────────────────────────────────────────────
 const RAW = JSON.parse(document.getElementById('mindmap-data').textContent);
+const CONTROL = RAW.meta.controlCenter || {};
+const AUTH_HEADERS = {
+  'x-user-id': 'master-ui-operator',
+  'x-permissions': 'domain.viewer,system.admin',
+};
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const S = {
@@ -403,6 +1096,56 @@ const S = {
   lastUpdate: null,
   totalTests: 570,
   passingTests: 570,
+  planningApiBase: RAW.meta.planningApiBase || '/api/planning-studio',
+  statusSummary: Object.assign({ autoSendEnabled: false }, CONTROL.statusBar || {}),
+  controlNodes: Array.isArray(CONTROL.controlNodes) ? CONTROL.controlNodes.slice() : [],
+  planRows: Array.isArray(CONTROL.planRows) ? CONTROL.planRows.slice() : [],
+  scaffoldCatalog: CONTROL.scaffoldCatalog || { blueprints: [], recipes: [], profiles: [], defaultBlueprint: '', defaultRecipe: '' },
+  roadmapSections: Array.isArray(CONTROL.roadmapSections) ? CONTROL.roadmapSections.slice() : [],
+  planningSnapshot: null,
+  scaffoldForm: {
+    domain: '',
+    blueprint: (CONTROL.scaffoldCatalog && CONTROL.scaffoldCatalog.defaultBlueprint) || 'domain-module-extension',
+    recipe: (CONTROL.scaffoldCatalog && CONTROL.scaffoldCatalog.defaultRecipe) || 'contract-first-module-builder',
+  },
+  scaffoldPreview: '',
+  scaffoldTranscript: '',
+  scaffoldError: '',
+  scaffoldStatus: {
+    tone: 'idle',
+    title: 'preview 대기',
+    currentState: 'preview를 아직 실행하지 않았습니다.',
+    nextAction: 'dry-run preview를 먼저 누르세요.',
+    retryable: '가능',
+    detail: 'domain, blueprint, recipe를 고른 뒤 preview를 실행하면 결과가 여기에 표시됩니다.',
+  },
+  execution: {
+    runtimeAvailable: false,
+    sessions: [],
+    selectedPts: '',
+    selectedWorkerIndex: 0,
+    promptText: '',
+    optimizedPrompt: '',
+    lastPromptText: '',
+    schedulerRunning: false,
+    schedulerWorkers: [],
+    currentActivity: null,
+    lastActivity: null,
+    lastError: null,
+    nextActionHint: '',
+    controls: {
+      sendPrompt: false,
+      autoSendToggle: false,
+      stop: false,
+      retryLastPrompt: false,
+      rollback: false,
+      terminalStatusVisible: true,
+      failureReasonVisible: false,
+    },
+    statusTone: 'warning',
+    statusTitle: '터미널 연결 확인 필요',
+    statusDetail: 'PTY 세션과 스케줄러 상태를 불러오는 중입니다.',
+  },
 };
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
@@ -419,13 +1162,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   runForce(120);
   render();
+  renderMasterStatus();
+  renderExecutionConsole();
+  renderSidebar();
+  renderPlanBoard();
   updateStatusBar();
   setupPanZoom();
   setupNodeInteractions();
   setupKeyboard();
   hydrateFromApi();
+  hydratePlanningSnapshot();
+  hydrateExecutionRuntime();
   connectSSE();
 
+  selectNode(S.statusSummary.currentLaneId || 'root');
   setTimeout(fitView, 50);
 });
 
@@ -576,6 +1326,7 @@ function renderNodes() {
 
   for (var ni = 0; ni < S.nodes.length; ni++) {
     var node = S.nodes[ni];
+    if (node.hiddenInGraph) continue;
     var g = svgEl('g', {
       transform: 'translate(' + node.x + ',' + node.y + ')',
       class: 'node node-' + node.type + (S.selected === node.id ? ' node-selected' : ''),
@@ -714,6 +1465,814 @@ function renderNodes() {
 function applyTransform() {
   var root = document.getElementById('graph-root');
   root.setAttribute('transform', 'translate(' + S.tx + ',' + S.ty + ') scale(' + S.tk + ')');
+}
+
+function statusClassName(status) {
+  return 'is-' + String(status || 'pending').replace(/[^a-z_]/gi, '_');
+}
+
+function stageProgress(stageValue) {
+  var stage = String(stageValue || '').toUpperCase();
+  if (stage === 'A') return 20;
+  if (stage === 'B') return 35;
+  if (stage === 'C') return 55;
+  if (stage === 'D') return 80;
+  if (stage === 'E') return 100;
+  return 10;
+}
+
+function laneStatusByStage(stageValue, laneId) {
+  var stage = String(stageValue || '').toUpperCase();
+  var order = ['A', 'B', 'C', 'D', 'E'];
+  var currentIndex = Math.max(order.indexOf(stage), 0);
+  var laneThresholds = {
+    'control-intake': 0,
+    'control-planning': 1,
+    'control-execution': 2,
+    'control-validation': 3,
+    'control-complete': 4,
+    'control-module': 1,
+  };
+  var threshold = laneThresholds[laneId];
+  if (laneId === 'control-module') {
+    return currentIndex >= 1 ? 'ready' : 'pending';
+  }
+  if (currentIndex > threshold) return 'completed';
+  if (currentIndex === threshold) return 'in_progress';
+  return 'pending';
+}
+
+function statusLabel(status) {
+  var value = String(status || 'pending');
+  return value === 'completed' ? '완료'
+    : value === 'in_progress' ? '진행 중'
+      : value === 'ready' ? '준비'
+        : value === 'blocked' ? '차단'
+          : '대기';
+}
+
+function renderMasterStatus() {
+  var goalEl = document.getElementById('master-goal');
+  var stageEl = document.getElementById('master-stage');
+  var progressEl = document.getElementById('master-progress');
+  var blockerEl = document.getElementById('master-blocker');
+  var nextEl = document.getElementById('master-next');
+  var autoSendEl = document.getElementById('master-auto-send');
+  var topbarBadgeEl = document.getElementById('topbar-auto-send-badge');
+  if (!goalEl) return;
+
+  goalEl.textContent = S.statusSummary.goal || '현재 목표 미정';
+  stageEl.textContent = S.statusSummary.currentStage || '-';
+  progressEl.textContent = String(S.statusSummary.progress || 0) + '%';
+  blockerEl.textContent = S.statusSummary.blocker || '정상';
+  blockerEl.className = 'master-value ' + (
+    String(S.statusSummary.blocker || '').includes('정상') ? 'status-ok'
+      : String(S.statusSummary.blocker || '').includes('차단') ? 'status-blocked'
+        : 'status-attention'
+  );
+  nextEl.textContent = S.statusSummary.nextTask || 'NONE';
+
+  var autoOn = S.execution.runtimeAvailable
+    ? S.execution.schedulerRunning === true
+    : S.statusSummary.autoSendEnabled === true;
+  if (autoSendEl) {
+    autoSendEl.textContent = autoOn ? 'ON' : 'OFF';
+    autoSendEl.className = autoOn ? 'master-auto-on' : 'master-auto-off';
+  }
+  if (topbarBadgeEl) {
+    topbarBadgeEl.textContent = autoOn ? '자동전송 ON' : '자동전송 OFF';
+    topbarBadgeEl.className = 'tb-auto-badge ' + (autoOn ? 'tb-auto-on' : 'tb-auto-off');
+  }
+}
+
+function currentExecutionActivity() {
+  return S.execution.lastError || S.execution.currentActivity || S.execution.lastActivity || null;
+}
+
+function selectedExecutionSession() {
+  var selected = String(S.execution.selectedPts || '').trim();
+  var sessions = Array.isArray(S.execution.sessions) ? S.execution.sessions : [];
+  for (var i = 0; i < sessions.length; i++) {
+    if (String(sessions[i].pts || '') === selected) {
+      return sessions[i];
+    }
+  }
+  return null;
+}
+
+function executionSummaryTone() {
+  var activity = currentExecutionActivity();
+  if (activity && activity.error) return 'error';
+  if (S.execution.schedulerRunning) return 'success';
+  if (selectedExecutionSession()) return 'idle';
+  return 'warning';
+}
+
+function executionSummaryTitle() {
+  var activity = currentExecutionActivity();
+  if (activity && activity.error) return '실행 실패 감지';
+  if (S.execution.schedulerRunning) return '자동 전송 실행 중';
+  if (selectedExecutionSession()) return '수동 제어 대기';
+  return S.execution.runtimeAvailable ? '터미널 선택 필요' : '브리지 오프라인';
+}
+
+function executionNextAction() {
+  if (String(S.execution.nextActionHint || '').trim()) {
+    return String(S.execution.nextActionHint || '').trim();
+  }
+  var activity = currentExecutionActivity();
+  if (activity && activity.error) {
+    return '실패 원인을 확인한 뒤 이전 내용 다시 실행 또는 프롬프트 전송을 누르세요.';
+  }
+  if (S.execution.schedulerRunning) {
+    return '중지가 필요하면 자동 전송 중지를 누르고, 즉시 진행은 다음 단계 엔터를 사용하세요.';
+  }
+  if (selectedExecutionSession()) {
+    return '추천 프롬프트를 채우거나 직접 입력한 뒤 전송 또는 자동 전송 시작을 누르세요.';
+  }
+  return 'PTY 세션을 먼저 선택하거나 브리지를 연결하세요.';
+}
+
+function executionFailureLocation(activity) {
+  if (!activity || !activity.error) {
+    return '없음';
+  }
+  return [
+    activity.action || 'action 없음',
+    activity.worker || 'worker 없음',
+    activity.pts || 'pts 없음',
+  ].join(' / ');
+}
+
+function htmlDisabled(disabled) {
+  return disabled ? ' disabled aria-disabled="true"' : '';
+}
+
+function applyControlCenterRuntimeState(runtimePayload) {
+  var runtimeState = runtimePayload && runtimePayload.runtime_state ? runtimePayload.runtime_state : null;
+  if (!runtimeState) {
+    return null;
+  }
+
+  var execution = runtimeState.execution || {};
+  var scheduler = runtimeState.scheduler || {};
+  var controls = runtimeState.user_controls || {};
+
+  S.execution.runtimeAvailable = execution.runtime_available === true;
+  S.execution.schedulerRunning = scheduler.running === true;
+  S.execution.schedulerWorkers = Array.isArray(scheduler.workers) ? scheduler.workers : [];
+  S.execution.currentActivity = execution.current_activity || scheduler.current_activity || null;
+  S.execution.lastActivity = execution.last_activity || scheduler.last_activity || null;
+  S.execution.lastError = execution.last_error || null;
+  S.execution.nextActionHint = String(execution.next_action || '').trim();
+  S.execution.controls = {
+    sendPrompt: controls.send_prompt === true,
+    autoSendToggle: controls.auto_send_toggle === true,
+    stop: controls.stop === true,
+    retryLastPrompt: controls.retry_last_prompt === true,
+    rollback: controls.rollback === true,
+    terminalStatusVisible: controls.terminal_status_visible !== false,
+    failureReasonVisible: controls.failure_reason_visible === true,
+  };
+  S.rollbackEnabled = controls.rollback === true;
+  S.statusSummary.autoSendEnabled = scheduler.running === true;
+
+  if (String(execution.last_prompt_text || '').trim()) {
+    S.execution.lastPromptText = String(execution.last_prompt_text || '').trim();
+  }
+
+  return runtimeState;
+}
+
+function renderExecutionConsole() {
+  var container = document.getElementById('execution-console');
+  if (!container) return;
+
+  var sessions = Array.isArray(S.execution.sessions) ? S.execution.sessions : [];
+  var selectedSession = selectedExecutionSession();
+  var activity = currentExecutionActivity();
+  var activitySummary = activity
+    ? [activity.action || 'activity', activity.worker || 'manual', activity.pts || 'pts 없음', activity.packet_id || 'packet 없음']
+      .filter(Boolean)
+      .join(' / ')
+    : '최근 실행 없음';
+  var promptValue = S.execution.promptText || S.execution.optimizedPrompt || '';
+  var lastPrompt = (activity && activity.prompt_preview) || S.execution.lastPromptText || '없음';
+  var errorText = activity && activity.error ? String(activity.error) : '없음';
+  var failureLocation = executionFailureLocation(activity);
+  var summaryTone = executionSummaryTone();
+  var runtimeBadgeClass = 'execution-badge '
+    + (activity && activity.error ? 'is-error' : (S.execution.runtimeAvailable ? 'is-live' : ''));
+  var sendDisabled = !S.execution.controls.sendPrompt;
+  var retryDisabled = !S.execution.controls.retryLastPrompt;
+  var autoToggleDisabled = !(S.execution.controls.autoSendToggle || S.execution.controls.stop);
+  var immediateDispatchDisabled = !Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1;
+  var selectedWorkerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
+  var selectedWorker = immediateDispatchDisabled ? null : (S.execution.schedulerWorkers[selectedWorkerIndex] || null);
+  var selectedWorkerSummary = selectedWorker
+    ? String(selectedWorker.name || ('Worker ' + (selectedWorkerIndex + 1)))
+      + (String(selectedWorker.pts || '').trim() ? ' / ' + String(selectedWorker.pts || '').trim() : '')
+      + (String(selectedWorker.plan_id || '').trim() ? ' / ' + String(selectedWorker.plan_id || '').trim() : '')
+    : '없음';
+  var runtimeWorkerActivity = S.execution.currentActivity || S.execution.lastActivity || null;
+  var runtimeWorkerError = S.execution.lastError || null;
+  var workerRosterSummary = immediateDispatchDisabled
+    ? '등록된 worker 없음'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      return label + (pts ? ' [' + pts + ']' : '');
+    }).join(', ');
+  var workerActivitySummary = immediateDispatchDisabled
+    ? '활동 중인 worker 없음'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
+      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var workerStatus = '대기';
+      if (isErrorWorker) {
+        workerStatus = '실패: ' + String(runtimeWorkerError.error || runtimeWorkerError.action || '원인 미상');
+      } else if (isActiveWorker) {
+        workerStatus = (runtimeWorkerActivity.action === 'running' ? '실행 중' : '최근 ' + String(runtimeWorkerActivity.action || 'activity'));
+      }
+      return label + (pts ? ' [' + pts + ']' : '') + ' - ' + workerStatus;
+    }).join(', ');
+  var workerBadgeSummary = immediateDispatchDisabled
+    ? '표시할 worker 배지 없음'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      var preview = String((worker && worker.prompt_preview) || '').trim();
+      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
+      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var badge = isErrorWorker
+        ? 'ERR ' + String(runtimeWorkerError.error || runtimeWorkerError.action || '원인 미상')
+        : isActiveWorker
+          ? String(runtimeWorkerActivity.action === 'running' ? 'RUN' : String(runtimeWorkerActivity.action || 'RECENT').toUpperCase())
+          : 'IDLE';
+      var detail = isErrorWorker
+        ? String(runtimeWorkerError.prompt_preview || preview || '').trim()
+        : isActiveWorker
+          ? String(runtimeWorkerActivity.prompt_preview || preview || '').trim()
+          : preview;
+      return label
+        + (pts ? ' [' + pts + ']' : '')
+        + ' {' + badge + '}'
+        + (detail ? ' ' + detail : '');
+    }).join(' | ');
+  var workerCardMarkup = immediateDispatchDisabled
+    ? ''
+    : '<div class="execution-worker-cards">' + S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      var planId = String((worker && worker.plan_id) || '').trim();
+      var preview = String((worker && worker.prompt_preview) || '').trim();
+      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
+      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var isSelectedWorker = index === selectedWorkerIndex;
+      var statusLabel = isErrorWorker
+        ? '실패'
+        : isActiveWorker
+          ? (runtimeWorkerActivity.action === 'running' ? '실행 중' : '최근 ' + String(runtimeWorkerActivity.action || 'activity'))
+          : '대기';
+      var detail = isErrorWorker
+        ? String(runtimeWorkerError.error || '원인 미상')
+        : isActiveWorker
+          ? String(runtimeWorkerActivity.prompt_preview || preview || '최근 프롬프트 없음')
+          : (preview || '대기 중');
+      var cardClass = 'execution-worker-card'
+        + (isSelectedWorker ? ' is-selected' : '')
+        + (isErrorWorker ? ' is-error' : '');
+      var pillClass = 'execution-worker-pill'
+        + (isSelectedWorker ? ' is-selected' : '')
+        + (isErrorWorker ? ' is-error' : '');
+      var selectButtonLabel = isSelectedWorker ? '선택됨' : '이 worker 선택';
+      return '<div class="' + cardClass + '">' +
+        '<div class="execution-worker-card-head">' +
+          '<strong class="execution-worker-card-title">' + escHtml(label) + '</strong>' +
+          '<span class="' + pillClass + '">' + escHtml(statusLabel) + '</span>' +
+        '</div>' +
+        '<div class="execution-worker-meta">' + escHtml((pts ? pts : 'pts 없음') + (planId ? ' / ' + planId : '')) + '</div>' +
+        '<div class="execution-worker-detail">' + escHtml(detail) + '</div>' +
+        '<div class="execution-worker-actions">' +
+          '<button type="button" class="execution-worker-action secondary" onclick="focusExecutionWorker(' + String(index) + ')"' + htmlDisabled(isSelectedWorker) + '>' + escHtml(selectButtonLabel) + '</button>' +
+          '<button type="button" class="execution-worker-action primary" onclick="sendExecutionWorkerNow(' + String(index) + ')">이 worker 즉시 전송</button>' +
+          (isErrorWorker ? '<button type="button" class="execution-worker-action warn" onclick="retryExecutionWorker(' + String(index) + ')">이 worker 재시도</button>' : '') +
+          (isErrorWorker && S.execution.schedulerRunning ? '<button type="button" class="execution-worker-action warn" onclick="stopAutoSendFromWorkerCard(' + String(index) + ')">이 worker에서 자동 전송 중지</button>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  var sessionOptions = sessions.length
+    ? sessions.map(function(session) {
+      var selected = String(session.pts || '') === String(S.execution.selectedPts || '');
+      return '<option value="' + escHtml(session.pts || '') + '"' + (selected ? ' selected' : '') + '>'
+        + escHtml(session.label || session.pts || 'unknown pts') + '</option>';
+    }).join('')
+    : '<option value="">연결된 PTY 세션 없음</option>';
+  var workerOptions = immediateDispatchDisabled
+    ? '<option value="0">사용 가능한 worker 없음</option>'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var selected = index === selectedWorkerIndex;
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      return '<option value="' + String(index) + '"' + (selected ? ' selected' : '') + '>'
+        + escHtml(label + (pts ? ' [' + pts + ']' : '')) + '</option>';
+    }).join('');
+
+  container.innerHTML = '<div class="sidebar-console">' +
+    '<div class="execution-summary is-' + escHtml(summaryTone) + '">' +
+      '<span class="' + runtimeBadgeClass + '">' + escHtml(S.execution.schedulerRunning ? '자동 전송 실행 중' : (S.execution.runtimeAvailable ? '수동 제어 가능' : '브리지 오프라인')) + '</span>' +
+      '<strong>' + escHtml(S.execution.statusTitle || executionSummaryTitle()) + '</strong>' +
+      '<p>' + escHtml(S.execution.statusDetail || executionNextAction()) + '</p>' +
+    '</div>' +
+    '<div class="execution-grid">' +
+      '<div class="execution-row"><span>선택 터미널</span><strong>' + escHtml(selectedSession ? selectedSession.label : '없음') + '</strong></div>' +
+      '<div class="execution-row"><span>자동 전송</span><strong>' + escHtml(S.execution.schedulerRunning ? '실행 중' : '중지됨') + '</strong></div>' +
+      '<div class="execution-row"><span>활성 worker</span><strong>' + escHtml(String(Array.isArray(S.execution.schedulerWorkers) ? S.execution.schedulerWorkers.length : 0)) + '</strong></div>' +
+      '<div class="execution-row"><span>선택 worker</span><strong>' + escHtml(selectedWorkerSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>worker 배치</span><strong>' + escHtml(workerRosterSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>worker 상태 요약</span><strong>' + escHtml(workerActivitySummary) + '</strong></div>' +
+      '<div class="execution-row"><span>worker 최근 배지</span><strong>' + escHtml(workerBadgeSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>마지막 실행</span><strong>' + escHtml(activitySummary) + '</strong></div>' +
+      '<div class="execution-row"><span>마지막 프롬프트</span><strong>' + escHtml(lastPrompt) + '</strong></div>' +
+      '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(failureLocation) + '</strong></div>' +
+      '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(errorText) + '</strong></div>' +
+      '<div class="execution-row"><span>지금 할 일</span><strong>' + escHtml(executionNextAction()) + '</strong></div>' +
+    '</div>' +
+    workerCardMarkup +
+    '<div class="execution-row">' +
+      '<span>전송 대상</span>' +
+      '<select id="execution-pts-select" class="execution-select" onchange="syncExecutionInputs()"' + htmlDisabled(sendDisabled) + '>' + sessionOptions + '</select>' +
+    '</div>' +
+    '<div class="execution-row">' +
+      '<span>프롬프트 입력</span>' +
+      '<textarea id="execution-prompt" class="execution-textarea" placeholder="여기에 직접 프롬프트를 입력하거나 추천 프롬프트를 불러오세요." oninput="syncExecutionInputs()"' + htmlDisabled(sendDisabled) + '>' + escHtml(promptValue) + '</textarea>' +
+    '</div>' +
+    '<div class="execution-row">' +
+      '<span>즉시 제어 worker</span>' +
+      '<select id="execution-worker-select" class="execution-select" onchange="syncExecutionInputs()"' + htmlDisabled(immediateDispatchDisabled) + '>' + workerOptions + '</select>' +
+    '</div>' +
+    '<div class="execution-actions">' +
+      '<button type="button" class="execution-button primary" onclick="sendPromptNow()"' + htmlDisabled(sendDisabled) + '>프롬프트 전송</button>' +
+      '<button type="button" class="execution-button secondary" onclick="loadRecommendedPrompt()">추천 프롬프트</button>' +
+      '<button type="button" class="execution-button secondary" onclick="sendEnterNow()"' + htmlDisabled(sendDisabled) + '>다음 단계 엔터</button>' +
+      '<button type="button" class="execution-button secondary" onclick="dispatchSchedulerPromptNow()"' + htmlDisabled(immediateDispatchDisabled) + '>현재 worker 즉시 전송</button>' +
+      '<button type="button" class="execution-button secondary" onclick="dispatchSchedulerEnterNow()"' + htmlDisabled(immediateDispatchDisabled) + '>전체 worker 즉시 엔터</button>' +
+      '<button type="button" class="execution-button secondary" onclick="retryLastPrompt()"' + htmlDisabled(retryDisabled) + '>이전 내용 다시 실행</button>' +
+      '<button type="button" class="execution-button warn" onclick="toggleAutoSendRuntime()"' + htmlDisabled(autoToggleDisabled) + '>' + escHtml(S.execution.schedulerRunning ? '자동 전송 중지' : '자동 전송 시작') + '</button>' +
+    '</div>' +
+    '<div class="execution-note">실행 중지, 재시도, 자동 전송 on/off, worker 즉시 전송, 현재 실패 원인, 다음 행동을 한 카드에 모았습니다. 기존 롤백은 도메인 패널에서 그대로 유지됩니다.</div>' +
+  '</div>';
+}
+
+function syncExecutionInputs() {
+  var selectEl = document.getElementById('execution-pts-select');
+  var promptEl = document.getElementById('execution-prompt');
+  var workerEl = document.getElementById('execution-worker-select');
+  if (selectEl) S.execution.selectedPts = selectEl.value;
+  if (promptEl) S.execution.promptText = promptEl.value;
+  if (workerEl) S.execution.selectedWorkerIndex = Math.max(0, Number.parseInt(workerEl.value, 10) || 0);
+}
+
+function focusExecutionWorker(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', 'worker 선택 확인 필요', '선택할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+}
+
+function sendExecutionWorkerNow(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', '즉시 전송 비활성화', '즉시 전송할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+  dispatchSchedulerPromptNow();
+}
+
+function retryExecutionWorker(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', '재시도 비활성화', '재시도할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+  dispatchSchedulerPromptNow();
+}
+
+function stopAutoSendFromWorkerCard(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', '자동 전송 중지 비활성화', '자동 전송을 중지할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+  if (!S.execution.schedulerRunning) {
+    setExecutionStatus('warning', '자동 전송 중지 비활성화', '이미 자동 전송이 중지되어 있습니다.');
+    return;
+  }
+  toggleAutoSendRuntime();
+}
+
+function setExecutionStatus(tone, title, detail) {
+  S.execution.statusTone = tone;
+  S.execution.statusTitle = title;
+  S.execution.statusDetail = detail;
+  renderExecutionConsole();
+}
+
+function resolveCurrentPacketId() {
+  var snapshotPacketId = String((((S.planningSnapshot || {}).current_wp || {}).id) || '').trim();
+  if (snapshotPacketId) return snapshotPacketId;
+  return String(((RAW.meta.report || {}).current_wp) || 'NONE');
+}
+
+function loadRecommendedPrompt() {
+  var prompt = String(S.execution.optimizedPrompt || '').trim();
+  if (!prompt) {
+    prompt = '[실행 지시]\n현재 목표: ' + String(S.statusSummary.goal || '목표 미정') + '\n다음 작업: ' + String(S.statusSummary.nextTask || 'NONE');
+  }
+  S.execution.promptText = prompt;
+  setExecutionStatus('idle', '추천 프롬프트 적용 완료', '내용을 검토한 뒤 프롬프트 전송 또는 자동 전송 시작을 누르세요.');
+  showToast('추천 프롬프트를 실행 패널에 채웠습니다.');
+}
+
+function hydrateExecutionRuntime() {
+  Promise.all([
+    fetchJson('/api/pty/sessions').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson('/ui/control-center-runtime').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson('/api/automation/optimize-prompt').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+  ]).then(function(results) {
+    var sessionsPayload = results[0];
+    var runtimePayload = results[1];
+    var optimizedPromptPayload = results[2];
+    var sessions = Array.isArray(sessionsPayload && sessionsPayload.sessions) ? sessionsPayload.sessions : [];
+    var runtimeState = applyControlCenterRuntimeState(runtimePayload);
+    var preferredPts = String(S.execution.selectedPts || '').trim()
+      || String((((runtimeState || {}).execution || {}).selected_pts_hint) || '').trim()
+      || String((((runtimeState || {}).execution || {}).current_activity || {}).pts || '').trim()
+      || String((((runtimeState || {}).execution || {}).last_activity || {}).pts || '').trim();
+
+    S.execution.sessions = sessions;
+    if (!runtimeState) {
+      S.execution.runtimeAvailable = Boolean(sessionsPayload);
+      S.execution.schedulerRunning = false;
+      S.execution.schedulerWorkers = [];
+      S.execution.currentActivity = null;
+      S.execution.lastActivity = null;
+      S.execution.lastError = null;
+      S.execution.nextActionHint = '';
+      S.execution.controls = {
+        sendPrompt: sessions.length > 0,
+        autoSendToggle: sessions.length > 0,
+        stop: false,
+        retryLastPrompt: Boolean(String(S.execution.lastPromptText || '').trim()),
+        rollback: S.rollbackEnabled === true,
+        terminalStatusVisible: true,
+        failureReasonVisible: false,
+      };
+    }
+    S.execution.optimizedPrompt = String((optimizedPromptPayload && optimizedPromptPayload.prompt) || S.execution.optimizedPrompt || '');
+
+    if (preferredPts && sessions.some(function(session) { return String(session.pts || '') === preferredPts; })) {
+      S.execution.selectedPts = preferredPts;
+    } else if (sessions.length > 0) {
+      S.execution.selectedPts = String(sessions[0].pts || '');
+    } else {
+      S.execution.selectedPts = '';
+    }
+    if (!Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1) {
+      S.execution.selectedWorkerIndex = 0;
+    } else if (!Number.isInteger(S.execution.selectedWorkerIndex) || S.execution.selectedWorkerIndex < 0 || S.execution.selectedWorkerIndex >= S.execution.schedulerWorkers.length) {
+      S.execution.selectedWorkerIndex = 0;
+    }
+
+    if (!String(S.execution.promptText || '').trim()) {
+      S.execution.promptText = S.execution.optimizedPrompt || String(S.statusSummary.goal || '');
+    }
+
+    S.execution.statusTone = executionSummaryTone();
+    S.execution.statusTitle = executionSummaryTitle();
+    S.execution.statusDetail = executionNextAction();
+    renderExecutionConsole();
+    renderMasterStatus();
+  });
+}
+
+function sendPromptNow() {
+  if (!S.execution.controls.sendPrompt) {
+    setExecutionStatus('warning', '프롬프트 전송 비활성화', '현재 상태에서는 전송 가능한 터미널이 없습니다.');
+    return;
+  }
+  syncExecutionInputs();
+  var pts = String(S.execution.selectedPts || '').trim();
+  var prompt = String(S.execution.promptText || '').trim();
+  if (!pts) {
+    setExecutionStatus('warning', '전송 대상 필요', '먼저 PTY 세션을 선택하세요.');
+    return;
+  }
+  if (!prompt) {
+    setExecutionStatus('warning', '프롬프트 입력 필요', '추천 프롬프트를 불러오거나 직접 입력하세요.');
+    return;
+  }
+
+  setExecutionStatus('idle', '프롬프트 전송 중', '선택한 터미널로 프롬프트를 보내는 중입니다.');
+  fetchJson('/api/pty/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-send:' + pts + ':prompt',
+    idempotencyPayload: {
+      pts: pts,
+      prompt: prompt,
+      action: 'prompt',
+      packet_id: resolveCurrentPacketId(),
+    },
+    body: JSON.stringify({
+      pts: pts,
+      text: prompt.endsWith('') ? prompt : prompt + '',
+      prompt: prompt,
+      action: 'prompt',
+      name: 'Control Center',
+      packet_id: resolveCurrentPacketId(),
+    }),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      if (!result.ok || result.body.ok === false) {
+        throw new Error(String(result.body.detail || result.body.message || result.body.error || 'prompt send failed'));
+      }
+      S.execution.lastPromptText = prompt;
+      showToast('프롬프트 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '프롬프트 전송 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function sendEnterNow() {
+  if (!S.execution.controls.sendPrompt) {
+    setExecutionStatus('warning', '엔터 전송 비활성화', '현재 상태에서는 엔터를 보낼 터미널이 없습니다.');
+    return;
+  }
+  syncExecutionInputs();
+  var pts = String(S.execution.selectedPts || '').trim();
+  if (!pts) {
+    setExecutionStatus('warning', '전송 대상 필요', '엔터를 보낼 PTY 세션을 먼저 선택하세요.');
+    return;
+  }
+
+  setExecutionStatus('idle', '다음 단계 엔터 전송 중', '선택한 터미널에 엔터를 보내는 중입니다.');
+  fetchJson('/api/pty/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-send:' + pts + ':enter',
+    idempotencyPayload: {
+      pts: pts,
+      prompt: String(S.execution.lastPromptText || S.execution.promptText || '').trim(),
+      action: 'enter',
+      packet_id: resolveCurrentPacketId(),
+    },
+    body: JSON.stringify({
+      pts: pts,
+      text: '',
+      prompt: String(S.execution.lastPromptText || S.execution.promptText || '').trim(),
+      action: 'enter',
+      name: 'Control Center',
+      packet_id: resolveCurrentPacketId(),
+    }),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      if (!result.ok || result.body.ok === false) {
+        throw new Error(String(result.body.detail || result.body.message || result.body.error || 'enter send failed'));
+      }
+      showToast('다음 단계 엔터 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '엔터 전송 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function dispatchSchedulerPromptNow() {
+  if (!Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1) {
+    setExecutionStatus('warning', '즉시 전송 비활성화', '즉시 전송할 scheduler worker가 아직 없습니다.');
+    return;
+  }
+  syncExecutionInputs();
+  var workerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
+  var worker = S.execution.schedulerWorkers[workerIndex];
+  if (!worker) {
+    setExecutionStatus('warning', 'worker 선택 확인 필요', '즉시 전송할 worker를 다시 선택하세요.');
+    return;
+  }
+  var workerName = String(worker.name || ('Worker ' + (workerIndex + 1)));
+
+  setExecutionStatus('idle', '현재 worker 즉시 전송 중', workerName + ' 프롬프트를 즉시 전송하는 중입니다.');
+  fetchJson('/api/pty/send-now', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-scheduler:send-now',
+    idempotencyPayload: { worker_index: workerIndex },
+    body: JSON.stringify({ worker_index: workerIndex }),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      var firstResult = Array.isArray(result.body.results) ? result.body.results[0] : null;
+      if (!result.ok || !firstResult || firstResult.ok !== true) {
+        throw new Error(String((firstResult && firstResult.error) || result.body.detail || result.body.message || 'scheduler send-now failed'));
+      }
+      showToast(workerName + ' 즉시 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '현재 worker 즉시 전송 실패', workerName + ': ' + String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function dispatchSchedulerEnterNow() {
+  if (!Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1) {
+    setExecutionStatus('warning', '즉시 엔터 비활성화', '즉시 엔터를 보낼 scheduler worker가 아직 없습니다.');
+    return;
+  }
+
+  setExecutionStatus('idle', '전체 worker 즉시 엔터 전송 중', '현재 scheduler worker 전체에 즉시 엔터를 보내는 중입니다.');
+  fetchJson('/api/pty/enter-now', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-scheduler:enter-now',
+    idempotencyPayload: {},
+    body: JSON.stringify({}),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      var results = Array.isArray(result.body.results) ? result.body.results : [];
+      var failed = results.find(function(item) { return !item || item.ok !== true; });
+      if (!result.ok || results.length < 1 || failed) {
+        throw new Error(String((failed && failed.error) || result.body.detail || result.body.message || 'scheduler enter-now failed'));
+      }
+      showToast('전체 worker 즉시 엔터 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '전체 worker 즉시 엔터 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function retryLastPrompt() {
+  if (!S.execution.controls.retryLastPrompt) {
+    setExecutionStatus('warning', '재시도 비활성화', '마지막 프롬프트가 기록되기 전에는 다시 실행할 수 없습니다.');
+    return;
+  }
+  if (!String(S.execution.lastPromptText || '').trim()) {
+    setExecutionStatus('warning', '재시도할 내용 없음', '먼저 한 번이라도 프롬프트를 전송해야 다시 실행할 수 있습니다.');
+    return;
+  }
+  S.execution.promptText = S.execution.lastPromptText;
+  renderExecutionConsole();
+  sendPromptNow();
+}
+
+function buildSchedulerWorkers() {
+  var snapshot = S.planningSnapshot || {};
+  var automation = snapshot.automation || snapshot.automation_config || {};
+  var selectedPts = String(S.execution.selectedPts || '').trim();
+  var basePrompt = String(S.execution.promptText || S.execution.lastPromptText || S.execution.optimizedPrompt || '계속').trim();
+  var cycleMinutes = Number(automation.cycle_minutes || 30);
+  var enterSeconds = Number(automation.enter_seconds || 10);
+  var configuredWorkers = Array.isArray(automation.workers) ? automation.workers : [];
+  var workers = configuredWorkers.map(function(worker, index) {
+    return {
+      name: String(worker.name || 'Worker ' + (index + 1)),
+      plan_id: String(worker.plan_id || resolveCurrentPacketId()),
+      pts: String(worker.pts || selectedPts),
+      prompt: String(worker.prompt || basePrompt),
+      use_home_operator_prompt: worker.use_home_operator_prompt === true,
+      cycle_minutes: Number(worker.cycle_minutes || cycleMinutes),
+      enter_seconds: Number(worker.enter_seconds || enterSeconds),
+    };
+  }).filter(function(worker) { return String(worker.pts || '').trim(); });
+
+  if (!workers.length && selectedPts) {
+    workers.push({
+      name: 'Control Center Worker',
+      plan_id: resolveCurrentPacketId(),
+      pts: selectedPts,
+      prompt: basePrompt || '계속',
+      use_home_operator_prompt: false,
+      cycle_minutes: cycleMinutes,
+      enter_seconds: enterSeconds,
+    });
+  }
+
+  return {
+    cycle_minutes: cycleMinutes,
+    enter_seconds: enterSeconds,
+    workers: workers,
+  };
+}
+
+function toggleAutoSendRuntime() {
+  if (!(S.execution.controls.autoSendToggle || S.execution.controls.stop)) {
+    setExecutionStatus('warning', '자동 전송 비활성화', '세션과 실행 상태를 확인한 뒤 다시 시도하세요.');
+    return;
+  }
+  syncExecutionInputs();
+  if (S.execution.schedulerRunning) {
+    setExecutionStatus('warning', '자동 전송 중지 중', '현재 실행 중인 자동 전송을 중지하는 중입니다.');
+    fetchJson('/api/pty/scheduler/stop', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      idempotencyScope: 'pty-scheduler:stop',
+      idempotencyPayload: {},
+      body: JSON.stringify({}),
+    })
+      .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+      .then(function(result) { if (!result.ok) { throw new Error(String(result.body.detail || result.body.message || result.body.error || 'scheduler stop failed')); } return result.body; })
+      .then(function() {
+        showToast('자동 전송 중지 완료');
+        hydrateExecutionRuntime();
+      })
+      .catch(function(error) {
+        setExecutionStatus('error', '자동 전송 중지 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+      });
+    return;
+  }
+
+  var schedulerPayload = buildSchedulerWorkers();
+  if (!schedulerPayload.workers.length) {
+    setExecutionStatus('warning', '자동 전송 시작 불가', '세션을 선택하고 전송할 프롬프트를 준비해야 자동 전송을 시작할 수 있습니다.');
+    return;
+  }
+
+  setExecutionStatus('idle', '자동 전송 시작 중', '선택한 세션과 프롬프트로 자동 전송을 시작하는 중입니다.');
+  fetchJson('/api/pty/scheduler/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-scheduler:start',
+    idempotencyPayload: schedulerPayload,
+    body: JSON.stringify(schedulerPayload),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) { if (!result.ok) { throw new Error(String(result.body.detail || result.body.message || result.body.error || 'scheduler start failed')); } return result.body; })
+    .then(function() {
+      S.execution.lastPromptText = String(S.execution.promptText || S.execution.lastPromptText || '').trim();
+      showToast('자동 전송 시작 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '자동 전송 시작 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function renderSidebar() {
+  var controlList = document.getElementById('control-sidebar-list');
+  var domainList = document.getElementById('domain-sidebar-list');
+  if (!controlList || !domainList) return;
+
+  controlList.innerHTML = S.controlNodes.map(function(item) {
+    return '<button type="button" class="control-entry ' + (S.selected === item.id ? 'active' : '') + '" data-control-id="' + escHtml(item.id) + '" onclick="selectControlNode(\'' + escHtml(item.id) + '\')">' +
+      '<div class="control-pill ' + statusClassName(item.status) + '">' + statusLabel(item.status) + '</div>' +
+      '<strong>' + escHtml(item.label) + '</strong>' +
+      '<span>' + escHtml(item.purpose || '') + '</span>' +
+      '</button>';
+  }).join('');
+
+  var domains = S.nodes.filter(function(node) { return node.type === 'domain'; });
+  domainList.innerHTML = domains.map(function(item) {
+    return '<button type="button" class="control-entry ' + (S.selected === item.id ? 'active' : '') + '" data-domain-id="' + escHtml(item.id) + '" onclick="selectControlNode(\'' + escHtml(item.id) + '\')">' +
+      '<div class="control-pill ' + statusClassName(item.flagActive === false ? 'blocked' : 'ready') + '">' + (item.flagActive === false ? '비활성' : '도메인') + '</div>' +
+      '<strong>' + escHtml(item.label) + '</strong>' +
+      '<span>헬스 ' + escHtml(String(item.healthScore || 0)) + ' / stage ' + escHtml(String(item.stageStatus || 'UNKNOWN')) + '</span>' +
+      '</button>';
+  }).join('');
+}
+
+function renderPlanBoard() {
+  var table = document.getElementById('plan-table-body');
+  if (!table) return;
+  table.innerHTML = S.planRows.map(function(row) {
+    return '<tr class="plan-row ' + (S.selected === row.nodeId ? 'active' : '') + '" data-node-id="' + escHtml(row.nodeId || '') + '" onclick="selectControlNode(\'' + escHtml(row.nodeId || 'root') + '\')">' +
+      '<td>' + escHtml(row.step || '') + '</td>' +
+      '<td>' + escHtml(row.task || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.purpose || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.input || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.output || '') + '</td>' +
+      '<td><span class="status-chip ' + statusClassName(row.status) + '">' + statusLabel(row.status) + '</span></td>' +
+      '<td>' + escHtml(row.priority || '') + '</td>' +
+      '<td>' + escHtml(row.owner || '') + '</td>' +
+      '<td class="plan-cell-wrap">' + escHtml(row.nextAction || '') + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function selectControlNode(id) {
+  selectNode(id);
 }
 
 // ─── Fit view ─────────────────────────────────────────────────────────────────
@@ -875,6 +2434,8 @@ function selectNode(id) {
       circle.setAttribute('stroke-width', isSelected ? '3' : '1.5');
     }
   });
+  renderSidebar();
+  renderPlanBoard();
   openPanel(id);
 }
 
@@ -888,6 +2449,8 @@ function deselectNode() {
       circle.setAttribute('stroke-width', '1.5');
     }
   });
+  renderSidebar();
+  renderPlanBoard();
   closePanel();
 }
 
@@ -906,7 +2469,7 @@ function renderPanel(id) {
   var n = S.byId[id];
   if (!n) return;
 
-  var typeLabels = { root: '\ub8e8\ud2b8', domain: '\ub3c4\uba54\uc778', stage: '\uc2a4\ud14c\uc774\uc9c0', contract: '\uacc4\uc57d', flag: '\ud53c\uc2a4\uccb4 \ud50c\ub798\uadf8' };
+  var typeLabels = { root: '\ub8e8\ud2b8', domain: '\ub3c4\uba54\uc778', stage: '\uc2a4\ud14c\uc774\uc9c0', contract: '\uacc4\uc57d', flag: '\ud53c\uc2a4\uccb4 \ud50c\ub798\uadf8', control: '\ud1b5\uc81c \ub178\ub4dc' };
   document.getElementById('panel-header').innerHTML =
     '<div class="ph-type">' + (typeLabels[n.type] || n.type) + '</div>' +
     '<div class="ph-title">' + escHtml(n.label) + '</div>' +
@@ -955,16 +2518,16 @@ function renderPanelTab(n, tab) {
 
 function renderOverviewTab(n) {
   if (n.type === 'root') {
-    return '<div class="ov-section">' +
-      '<div class="ov-label">\uc2dc\uc2a4\ud15c \uc0c1\ud0dc</div>' +
-      '<div class="ov-value ov-pass">HEALTHY</div>' +
-      '<div class="ov-label mt8">\ud65c\uc131 \ub3c4\uba54\uc778</div>' +
-      '<div class="ov-value">4\uac1c (billing / productivity / video / system)</div>' +
-      '<div class="ov-label mt8">\uc804\uccb4 \ud14c\uc2a4\ud2b8</div>' +
-      '<div class="ov-value">' + S.passingTests + ' / ' + S.totalTests + ' PASS</div>' +
-      '<div class="ov-label mt8">SSE \uc2a4\ud2b8\ub9bc</div>' +
-      '<div class="ov-value">' + S.sseStatus + '</div>' +
+    return '<div class="detail-grid-cards">' +
+      renderDetailCard('\ud604\uc7ac \ubaa9\ud45c', S.statusSummary.goal || '\ud604\uc7ac \ubaa9\ud45c \ubbf8\uc815', '\ud1b5\ud569 \ud1b5\uc81c \uc13c\ud130\uc758 \uae30\uc900 \ubaa9\ud45c\ub97c \uace0\uc815\ud569\ub2c8\ub2e4.') +
+      renderDetailCard('\ud604\uc7ac \uc791\uc5c5', 'Stage ' + escHtml(S.statusSummary.currentStage || '-') + ' / packet ' + escHtml(String((RAW.meta.report || {}).current_wp || 'NONE')), '\ud604\uc7ac packet \uae30\uc900 \ud3ec\ucee4\uc2a4\ub97c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.') +
+      renderDetailCard('\uacb0\uacfc \ubbf8\ub9ac\ubcf4\uae30', S.passingTests + ' / ' + S.totalTests + ' PASS', 'system API, planning snapshot, quality gate\ub97c \ud569\uce5c \uae30\uc900 \uac12\uc785\ub2c8\ub2e4.') +
+      renderDetailCard('\ubb38\uc81c\uc810', S.statusSummary.blocker || '\uc815\uc0c1', 'drift, known issues, \ud655\uc778 \ud544\uc694 \ud56d\ubaa9\uc744 \ud55c \uc904\ub85c \ubd84\ub9ac\ud569\ub2c8\ub2e4.') +
+      renderDetailCard('\ub2e4\uc74c \ud589\ub3d9', S.statusSummary.nextTask || 'NONE', '\ub2e4\uc74c packet \ub610\ub294 module preview \uc2e4\ud589\uc73c\ub85c \uc774\uc5b4\uc9d1\ub2c8\ub2e4.') +
       '</div>';
+  }
+  if (n.type === 'control') {
+    return renderControlOverview(n);
   }
   if (n.type === 'flag') {
     return '<div class="ov-section">' +
@@ -1031,6 +2594,357 @@ function renderOverviewTab(n) {
     '</div>';
 }
 
+function renderDetailCard(title, strongValue, description) {
+  return '<article class="detail-card">' +
+    '<span>' + escHtml(title) + '</span>' +
+    '<strong>' + escHtml(strongValue || '') + '</strong>' +
+    '<p>' + escHtml(description || '') + '</p>' +
+    '</article>';
+}
+
+function renderControlOverview(n) {
+  var inputs = Array.isArray(n.inputs) ? n.inputs.join(' / ') : '';
+  var outputs = Array.isArray(n.outputs) ? n.outputs.join(' / ') : '';
+  var issues = Array.isArray(n.issues) ? n.issues.join('\n') : '';
+  var cards = [
+    renderDetailCard('\ubaa9\ud45c', n.purpose || '', '\uc774 \ub178\ub4dc\uac00 \ub2f4\ub2f9\ud558\ub294 \ucc45\uc784\uc744 \uc124\uba85\ud569\ub2c8\ub2e4.'),
+    renderDetailCard('\ud604\uc7ac \uc791\uc5c5', statusLabel(n.status), '\uc9c0\uae08 \uc5b4\ub514\uae4c\uc9c0 \uc9c4\ud589\ub410\ub294\uc9c0 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.'),
+    renderDetailCard('\uc785\ub825 \uc870\uac74', inputs || '\uc785\ub825 \uc815\uc758 \uc5c6\uc74c', '\uc774 \ub2e8\uacc4\uac00 \ucc38\uc870\ud558\ub294 \uc18c\uc2a4\ub97c \uc694\uc57d\ud569\ub2c8\ub2e4.'),
+    renderDetailCard('\uacb0\uacfc \ubbf8\ub9ac\ubcf4\uae30', outputs || '\ucd9c\ub825 \uc815\uc758 \uc5c6\uc74c', '\ub2e8\uacc4\uac00 \ub05d\ub098\uba74 \uc5bb\uc5b4\uc57c \ud560 \uc0b0\ucd9c\ubb3c\uc785\ub2c8\ub2e4.'),
+    renderDetailCard('\ubb38\uc81c\uc810', issues || '\ubb38\uc81c\uc810 \uc5c6\uc74c', '\ucc28\ub2e8 \uc0ac\uc720\ub098 \uc8fc\uc758\ud560 \uc810\uc744 \ubd84\ub9ac\ud569\ub2c8\ub2e4.'),
+    renderDetailCard('\ub2e4\uc74c \ud589\ub3d9', n.nextAction || '', '\ub2e4\uc74c \ub178\ub4dc\ub85c \uc5b4\ub5bb\uac8c \ub118\uc5b4\uac00\ub294\uc9c0 \ubc14\ub85c \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.'),
+  ];
+
+  return '<div class="detail-grid-cards">' +
+    cards.join('') +
+    (n.controlKind === 'module' ? renderModuleWorkbench() : '') +
+    '</div>';
+}
+
+function selectedBlueprint() {
+  var list = Array.isArray(S.scaffoldCatalog.blueprints) ? S.scaffoldCatalog.blueprints : [];
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i].id) === String(S.scaffoldForm.blueprint)) return list[i];
+  }
+  return list[0] || null;
+}
+
+function selectedRecipe() {
+  var list = Array.isArray(S.scaffoldCatalog.recipes) ? S.scaffoldCatalog.recipes : [];
+  for (var i = 0; i < list.length; i++) {
+    if (String(list[i].id) === String(S.scaffoldForm.recipe)) return list[i];
+  }
+  return list[0] || null;
+}
+
+function syncScaffoldForm() {
+  var domainEl = document.getElementById('module-domain');
+  var blueprintEl = document.getElementById('module-blueprint');
+  var recipeEl = document.getElementById('module-recipe');
+  if (domainEl) S.scaffoldForm.domain = String(domainEl.value || '').trim();
+  if (blueprintEl) S.scaffoldForm.blueprint = String(blueprintEl.value || '');
+  if (recipeEl) S.scaffoldForm.recipe = String(recipeEl.value || '');
+}
+
+function setScaffoldStatus(tone, title, currentState, nextAction, retryable, detail) {
+  S.scaffoldStatus = {
+    tone: String(tone || 'idle'),
+    title: String(title || ''),
+    currentState: String(currentState || ''),
+    nextAction: String(nextAction || ''),
+    retryable: String(retryable || ''),
+    detail: String(detail || ''),
+  };
+}
+
+function statusToneBadge(tone) {
+  if (tone === 'success') return '정상';
+  if (tone === 'warning') return '확인 필요';
+  if (tone === 'error') return '차단';
+  return '대기';
+}
+
+function normalizeScaffoldFailure(body, actionLabel, retryAfterSeconds) {
+  var code = String(body && body.code || '');
+  var message = String(body && (body.detail || body.message) || actionLabel + ' failed');
+  var retryAfter = retryAfterSeconds ? String(retryAfterSeconds) + '초 후 재시도' : '원인 확인 후 재시도';
+
+  if (code === 'RESOURCE_BUSY') {
+    return {
+      tone: 'warning',
+      title: actionLabel + ' 대기 필요',
+      currentState: '같은 리소스에서 다른 작업이 이미 진행 중입니다.',
+      nextAction: retryAfter + ' 다시 시도하거나 다른 domain으로 실행하세요.',
+      retryable: '가능',
+      detail: message,
+    };
+  }
+
+  if (code === 'FORBIDDEN') {
+    return {
+      tone: 'error',
+      title: actionLabel + ' 권한 부족',
+      currentState: '현재 권한으로는 이 작업을 실행할 수 없습니다.',
+      nextAction: actionLabel === 'create'
+        ? 'system.admin 권한으로 다시 시도하세요.'
+        : 'domain.viewer 또는 system.admin 권한으로 다시 시도하세요.',
+      retryable: '권한 확보 후 가능',
+      detail: message,
+    };
+  }
+
+  if (code === 'VALIDATION_ERROR') {
+    return {
+      tone: 'warning',
+      title: actionLabel + ' 입력 확인 필요',
+      currentState: '입력값 형식이 올바르지 않습니다.',
+      nextAction: 'domain, blueprint, recipe를 다시 확인한 뒤 실행하세요.',
+      retryable: '가능',
+      detail: message,
+    };
+  }
+
+  if (code === 'CONFLICT') {
+    return {
+      tone: 'warning',
+      title: actionLabel + ' 충돌 감지',
+      currentState: '같은 이름의 대상이나 기존 산출물과 충돌했습니다.',
+      nextAction: '기존 requirements 파일을 확인하거나 다른 domain으로 시도하세요.',
+      retryable: '조건 해소 후 가능',
+      detail: message,
+    };
+  }
+
+  return {
+    tone: 'error',
+    title: actionLabel + ' 실패',
+    currentState: '요청은 전달됐지만 정상 완료되지 않았습니다.',
+    nextAction: '상세 메시지를 확인하고 입력값 또는 서버 상태를 점검하세요.',
+    retryable: '확인 후 가능',
+    detail: message,
+  };
+}
+
+function renderScaffoldStatus() {
+  var status = S.scaffoldStatus || {};
+  return '<section class="module-status is-' + escHtml(status.tone || 'idle') + '">' +
+    '<div class="module-status-head">' +
+    '<strong class="module-status-title">' + escHtml(status.title || 'preview 대기') + '</strong>' +
+    '<span class="module-status-badge">' + escHtml(statusToneBadge(status.tone || 'idle')) + '</span>' +
+    '</div>' +
+    '<div class="module-status-grid">' +
+    '<div class="module-status-row"><span>현재 상태</span><strong>' + escHtml(status.currentState || '-') + '</strong></div>' +
+    '<div class="module-status-row"><span>다음 행동</span><strong>' + escHtml(status.nextAction || '-') + '</strong></div>' +
+    '<div class="module-status-row"><span>재시도</span><strong>' + escHtml(status.retryable || '-') + '</strong></div>' +
+    '<div class="module-status-row"><span>상세</span><strong>' + escHtml(status.detail || '-') + '</strong></div>' +
+    '</div>' +
+    '</section>';
+}
+
+function renderModuleWorkbench() {
+  var blueprint = selectedBlueprint();
+  var recipe = selectedRecipe();
+  var profile = blueprint ? String(blueprint.architecture_profile || '') : '';
+  var steps = blueprint && Array.isArray(blueprint.starter_sequence)
+    ? blueprint.starter_sequence.map(function(item) {
+      return '- ' + String(item.step || '') + ': ' + String(item.focus || '');
+    }).join('\n')
+    : 'starter sequence 없음';
+  var previewText = S.scaffoldPreview || 'preview를 아직 실행하지 않았습니다. dry-run preview를 먼저 누르세요.';
+
+  var blueprintOptions = (Array.isArray(S.scaffoldCatalog.blueprints) ? S.scaffoldCatalog.blueprints : []).map(function(item) {
+    return '<option value="' + escHtml(item.id) + '"' + (String(item.id) === String(S.scaffoldForm.blueprint) ? ' selected' : '') + '>' +
+      escHtml(item.name + ' (' + item.id + ')') + '</option>';
+  }).join('');
+  var recipeOptions = (Array.isArray(S.scaffoldCatalog.recipes) ? S.scaffoldCatalog.recipes : []).map(function(item) {
+    return '<option value="' + escHtml(item.id) + '"' + (String(item.id) === String(S.scaffoldForm.recipe) ? ' selected' : '') + '>' +
+      escHtml(item.name + ' (' + item.id + ')') + '</option>';
+  }).join('');
+
+  return '<section class="module-workbench">' +
+    '<div class="module-grid">' +
+    '<div class="module-field"><span>domain id</span><input id="module-domain" class="module-input" value="' + escHtml(S.scaffoldForm.domain || '') + '" placeholder="예: ordering" oninput="handleScaffoldInput()"></div>' +
+    '<div class="module-field"><span>blueprint</span><select id="module-blueprint" class="module-select" onchange="handleScaffoldBlueprint()">' + blueprintOptions + '</select></div>' +
+    '<div class="module-field"><span>architecture profile</span><input class="module-input" value="' + escHtml(profile || 'unknown') + '" readonly></div>' +
+    '<div class="module-field"><span>recipe</span><select id="module-recipe" class="module-select" onchange="handleScaffoldInput()">' + recipeOptions + '</select></div>' +
+    '<div class="module-toolbar">' +
+    '<button type="button" class="module-button primary" onclick="previewModuleScaffold()">dry-run preview</button>' +
+    '<button type="button" class="module-button secondary" onclick="loadScaffoldCommand()">명령 미리보기</button>' +
+    '<button type="button" class="module-button warn" onclick="createModuleScaffold()">confirm 후 create</button>' +
+    '</div>' +
+    renderScaffoldStatus() +
+    '<div class="module-note">starter sequence\n' + escHtml(steps) + '</div>' +
+    '<pre class="module-preview">' + escHtml(previewText) + '</pre>' +
+    '</div>' +
+    '</section>';
+}
+
+function handleScaffoldInput() {
+  syncScaffoldForm();
+}
+
+function handleScaffoldBlueprint() {
+  syncScaffoldForm();
+  var blueprint = selectedBlueprint();
+  if (!blueprint) return;
+  var recipes = Array.isArray(S.scaffoldCatalog.recipes) ? S.scaffoldCatalog.recipes : [];
+  for (var i = 0; i < recipes.length; i++) {
+    var refs = Array.isArray(recipes[i].blueprint_refs) ? recipes[i].blueprint_refs : [];
+    if (refs.indexOf(blueprint.id) !== -1) {
+      S.scaffoldForm.recipe = recipes[i].id;
+      break;
+    }
+  }
+  renderPanel('control-module');
+}
+
+function loadScaffoldCommand() {
+  syncScaffoldForm();
+  S.scaffoldError = '';
+  S.scaffoldPreview = 'node scripts/generate-domain-scaffold.js --domain ' +
+    (S.scaffoldForm.domain || '<domain>') +
+    ' --blueprint ' + (S.scaffoldForm.blueprint || '<blueprint>') +
+    (S.scaffoldForm.recipe ? ' --recipe ' + S.scaffoldForm.recipe : '') +
+    ' --dry-run';
+  setScaffoldStatus(
+    'idle',
+    '명령 미리보기 준비',
+    'CLI 실행 명령이 준비되었습니다.',
+    'dry-run preview를 실행해 실제 preview 결과를 확인하세요.',
+    '가능',
+    '명령 미리보기는 실행하지 않고 입력값만 조합합니다.'
+  );
+  renderPanel('control-module');
+}
+
+function previewModuleScaffold() {
+  syncScaffoldForm();
+  S.scaffoldError = '';
+  if (!S.scaffoldForm.domain || !S.scaffoldForm.blueprint) {
+    S.scaffoldError = 'domain 과 blueprint 를 먼저 입력하세요.';
+    setScaffoldStatus(
+      'warning',
+      'preview 입력 확인 필요',
+      '필수 입력값이 비어 있습니다.',
+      'domain 과 blueprint 를 채운 뒤 다시 preview를 실행하세요.',
+      '가능',
+      'domain 과 blueprint 는 필수입니다.'
+    );
+    renderPanel('control-module');
+    return;
+  }
+
+  fetchJson(S.planningApiBase + '/scaffold-preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'scaffold-preview:' + S.scaffoldForm.domain + ':' + S.scaffoldForm.blueprint,
+    idempotencyPayload: S.scaffoldForm,
+    body: JSON.stringify(S.scaffoldForm),
+  })
+    .then(function(r) {
+      return r.json().then(function(body) {
+        return {
+          ok: r.ok,
+          body: body,
+          retryAfter: r.headers.get('retry-after'),
+        };
+      });
+    })
+    .then(function(result) {
+      if (!result.ok) {
+        throw normalizeScaffoldFailure(result.body, 'preview', result.retryAfter);
+      }
+      S.scaffoldTranscript = String((result.body.data && result.body.data.stdout) || '');
+      S.scaffoldPreview = String((result.body.data && (result.body.data.preview || result.body.data.stdout)) || '');
+      S.scaffoldError = '';
+      setScaffoldStatus(
+        'success',
+        'preview 준비 완료',
+        'dry-run preview가 정상적으로 갱신되었습니다.',
+        '결과를 확인한 뒤 confirm 후 create를 실행하세요.',
+        '가능',
+        'preview는 읽기 전용이며 실제 파일을 만들지 않습니다.'
+      );
+      renderPanel('control-module');
+      showToast('module dry-run preview 갱신 완료');
+    })
+    .catch(function(error) {
+      var normalized = error && error.tone ? error : normalizeScaffoldFailure({ message: String(error && error.message || 'preview failed') }, 'preview');
+      S.scaffoldError = normalized.detail;
+      setScaffoldStatus(normalized.tone, normalized.title, normalized.currentState, normalized.nextAction, normalized.retryable, normalized.detail);
+      renderPanel('control-module');
+    });
+}
+
+function createModuleScaffold() {
+  syncScaffoldForm();
+  if (!S.scaffoldForm.domain || !S.scaffoldForm.blueprint) {
+    S.scaffoldError = 'domain 과 blueprint 를 먼저 입력하세요.';
+    setScaffoldStatus(
+      'warning',
+      'create 입력 확인 필요',
+      '필수 입력값이 비어 있습니다.',
+      'domain 과 blueprint 를 채운 뒤 다시 create를 실행하세요.',
+      '가능',
+      'domain 과 blueprint 는 필수입니다.'
+    );
+    renderPanel('control-module');
+    return;
+  }
+  if (!window.confirm('requirements/' + S.scaffoldForm.domain + '.yaml 을 실제로 생성할까요?')) {
+    setScaffoldStatus(
+      'idle',
+      'create 대기',
+      '실제 생성은 아직 실행되지 않았습니다.',
+      'preview 결과를 다시 확인한 뒤 confirm 후 create를 누르세요.',
+      '가능',
+      '사용자 확인이 있어야 create가 실행됩니다.'
+    );
+    return;
+  }
+
+  fetchJson(S.planningApiBase + '/scaffold-create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'scaffold-create:' + S.scaffoldForm.domain + ':' + S.scaffoldForm.blueprint,
+    idempotencyPayload: S.scaffoldForm,
+    body: JSON.stringify(S.scaffoldForm),
+  })
+    .then(function(r) {
+      return r.json().then(function(body) {
+        return {
+          ok: r.ok,
+          body: body,
+          retryAfter: r.headers.get('retry-after'),
+        };
+      });
+    })
+    .then(function(result) {
+      if (!result.ok) {
+        throw normalizeScaffoldFailure(result.body, 'create', result.retryAfter);
+      }
+      S.scaffoldTranscript = String((result.body.data && result.body.data.stdout) || '');
+      S.scaffoldPreview = String((result.body.data && result.body.data.stdout) || '');
+      S.scaffoldError = '';
+      setScaffoldStatus(
+        'success',
+        'requirements 생성 완료',
+        'requirements/' + S.scaffoldForm.domain + '.yaml 생성이 완료되었습니다.',
+        'diff와 다음 work packet 연결 상태를 확인하세요.',
+        '불필요',
+        '실제 파일 생성이 끝났으므로 후속 검증 단계로 넘어가면 됩니다.'
+      );
+      renderPanel('control-module');
+      showToast('requirements/' + S.scaffoldForm.domain + '.yaml 생성 완료');
+    })
+    .catch(function(error) {
+      var normalized = error && error.tone ? error : normalizeScaffoldFailure({ message: String(error && error.message || 'create failed') }, 'create');
+      S.scaffoldError = normalized.detail;
+      setScaffoldStatus(normalized.tone, normalized.title, normalized.currentState, normalized.nextAction, normalized.retryable, normalized.detail);
+      renderPanel('control-module');
+    });
+}
+
 function renderFlagsTab(n) {
   var domainFlags = S.nodes.filter(function(node) {
     return node.type === 'flag' && node.parentId === n.id;
@@ -1079,8 +2993,76 @@ function renderQualityTab(n) {
     '<div class="ov-value ov-pass mt8">5/5 PASS</div>';
 }
 
+function mergeHeaders(base, extra) {
+  var next = {};
+  var key;
+  for (key in base) next[key] = base[key];
+  for (key in (extra || {})) next[key] = extra[key];
+  return next;
+}
+
+var PENDING_IDEMPOTENCY_KEYS = {};
+
+function stableStringifyForIdempotency(value) {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return '[' + value.map(function(item) { return stableStringifyForIdempotency(item); }).join(',') + ']';
+  }
+  var keys = Object.keys(value).sort();
+  return '{' + keys.map(function(key) {
+    return JSON.stringify(key) + ':' + stableStringifyForIdempotency(value[key]);
+  }).join(',') + '}';
+}
+
+function createClientIdempotencyKey(scope) {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return scope + ':' + window.crypto.randomUUID();
+  }
+  return scope + ':' + Date.now() + ':' + Math.random().toString(16).slice(2);
+}
+
+function reserveIdempotencyKey(scope, payload) {
+  var fingerprint = stableStringifyForIdempotency(payload || {});
+  var entry = PENDING_IDEMPOTENCY_KEYS[scope];
+  if (entry && entry.fingerprint === fingerprint) {
+    return entry.key;
+  }
+  var key = createClientIdempotencyKey(scope);
+  PENDING_IDEMPOTENCY_KEYS[scope] = { key: key, fingerprint: fingerprint };
+  return key;
+}
+
+function releaseIdempotencyKey(scope, key) {
+  var entry = PENDING_IDEMPOTENCY_KEYS[scope];
+  if (entry && entry.key === key) {
+    delete PENDING_IDEMPOTENCY_KEYS[scope];
+  }
+}
+
+function fetchJson(url, options) {
+  var opts = options || {};
+  var headers = mergeHeaders(AUTH_HEADERS, opts.headers || {});
+  var method = String(opts.method || 'GET').toUpperCase();
+  var idempotencyScope = opts.idempotencyScope;
+  var reservedKey = '';
+  if (method === 'POST' && idempotencyScope) {
+    reservedKey = reserveIdempotencyKey(idempotencyScope, opts.idempotencyPayload);
+    headers['Idempotency-Key'] = reservedKey;
+  }
+  var requestOptions = Object.assign({}, opts, { headers: headers });
+  delete requestOptions.idempotencyScope;
+  delete requestOptions.idempotencyPayload;
+  return fetch(url, requestOptions).finally(function() {
+    if (reservedKey && idempotencyScope) {
+      releaseIdempotencyKey(idempotencyScope, reservedKey);
+    }
+  });
+}
+
 function fetchAuditLog(domainId) {
-  fetch(S.apiBase + '/system/audit?domain=' + encodeURIComponent(domainId) + '&page_size=20')
+  fetchJson(S.apiBase + '/system/audit?domain=' + encodeURIComponent(domainId) + '&page_size=20')
     .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function(data) {
       var entries = Array.isArray(data.entries) ? data.entries : [];
@@ -1116,7 +3098,7 @@ function toggleFlag(flagId, newVal) {
     if (flagRect) flagRect.setAttribute('fill', newVal ? 'var(--node-flag-on)' : 'var(--node-flag-off)');
   }
 
-  fetch(S.apiBase + '/system/flags/' + encodeURIComponent(flagId), {
+  fetchJson(S.apiBase + '/system/flags/' + encodeURIComponent(flagId), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ value: newVal }),
@@ -1144,7 +3126,7 @@ function confirmRollback() {
   var reason = modal.querySelector('.modal-reason').value || '';
   modal.style.display = 'none';
 
-  fetch(S.apiBase + '/system/rollback/' + encodeURIComponent(domainId), {
+  fetchJson(S.apiBase + '/system/rollback/' + encodeURIComponent(domainId), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reason: reason }),
@@ -1170,8 +3152,8 @@ function pulseNode(nodeId, color) {
 function hydrateFromApi() {
   var base = S.apiBase;
   Promise.all([
-    fetch(base + '/system/health').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
-    fetch(base + '/system/flags').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson(base + '/system/health').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson(base + '/system/flags').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
   ]).then(function(results) {
     var healthData = results[0], flagsData = results[1];
     if (healthData) applyHealthData(healthData);
@@ -1179,6 +3161,136 @@ function hydrateFromApi() {
     S.lastUpdate = new Date();
     updateStatusBar();
   });
+}
+
+function hydratePlanningSnapshot() {
+  fetchJson(S.planningApiBase + '/snapshot')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(payload) {
+      if (!payload) return;
+      var snapshot = payload.data || payload;
+      S.planningSnapshot = snapshot;
+      applyPlanningSnapshot(snapshot);
+    })
+    .catch(function() {
+      return null;
+    });
+}
+
+function applyPlanningSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return;
+  var currentWp = snapshot.current_wp || {};
+  var nextActions = snapshot.next_actions || {};
+  var completedCount = Array.isArray(snapshot.completed_packets) ? snapshot.completed_packets.length : 0;
+  var changedCount = snapshot.code_status && typeof snapshot.code_status.changed_count === 'number'
+    ? snapshot.code_status.changed_count
+    : 0;
+
+  if (currentWp.goal) S.statusSummary.goal = String(currentWp.goal);
+  if (currentWp.stage) {
+    S.statusSummary.currentStage = String(currentWp.stage).toUpperCase();
+    S.statusSummary.progress = Math.max(S.statusSummary.progress || 0, stageProgress(currentWp.stage));
+  }
+  if (nextActions.next_wp) S.statusSummary.nextTask = String(nextActions.next_wp);
+  if (changedCount > 0) S.statusSummary.blocker = '확인 필요 ' + changedCount + '개 변경';
+
+  var automationConfig = snapshot.automation || snapshot.automation_config || null;
+  if (automationConfig && typeof automationConfig.enabled === 'boolean') {
+    S.statusSummary.autoSendEnabled = automationConfig.enabled;
+  }
+  if (!String(S.execution.promptText || '').trim() && currentWp.goal) {
+    S.execution.promptText = '[현재 목표]
+' + String(currentWp.goal) + '
+
+[다음 작업]
+' + String(nextActions.next_wp || 'NONE');
+  }
+
+  S.planRows = [
+    {
+      id: 'plan-intake',
+      nodeId: 'control-intake',
+      step: '1',
+      task: '입력 이해',
+      purpose: '사용자 요청과 packet 범위를 정리',
+      input: String(currentWp.id || 'NONE'),
+      output: String(currentWp.goal || '목표 미정'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-intake'),
+      priority: '최고',
+      owner: 'Planner',
+      nextAction: '계획 수립',
+    },
+    {
+      id: 'plan-planning',
+      nodeId: 'control-planning',
+      step: '2',
+      task: '계획 수립',
+      purpose: 'active packet과 draft를 동기화',
+      input: String(snapshot.default_packet_id || currentWp.id || 'NONE'),
+      output: String((snapshot.planner_sections_draft || {}).updated_at || 'draft ready'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-planning'),
+      priority: '최고',
+      owner: 'Planner',
+      nextAction: '실행 포커스 이동',
+    },
+    {
+      id: 'plan-execution',
+      nodeId: 'control-execution',
+      step: '3',
+      task: '실행',
+      purpose: '현재 packet 실행과 runtime bridge 연결',
+      input: String(currentWp.id || 'NONE'),
+      output: String(currentWp.status || 'pending'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-execution'),
+      priority: '최고',
+      owner: 'Builder',
+      nextAction: '검증 evidence 확보',
+    },
+    {
+      id: 'plan-validation',
+      nodeId: 'control-validation',
+      step: '4',
+      task: '검증',
+      purpose: 'drift와 changed files 확인',
+      input: String(changedCount) + ' changed',
+      output: changedCount > 0 ? '재검토 필요' : 'clean',
+      status: changedCount > 0 ? 'ready' : laneStatusByStage(S.statusSummary.currentStage, 'control-validation'),
+      priority: '최고',
+      owner: 'Reviewer',
+      nextAction: '완료 판정',
+    },
+    {
+      id: 'plan-complete',
+      nodeId: 'control-complete',
+      step: '5',
+      task: '완료',
+      purpose: '완료 packet과 다음 실행 연결',
+      input: String(completedCount) + ' completed',
+      output: String(nextActions.next_wp || 'NONE'),
+      status: laneStatusByStage(S.statusSummary.currentStage, 'control-complete'),
+      priority: '높음',
+      owner: 'Reporter',
+      nextAction: '다음 packet 이동',
+    },
+    {
+      id: 'plan-module',
+      nodeId: 'control-module',
+      step: '6',
+      task: '모듈 생성',
+      purpose: 'preview -> dry-run -> confirm -> create',
+      input: 'blueprint / recipe / domain',
+      output: 'requirements preview',
+      status: 'ready',
+      priority: '최고',
+      owner: 'Builder',
+      nextAction: 'dry-run preview 실행',
+    },
+  ];
+
+  renderMasterStatus();
+  renderExecutionConsole();
+  renderPlanBoard();
+  if (S.selected) renderPanel(S.selected);
 }
 
 function applyHealthData(data) {
@@ -1319,7 +3431,10 @@ function updateStatusBar() {
     updateEl.textContent = secs !== null ? '\uc5c5\ub370\uc774\ud2b8: ' + secs + '\ucd08 \uc804' : '\uc5c5\ub370\uc774\ud2b8: -';
   }
   if (zoomEl)  zoomEl.textContent  = 'Zoom: ' + Math.round(S.tk * 100) + '%';
-  if (countEl) countEl.textContent = 'Nodes: ' + S.nodes.length;
+  if (countEl) {
+    var visibleCount = S.nodes.filter(function(node) { return !node.hiddenInGraph; }).length;
+    countEl.textContent = 'Nodes: ' + visibleCount;
+  }
 }
 
 function updateZoomDisplay() {
@@ -1401,8 +3516,27 @@ window.toggleFlag         = toggleFlag;
 window.openRollbackModal  = openRollbackModal;
 window.confirmRollback    = confirmRollback;
 window.fitView            = fitView;
+window.selectControlNode  = selectControlNode;
+window.syncExecutionInputs = syncExecutionInputs;
+window.focusExecutionWorker = focusExecutionWorker;
+window.sendExecutionWorkerNow = sendExecutionWorkerNow;
+window.retryExecutionWorker = retryExecutionWorker;
+window.stopAutoSendFromWorkerCard = stopAutoSendFromWorkerCard;
+window.sendPromptNow = sendPromptNow;
+window.sendEnterNow = sendEnterNow;
+window.dispatchSchedulerPromptNow = dispatchSchedulerPromptNow;
+window.dispatchSchedulerEnterNow = dispatchSchedulerEnterNow;
+window.retryLastPrompt = retryLastPrompt;
+window.toggleAutoSendRuntime = toggleAutoSendRuntime;
+window.loadRecommendedPrompt = loadRecommendedPrompt;
+window.handleScaffoldInput = handleScaffoldInput;
+window.handleScaffoldBlueprint = handleScaffoldBlueprint;
+window.previewModuleScaffold = previewModuleScaffold;
+window.createModuleScaffold = createModuleScaffold;
+window.loadScaffoldCommand = loadScaffoldCommand;
 
 setInterval(updateStatusBar, 10000);
+setInterval(hydrateExecutionRuntime, 15000);
 
 })();</script>
 </body>

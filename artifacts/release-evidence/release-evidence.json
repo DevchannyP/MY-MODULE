@@ -1,26 +1,112 @@
 {
-  "schema_version": "2",
-  "generated_at_utc": "2026-03-19T15:44:59.402674+00:00",
+  "schema_version": "3",
+  "generated_at_utc": "2026-04-09T13:53:41.397079+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "2768b12e4c520b5c7a0ad5f8e41b9f9e79ca099a",
+  "head_commit": "a60c0f0420c710f9b60150b44717d94be9b8fbb2",
   "build_environment": {
     "ci": "false",
-    "github_sha": "2768b12e4c520b5c7a0ad5f8e41b9f9e79ca099a",
+    "github_sha": "a60c0f0420c710f9b60150b44717d94be9b8fbb2",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
+  },
+  "git_status": {
+    "available": true,
+    "is_clean": false,
+    "modified_paths": [
+      "artifacts/decision-apply/latest/benchmark-pack.json",
+      "artifacts/decision-apply/latest/context-lock.json",
+      "artifacts/decision-apply/latest/decision-apply-report.json",
+      "artifacts/decision-apply/latest/handoff-bundle.json",
+      "artifacts/decision-apply/latest/promoted-packet.yaml",
+      "artifacts/master-planner/index.html",
+      "artifacts/mindmap/index.html",
+      "artifacts/promotion-pipeline/latest/benchmark-pack.json",
+      "artifacts/promotion-pipeline/latest/context-lock.json",
+      "artifacts/promotion-pipeline/latest/handoff-bundle.json",
+      "artifacts/promotion-pipeline/latest/pipeline-report.json",
+      "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
+      "artifacts/provenance/workflow-os-provenance.json",
+      "artifacts/release-evidence/release-evidence.json",
+      "artifacts/sbom/workflow-os.spdx.json",
+      "master-shell/feature-flags/flags.yaml",
+      "master-shell/feature-flags/metadata.json",
+      "memory/project/metrics.yaml",
+      "scripts/generate-domain-scaffold.js",
+      "scripts/generate-mindmap.js",
+      "scripts/generate_release_evidence.py",
+      "scripts/run_stage.js",
+      "scripts/serve.py",
+      "scripts/validate_master_shell.py",
+      "scripts/validate_requirements.py",
+      "src/server/createServer.js",
+      "src/shared/uiRuntimeContracts.js",
+      "src/tests/smoke/dynamicFrontendServer.smoke.test.js",
+      "src/tests/smoke/mindmapControlCenter.smoke.test.js",
+      "worklog/audit-chain.json",
+      "worklog/contract-matrix.md"
+    ],
+    "untracked_paths": [
+      ".codex",
+      ".env.bak",
+      ".turbo/",
+      "artifacts/.cache/",
+      "artifacts/deployment-smoke/latest.json",
+      "artifacts/home-data.json",
+      "artifacts/vscode-cli-automation/",
+      "docs/adr/0012-ui-shell-composition-strategy.md",
+      "master-shell/catalog/system-os-benchmark-map.yaml",
+      "memory/project/ui-os-integration-plan.yaml",
+      "memory/project/vscode-cli-automation.yaml",
+      "memory/stageB/ui-shell-composition.yaml",
+      "scripts/register_stage_c_plugin.py",
+      "src/tests/smoke/mindmapControlCenterBrowserInteraction.smoke.test.js",
+      "src/tests/smoke/mindmapControlCenterInteraction.smoke.test.js",
+      "worklog/audit-chain.jsonl",
+      "worklog/audit-chain.meta.json",
+      "worklog/system-os-runtime.jsonl"
+    ]
   },
   "memory_sources": {
     "current_state": "memory/current-state.yaml",
     "next_actions": "memory/next-actions.yaml"
   },
   "last_completed_stage": "WORK_PACKET_MODE",
+  "last_completed_unit": {
+    "mode": "work_packet",
+    "id": "WP-RUN-004",
+    "completed_at": "2026-03-20",
+    "result": "PASS"
+  },
   "quality_gate_result": "PASS",
+  "quality_gate_inputs": [
+    "npm run validate:requirements",
+    "npm run test:contract",
+    "npm test",
+    "npm run lint"
+  ],
+  "release_artifacts": {
+    "release_evidence": {
+      "path": "artifacts/release-evidence/release-evidence.json",
+      "exists": true,
+      "digest_strategy": "external-verification-required"
+    },
+    "provenance": {
+      "path": "artifacts/provenance/workflow-os-provenance.json",
+      "exists": true,
+      "sha256": "bf8f41b5d57808ca055fdb25daf1d9d7f3de422d78d251ab38373f43e85f8f2c"
+    },
+    "sbom": {
+      "path": "artifacts/sbom/workflow-os.spdx.json",
+      "exists": true,
+      "sha256": "06d6109a8d60b8be79830bf770668d6de7ce094d8d58a0174ec6071a4789ba58"
+    }
+  },
   "next_action": {
-    "priority": "1",
-    "id": "WP-EVID-001",
+    "priority": "NONE",
+    "id": "WP-VIDEO-001",
     "track": "WORK_PACKET",
-    "action": "root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다"
+    "action": "video 도메인 Stage A~E 전체 구현 — contract 생성, 플러그인 등록, 단위/적대적 테스트"
   }
 }

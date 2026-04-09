@@ -24,6 +24,358 @@
       "primaryPackagePurpose": "APPLICATION"
     },
     {
+      "name": "@babel/code-frame",
+      "SPDXID": "SPDXRef-Package--babel-code-frame",
+      "versionInfo": "7.29.0",
+      "downloadLocation": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.29.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@babel/code-frame@7.29.0"
+        }
+      ]
+    },
+    {
+      "name": "@babel/helper-validator-identifier",
+      "SPDXID": "SPDXRef-Package--babel-helper-validator-identifier",
+      "versionInfo": "7.28.5",
+      "downloadLocation": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.28.5.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@babel/helper-validator-identifier@7.28.5"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/cli",
+      "SPDXID": "SPDXRef-Package--commitlint-cli",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/cli/-/cli-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/cli@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/config-conventional",
+      "SPDXID": "SPDXRef-Package--commitlint-config-conventional",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/config-conventional/-/config-conventional-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/config-conventional@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/config-validator",
+      "SPDXID": "SPDXRef-Package--commitlint-config-validator",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/config-validator/-/config-validator-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/config-validator@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/config-validator/node_modules/ajv",
+      "SPDXID": "SPDXRef-Package--commitlint-config-validator-node-modules-ajv",
+      "versionInfo": "8.18.0",
+      "downloadLocation": "https://registry.npmjs.org/ajv/-/ajv-8.18.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/config-validator/node_modules/ajv@8.18.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/config-validator/node_modules/json-schema-traverse",
+      "SPDXID": "SPDXRef-Package--commitlint-config-validator-node-modules-json-schema-traverse",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/config-validator/node_modules/json-schema-traverse@1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/ensure",
+      "SPDXID": "SPDXRef-Package--commitlint-ensure",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/ensure/-/ensure-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/ensure@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/execute-rule",
+      "SPDXID": "SPDXRef-Package--commitlint-execute-rule",
+      "versionInfo": "20.0.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/execute-rule/-/execute-rule-20.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/execute-rule@20.0.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/format",
+      "SPDXID": "SPDXRef-Package--commitlint-format",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/format/-/format-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/format@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/is-ignored",
+      "SPDXID": "SPDXRef-Package--commitlint-is-ignored",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/is-ignored/-/is-ignored-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/is-ignored@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/lint",
+      "SPDXID": "SPDXRef-Package--commitlint-lint",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/lint/-/lint-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/lint@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/load",
+      "SPDXID": "SPDXRef-Package--commitlint-load",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/load/-/load-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/load@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/message",
+      "SPDXID": "SPDXRef-Package--commitlint-message",
+      "versionInfo": "20.4.3",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/message/-/message-20.4.3.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/message@20.4.3"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/parse",
+      "SPDXID": "SPDXRef-Package--commitlint-parse",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/parse/-/parse-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/parse@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/read",
+      "SPDXID": "SPDXRef-Package--commitlint-read",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/read/-/read-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/read@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/resolve-extends",
+      "SPDXID": "SPDXRef-Package--commitlint-resolve-extends",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/resolve-extends/-/resolve-extends-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/resolve-extends@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/rules",
+      "SPDXID": "SPDXRef-Package--commitlint-rules",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/rules/-/rules-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/rules@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/to-lines",
+      "SPDXID": "SPDXRef-Package--commitlint-to-lines",
+      "versionInfo": "20.0.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/to-lines/-/to-lines-20.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/to-lines@20.0.0"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/top-level",
+      "SPDXID": "SPDXRef-Package--commitlint-top-level",
+      "versionInfo": "20.4.3",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/top-level/-/top-level-20.4.3.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/top-level@20.4.3"
+        }
+      ]
+    },
+    {
+      "name": "@commitlint/types",
+      "SPDXID": "SPDXRef-Package--commitlint-types",
+      "versionInfo": "20.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@commitlint/types/-/types-20.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@commitlint/types@20.5.0"
+        }
+      ]
+    },
+    {
+      "name": "@conventional-changelog/git-client",
+      "SPDXID": "SPDXRef-Package--conventional-changelog-git-client",
+      "versionInfo": "2.6.0",
+      "downloadLocation": "https://registry.npmjs.org/@conventional-changelog/git-client/-/git-client-2.6.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@conventional-changelog/git-client@2.6.0"
+        }
+      ]
+    },
+    {
       "name": "@eslint-community/eslint-utils",
       "SPDXID": "SPDXRef-Package--eslint-community-eslint-utils",
       "versionInfo": "4.9.1",
@@ -232,6 +584,134 @@
       ]
     },
     {
+      "name": "@simple-libs/child-process-utils",
+      "SPDXID": "SPDXRef-Package--simple-libs-child-process-utils",
+      "versionInfo": "1.0.2",
+      "downloadLocation": "https://registry.npmjs.org/@simple-libs/child-process-utils/-/child-process-utils-1.0.2.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@simple-libs/child-process-utils@1.0.2"
+        }
+      ]
+    },
+    {
+      "name": "@simple-libs/stream-utils",
+      "SPDXID": "SPDXRef-Package--simple-libs-stream-utils",
+      "versionInfo": "1.2.0",
+      "downloadLocation": "https://registry.npmjs.org/@simple-libs/stream-utils/-/stream-utils-1.2.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@simple-libs/stream-utils@1.2.0"
+        }
+      ]
+    },
+    {
+      "name": "@turbo/darwin-64",
+      "SPDXID": "SPDXRef-Package--turbo-darwin-64",
+      "versionInfo": "2.8.20",
+      "downloadLocation": "https://registry.npmjs.org/@turbo/darwin-64/-/darwin-64-2.8.20.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@turbo/darwin-64@2.8.20"
+        }
+      ]
+    },
+    {
+      "name": "@turbo/darwin-arm64",
+      "SPDXID": "SPDXRef-Package--turbo-darwin-arm64",
+      "versionInfo": "2.8.20",
+      "downloadLocation": "https://registry.npmjs.org/@turbo/darwin-arm64/-/darwin-arm64-2.8.20.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@turbo/darwin-arm64@2.8.20"
+        }
+      ]
+    },
+    {
+      "name": "@turbo/linux-64",
+      "SPDXID": "SPDXRef-Package--turbo-linux-64",
+      "versionInfo": "2.8.20",
+      "downloadLocation": "https://registry.npmjs.org/@turbo/linux-64/-/linux-64-2.8.20.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@turbo/linux-64@2.8.20"
+        }
+      ]
+    },
+    {
+      "name": "@turbo/linux-arm64",
+      "SPDXID": "SPDXRef-Package--turbo-linux-arm64",
+      "versionInfo": "2.8.20",
+      "downloadLocation": "https://registry.npmjs.org/@turbo/linux-arm64/-/linux-arm64-2.8.20.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@turbo/linux-arm64@2.8.20"
+        }
+      ]
+    },
+    {
+      "name": "@turbo/windows-64",
+      "SPDXID": "SPDXRef-Package--turbo-windows-64",
+      "versionInfo": "2.8.20",
+      "downloadLocation": "https://registry.npmjs.org/@turbo/windows-64/-/windows-64-2.8.20.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@turbo/windows-64@2.8.20"
+        }
+      ]
+    },
+    {
+      "name": "@turbo/windows-arm64",
+      "SPDXID": "SPDXRef-Package--turbo-windows-arm64",
+      "versionInfo": "2.8.20",
+      "downloadLocation": "https://registry.npmjs.org/@turbo/windows-arm64/-/windows-arm64-2.8.20.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@turbo/windows-arm64@2.8.20"
+        }
+      ]
+    },
+    {
       "name": "@types/esrecurse",
       "SPDXID": "SPDXRef-Package--types-esrecurse",
       "versionInfo": "4.3.1",
@@ -276,6 +756,22 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/@types/json-schema@7.0.15"
+        }
+      ]
+    },
+    {
+      "name": "@types/node",
+      "SPDXID": "SPDXRef-Package--types-node",
+      "versionInfo": "25.5.0",
+      "downloadLocation": "https://registry.npmjs.org/@types/node/-/node-25.5.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/@types/node@25.5.0"
         }
       ]
     },
@@ -328,6 +824,70 @@
       ]
     },
     {
+      "name": "ansi-regex",
+      "SPDXID": "SPDXRef-Package-ansi-regex",
+      "versionInfo": "5.0.1",
+      "downloadLocation": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/ansi-regex@5.0.1"
+        }
+      ]
+    },
+    {
+      "name": "ansi-styles",
+      "SPDXID": "SPDXRef-Package-ansi-styles",
+      "versionInfo": "4.3.0",
+      "downloadLocation": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-4.3.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/ansi-styles@4.3.0"
+        }
+      ]
+    },
+    {
+      "name": "argparse",
+      "SPDXID": "SPDXRef-Package-argparse",
+      "versionInfo": "2.0.1",
+      "downloadLocation": "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz",
+      "licenseConcluded": "Python-2.0",
+      "licenseDeclared": "Python-2.0",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/argparse@2.0.1"
+        }
+      ]
+    },
+    {
+      "name": "array-ify",
+      "SPDXID": "SPDXRef-Package-array-ify",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "https://registry.npmjs.org/array-ify/-/array-ify-1.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/array-ify@1.0.0"
+        }
+      ]
+    },
+    {
       "name": "balanced-match",
       "SPDXID": "SPDXRef-Package-balanced-match",
       "versionInfo": "4.0.4",
@@ -356,6 +916,166 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/brace-expansion@5.0.4"
+        }
+      ]
+    },
+    {
+      "name": "callsites",
+      "SPDXID": "SPDXRef-Package-callsites",
+      "versionInfo": "3.1.0",
+      "downloadLocation": "https://registry.npmjs.org/callsites/-/callsites-3.1.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/callsites@3.1.0"
+        }
+      ]
+    },
+    {
+      "name": "cliui",
+      "SPDXID": "SPDXRef-Package-cliui",
+      "versionInfo": "8.0.1",
+      "downloadLocation": "https://registry.npmjs.org/cliui/-/cliui-8.0.1.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/cliui@8.0.1"
+        }
+      ]
+    },
+    {
+      "name": "color-convert",
+      "SPDXID": "SPDXRef-Package-color-convert",
+      "versionInfo": "2.0.1",
+      "downloadLocation": "https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/color-convert@2.0.1"
+        }
+      ]
+    },
+    {
+      "name": "color-name",
+      "SPDXID": "SPDXRef-Package-color-name",
+      "versionInfo": "1.1.4",
+      "downloadLocation": "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/color-name@1.1.4"
+        }
+      ]
+    },
+    {
+      "name": "compare-func",
+      "SPDXID": "SPDXRef-Package-compare-func",
+      "versionInfo": "2.0.0",
+      "downloadLocation": "https://registry.npmjs.org/compare-func/-/compare-func-2.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/compare-func@2.0.0"
+        }
+      ]
+    },
+    {
+      "name": "conventional-changelog-angular",
+      "SPDXID": "SPDXRef-Package-conventional-changelog-angular",
+      "versionInfo": "8.3.0",
+      "downloadLocation": "https://registry.npmjs.org/conventional-changelog-angular/-/conventional-changelog-angular-8.3.0.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/conventional-changelog-angular@8.3.0"
+        }
+      ]
+    },
+    {
+      "name": "conventional-changelog-conventionalcommits",
+      "SPDXID": "SPDXRef-Package-conventional-changelog-conventionalcommits",
+      "versionInfo": "9.3.0",
+      "downloadLocation": "https://registry.npmjs.org/conventional-changelog-conventionalcommits/-/conventional-changelog-conventionalcommits-9.3.0.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/conventional-changelog-conventionalcommits@9.3.0"
+        }
+      ]
+    },
+    {
+      "name": "conventional-commits-parser",
+      "SPDXID": "SPDXRef-Package-conventional-commits-parser",
+      "versionInfo": "6.3.0",
+      "downloadLocation": "https://registry.npmjs.org/conventional-commits-parser/-/conventional-commits-parser-6.3.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/conventional-commits-parser@6.3.0"
+        }
+      ]
+    },
+    {
+      "name": "cosmiconfig",
+      "SPDXID": "SPDXRef-Package-cosmiconfig",
+      "versionInfo": "9.0.1",
+      "downloadLocation": "https://registry.npmjs.org/cosmiconfig/-/cosmiconfig-9.0.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/cosmiconfig@9.0.1"
+        }
+      ]
+    },
+    {
+      "name": "cosmiconfig-typescript-loader",
+      "SPDXID": "SPDXRef-Package-cosmiconfig-typescript-loader",
+      "versionInfo": "6.2.0",
+      "downloadLocation": "https://registry.npmjs.org/cosmiconfig-typescript-loader/-/cosmiconfig-typescript-loader-6.2.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/cosmiconfig-typescript-loader@6.2.0"
         }
       ]
     },
@@ -404,6 +1124,86 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/deep-is@0.1.4"
+        }
+      ]
+    },
+    {
+      "name": "dot-prop",
+      "SPDXID": "SPDXRef-Package-dot-prop",
+      "versionInfo": "5.3.0",
+      "downloadLocation": "https://registry.npmjs.org/dot-prop/-/dot-prop-5.3.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/dot-prop@5.3.0"
+        }
+      ]
+    },
+    {
+      "name": "emoji-regex",
+      "SPDXID": "SPDXRef-Package-emoji-regex",
+      "versionInfo": "8.0.0",
+      "downloadLocation": "https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/emoji-regex@8.0.0"
+        }
+      ]
+    },
+    {
+      "name": "env-paths",
+      "SPDXID": "SPDXRef-Package-env-paths",
+      "versionInfo": "2.2.1",
+      "downloadLocation": "https://registry.npmjs.org/env-paths/-/env-paths-2.2.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/env-paths@2.2.1"
+        }
+      ]
+    },
+    {
+      "name": "error-ex",
+      "SPDXID": "SPDXRef-Package-error-ex",
+      "versionInfo": "1.3.4",
+      "downloadLocation": "https://registry.npmjs.org/error-ex/-/error-ex-1.3.4.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/error-ex@1.3.4"
+        }
+      ]
+    },
+    {
+      "name": "escalade",
+      "SPDXID": "SPDXRef-Package-escalade",
+      "versionInfo": "3.2.0",
+      "downloadLocation": "https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/escalade@3.2.0"
         }
       ]
     },
@@ -552,6 +1352,22 @@
       ]
     },
     {
+      "name": "fast-check",
+      "SPDXID": "SPDXRef-Package-fast-check",
+      "versionInfo": "4.6.0",
+      "downloadLocation": "https://registry.npmjs.org/fast-check/-/fast-check-4.6.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/fast-check@4.6.0"
+        }
+      ]
+    },
+    {
       "name": "fast-deep-equal",
       "SPDXID": "SPDXRef-Package-fast-deep-equal",
       "versionInfo": "3.1.3",
@@ -596,6 +1412,22 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/fast-levenshtein@2.0.6"
+        }
+      ]
+    },
+    {
+      "name": "fast-uri",
+      "SPDXID": "SPDXRef-Package-fast-uri",
+      "versionInfo": "3.1.0",
+      "downloadLocation": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.0.tgz",
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "BSD-3-Clause",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/fast-uri@3.1.0"
         }
       ]
     },
@@ -664,6 +1496,38 @@
       ]
     },
     {
+      "name": "get-caller-file",
+      "SPDXID": "SPDXRef-Package-get-caller-file",
+      "versionInfo": "2.0.5",
+      "downloadLocation": "https://registry.npmjs.org/get-caller-file/-/get-caller-file-2.0.5.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/get-caller-file@2.0.5"
+        }
+      ]
+    },
+    {
+      "name": "git-raw-commits",
+      "SPDXID": "SPDXRef-Package-git-raw-commits",
+      "versionInfo": "5.0.1",
+      "downloadLocation": "https://registry.npmjs.org/git-raw-commits/-/git-raw-commits-5.0.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/git-raw-commits@5.0.1"
+        }
+      ]
+    },
+    {
       "name": "glob-parent",
       "SPDXID": "SPDXRef-Package-glob-parent",
       "versionInfo": "6.0.2",
@@ -676,6 +1540,38 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/glob-parent@6.0.2"
+        }
+      ]
+    },
+    {
+      "name": "global-directory",
+      "SPDXID": "SPDXRef-Package-global-directory",
+      "versionInfo": "4.0.1",
+      "downloadLocation": "https://registry.npmjs.org/global-directory/-/global-directory-4.0.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/global-directory@4.0.1"
+        }
+      ]
+    },
+    {
+      "name": "husky",
+      "SPDXID": "SPDXRef-Package-husky",
+      "versionInfo": "9.1.7",
+      "downloadLocation": "https://registry.npmjs.org/husky/-/husky-9.1.7.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/husky@9.1.7"
         }
       ]
     },
@@ -696,6 +1592,54 @@
       ]
     },
     {
+      "name": "import-fresh",
+      "SPDXID": "SPDXRef-Package-import-fresh",
+      "versionInfo": "3.3.1",
+      "downloadLocation": "https://registry.npmjs.org/import-fresh/-/import-fresh-3.3.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/import-fresh@3.3.1"
+        }
+      ]
+    },
+    {
+      "name": "import-fresh/node_modules/resolve-from",
+      "SPDXID": "SPDXRef-Package-import-fresh-node-modules-resolve-from",
+      "versionInfo": "4.0.0",
+      "downloadLocation": "https://registry.npmjs.org/resolve-from/-/resolve-from-4.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/import-fresh/node_modules/resolve-from@4.0.0"
+        }
+      ]
+    },
+    {
+      "name": "import-meta-resolve",
+      "SPDXID": "SPDXRef-Package-import-meta-resolve",
+      "versionInfo": "4.2.0",
+      "downloadLocation": "https://registry.npmjs.org/import-meta-resolve/-/import-meta-resolve-4.2.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/import-meta-resolve@4.2.0"
+        }
+      ]
+    },
+    {
       "name": "imurmurhash",
       "SPDXID": "SPDXRef-Package-imurmurhash",
       "versionInfo": "0.1.4",
@@ -708,6 +1652,38 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/imurmurhash@0.1.4"
+        }
+      ]
+    },
+    {
+      "name": "ini",
+      "SPDXID": "SPDXRef-Package-ini",
+      "versionInfo": "4.1.1",
+      "downloadLocation": "https://registry.npmjs.org/ini/-/ini-4.1.1.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/ini@4.1.1"
+        }
+      ]
+    },
+    {
+      "name": "is-arrayish",
+      "SPDXID": "SPDXRef-Package-is-arrayish",
+      "versionInfo": "0.2.1",
+      "downloadLocation": "https://registry.npmjs.org/is-arrayish/-/is-arrayish-0.2.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/is-arrayish@0.2.1"
         }
       ]
     },
@@ -728,6 +1704,22 @@
       ]
     },
     {
+      "name": "is-fullwidth-code-point",
+      "SPDXID": "SPDXRef-Package-is-fullwidth-code-point",
+      "versionInfo": "3.0.0",
+      "downloadLocation": "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/is-fullwidth-code-point@3.0.0"
+        }
+      ]
+    },
+    {
       "name": "is-glob",
       "SPDXID": "SPDXRef-Package-is-glob",
       "versionInfo": "4.0.3",
@@ -740,6 +1732,38 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/is-glob@4.0.3"
+        }
+      ]
+    },
+    {
+      "name": "is-obj",
+      "SPDXID": "SPDXRef-Package-is-obj",
+      "versionInfo": "2.0.0",
+      "downloadLocation": "https://registry.npmjs.org/is-obj/-/is-obj-2.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/is-obj@2.0.0"
+        }
+      ]
+    },
+    {
+      "name": "is-plain-obj",
+      "SPDXID": "SPDXRef-Package-is-plain-obj",
+      "versionInfo": "4.1.0",
+      "downloadLocation": "https://registry.npmjs.org/is-plain-obj/-/is-plain-obj-4.1.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/is-plain-obj@4.1.0"
         }
       ]
     },
@@ -760,6 +1784,54 @@
       ]
     },
     {
+      "name": "jiti",
+      "SPDXID": "SPDXRef-Package-jiti",
+      "versionInfo": "2.6.1",
+      "downloadLocation": "https://registry.npmjs.org/jiti/-/jiti-2.6.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/jiti@2.6.1"
+        }
+      ]
+    },
+    {
+      "name": "js-tokens",
+      "SPDXID": "SPDXRef-Package-js-tokens",
+      "versionInfo": "4.0.0",
+      "downloadLocation": "https://registry.npmjs.org/js-tokens/-/js-tokens-4.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/js-tokens@4.0.0"
+        }
+      ]
+    },
+    {
+      "name": "js-yaml",
+      "SPDXID": "SPDXRef-Package-js-yaml",
+      "versionInfo": "4.1.1",
+      "downloadLocation": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/js-yaml@4.1.1"
+        }
+      ]
+    },
+    {
       "name": "json-buffer",
       "SPDXID": "SPDXRef-Package-json-buffer",
       "versionInfo": "3.0.1",
@@ -772,6 +1844,22 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/json-buffer@3.0.1"
+        }
+      ]
+    },
+    {
+      "name": "json-parse-even-better-errors",
+      "SPDXID": "SPDXRef-Package-json-parse-even-better-errors",
+      "versionInfo": "2.3.1",
+      "downloadLocation": "https://registry.npmjs.org/json-parse-even-better-errors/-/json-parse-even-better-errors-2.3.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/json-parse-even-better-errors@2.3.1"
         }
       ]
     },
@@ -840,6 +1928,22 @@
       ]
     },
     {
+      "name": "lines-and-columns",
+      "SPDXID": "SPDXRef-Package-lines-and-columns",
+      "versionInfo": "1.2.4",
+      "downloadLocation": "https://registry.npmjs.org/lines-and-columns/-/lines-and-columns-1.2.4.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lines-and-columns@1.2.4"
+        }
+      ]
+    },
+    {
       "name": "locate-path",
       "SPDXID": "SPDXRef-Package-locate-path",
       "versionInfo": "6.0.0",
@@ -856,6 +1960,118 @@
       ]
     },
     {
+      "name": "lodash.camelcase",
+      "SPDXID": "SPDXRef-Package-lodash.camelcase",
+      "versionInfo": "4.3.0",
+      "downloadLocation": "https://registry.npmjs.org/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash.camelcase@4.3.0"
+        }
+      ]
+    },
+    {
+      "name": "lodash.kebabcase",
+      "SPDXID": "SPDXRef-Package-lodash.kebabcase",
+      "versionInfo": "4.1.1",
+      "downloadLocation": "https://registry.npmjs.org/lodash.kebabcase/-/lodash.kebabcase-4.1.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash.kebabcase@4.1.1"
+        }
+      ]
+    },
+    {
+      "name": "lodash.mergewith",
+      "SPDXID": "SPDXRef-Package-lodash.mergewith",
+      "versionInfo": "4.6.2",
+      "downloadLocation": "https://registry.npmjs.org/lodash.mergewith/-/lodash.mergewith-4.6.2.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash.mergewith@4.6.2"
+        }
+      ]
+    },
+    {
+      "name": "lodash.snakecase",
+      "SPDXID": "SPDXRef-Package-lodash.snakecase",
+      "versionInfo": "4.1.1",
+      "downloadLocation": "https://registry.npmjs.org/lodash.snakecase/-/lodash.snakecase-4.1.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash.snakecase@4.1.1"
+        }
+      ]
+    },
+    {
+      "name": "lodash.startcase",
+      "SPDXID": "SPDXRef-Package-lodash.startcase",
+      "versionInfo": "4.4.0",
+      "downloadLocation": "https://registry.npmjs.org/lodash.startcase/-/lodash.startcase-4.4.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash.startcase@4.4.0"
+        }
+      ]
+    },
+    {
+      "name": "lodash.upperfirst",
+      "SPDXID": "SPDXRef-Package-lodash.upperfirst",
+      "versionInfo": "4.3.1",
+      "downloadLocation": "https://registry.npmjs.org/lodash.upperfirst/-/lodash.upperfirst-4.3.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/lodash.upperfirst@4.3.1"
+        }
+      ]
+    },
+    {
+      "name": "meow",
+      "SPDXID": "SPDXRef-Package-meow",
+      "versionInfo": "13.2.0",
+      "downloadLocation": "https://registry.npmjs.org/meow/-/meow-13.2.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/meow@13.2.0"
+        }
+      ]
+    },
+    {
       "name": "minimatch",
       "SPDXID": "SPDXRef-Package-minimatch",
       "versionInfo": "10.2.4",
@@ -868,6 +2084,22 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/minimatch@10.2.4"
+        }
+      ]
+    },
+    {
+      "name": "minimist",
+      "SPDXID": "SPDXRef-Package-minimist",
+      "versionInfo": "1.2.8",
+      "downloadLocation": "https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/minimist@1.2.8"
         }
       ]
     },
@@ -952,6 +2184,38 @@
       ]
     },
     {
+      "name": "parent-module",
+      "SPDXID": "SPDXRef-Package-parent-module",
+      "versionInfo": "1.0.1",
+      "downloadLocation": "https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/parent-module@1.0.1"
+        }
+      ]
+    },
+    {
+      "name": "parse-json",
+      "SPDXID": "SPDXRef-Package-parse-json",
+      "versionInfo": "5.2.0",
+      "downloadLocation": "https://registry.npmjs.org/parse-json/-/parse-json-5.2.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/parse-json@5.2.0"
+        }
+      ]
+    },
+    {
       "name": "path-exists",
       "SPDXID": "SPDXRef-Package-path-exists",
       "versionInfo": "4.0.0",
@@ -980,6 +2244,22 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/path-key@3.1.1"
+        }
+      ]
+    },
+    {
+      "name": "picocolors",
+      "SPDXID": "SPDXRef-Package-picocolors",
+      "versionInfo": "1.1.1",
+      "downloadLocation": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/picocolors@1.1.1"
         }
       ]
     },
@@ -1016,6 +2296,86 @@
       ]
     },
     {
+      "name": "pure-rand",
+      "SPDXID": "SPDXRef-Package-pure-rand",
+      "versionInfo": "8.3.0",
+      "downloadLocation": "https://registry.npmjs.org/pure-rand/-/pure-rand-8.3.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/pure-rand@8.3.0"
+        }
+      ]
+    },
+    {
+      "name": "require-directory",
+      "SPDXID": "SPDXRef-Package-require-directory",
+      "versionInfo": "2.1.1",
+      "downloadLocation": "https://registry.npmjs.org/require-directory/-/require-directory-2.1.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/require-directory@2.1.1"
+        }
+      ]
+    },
+    {
+      "name": "require-from-string",
+      "SPDXID": "SPDXRef-Package-require-from-string",
+      "versionInfo": "2.0.2",
+      "downloadLocation": "https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/require-from-string@2.0.2"
+        }
+      ]
+    },
+    {
+      "name": "resolve-from",
+      "SPDXID": "SPDXRef-Package-resolve-from",
+      "versionInfo": "5.0.0",
+      "downloadLocation": "https://registry.npmjs.org/resolve-from/-/resolve-from-5.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/resolve-from@5.0.0"
+        }
+      ]
+    },
+    {
+      "name": "semver",
+      "SPDXID": "SPDXRef-Package-semver",
+      "versionInfo": "7.7.4",
+      "downloadLocation": "https://registry.npmjs.org/semver/-/semver-7.7.4.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/semver@7.7.4"
+        }
+      ]
+    },
+    {
       "name": "shebang-command",
       "SPDXID": "SPDXRef-Package-shebang-command",
       "versionInfo": "2.0.0",
@@ -1048,6 +2408,70 @@
       ]
     },
     {
+      "name": "string-width",
+      "SPDXID": "SPDXRef-Package-string-width",
+      "versionInfo": "4.2.3",
+      "downloadLocation": "https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/string-width@4.2.3"
+        }
+      ]
+    },
+    {
+      "name": "strip-ansi",
+      "SPDXID": "SPDXRef-Package-strip-ansi",
+      "versionInfo": "6.0.1",
+      "downloadLocation": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/strip-ansi@6.0.1"
+        }
+      ]
+    },
+    {
+      "name": "tinyexec",
+      "SPDXID": "SPDXRef-Package-tinyexec",
+      "versionInfo": "1.0.4",
+      "downloadLocation": "https://registry.npmjs.org/tinyexec/-/tinyexec-1.0.4.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/tinyexec@1.0.4"
+        }
+      ]
+    },
+    {
+      "name": "turbo",
+      "SPDXID": "SPDXRef-Package-turbo",
+      "versionInfo": "2.8.20",
+      "downloadLocation": "https://registry.npmjs.org/turbo/-/turbo-2.8.20.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/turbo@2.8.20"
+        }
+      ]
+    },
+    {
       "name": "type-check",
       "SPDXID": "SPDXRef-Package-type-check",
       "versionInfo": "0.4.0",
@@ -1060,6 +2484,38 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/type-check@0.4.0"
+        }
+      ]
+    },
+    {
+      "name": "typescript",
+      "SPDXID": "SPDXRef-Package-typescript",
+      "versionInfo": "5.9.3",
+      "downloadLocation": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/typescript@5.9.3"
+        }
+      ]
+    },
+    {
+      "name": "undici-types",
+      "SPDXID": "SPDXRef-Package-undici-types",
+      "versionInfo": "7.18.2",
+      "downloadLocation": "https://registry.npmjs.org/undici-types/-/undici-types-7.18.2.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/undici-types@7.18.2"
         }
       ]
     },
@@ -1108,6 +2564,70 @@
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
           "referenceLocator": "pkg:npm/word-wrap@1.2.5"
+        }
+      ]
+    },
+    {
+      "name": "wrap-ansi",
+      "SPDXID": "SPDXRef-Package-wrap-ansi",
+      "versionInfo": "7.0.0",
+      "downloadLocation": "https://registry.npmjs.org/wrap-ansi/-/wrap-ansi-7.0.0.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/wrap-ansi@7.0.0"
+        }
+      ]
+    },
+    {
+      "name": "y18n",
+      "SPDXID": "SPDXRef-Package-y18n",
+      "versionInfo": "5.0.8",
+      "downloadLocation": "https://registry.npmjs.org/y18n/-/y18n-5.0.8.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/y18n@5.0.8"
+        }
+      ]
+    },
+    {
+      "name": "yargs",
+      "SPDXID": "SPDXRef-Package-yargs",
+      "versionInfo": "17.7.2",
+      "downloadLocation": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/yargs@17.7.2"
+        }
+      ]
+    },
+    {
+      "name": "yargs-parser",
+      "SPDXID": "SPDXRef-Package-yargs-parser",
+      "versionInfo": "21.1.1",
+      "downloadLocation": "https://registry.npmjs.org/yargs-parser/-/yargs-parser-21.1.1.tgz",
+      "licenseConcluded": "ISC",
+      "licenseDeclared": "ISC",
+      "primaryPackagePurpose": "LIBRARY",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/yargs-parser@21.1.1"
         }
       ]
     },

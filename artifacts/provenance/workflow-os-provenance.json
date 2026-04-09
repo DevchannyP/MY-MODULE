@@ -8,20 +8,20 @@
         "stage": "D"
       },
       "internalParameters": {
-        "lockfile_sha256": "253fa53719a6d49329796121e3de124cc1559a3a0c0f5362ada819b4c3421c2f",
-        "package_json_sha256": "cf2f139760aae6ccde990b6619f157df9f1f05084643b0f81af91e49a60137a1",
+        "lockfile_sha256": "feb569fe2afa2b34670235f562a66735a2174b0bc40d5748c1351193aed075b1",
+        "package_json_sha256": "8e6ba4f7f73079a546c91d1547cc84726d3006a125f1eedb96b2ded25dbc3106",
         "requirements_sha256": "9664a02d9a9e1273b7542ecc119c72826503e4c6219c96af24b727ac89d7f970"
       },
       "resolvedDependencies": [
         {
           "digest": {
-            "sha256": "253fa53719a6d49329796121e3de124cc1559a3a0c0f5362ada819b4c3421c2f"
+            "sha256": "feb569fe2afa2b34670235f562a66735a2174b0bc40d5748c1351193aed075b1"
           },
           "uri": "package-lock.json"
         },
         {
           "digest": {
-            "sha256": "cf2f139760aae6ccde990b6619f157df9f1f05084643b0f81af91e49a60137a1"
+            "sha256": "8e6ba4f7f73079a546c91d1547cc84726d3006a125f1eedb96b2ded25dbc3106"
           },
           "uri": "package.json"
         },
@@ -62,7 +62,7 @@
   "subject": [
     {
       "digest": {
-        "sha256": "f2a71cd77c312bde2da4b23803ce6caceec8ba3cf142160e0a455de5435d0a6b"
+        "sha256": "06d6109a8d60b8be79830bf770668d6de7ce094d8d58a0174ec6071a4789ba58"
       },
       "name": "artifacts/sbom/workflow-os.spdx.json"
     }

@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CLI 자동 전송기</title>
+<style>
+:root {
+  --bg:#f7f3ea;--card:#fffdf8;--line:#dccfba;--text:#1f2a37;--muted:#61707f;
+  --accent:#0f766e;--red:#dc2626;--green:#0f766e;--amber:#b45309;
+  --font:"Noto Sans KR","Malgun Gothic",sans-serif;
+  --mono:"D2Coding","Consolas",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:24px}
+
+h1{font-size:18px;font-weight:700;margin-bottom:4px}
+.sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+
+.section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+.section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+
+/* 감지 영역 */
+.detect-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pts-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;
+  border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:600}
+.pts-ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.pts-none{background:#fef9c3;color:#854d0e;border:1px solid #fde68a}
+.pts-err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot-green{background:#22c55e;animation:pulse 2s infinite}
+.dot-gray{background:#94a3b8}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* 세션 목록 */
+.session-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.session-toolbar{display:grid;gap:10px;margin-top:14px}
+.session-search{display:grid;gap:6px}
+.session-search span{font-size:11px;color:var(--muted);font-weight:700}
+.session-search input{
+  width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:10px;
+  font-family:var(--font);font-size:13px;background:var(--card);color:var(--text);
+}
+.session-search input:focus{outline:none;border-color:var(--accent)}
+.session-quick{display:grid;gap:10px}
+.session-filters{display:flex;gap:8px;flex-wrap:wrap}
+.session-filter{
+  border:1px solid var(--line);background:var(--card);color:var(--muted);
+  padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;
+}
+.session-filter.active{background:#e6fffa;border-color:var(--accent);color:var(--accent)}
+.session-actions{display:flex;gap:8px;flex-wrap:wrap}
+.session-summary{
+  margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+  background:#faf5eb;font-size:12px;color:var(--muted)
+}
+.session-help{margin-top:10px;font-size:11px;color:var(--muted)}
+.session-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border:2px solid var(--line);border-radius:10px;
+  background:var(--card);cursor:pointer;transition:border-color .15s,background .15s;
+}
+.session-item:hover{border-color:var(--accent);background:#f0fdf9}
+.session-item.selected{border-color:var(--accent);background:#f0fdf9}
+.session-item.focused{box-shadow:0 0 0 3px rgba(15,118,110,.12)}
+.session-info{display:flex;flex-direction:column;gap:2px}
+.session-pts{font-family:var(--mono);font-size:13px;font-weight:700}
+.session-procs{font-size:11px;color:var(--muted)}
+.session-cmd{font-size:11px;color:#7c6750;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.session-right{display:flex;gap:6px;align-items:center}
+.badge{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:700}
+.badge-cli{background:#dcfce7;color:#166534}
+.badge-sel{background:#dbeafe;color:#1e40af}
+.badge-tag{background:#f3ead8;color:#7c6750}
+.badge-recent{background:#fef3c7;color:#92400e}
+
+/* 프롬프트 */
+textarea{
+  width:100%;padding:12px;border:2px solid var(--line);border-radius:10px;
+  font-family:var(--mono);font-size:13px;line-height:1.6;resize:vertical;
+  background:var(--card);color:var(--text);min-height:120px;
+}
+select{
+  width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:10px;
+  font-family:var(--font);font-size:13px;background:var(--card);color:var(--text);
+}
+textarea:focus{outline:none;border-color:var(--accent)}
+select:focus{outline:none;border-color:var(--accent)}
+
+/* 버튼 */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 20px;border-radius:10px;border:none;cursor:pointer;
+  font-family:var(--font);font-size:14px;font-weight:700;transition:all .15s;
+}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-send{background:var(--accent);color:#fff;font-size:16px;padding:14px 32px;width:100%}
+.btn-send:hover:not(:disabled){background:#0d6860}
+.btn-enter{background:#f0fdf9;color:var(--accent);border:2px solid var(--accent)}
+.btn-enter:hover:not(:disabled){background:#dcfce7}
+.btn-sm{background:var(--card);color:var(--text);border:1px solid var(--line);font-size:12px;padding:5px 12px}
+.btn-sm:hover{background:#f3ead8}
+.btn-danger{background:#fef2f2;color:var(--red);border:1px solid #fecaca}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* 결과 */
+.result{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;margin-top:12px;display:none}
+.result-ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.result-fail{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+
+/* 스케줄러 */
+.sched-status{display:flex;align-items:center;gap:8px;font-size:13px;padding:8px 0}
+.cfg-row{display:flex;gap:12px;flex-wrap:wrap}
+.cfg-field{display:flex;flex-direction:column;gap:4px;min-width:130px}
+.cfg-field label{font-size:11px;color:var(--muted)}
+.cfg-field select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--card)}
+
+/* 로그 */
+.log-box{background:#1e1e2e;border-radius:10px;padding:12px;height:180px;overflow-y:auto;font-family:var(--mono);font-size:11px}
+.log-line{color:#cdd6f4;padding:1px 0;white-space:pre-wrap;word-break:break-all}
+.log-ok{color:#a6e3a1}
+.log-fail{color:#f38ba8}
+.log-sys{color:#89dceb}
+.log-empty{color:#6c7086;font-style:italic}
+
+/* 상태 헤더 */
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.top-bar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.server-dot{font-size:12px}
+.server-ok{color:var(--green)}
+.server-err{color:var(--muted)}
+
+/* 멀티 워커 */
+.worker-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.worker-tab{padding:5px 14px;border-radius:8px;border:1px solid var(--line);font-size:12px;font-weight:600;cursor:pointer;background:var(--card)}
+.worker-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.worker-panel{display:none}
+.worker-panel.active{display:block}
+
+@media (min-width: 900px){
+  .session-quick{grid-template-columns:minmax(0,1fr) auto}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <h1>CLI 자동 전송기</h1>
+    <div class="sub">현재 열린 CLI 창에 프롬프트를 전송합니다</div>
+  </div>
+  <div class="top-bar-actions">
+    <a class="btn btn-sm" href="/#plan-studio">홈으로 이동</a>
+    <span id="srv" class="server-dot server-err">● 서버 확인 중...</span>
+  </div>
+</div>
+
+<!-- ① 대상 CLI 창 -->
+<div class="section">
+  <div class="section-title">대상 터미널 선택</div>
+  <div class="detect-row">
+    <span id="sel-badge" class="pts-badge pts-none">선택 없음</span>
+    <button class="btn btn-sm" id="btn-refresh">새로 고침</button>
+  </div>
+  <div class="session-toolbar">
+    <label class="session-search">
+      <span>세션 검색</span>
+      <input id="session-query" type="text" placeholder="PTS, 프로세스, 명령어 일부 검색 (/)" autocomplete="off">
+    </label>
+    <div class="session-quick">
+      <div class="session-filters" id="session-filters" role="toolbar" aria-label="세션 필터"></div>
+      <div class="session-actions">
+        <button class="btn btn-sm" id="btn-next-match">다음 추천 배정</button>
+        <button class="btn btn-sm" id="btn-clear-target">현재 워커 비우기</button>
+      </div>
+    </div>
+  </div>
+  <div class="session-summary" id="session-summary">세션 정보를 읽는 중...</div>
+  <div class="session-help">`/` 검색 · ↑↓ 이동 · Enter 선택 · `1~6` 워커 전환 · `R` 새로 고침</div>
+  <div class="session-list" id="session-list" tabindex="0" role="listbox" aria-label="대상 터미널 세션 목록">
+    <div style="font-size:12px;color:var(--muted)">로딩 중...</div>
+  </div>
+</div>
+
+<!-- ② 워커 탭 -->
+<div class="section">
+  <div class="section-title">워커 설정</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div class="worker-tabs" id="worker-tabs" role="tablist" aria-label="워커 선택"></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm" id="btn-add-worker">+ 워커 추가</button>
+      <button class="btn btn-sm" id="btn-rm-worker">− 워커 제거</button>
+    </div>
+  </div>
+  <div id="worker-panels"></div>
+</div>
+
+<!-- ③ 즉시 전송 -->
+<div class="section">
+  <div class="section-title">즉시 전송</div>
+  <div class="btn-row">
+    <button class="btn btn-sm" id="btn-home-prompt">홈 실행 프롬프트 새로 읽기</button>
+    <button class="btn btn-send" id="btn-send-all">▶ 설정된 프롬프트 전송</button>
+    <button class="btn btn-enter" id="btn-enter-all">↵ Enter만 전송</button>
+  </div>
+  <div id="send-result" class="result"></div>
+</div>
+
+<!-- ④ 자동 스케줄러 -->
+<div class="section">
+  <div class="section-title">자동 스케줄러</div>
+  <div class="sched-status">
+    <span class="dot" id="sched-dot" style="background:#94a3b8"></span>
+    <span id="sched-label">중지됨</span>
+    <span id="sched-detail" style="font-size:11px;color:var(--muted);margin-left:8px"></span>
+  </div>
+  <div class="cfg-row" style="margin:12px 0">
+    <div class="cfg-field">
+      <label>프롬프트 전송 주기</label>
+      <select id="cfg-cycle">
+        <option value="5">5분</option><option value="10">10분</option>
+        <option value="20">20분</option><option value="30" selected>30분</option>
+        <option value="60">60분</option>
+      </select>
+    </div>
+    <div class="cfg-field">
+      <label>Enter 간격</label>
+      <select id="cfg-interval">
+        <option value="5">5초</option><option value="10" selected>10초</option>
+        <option value="20">20초</option><option value="30">30초</option>
+      </select>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-send" style="width:auto;font-size:14px;padding:10px 24px" id="btn-sched-start">▶ 스케줄러 시작</button>
+    <button class="btn btn-danger" id="btn-sched-stop">■ 중지</button>
+  </div>
+</div>
+
+<!-- ⑤ 로그 -->
+<div class="section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span class="section-title" style="margin:0">로그</span>
+    <button class="btn btn-sm" id="btn-clear-log">지우기</button>
+  </div>
+  <div class="log-box" id="log-box">
+    <div class="log-line log-empty">로그가 여기에 표시됩니다.</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── 상태 ──────────────────────────────────────────────────── //
+let sessions   = [];          // [{pts, label, processes, isClaude}]
+let workers    = [{pts:'', prompt:'', useHomeOperatorPrompt:true}];
+let activeTab  = 0;
+let serverOk   = false;
+let schedOn    = false;
+let seenKeys   = new Set();
+let homeOperatorPrompt = '';
+let sessionQuery = '';
+let sessionFilter = 'recommended';
+let focusedSessionPts = '';
+let recentSessionPts = [];
+const SUBMIT_ENTER = '\r';
+const STORAGE_KEY = 'vscode-cli-automation:v3';
+const SESSION_FILTERS = [
+  {id:'recommended', label:'추천'},
+  {id:'cli', label:'CLI'},
+  {id:'available', label:'미배정'},
+  {id:'assigned', label:'배정됨'},
+  {id:'all', label:'전체'},
+];
+const KNOWN_SHELLS = ['bash','zsh','fish','sh','pwsh','powershell','cmd','nu'];
+const KNOWN_AI_CLI = ['codex','claude','aider','gemini','amp','opencode'];
+const KNOWN_RUNNERS = ['npm','node','pnpm','yarn','python','python3','uv','bun'];
+
+// ── 초기화 ────────────────────────────────────────────────── //
+window.addEventListener('DOMContentLoaded', () => {
+  loadPersistedState();
+  renderTabs();
+  renderPanels();
+  renderSessionFilters();
+  syncSessionControls();
+  load();
+  loadHomeOperatorPrompt();
+  bindEvents();
+  setInterval(poll, 2000);
+  setInterval(localTick, 1000);
+  setInterval(() => { loadHomeOperatorPrompt(true); }, 10000);
+});
+
+function bindEvents() {
+  $('btn-refresh').onclick     = load;
+  $('btn-add-worker').onclick  = addWorker;
+  $('btn-rm-worker').onclick   = removeWorker;
+  $('btn-home-prompt').onclick = () => loadHomeOperatorPrompt();
+  $('btn-send-all').onclick    = sendAll;
+  $('btn-enter-all').onclick   = enterAll;
+  $('btn-sched-start').onclick = schedStart;
+  $('btn-sched-stop').onclick  = schedStop;
+  $('btn-clear-log').onclick   = clearLog;
+  $('btn-clear-target').onclick = clearActiveTarget;
+  $('btn-next-match').onclick   = assignNextRecommended;
+  $('session-query').oninput    = (e) => {
+    sessionQuery = e.target.value || '';
+    persistState();
+    renderSessions();
+  };
+  $('session-list').addEventListener('keydown', onSessionListKeydown);
+  $('worker-tabs').addEventListener('keydown', onWorkerTabsKeydown);
+  document.addEventListener('keydown', onGlobalKeydown);
+}
+
+function loadPersistedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved || typeof saved !== 'object') return;
+    if (Array.isArray(saved.workers) && saved.workers.length) {
+      workers = saved.workers.slice(0, 6).map((worker) => ({
+        pts: typeof worker?.pts === 'string' ? worker.pts : '',
+        prompt: typeof worker?.prompt === 'string' ? worker.prompt : '',
+        useHomeOperatorPrompt: worker?.useHomeOperatorPrompt !== false,
+      }));
+    }
+    if (typeof saved.activeTab === 'number') {
+      activeTab = Math.max(0, Math.min(saved.activeTab, workers.length - 1));
+    }
+    if (typeof saved.sessionQuery === 'string') sessionQuery = saved.sessionQuery;
+    if (SESSION_FILTERS.some((filter) => filter.id === saved.sessionFilter)) {
+      sessionFilter = saved.sessionFilter;
+    }
+    if (Array.isArray(saved.recentSessionPts)) {
+      recentSessionPts = saved.recentSessionPts.filter((pts) => typeof pts === 'string').slice(0, 8);
+    }
+  } catch {}
+}
+
+function persistState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      workers,
+      activeTab,
+      sessionQuery,
+      sessionFilter,
+      recentSessionPts,
+    }));
+  } catch {}
+}
+
+function syncSessionControls() {
+  $('session-query').value = sessionQuery;
+}
+
+function classifySession(session) {
+  const processes = Array.isArray(session.processes) ? session.processes : [];
+  const processNames = processes.map((process) => String(process.comm || '').toLowerCase());
+  const cmdlines = processes.map((process) => String(process.cmdline || '').toLowerCase());
+  const shellType = KNOWN_SHELLS.find((name) => processNames.includes(name)) || '';
+  const aiCli = KNOWN_AI_CLI.find((name) =>
+    processNames.some((process) => process.includes(name))
+    || cmdlines.some((cmdline) => cmdline.includes(name))
+  ) || '';
+  const runnerType = KNOWN_RUNNERS.find((name) => processNames.includes(name)) || '';
+  const commandPreview = trimText(
+    processes.find((process) => process.cmdline && process.cmdline !== process.comm)?.cmdline || '',
+    96,
+  );
+  const isCliCandidate = Boolean(aiCli || (runnerType && shellType));
+  return {
+    shellType,
+    aiCli,
+    runnerType,
+    commandPreview,
+    isCliCandidate,
+    searchText: [
+      session.pts,
+      shellType,
+      aiCli,
+      runnerType,
+      ...processNames,
+      ...cmdlines,
+    ].join(' ').toLowerCase(),
+  };
+}
+
+function assignedWorkersForPts(pts) {
+  return workers.map((worker, index) => worker.pts === pts ? index + 1 : null).filter(Boolean);
+}
+
+function sessionPriority(session) {
+  const assignedTo = assignedWorkersForPts(session.pts);
+  const activePts = workers[activeTab]?.pts || '';
+  const recentIndex = recentSessionPts.indexOf(session.pts);
+  const ptsNum = Number(String(session.pts || '').split('/').pop()) || 0;
+  return [
+    activePts === session.pts ? 0 : 1,
+    assignedTo.length ? 0 : 1,
+    recentIndex >= 0 ? recentIndex : 999,
+    session.isCliCandidate ? 0 : 1,
+    session.shellType ? 0 : 1,
+    ptsNum,
+  ];
+}
+
+function compareSessionPriority(a, b) {
+  const pa = sessionPriority(a);
+  const pb = sessionPriority(b);
+  for (let i = 0; i < pa.length; i += 1) {
+    if (pa[i] !== pb[i]) return pa[i] - pb[i];
+  }
+  return String(a.pts || '').localeCompare(String(b.pts || ''));
+}
+
+function matchesSessionFilter(session) {
+  const assigned = assignedWorkersForPts(session.pts).length > 0;
+  switch (sessionFilter) {
+    case 'cli': return session.isCliCandidate;
+    case 'available': return !assigned;
+    case 'assigned': return assigned;
+    case 'all': return true;
+    default:
+      return assigned || session.isCliCandidate || !!session.shellType;
+  }
+}
+
+function matchesSessionQuery(session) {
+  const query = String(sessionQuery || '').trim().toLowerCase();
+  return !query || session.searchText.includes(query);
+}
+
+function getVisibleSessions() {
+  return sessions
+    .filter((session) => matchesSessionFilter(session) && matchesSessionQuery(session))
+    .sort(compareSessionPriority);
+}
+
+function ensureFocusedSession(visibleSessions) {
+  if (!visibleSessions.length) {
+    focusedSessionPts = '';
+    return;
+  }
+  const activePts = workers[activeTab]?.pts || '';
+  if (activePts && visibleSessions.some((session) => session.pts === activePts)) {
+    focusedSessionPts = activePts;
+    return;
+  }
+  if (focusedSessionPts && visibleSessions.some((session) => session.pts === focusedSessionPts)) return;
+  focusedSessionPts = visibleSessions[0].pts;
+}
+
+function sessionStats() {
+  const total = sessions.length;
+  const cli = sessions.filter((session) => session.isCliCandidate).length;
+  const assigned = sessions.filter((session) => assignedWorkersForPts(session.pts).length).length;
+  const visible = getVisibleSessions().length;
+  return {total, cli, assigned, visible};
+}
+
+function renderSessionFilters() {
+  const stats = sessionStats();
+  const counts = {
+    recommended: sessions.filter((session) => assignedWorkersForPts(session.pts).length || session.isCliCandidate || !!session.shellType).length,
+    cli: stats.cli,
+    available: sessions.filter((session) => !assignedWorkersForPts(session.pts).length).length,
+    assigned: stats.assigned,
+    all: stats.total,
+  };
+  $('session-filters').innerHTML = SESSION_FILTERS.map((filter) => `
+    <button
+      type="button"
+      class="session-filter${filter.id===sessionFilter?' active':''}"
+      aria-pressed="${filter.id===sessionFilter?'true':'false'}"
+      onclick="setSessionFilter('${filter.id}')"
+    >${filter.label} ${counts[filter.id] || 0}</button>
+  `).join('');
+}
+
+function updateSessionSummary(visibleCount) {
+  const stats = sessionStats();
+  const currentPts = workers[activeTab]?.pts || '없음';
+  $('session-summary').textContent =
+    `현재 Worker ${activeTab + 1} · 선택 ${currentPts} · 표시 ${visibleCount}/${stats.total} · CLI 후보 ${stats.cli} · 배정됨 ${stats.assigned}`;
+}
+
+function setSessionFilter(nextFilter) {
+  sessionFilter = SESSION_FILTERS.some((filter) => filter.id === nextFilter) ? nextFilter : 'recommended';
+  persistState();
+  renderSessions();
+}
+
+function clearActiveTarget() {
+  assignWorkerPts(activeTab, '');
+}
+
+function assignNextRecommended() {
+  const visibleSessions = getVisibleSessions();
+  const startIndex = Math.max(visibleSessions.findIndex((session) => session.pts === (focusedSessionPts || workers[activeTab]?.pts || '')), 0);
+  const rotated = visibleSessions.slice(startIndex + 1).concat(visibleSessions.slice(0, startIndex + 1));
+  const candidate = rotated.find((session) => {
+    const assignedTo = assignedWorkersForPts(session.pts);
+    return !assignedTo.length || session.pts === workers[activeTab]?.pts;
+  });
+  if (!candidate) {
+    showResult(false, '현재 필터에서 배정 가능한 터미널이 없습니다.');
+    return;
+  }
+  focusedSessionPts = candidate.pts;
+  assignWorkerPts(activeTab, candidate.pts);
+}
+
+async function loadHomeOperatorPrompt(silent) {
+  try {
+    const response = await fetch('/home-data.json?ts=' + Date.now(), {cache:'no-store'});
+    if (!response.ok) throw new Error(String(response.status));
+    const payload = await response.json();
+    const nextPrompt = (((payload || {}).planStudioData || {}).operatorPrompt || '').trim();
+    if (nextPrompt && nextPrompt !== homeOperatorPrompt) {
+      homeOperatorPrompt = nextPrompt;
+      renderPanels();
+      if (!silent) log('sys', '홈 CLI 실행 프롬프트를 새로 읽었습니다.');
+    } else if (!silent && nextPrompt) {
+      log('sys', '홈 CLI 실행 프롬프트가 이미 최신입니다.');
+    } else if (!silent) {
+      showResult(false, '홈 실행 프롬프트를 읽지 못했습니다.');
+    }
+  } catch (e) {
+    if (!silent) {
+      showResult(false, '홈 실행 프롬프트 읽기 실패: ' + e.message);
+      log('fail', '홈 실행 프롬프트 읽기 실패: ' + e.message);
+    }
+  }
+}
+
+// ── PTY 세션 로드 ─────────────────────────────────────────── //
+async function load() {
+  const listEl = $('session-list');
+  $('btn-refresh').textContent = '탐지 중...';
+  $('btn-refresh').disabled    = true;
+  try {
+    const d = await get('/api/pty/sessions');
+    sessions = (d.sessions || []).map((session) => ({
+      ...session,
+      ...classifySession(session),
+    }));
+    // 자동 배정: 아직 배정되지 않은 CLI 세션만 빈 워커에 채운다.
+    const assignedPts = new Set(workers.map(w => w.pts).filter(Boolean));
+    sessions.filter((session) => session.isCliCandidate && !assignedPts.has(session.pts)).forEach((session) => {
+      const idx = workers.findIndex(w => !w.pts);
+      if (idx >= 0) {
+        workers[idx].pts = session.pts;
+        assignedPts.add(session.pts);
+      }
+    });
+    renderSessions();
+    renderPanels();
+    updateSelBadge();
+    persistState();
+    log('sys', `PTY 세션 ${sessions.length}개 탐지됨`);
+  } catch(e) {
+    listEl.innerHTML = '<div style="color:var(--red);font-size:12px">탐지 실패 — 서버가 실행 중인지 확인하세요</div>';
+    $('session-summary').textContent = '세션 탐지 실패';
+    log('fail', '세션 탐지 실패: ' + e.message);
+  } finally {
+    $('btn-refresh').textContent = '새로 고침';
+    $('btn-refresh').disabled    = false;
+  }
+}
+
+function renderSessions() {
+  const listEl = $('session-list');
+  const activeWorker = workers[activeTab];
+  const visibleSessions = getVisibleSessions();
+  ensureFocusedSession(visibleSessions);
+  renderSessionFilters();
+  updateSessionSummary(visibleSessions.length);
+  listEl.setAttribute('aria-activedescendant', focusedSessionPts ? sessionOptionId(focusedSessionPts) : '');
+  if (!sessions.length) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">활성 터미널 없음</div>';
+    return;
+  }
+  if (!visibleSessions.length) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--muted)">현재 필터에서 보이는 터미널이 없습니다</div>';
+    return;
+  }
+  listEl.innerHTML = visibleSessions.map((session) => {
+    const assignedTo = assignedWorkersForPts(session.pts);
+    const procs = session.processes.slice(0,4).map((process) => process.comm).join(', ');
+    const isSel = !!activeWorker && activeWorker.pts === session.pts;
+    const isFocused = focusedSessionPts === session.pts;
+    const secondaryBadges = [
+      session.aiCli ? `<span class="badge badge-cli">${esc(session.aiCli.toUpperCase())}</span>` : '',
+      !session.aiCli && session.runnerType ? `<span class="badge badge-tag">${esc(session.runnerType)}</span>` : '',
+      session.shellType ? `<span class="badge badge-tag">${esc(session.shellType)}</span>` : '',
+      recentSessionPts.includes(session.pts) ? '<span class="badge badge-recent">RECENT</span>' : '',
+      assignedTo.length ? `<span class="badge badge-sel">W${assignedTo.join(',')}</span>` : '',
+    ].filter(Boolean).join('');
+    return `
+<div
+  id="${sessionOptionId(session.pts)}"
+  class="session-item${isSel?' selected':''}${isFocused?' focused':''}"
+  role="option"
+  aria-selected="${isSel?'true':'false'}"
+  onclick="activateSession('${esc(session.pts)}')"
+>
+  <div class="session-info">
+    <div class="session-pts">${esc(session.pts)}</div>
+    <div class="session-procs">${esc(procs)}</div>
+    ${session.commandPreview ? `<div class="session-cmd">${esc(session.commandPreview)}</div>` : ''}
+  </div>
+  <div class="session-right">
+    ${secondaryBadges}
+  </div>
+</div>`;
+  }).join('');
+}
+
+function activateSession(pts) {
+  focusedSessionPts = pts;
+  selectSession(pts);
+}
+
+function selectSession(pts) {
+  if (!workers[activeTab]) return;
+  assignWorkerPts(activeTab, workers[activeTab].pts === pts ? '' : pts);
+}
+
+function updateSelBadge() {
+  const w = workers[activeTab];
+  const badge = $('sel-badge');
+  if (w && w.pts) {
+    badge.textContent = w.pts;
+    badge.className   = 'pts-badge pts-ok';
+    badge.innerHTML   = '<span class="dot dot-green"></span> ' + esc(w.pts);
+  } else {
+    badge.className   = 'pts-badge pts-none';
+    badge.textContent = '선택 없음';
+  }
+}
+
+// ── 워커 탭 ───────────────────────────────────────────────── //
+function renderTabs() {
+  $('worker-tabs').innerHTML = workers.map((w, i) =>
+    `<div class="worker-tab${i===activeTab?' active':''}" role="tab" tabindex="${i===activeTab?0:-1}" aria-selected="${i===activeTab?'true':'false'}" onclick="switchTab(${i})">
+      Worker ${i+1}${w.pts ? ' ✓' : ''}
+    </div>`
+  ).join('');
+}
+
+function renderPanels() {
+  $('worker-panels').innerHTML = workers.map((w, i) => `
+<div class="worker-panel${i===activeTab?' active':''}">
+  <div style="margin-bottom:8px;font-size:12px;color:var(--muted)">
+    PTY: <strong style="font-family:var(--mono)">${w.pts || '미선택 — 위 목록에서 클릭'}</strong>
+  </div>
+  <div style="display:grid;gap:8px;margin-bottom:10px">
+    <label style="font-size:12px;color:var(--muted);font-weight:700">대상 터미널</label>
+    <select onchange="setWorkerPts(${i}, this.value)">${['<option value="">터미널 선택</option>'].concat(sessions.map((session) => `<option value="${esc(session.pts)}"${session.pts===w.pts?' selected':''}>${esc(session.pts)} · ${esc(session.processes.slice(0,2).map(p=>p.comm).join(', '))}</option>`)).join('')}</select>
+    <label style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)">
+      <input type="checkbox" ${w.useHomeOperatorPrompt ? 'checked' : ''} onchange="setWorkerHomePrompt(${i}, this.checked)">
+      홈 CLI 실행 프롬프트 추적
+    </label>
+  </div>
+  <textarea
+    placeholder="계속&#10;&#10;또는 원하는 명령어"
+    ${w.useHomeOperatorPrompt ? 'disabled' : ''}
+    oninput="workers[${i}].prompt=this.value;persistState();renderTabs()"
+  >${esc(w.useHomeOperatorPrompt ? (homeOperatorPrompt || '홈 실행 프롬프트를 아직 읽지 못했습니다.') : w.prompt)}</textarea>
+  <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted)">
+    <span>${(getWorkerPromptValue(w)||'').length}자</span>
+    <button class="btn btn-sm" onclick="smartPrompt(${i})">⚡ 스마트 생성</button>
+  </div>
+</div>`).join('');
+  renderTabs();
+  updateSelBadge();
+}
+
+function setWorkerPts(index, value) {
+  assignWorkerPts(index, value || '');
+}
+
+function assignWorkerPts(index, pts) {
+  if (!workers[index]) return;
+  const nextPts = pts || '';
+  if (nextPts) {
+    workers.forEach((worker, workerIndex) => {
+      if (workerIndex !== index && worker.pts === nextPts) {
+        worker.pts = '';
+      }
+    });
+    recentSessionPts = [nextPts].concat(recentSessionPts.filter((ptsPath) => ptsPath !== nextPts)).slice(0, 8);
+  }
+  workers[index].pts = nextPts;
+  focusedSessionPts = nextPts || focusedSessionPts;
+  persistState();
+  renderSessions();
+  renderPanels();
+  updateSelBadge();
+}
+
+function setWorkerHomePrompt(index, checked) {
+  if (!workers[index]) return;
+  workers[index].useHomeOperatorPrompt = !!checked;
+  persistState();
+  renderPanels();
+}
+
+function getWorkerPromptValue(worker) {
+  if (worker && worker.useHomeOperatorPrompt) {
+    return homeOperatorPrompt || worker.prompt || '계속';
+  }
+  return (worker && worker.prompt) || '계속';
+}
+
+function switchTab(i) {
+  activeTab = i;
+  persistState();
+  renderPanels();
+  renderSessions();
+  updateSelBadge();
+}
+
+function addWorker() {
+  if (workers.length >= 6) return;
+  workers.push({pts:'', prompt:'', useHomeOperatorPrompt:true});
+  activeTab = workers.length - 1;
+  persistState();
+  renderSessions();
+  renderPanels();
+}
+
+function removeWorker() {
+  if (workers.length <= 1) return;
+  workers.splice(activeTab, 1);
+  activeTab = Math.min(activeTab, workers.length - 1);
+  persistState();
+  renderSessions();
+  renderPanels();
+}
+
+// ── 즉시 전송 ─────────────────────────────────────────────── //
+async function sendAll() {
+  await loadHomeOperatorPrompt(true);
+  const targets = workers.filter(w => w.pts);
+  if (!targets.length) {
+    showResult(false, '대상 터미널을 먼저 선택하세요 (위 목록에서 클릭)');
+    return;
+  }
+  $('btn-send-all').disabled = true;
+  $('btn-send-all').textContent = '전송 중...';
+  let ok=0, fail=0, failMsg='';
+  for (const w of targets) {
+    try {
+      const promptText = String(getWorkerPromptValue(w) || '계속').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const r = await post('/api/pty/send', {
+        pts: w.pts,
+        text: promptText + SUBMIT_ENTER,
+        action: 'prompt',
+        name: 'Dashboard Worker',
+        prompt: promptText,
+        use_home_operator_prompt: !!w.useHomeOperatorPrompt,
+      });
+      if (r.ok) { ok++; log('ok', `→ ${w.pts}  "${promptText.slice(0,30)}" 전송 완료`); }
+      else      { fail++; failMsg=r.error||''; log('fail', `→ ${w.pts} 전송 실패: ${r.error}`); }
+    } catch(e) { fail++; failMsg=e.message; log('fail', '오류: '+e.message); }
+  }
+  $('btn-send-all').disabled = false;
+  $('btn-send-all').textContent = '▶ 설정된 프롬프트 전송';
+  if (fail === 0) showResult(true,  `✓ ${ok}개 워커에 전송 완료`);
+  else            showResult(false, `✗ ${fail}개 실패${failMsg?' — '+failMsg:''}`);
+}
+
+async function enterAll() {
+  const targets = workers.filter(w => w.pts);
+  if (!targets.length) { showResult(false, '대상 터미널을 먼저 선택하세요'); return; }
+  let ok=0;
+  for (const w of targets) {
+    try {
+      const r = await post('/api/pty/send', {
+        pts:w.pts,
+        text:SUBMIT_ENTER,
+        action:'enter',
+        name:'Dashboard Worker',
+        prompt:String(getWorkerPromptValue(w) || '계속').replace(/\r\n/g, '\n').replace(/\r/g, '\n'),
+        use_home_operator_prompt: !!w.useHomeOperatorPrompt,
+      });
+      if(r.ok) ok++;
+    } catch{}
+  }
+  showResult(true, `↵ Enter ${ok}개 전송 완료`);
+  log('ok', `Enter ${ok}개 전송`);
+}
+
+function showResult(success, msg) {
+  const el = $('send-result');
+  el.textContent = msg;
+  el.className   = 'result ' + (success ? 'result-ok' : 'result-fail');
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display='none'; }, 4000);
+}
+
+// ── 스마트 프롬프트 생성 ──────────────────────────────────── //
+async function smartPrompt(idx) {
+  try {
+    const d = await get('/api/automation/optimize-prompt');
+    if (d && d.prompt) {
+      workers[idx].useHomeOperatorPrompt = false;
+      workers[idx].prompt = d.prompt;
+      persistState();
+      renderPanels();
+      log('sys', 'Worker '+(idx+1)+' 스마트 프롬프트 생성 완료');
+    }
+  } catch { log('fail', '스마트 생성 실패'); }
+}
+
+// ── 스케줄러 ──────────────────────────────────────────────── //
+async function schedStart() {
+  await loadHomeOperatorPrompt(true);
+  const targets = workers.filter(w => w.pts);
+  if (!targets.length) { showResult(false, '대상 터미널을 먼저 선택하세요'); return; }
+  const body = {
+    cycle_minutes: +$('cfg-cycle').value || 30,
+    enter_seconds: +$('cfg-interval').value || 10,
+    workers: workers.map((w,i) => ({
+      name:'Worker '+(i+1),
+      pts:w.pts||'',
+      prompt:getWorkerPromptValue(w),
+      use_home_operator_prompt: !!w.useHomeOperatorPrompt,
+    })),
+  };
+  try {
+    const r = await post('/api/pty/scheduler/start', body);
+    log('sys', `스케줄러 시작 — ${r.workers}개 워커, 주기 ${body.cycle_minutes}분, Enter ${body.enter_seconds}초`);
+  } catch(e) { log('fail', '스케줄러 시작 실패: '+e.message); }
+}
+
+async function schedStop() {
+  try {
+    await post('/api/pty/scheduler/stop', {});
+    log('sys', '스케줄러 중지');
+  } catch(e) { log('fail', '중지 실패: '+e.message); }
+}
+
+// ── 폴링 ─────────────────────────────────────────────────── //
+async function poll() {
+  try {
+    const d = await get('/api/pty/scheduler/status', 1500);
+    serverOk = true;
+    $('srv').textContent = '● 서버 연결됨';
+    $('srv').className   = 'server-dot server-ok';
+    schedOn = d.running;
+    updateSchedUI(d);
+    (d.log||[]).forEach(addServerLog);
+  } catch {
+    if (serverOk) {
+      serverOk = false;
+      $('srv').textContent = '● 서버 미연결';
+      $('srv').className   = 'server-dot server-err';
+    }
+  }
+}
+
+function updateSchedUI(d) {
+  const dot   = $('sched-dot');
+  const label = $('sched-label');
+  const detail= $('sched-detail');
+  if (d.running) {
+    dot.style.background = '#22c55e';
+    dot.style.animation  = 'pulse 2s infinite';
+    label.textContent    = '실행 중';
+    const w0 = d.workers[0];
+    detail.textContent   = w0 ? `다음 Enter: ${w0.next_enter_in}s  다음 Prompt: ${w0.next_prompt_in}s` : '';
+  } else {
+    dot.style.background = '#94a3b8';
+    dot.style.animation  = 'none';
+    label.textContent    = '중지됨';
+    detail.textContent   = '';
+  }
+}
+
+let _tick = {}; // {workerIdx: {enterIn, promptIn}}
+function localTick() {
+  if (!schedOn) return;
+  Object.keys(_tick).forEach(i => {
+    if (_tick[i].enterIn  > 0) _tick[i].enterIn--;
+    if (_tick[i].promptIn > 0) _tick[i].promptIn--;
+  });
+}
+
+function addServerLog(e) {
+  const key = `${e.ts}|${e.worker}|${e.action}|${e.pts||''}|${e.ok?1:0}`;
+  if (seenKeys.has(key)) return;
+  seenKeys.add(key);
+  if (seenKeys.size > 500) seenKeys = new Set([...seenKeys].slice(-300));
+  const ok = e.ok !== false;
+  const act = e.action==='prompt'?'프롬프트':e.action==='enter'?'Enter':e.action;
+  log(ok?'ok':'fail', `[${e.ts}] ${e.worker} → ${act} ${e.pts||''} ${ok?'OK':'FAIL '+(e.error||'')}`);
+}
+
+// ── 로그 ─────────────────────────────────────────────────── //
+function log(type, msg) {
+  const box = $('log-box');
+  const empty = box.querySelector('.log-empty');
+  if (empty) empty.remove();
+  const ts  = new Date().toLocaleTimeString('ko-KR',{hour12:false});
+  const cls = type==='ok'?'log-ok':type==='fail'?'log-fail':type==='sys'?'log-sys':'log-line';
+  const el  = document.createElement('div');
+  el.className = 'log-line ' + cls;
+  el.textContent = `[${ts}] ${msg}`;
+  box.insertBefore(el, box.firstChild);
+  while (box.children.length > 100) box.removeChild(box.lastChild);
+}
+
+function clearLog() {
+  $('log-box').innerHTML = '<div class="log-line log-empty">로그가 지워졌습니다.</div>';
+  seenKeys.clear();
+}
+
+function onGlobalKeydown(event) {
+  if (isEditableTarget(event.target)) return;
+  if (event.key === '/') {
+    event.preventDefault();
+    $('session-query').focus();
+    $('session-query').select();
+    return;
+  }
+  if (event.key.toLowerCase() === 'r') {
+    event.preventDefault();
+    load();
+    return;
+  }
+  if (/^[1-6]$/.test(event.key)) {
+    const index = Number(event.key) - 1;
+    if (workers[index]) {
+      event.preventDefault();
+      switchTab(index);
+    }
+  }
+}
+
+function onSessionListKeydown(event) {
+  const visibleSessions = getVisibleSessions();
+  if (!visibleSessions.length) return;
+  const currentIndex = Math.max(0, visibleSessions.findIndex((session) => session.pts === focusedSessionPts));
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    focusedSessionPts = visibleSessions[Math.min(currentIndex + 1, visibleSessions.length - 1)].pts;
+    renderSessions();
+    return;
+  }
+  if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    focusedSessionPts = visibleSessions[Math.max(currentIndex - 1, 0)].pts;
+    renderSessions();
+    return;
+  }
+  if (event.key === 'Home') {
+    event.preventDefault();
+    focusedSessionPts = visibleSessions[0].pts;
+    renderSessions();
+    return;
+  }
+  if (event.key === 'End') {
+    event.preventDefault();
+    focusedSessionPts = visibleSessions[visibleSessions.length - 1].pts;
+    renderSessions();
+    return;
+  }
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    activateSession(focusedSessionPts || visibleSessions[0].pts);
+    return;
+  }
+  if (event.key === 'Escape' && sessionQuery) {
+    event.preventDefault();
+    sessionQuery = '';
+    syncSessionControls();
+    persistState();
+    renderSessions();
+  }
+}
+
+function onWorkerTabsKeydown(event) {
+  if (!workers.length) return;
+  let nextIndex = activeTab;
+  if (event.key === 'ArrowRight') nextIndex = (activeTab + 1) % workers.length;
+  else if (event.key === 'ArrowLeft') nextIndex = (activeTab - 1 + workers.length) % workers.length;
+  else if (event.key === 'Home') nextIndex = 0;
+  else if (event.key === 'End') nextIndex = workers.length - 1;
+  else return;
+  event.preventDefault();
+  switchTab(nextIndex);
+}
+
+// ── API ──────────────────────────────────────────────────── //
+async function get(url, timeout) {
+  const r = await fetch(url, {signal: AbortSignal.timeout(timeout||3000)});
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function post(url, body) {
+  const r = await fetch(url, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body), signal: AbortSignal.timeout(5000),
+  });
+  if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error||r.status); }
+  return r.json();
+}
+
+// ── 유틸 ─────────────────────────────────────────────────── //
+function $(i) { return document.getElementById(i); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function trimText(text, limit) {
+  const normalized = String(text || '').trim();
+  return normalized.length > limit ? normalized.slice(0, limit - 1) + '…' : normalized;
+}
+function sessionOptionId(pts) {
+  return 'session-option-' + String(pts || '').replace(/[^a-zA-Z0-9_-]/g, '-');
+}
+function isEditableTarget(target) {
+  if (!target || typeof target.matches !== 'function') return false;
+  return target.matches('input, textarea, select, [contenteditable="true"]');
+}
+</script>
+</body>
+</html>

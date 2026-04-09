@@ -1,0 +1,3 @@
+{"ts": "2026-03-28T07:00:43Z", "action": "validation-result", "payload": {"packet_id": "WP-RUN-004", "outcome": "pass", "source": "drift-validation-queue", "notes": "manual verification pass", "commands": ["npm run check:deployment-environment-provisioning"], "ok": true, "error": ""}}
+{"ts": "2026-03-28T07:11:57Z", "action": "decision-apply-run", "payload": {"packet_id": "", "goal": "stateful-ops", "apply": false, "result": "dry-run", "decision_gate": "blocked", "ok": true, "error": ""}}
+{"ts": "2026-03-28T07:18:01Z", "action": "decision-apply-run", "payload": {"packet_id": "", "goal": "stateful-ops", "apply": false, "result": "dry-run", "decision_gate": "blocked", "ok": true, "error": ""}}

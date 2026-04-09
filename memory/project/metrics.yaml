@@ -1,2 +1,25 @@
-# 실행 메트릭 자동 기록
-executions: []
+executions:
+  - date: "2026-04-06"
+  - date: "2026-04-06"
+  - date: "2026-04-06"
+    domain: "zone-gui-api-contract"
+    stage: "D"
+    duration_seconds: 90
+    tests_passed: 570
+    tests_total: 570
+    gate_result: "PASS"
+    timestamp: "2026-04-06T11:15:10.943Z"
+    domain: "zone-feature-flags"
+    stage: "D"
+    duration_seconds: 90
+    tests_passed: 570
+    tests_total: 570
+    gate_result: "PASS"
+    timestamp: "2026-04-06T11:05:47.764Z"
+    domain: "zone-ui-rendering"
+    stage: "D"
+    duration_seconds: 316
+    tests_passed: 570
+    tests_total: 570
+    gate_result: "PASS"
+    timestamp: "2026-04-06T10:58:02.354Z"

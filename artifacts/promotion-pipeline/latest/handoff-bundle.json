@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-03-25T10:49:37.150263+00:00",
+  "generated_at": "2026-04-09T13:53:41.808346+00:00",
   "goal": "plan-and-learn",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -47,19 +47,19 @@
       "primary": {
         "file_count": 5,
         "total_bytes": 16248,
-        "estimated_tokens": 4061
+        "estimated_tokens": 5416
       },
       "secondary": {
         "file_count": 4,
         "total_bytes": 16501,
-        "estimated_tokens": 4125
+        "estimated_tokens": 5501
       },
       "deferred": {
-        "file_count": 132,
-        "total_bytes": 498773,
-        "estimated_tokens": 124693
+        "file_count": 182,
+        "total_bytes": 583576,
+        "estimated_tokens": 194525
       },
-      "total_estimated_tokens": 132879
+      "total_estimated_tokens": 205442
     },
     "path_metrics": {
       "read_first": [
@@ -68,35 +68,35 @@
           "exists": true,
           "file_count": 1,
           "total_bytes": 2081,
-          "estimated_tokens": 520
+          "estimated_tokens": 694
         },
         {
           "path": "memory/current-wp.yaml",
           "exists": true,
           "file_count": 1,
           "total_bytes": 2274,
-          "estimated_tokens": 568
+          "estimated_tokens": 758
         },
         {
           "path": "requirements/requirements.yaml",
           "exists": true,
           "file_count": 1,
           "total_bytes": 2425,
-          "estimated_tokens": 606
+          "estimated_tokens": 808
         },
         {
           "path": "requirements/constraints.yaml",
           "exists": true,
           "file_count": 1,
           "total_bytes": 1921,
-          "estimated_tokens": 480
+          "estimated_tokens": 640
         },
         {
           "path": "master-shell/catalog/project-intake-canvas.yaml",
           "exists": true,
           "file_count": 1,
           "total_bytes": 7547,
-          "estimated_tokens": 1887
+          "estimated_tokens": 2516
         }
       ],
       "read_next": [
@@ -105,51 +105,51 @@
           "exists": true,
           "file_count": 1,
           "total_bytes": 6170,
-          "estimated_tokens": 1542
+          "estimated_tokens": 2057
         },
         {
           "path": "master-shell/catalog/planning-studio-modes.yaml",
           "exists": true,
           "file_count": 1,
           "total_bytes": 3544,
-          "estimated_tokens": 886
+          "estimated_tokens": 1181
         },
         {
           "path": "master-shell/catalog/ai-learning-map.yaml",
           "exists": true,
           "file_count": 1,
           "total_bytes": 4502,
-          "estimated_tokens": 1126
+          "estimated_tokens": 1501
         },
         {
           "path": "master-shell/catalog/master-os-relations.yaml",
           "exists": true,
           "file_count": 1,
           "total_bytes": 2285,
-          "estimated_tokens": 571
+          "estimated_tokens": 762
         }
       ],
       "read_later": [
         {
           "path": "domains/",
           "exists": true,
-          "file_count": 121,
-          "total_bytes": 486093,
-          "estimated_tokens": 121523
+          "file_count": 122,
+          "total_bytes": 488545,
+          "estimated_tokens": 162848
         },
         {
           "path": "artifacts/deployment-smoke/",
           "exists": true,
-          "file_count": 3,
-          "total_bytes": 9087,
-          "estimated_tokens": 2272
+          "file_count": 4,
+          "total_bytes": 26203,
+          "estimated_tokens": 8734
         },
         {
           "path": "worklog/reports/",
           "exists": true,
-          "file_count": 8,
-          "total_bytes": 3593,
-          "estimated_tokens": 898
+          "file_count": 56,
+          "total_bytes": 68828,
+          "estimated_tokens": 22943
         }
       ]
     }
@@ -195,7 +195,7 @@
         "id": "token-budget",
         "label": "토큰 예산 적합성",
         "status": "risk",
-        "detail": "primary 4061 tok / total 132879 tok"
+        "detail": "primary 5416 tok / total 205442 tok"
       },
       {
         "id": "completed-packet",
@@ -213,19 +213,19 @@
       "primary": {
         "file_count": 5,
         "total_bytes": 16248,
-        "estimated_tokens": 4061
+        "estimated_tokens": 5416
       },
       "secondary": {
         "file_count": 4,
         "total_bytes": 16501,
-        "estimated_tokens": 4125
+        "estimated_tokens": 5501
       },
       "deferred": {
-        "file_count": 132,
-        "total_bytes": 498773,
-        "estimated_tokens": 124693
+        "file_count": 182,
+        "total_bytes": 583576,
+        "estimated_tokens": 194525
       },
-      "total_estimated_tokens": 132879
+      "total_estimated_tokens": 205442
     },
     "required_adapters": [
       "master-ui-plugin-shell",
@@ -235,13 +235,13 @@
       "feature-flag-provider"
     ],
     "selected_adapters": [
+      "feature-flag-provider",
+      "remote-mcp-connector",
       "observability-otel",
       "openai-responses-agent",
-      "master-ui-static-planner",
       "master-ui-plugin-shell",
-      "remote-mcp-connector",
-      "planner-state-memory",
-      "feature-flag-provider"
+      "master-ui-static-planner",
+      "planner-state-memory"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,8 +254,8 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-03-25T10:49:37.150245+00:00",
-    "goal": "최근 audit 시그널을 기준으로 actor? e20338b4677d",
+    "generated_at": "2026-04-09T13:53:41.808328+00:00",
+    "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
     "focus_tracks": [
@@ -288,15 +288,21 @@
         "track_title": "런타임 운영 학습",
         "matched": [
           {
-            "timestamp": "2026-03-21T01:50:20.302Z",
-            "title": "fix/billing-payment-usecase",
-            "detail": "actor? e20338b4677d",
+            "timestamp": "2026-04-06T11:05:47.752Z",
+            "title": "D/zone-feature-flags",
+            "detail": "actor? 9543a440d4e4",
             "tag": "audit"
           },
           {
-            "timestamp": "2026-03-20T11:03:24.242Z",
-            "title": "Phase3",
-            "detail": "actor? c75a2ccf65e1",
+            "timestamp": "2026-04-06T10:58:01.729Z",
+            "title": "D/zone-ui-rendering",
+            "detail": "actor? 4622824a8c74",
+            "tag": "audit"
+          },
+          {
+            "timestamp": "2026-03-25T11:37:10.201Z",
+            "title": "C/core",
+            "detail": "actor? 880f53950381",
             "tag": "audit"
           }
         ]
@@ -321,20 +327,14 @@
         "matched": [
           {
             "timestamp": "",
-            "title": "report video",
-            "detail": "worklog/reports/video/StageDE_report.md",
+            "title": "report 2026-03-25_011_D_video",
+            "detail": "worklog/reports/2026-03-25_011_D_video/REPORT.md",
             "tag": "report"
           },
           {
             "timestamp": "",
-            "title": "report billing",
-            "detail": "worklog/reports/billing/StageDE_report.md",
-            "tag": "report"
-          },
-          {
-            "timestamp": "",
-            "title": "report 2026-03-20_001_A___test__",
-            "detail": "worklog/reports/2026-03-20_001_A___test__/REPORT.md",
+            "title": "report 2026-03-25_001_A_billing",
+            "detail": "worklog/reports/2026-03-25_001_A_billing/REPORT.md",
             "tag": "report"
           }
         ]
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-03-25 08:03:13 +0900",
+            "timestamp": "2026-04-09 22:51:43 +0900",
             "title": "git commit",
-            "detail": "docs(governance): refresh repo operating guides",
+            "detail": "feat(ui-shell-contract): register /flags endpoint + contract 3-way validation complete",
             "tag": "git"
           }
         ]
