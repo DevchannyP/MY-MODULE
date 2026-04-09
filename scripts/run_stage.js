@@ -44,8 +44,8 @@ const STAGE_METADATA = {
   },
 };
 
-function readYaml(relativePath) {
-  const absolutePath = path.join(ROOT, relativePath);
+function readYaml(relativePath, runtimeRoot = ROOT) {
+  const absolutePath = path.join(runtimeRoot, relativePath);
   if (!fs.existsSync(absolutePath)) {
     return {};
   }
@@ -74,7 +74,7 @@ function parseArgs(argv) {
   const [, , stageArg, ...flags] = argv;
   const stage = String(stageArg || '').toUpperCase();
   if (!STAGE_ORDER.includes(stage)) {
-    return { error: 'usage: node scripts/run_stage.js [A|B|C|D|E] [--module <id>] [--dry-run] [--json]' };
+    return { error: 'usage: node scripts/run_stage.js [A|B|C|D|E] [--module <id>] [--dry-run|--execute] [--root <path>] [--json]' };
   }
 
   // --module <id> selects which requirements file to use (e.g. billing, video)
@@ -84,15 +84,22 @@ function parseArgs(argv) {
     moduleId = flags[modIdx + 1];
   }
 
+  let runtimeRoot = ROOT;
+  const rootIdx = flags.indexOf('--root');
+  if (rootIdx !== -1 && rootIdx + 1 < flags.length) {
+    runtimeRoot = path.resolve(flags[rootIdx + 1]);
+  }
+
   return {
     stage,
     moduleId,
+    runtimeRoot,
     dryRun: flags.includes('--dry-run') || !flags.includes('--execute'),
     json: true,
   };
 }
 
-function resolveRequirementsPath(moduleId) {
+function resolveRequirementsPath(moduleId, runtimeRoot = ROOT) {
   if (!moduleId) return 'requirements/requirements.yaml';
   // Try requirements/<moduleId>.yaml first, then requirements/requirements.yaml
   const candidates = [
@@ -100,13 +107,13 @@ function resolveRequirementsPath(moduleId) {
     'requirements/requirements.yaml',
   ];
   for (const candidate of candidates) {
-    if (fs.existsSync(path.join(ROOT, candidate))) return candidate;
+    if (fs.existsSync(path.join(runtimeRoot, candidate))) return candidate;
   }
   return 'requirements/requirements.yaml';
 }
 
-function getLegacyStageStates() {
-  const legacy = readYaml('memory/project/current-state.yaml');
+function getLegacyStageStates(runtimeRoot = ROOT) {
+  const legacy = readYaml('memory/project/current-state.yaml', runtimeRoot);
   return legacy.stage_states && typeof legacy.stage_states === 'object' ? legacy.stage_states : {};
 }
 
@@ -156,6 +163,78 @@ function evaluateStage(stage, requirements, rootState, currentWp, legacyStageSta
   };
 }
 
+function runStageCommand(command, runtimeRoot = ROOT) {
+  const result = spawnSync('bash', ['-lc', command], {
+    cwd: runtimeRoot,
+    encoding: 'utf8',
+  });
+  return {
+    command,
+    ok: result.status === 0,
+    exit_code: typeof result.status === 'number' ? result.status : 1,
+    signal: result.signal || null,
+    stdout: String(result.stdout || '').trim(),
+    stderr: String(result.stderr || '').trim(),
+  };
+}
+
+function executeStage(report, metadata, runtimeRoot = ROOT, runner = runStageCommand) {
+  const commandResults = [];
+  for (const command of metadata.commands) {
+    const commandResult = runner(command, runtimeRoot);
+    commandResults.push(commandResult);
+    if (!commandResult.ok) {
+      break;
+    }
+  }
+
+  const passed = commandResults.every((item) => item.ok);
+  const failedCount = commandResults.filter((item) => !item.ok).length;
+
+  return {
+    ...report,
+    execution_mode: 'execute',
+    run_now: true,
+    status: passed ? 'pass' : 'fail',
+    quality_gate_result: passed ? 'PASS' : 'FAIL',
+    command_results: commandResults,
+    executed_command_count: commandResults.length,
+    failed_command_count: failedCount,
+    notes: [
+      ...report.notes.filter((note) => note !== 'This command does not mutate repository state.'),
+      passed
+        ? 'Stage execution completed and all required commands passed.'
+        : 'Stage execution stopped at the first failing command.',
+    ],
+  };
+}
+
+function runStage(stage, {
+  moduleId = null,
+  runtimeRoot = ROOT,
+  dryRun = true,
+  runner = runStageCommand,
+} = {}) {
+  const requirementsPath = resolveRequirementsPath(moduleId, runtimeRoot);
+  const requirements = readYaml(requirementsPath, runtimeRoot);
+  const rootState = readYaml('memory/current-state.yaml', runtimeRoot);
+  const currentWp = readYaml('memory/current-wp.yaml', runtimeRoot);
+  const legacyStageStates = getLegacyStageStates(runtimeRoot);
+  const metadata = STAGE_METADATA[stage];
+  const baseReport = evaluateStage(stage, requirements, rootState, currentWp, legacyStageStates);
+  const report = {
+    ...baseReport,
+    requirements_file: requirementsPath,
+    runtime_root: path.relative(ROOT, runtimeRoot) || '.',
+  };
+
+  if (dryRun || report.status !== 'ready') {
+    return report;
+  }
+
+  return executeStage(report, metadata, runtimeRoot, runner);
+}
+
 function main() {
   const args = parseArgs(process.argv);
   if (args.error) {
@@ -163,15 +242,16 @@ function main() {
     process.exit(2);
   }
 
-  const requirementsPath = resolveRequirementsPath(args.moduleId);
-  const requirements = readYaml(requirementsPath);
-  const rootState = readYaml('memory/current-state.yaml');
-  const currentWp = readYaml('memory/current-wp.yaml');
-  const legacyStageStates = getLegacyStageStates();
-  const report = evaluateStage(args.stage, requirements, rootState, currentWp, legacyStageStates);
-  report.requirements_file = requirementsPath;
+  const report = runStage(args.stage, {
+    moduleId: args.moduleId,
+    runtimeRoot: args.runtimeRoot,
+    dryRun: args.dryRun,
+  });
 
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  if (!args.dryRun && report.status === 'fail') {
+    process.exit(1);
+  }
 }
 
 if (require.main === module) {
@@ -186,10 +266,10 @@ if (require.main === module) {
  * @param {string[]} relativePaths
  * @returns {Record<string, Record<string, unknown>>}
  */
-function readYamlMany(relativePaths) {
+function readYamlMany(relativePaths, runtimeRoot = ROOT) {
   const output = {};
   for (const relativePath of relativePaths.filter(Boolean)) {
-    output[relativePath] = readYaml(relativePath);
+    output[relativePath] = readYaml(relativePath, runtimeRoot);
   }
   return output;
 }
@@ -200,5 +280,8 @@ module.exports = {
   readYamlMany,
   getLegacyStageStates,
   evaluateStage,
+  executeStage,
+  runStage,
+  runStageCommand,
   resolveRequirementsPath,
 };

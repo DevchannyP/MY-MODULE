@@ -9,6 +9,7 @@ import re
 import sys
 
 import yaml
+from jsonschema import Draft202012Validator, SchemaError
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -57,6 +58,25 @@ def relative_path(path: Path) -> str:
 
 def add_error(errors: list[str], message: str) -> None:
     errors.append(message)
+
+
+def format_schema_error_path(error) -> str:
+    parts: list[str] = []
+    for part in error.absolute_path:
+        if isinstance(part, int):
+            if parts:
+                parts[-1] = f"{parts[-1]}[{part}]"
+            else:
+                parts.append(f"[{part}]")
+            continue
+        parts.append(str(part))
+    return ".".join(parts) if parts else "document"
+
+
+def normalize_schema_error_message(error) -> str:
+    if error.validator == "uniqueItems":
+        return "items must be unique"
+    return error.message
 
 
 def require_mapping(errors: list[str], label: str, value: object) -> dict:
@@ -145,9 +165,22 @@ def validate_requirements(target_path: Path) -> list[str]:
 
     try:
         with SCHEMA_PATH.open("r", encoding="utf-8") as handle:
-            json.load(handle)
+            schema = json.load(handle)
     except json.JSONDecodeError as exc:
         errors.append(f"{relative_path(SCHEMA_PATH)}: JSON parse error -> {exc}")
+        schema = None
+
+    if schema is not None:
+        try:
+            Draft202012Validator.check_schema(schema)
+            schema_validator = Draft202012Validator(schema)
+            for error in sorted(schema_validator.iter_errors(data), key=lambda item: list(item.absolute_path)):
+                add_error(
+                    errors,
+                    f"{format_schema_error_path(error)}: schema violation -> {normalize_schema_error_message(error)}",
+                )
+        except SchemaError as exc:
+            add_error(errors, f"{relative_path(SCHEMA_PATH)}: invalid JSON Schema -> {exc.message}")
 
     document = require_mapping(errors, relative_path(target_path), data)
     allowed_top_level = {

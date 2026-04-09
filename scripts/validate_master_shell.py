@@ -76,6 +76,24 @@ def ensure_list_of_strings(value) -> list[str]:
     return [item for item in value if isinstance(item, str) and item]
 
 
+def is_safe_default_flag_override(plugin: dict, flag_value) -> bool:
+    if flag_value is not False:
+        return False
+
+    rollout = plugin.get("rollout", {})
+    if not isinstance(rollout, dict):
+        return False
+
+    percentage = rollout.get("percentage")
+    current_phase = rollout.get("current_phase")
+    return (
+        isinstance(percentage, int)
+        and percentage > 0
+        and isinstance(current_phase, str)
+        and bool(current_phase)
+    )
+
+
 def main() -> int:
     registry = load_yaml("master-shell/plugin-registry/registry.yaml")
     navigation = load_yaml("master-shell/navigation/nav.yaml")
@@ -191,16 +209,25 @@ def main() -> int:
         if feature_flag not in feature_flags:
             errors.append(f"{plugin_id}: feature flag not registered -> {feature_flag}")
         else:
-            # flag value ↔ plugin status consistency check
+            # Repository flag files keep safe defaults false; active rollout can still
+            # be valid when runtime/env overrides enable the plugin in deployment.
             flag_value = flags.get("plugin_flags", {}).get(feature_flag)
             plugin_status = plugin.get("status")
             if flag_value is True and plugin_status != "active":
                 errors.append(
                     f"{plugin_id}: feature flag {feature_flag}=true but plugin status is {plugin_status!r} (expected 'active')"
                 )
-            elif flag_value is False and plugin_status not in ("inactive", None):
+            elif (
+                flag_value is False
+                and plugin_status == "active"
+                and not is_safe_default_flag_override(plugin, flag_value)
+            ):
                 errors.append(
-                    f"{plugin_id}: feature flag {feature_flag}=false but plugin status is {plugin_status!r} (expected 'inactive')"
+                    f"{plugin_id}: feature flag {feature_flag}=false with active status requires rollout metadata for runtime override"
+                )
+            elif flag_value is False and plugin_status not in ("inactive", "active", None):
+                errors.append(
+                    f"{plugin_id}: feature flag {feature_flag}=false but plugin status is {plugin_status!r} (expected 'inactive' or runtime-overridden 'active')"
                 )
 
         architecture_profile = plugin.get("architecture_profile")

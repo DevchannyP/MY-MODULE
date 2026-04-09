@@ -8,9 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT = path.resolve(__dirname, '..');
-const CATALOG_DIR = path.join(ROOT, 'master-shell', 'catalog');
-const REQUIREMENTS_DIR = path.join(ROOT, 'requirements');
+const DEFAULT_ROOT = path.resolve(__dirname, '..');
 
 // ---------------------------------------------------------------------------
 // 인수 파싱
@@ -144,8 +142,8 @@ function parseInlineArray(val) {
 // ---------------------------------------------------------------------------
 // 카탈로그 로더
 // ---------------------------------------------------------------------------
-function loadCatalog(filename) {
-  const filePath = path.join(CATALOG_DIR, filename);
+function loadCatalogAtRoot(runtimeRoot, filename) {
+  const filePath = path.join(path.resolve(runtimeRoot), 'master-shell', 'catalog', filename);
   try {
     return parseYaml(fs.readFileSync(filePath, 'utf8'));
   } catch {
@@ -157,9 +155,9 @@ function loadCatalog(filename) {
 // --list-blueprints
 // ---------------------------------------------------------------------------
 function cmdListBlueprints() {
-  const blueprints = loadCatalog('project-blueprints.yaml');
-  const recipes = loadCatalog('ai-runtime-recipes.yaml');
-  const matrix = loadCatalog('adapter-compatibility-matrix.yaml');
+  const blueprints = loadCatalogAtRoot(DEFAULT_ROOT, 'project-blueprints.yaml');
+  const recipes = loadCatalogAtRoot(DEFAULT_ROOT, 'ai-runtime-recipes.yaml');
+  const matrix = loadCatalogAtRoot(DEFAULT_ROOT, 'adapter-compatibility-matrix.yaml');
 
   process.stdout.write('\n=== 사용 가능한 블루프린트 ===\n\n');
 
@@ -285,7 +283,7 @@ feature_flags:
 
 routing:
   entry_point: "/${domain}"
-  navigation_group: "TODO"
+  navigation_group: "${domain}"
   plugin_slot: "main-content"
 
 # 아키텍처 프로파일 어댑터 참고 (Stage A 설계 시 활성화)
@@ -389,11 +387,12 @@ function main() {
 
   const recipeId = args.recipe || null;
   const isDryRun = Boolean(args.dryRun);
+  const runtimeRoot = path.resolve(typeof args.root === 'string' ? args.root : DEFAULT_ROOT);
 
-  const blueprints = loadCatalog('project-blueprints.yaml');
-  const recipes = loadCatalog('ai-runtime-recipes.yaml');
-  const registry = loadCatalog('adapter-registry.yaml');
-  const matrix = loadCatalog('adapter-compatibility-matrix.yaml');
+  const blueprints = loadCatalogAtRoot(runtimeRoot, 'project-blueprints.yaml');
+  const recipes = loadCatalogAtRoot(runtimeRoot, 'ai-runtime-recipes.yaml');
+  const registry = loadCatalogAtRoot(runtimeRoot, 'adapter-registry.yaml');
+  const matrix = loadCatalogAtRoot(runtimeRoot, 'adapter-compatibility-matrix.yaml');
 
   const bp = validateBlueprint(blueprints, blueprintId);
   if (!bp) {
@@ -431,8 +430,9 @@ function main() {
   }
 
   const adapterRefs = getAdapterRefsForProfile(registry, profile);
-  const outFile = path.join(REQUIREMENTS_DIR, `${domain}.yaml`);
-  const relativeOut = path.relative(ROOT, outFile);
+  const requirementsDir = path.join(runtimeRoot, 'requirements');
+  const outFile = path.join(requirementsDir, `${domain}.yaml`);
+  const relativeOut = path.relative(runtimeRoot, outFile);
   const exists = fs.existsSync(outFile);
 
   printPlan({ domain, blueprint: blueprintId, recipe: recipeId, profile, adapterRefs, outFile: relativeOut, exists });
@@ -453,8 +453,8 @@ function main() {
     process.exit(1);
   }
 
-  if (!fs.existsSync(REQUIREMENTS_DIR)) {
-    fs.mkdirSync(REQUIREMENTS_DIR, { recursive: true });
+  if (!fs.existsSync(requirementsDir)) {
+    fs.mkdirSync(requirementsDir, { recursive: true });
   }
 
   const content = buildRequirementsYaml({ domain, blueprint: blueprintId, recipe: recipeId, profile, adapterRefs });

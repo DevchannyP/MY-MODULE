@@ -53,7 +53,7 @@ MIME_TYPES = {
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Idempotency-Key",
     "Access-Control-Max-Age": "86400",
 }
 
@@ -72,6 +72,82 @@ _automation_runtime = {
     },
     "log": [],
 }
+
+# ── Idempotency Runtime State ────────────────────────────────── #
+_idempotency_lock = threading.Lock()
+_idempotency_store = {}
+
+
+def _stable_json_dumps(value) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _build_idempotency_fingerprint(body_bytes: bytes) -> str:
+    try:
+        payload = json.loads(body_bytes or b"{}")
+    except Exception:
+        payload = (body_bytes or b"").decode("utf-8", errors="replace")
+    return hashlib.sha256(_stable_json_dumps(payload).encode("utf-8")).hexdigest()
+
+
+def normalize_idempotency_key(raw_value) -> str:
+    if raw_value is None:
+        return ""
+    value = str(raw_value).strip()
+    if not value:
+        return ""
+    if len(value) > 255:
+        raise ValueError("Idempotency-Key must be 255 characters or fewer")
+    return value
+
+
+def _idempotency_scope(method: str, path: str, caller_id: str, key: str) -> str:
+    return f"{method}:{path}:{caller_id or 'anonymous'}:{key}"
+
+
+def claim_idempotency(method: str, path: str, caller_id: str, key: str, body_bytes: bytes) -> dict:
+    if not key:
+        return {"outcome": "skipped", "scope": None}
+
+    scope = _idempotency_scope(method, path, caller_id, key)
+    fingerprint = _build_idempotency_fingerprint(body_bytes)
+    with _idempotency_lock:
+        existing = _idempotency_store.get(scope)
+        if existing:
+            if existing["fingerprint"] != fingerprint:
+                return {"outcome": "mismatch", "scope": scope}
+            if existing["state"] == "completed":
+                return {"outcome": "replay", "scope": scope, "response": existing["response"]}
+            return {"outcome": "in_progress", "scope": scope}
+
+        _idempotency_store[scope] = {
+            "state": "in_progress",
+            "fingerprint": fingerprint,
+            "response": None,
+            "created_at": utc_now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+    return {"outcome": "started", "scope": scope}
+
+
+def complete_idempotency(scope: str | None, status: int, data) -> None:
+    if not scope:
+        return
+    with _idempotency_lock:
+        entry = _idempotency_store.get(scope)
+        if not entry:
+            return
+        entry["state"] = "completed"
+        entry["response"] = {
+            "status": status,
+            "body": json.loads(json.dumps(data, ensure_ascii=False)),
+        }
+
+
+def abort_idempotency(scope: str | None) -> None:
+    if not scope:
+        return
+    with _idempotency_lock:
+        _idempotency_store.pop(scope, None)
 
 # ── File Activity Watcher ─────────────────────────────────────── #
 _activity_lock = threading.Lock()
@@ -1845,11 +1921,13 @@ class WfosHandler(BaseHTTPRequestHandler):
         for k, v in CORS_HEADERS.items():
             self.send_header(k, v)
 
-    def send_json(self, status, data):
+    def send_json(self, status, data, extra_headers=None):
         body = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, str(value))
         self.send_cors_headers()
         self.end_headers()
         self.wfile.write(body)
@@ -1871,6 +1949,32 @@ class WfosHandler(BaseHTTPRequestHandler):
     def read_body(self):
         length = int(self.headers.get("Content-Length", 0))
         return self.rfile.read(length) if length > 0 else b""
+
+    def prepare_idempotency(self, method, path, body_bytes):
+        try:
+            key = normalize_idempotency_key(self.headers.get("Idempotency-Key"))
+        except ValueError as exc:
+            self.send_json(400, {"error": str(exc)})
+            return None, True
+
+        caller_id = str(self.headers.get("X-User-Id") or "anonymous").strip() or "anonymous"
+        claim = claim_idempotency(method, path, caller_id, key, body_bytes)
+
+        if claim["outcome"] == "replay":
+            response = claim.get("response") or {}
+            self.send_json(
+                int(response.get("status", 200)),
+                response.get("body", {}),
+                {"Idempotency-Replayed": "true"},
+            )
+            return None, True
+        if claim["outcome"] == "in_progress":
+            self.send_json(409, {"error": "duplicate request with the same Idempotency-Key is still in progress"})
+            return None, True
+        if claim["outcome"] == "mismatch":
+            self.send_json(409, {"error": "Idempotency-Key reuse detected with a different request payload"})
+            return None, True
+        return claim.get("scope"), False
 
     # ------------------------------------------------------------------ #
     def do_OPTIONS(self):
@@ -2004,14 +2108,20 @@ class WfosHandler(BaseHTTPRequestHandler):
                 return
             action = path.split("/")[-1]
             body_bytes = self.read_body()
+            idempotency_scope, handled = self.prepare_idempotency(method, path, body_bytes)
+            if handled:
+                return
             code, out, err = call_planning_studio_api(action, body_bytes)
             if code != 0:
+                abort_idempotency(idempotency_scope)
                 self.send_json(500, {"error": err.decode("utf-8", errors="replace")})
                 return
             try:
-                self.send_json(200, json.loads(out))
+                payload = json.loads(out)
             except json.JSONDecodeError:
-                self.send_json(200, {"ok": True, "message": out.decode("utf-8", errors="replace").strip()})
+                payload = {"ok": True, "message": out.decode("utf-8", errors="replace").strip()}
+            complete_idempotency(idempotency_scope, 200, payload)
+            self.send_json(200, payload)
             return
 
         # ── Static files ───────────────────────────────────────── #
@@ -2080,10 +2190,15 @@ class WfosHandler(BaseHTTPRequestHandler):
             if method != "POST":
                 self.send_json(405, {"error": "Method not allowed"})
                 return
-            body = json.loads(self.read_body() or b"{}")
+            body_bytes = self.read_body()
+            idempotency_scope, handled = self.prepare_idempotency(method, path, body_bytes)
+            if handled:
+                return
+            body = json.loads(body_bytes or b"{}")
             pts  = body.get("pts", "")
             text = body.get("text", "")
             if not pts:
+                abort_idempotency(idempotency_scope)
                 self.send_json(400, {"error": "pts required"})
                 return
             ok, err = send_to_pty(pts, text)
@@ -2123,7 +2238,12 @@ class WfosHandler(BaseHTTPRequestHandler):
                 "ok": ok,
                 "error": err,
             })
-            self.send_json(200 if ok else 500, {"ok": ok, "error": err})
+            payload = {"ok": ok, "error": err}
+            if ok:
+                complete_idempotency(idempotency_scope, 200, payload)
+            else:
+                abort_idempotency(idempotency_scope)
+            self.send_json(200 if ok else 500, payload)
             return
 
         # ── PTY scheduler status ──────────────────────────── #
@@ -2183,7 +2303,11 @@ class WfosHandler(BaseHTTPRequestHandler):
             if method != "POST":
                 self.send_json(405, {"error": "Method not allowed"})
                 return
-            body         = json.loads(self.read_body() or b"{}")
+            body_bytes    = self.read_body()
+            idempotency_scope, handled = self.prepare_idempotency(method, path, body_bytes)
+            if handled:
+                return
+            body         = json.loads(body_bytes or b"{}")
             cycle_min    = float(body.get("cycle_minutes", 30))
             enter_sec    = float(body.get("enter_seconds", 10))
             workers_cfg  = body.get("workers", [])
@@ -2214,13 +2338,19 @@ class WfosHandler(BaseHTTPRequestHandler):
                 "cycle_minutes": cycle_min,
                 "enter_seconds": enter_sec,
             })
-            self.send_json(200, {"ok": True, "workers": len(workers_cfg)})
+            payload = {"ok": True, "workers": len(workers_cfg)}
+            complete_idempotency(idempotency_scope, 200, payload)
+            self.send_json(200, payload)
             return
 
         # ── PTY scheduler stop ────────────────────────────── #
         if path == "/api/pty/scheduler/stop":
             if method != "POST":
                 self.send_json(405, {"error": "Method not allowed"})
+                return
+            body_bytes = self.read_body()
+            idempotency_scope, handled = self.prepare_idempotency(method, path, body_bytes)
+            if handled:
                 return
             with _pty_sched_lock:
                 _pty_sched["running"]    = False
@@ -2229,7 +2359,9 @@ class WfosHandler(BaseHTTPRequestHandler):
                     "ts": "system", "worker": "scheduler", "action": "stop", "ok": True,
                 })
             append_system_runtime_event("scheduler-stop", {"ok": True})
-            self.send_json(200, {"ok": True})
+            payload = {"ok": True}
+            complete_idempotency(idempotency_scope, 200, payload)
+            self.send_json(200, payload)
             return
 
         # ── PTY send prompt now (all or one) ──────────────── #

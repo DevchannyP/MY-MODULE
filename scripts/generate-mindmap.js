@@ -652,6 +652,220 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .master-auto-on { color: var(--green); font-weight: 700; }
 .master-auto-off { color: var(--slate); }
 
+.sidebar-console {
+  border-radius: 18px;
+  border: 1px solid rgba(220, 207, 186, 0.9);
+  background: linear-gradient(180deg, #fffefb, #fff8ef);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+.execution-summary {
+  border-radius: 14px;
+  border: 1px solid rgba(220, 207, 186, 0.9);
+  background: rgba(255,255,255,0.82);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.execution-summary.is-success {
+  background: #f3fbf7;
+  border-color: rgba(15,118,110,0.26);
+}
+.execution-summary.is-warning {
+  background: #fff8ef;
+  border-color: rgba(180,83,9,0.28);
+}
+.execution-summary.is-error {
+  background: #fff4f3;
+  border-color: rgba(220,38,38,0.22);
+}
+.execution-summary strong {
+  font-size: 13px;
+}
+.execution-summary p {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.execution-grid {
+  display: grid;
+  gap: 8px;
+}
+.execution-row {
+  display: grid;
+  gap: 4px;
+}
+.execution-row span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.execution-row strong {
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-line;
+  word-break: break-word;
+}
+.execution-select,
+.execution-textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: #fffdf8;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+.execution-textarea {
+  min-height: 116px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.execution-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.execution-worker-cards {
+  display: grid;
+  gap: 8px;
+}
+.execution-worker-card {
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.92);
+  background: rgba(255,255,255,0.82);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.execution-worker-card.is-selected {
+  border-color: rgba(29,78,216,0.36);
+  background: #f4f8ff;
+}
+.execution-worker-card.is-error {
+  border-color: rgba(220,38,38,0.28);
+  background: #fff3f2;
+}
+.execution-worker-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.execution-worker-card-title {
+  font-size: 12px;
+  font-weight: 700;
+}
+.execution-worker-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #fff8ef;
+  color: #9a3412;
+}
+.execution-worker-pill.is-selected {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.execution-worker-pill.is-error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.execution-worker-meta,
+.execution-worker-detail {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  word-break: break-word;
+}
+.execution-worker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.execution-worker-action {
+  border: none;
+  border-radius: 10px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+.execution-worker-action.secondary {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+.execution-worker-action.primary {
+  background: linear-gradient(135deg, #0f766e, #1d4ed8);
+  color: white;
+}
+.execution-worker-action.warn {
+  background: #c2410c;
+  color: white;
+}
+.execution-worker-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.execution-button {
+  border: none;
+  border-radius: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.execution-button.primary { background: linear-gradient(135deg, #0f766e, #1d4ed8); color: white; }
+.execution-button.secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
+.execution-button.warn { background: #c2410c; color: white; }
+.execution-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.execution-note {
+  border-radius: 12px;
+  border: 1px dashed rgba(220, 207, 186, 0.92);
+  background: rgba(255,255,255,0.74);
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.execution-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid rgba(148,163,184,0.42);
+  background: rgba(148,163,184,0.12);
+  color: var(--slate);
+}
+.execution-badge.is-live {
+  border-color: rgba(15,118,110,0.4);
+  background: rgba(15,118,110,0.1);
+  color: var(--green);
+}
+.execution-badge.is-error {
+  border-color: rgba(220,38,38,0.3);
+  background: rgba(220,38,38,0.08);
+  color: var(--accent-2);
+}
+
 #control-sidebar {
   position: fixed;
   left: 0;
@@ -1263,6 +1477,33 @@ const S = {
     retryable: '가능',
     detail: 'domain, blueprint, recipe를 고른 뒤 preview를 실행하면 결과가 여기에 표시됩니다.',
   },
+  execution: {
+    runtimeAvailable: false,
+    sessions: [],
+    selectedPts: '',
+    selectedWorkerIndex: 0,
+    promptText: '',
+    optimizedPrompt: '',
+    lastPromptText: '',
+    schedulerRunning: false,
+    schedulerWorkers: [],
+    currentActivity: null,
+    lastActivity: null,
+    lastError: null,
+    nextActionHint: '',
+    controls: {
+      sendPrompt: false,
+      autoSendToggle: false,
+      stop: false,
+      retryLastPrompt: false,
+      rollback: false,
+      terminalStatusVisible: true,
+      failureReasonVisible: false,
+    },
+    statusTone: 'warning',
+    statusTitle: '터미널 연결 확인 필요',
+    statusDetail: 'PTY 세션과 스케줄러 상태를 불러오는 중입니다.',
+  },
 };
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
@@ -1280,6 +1521,7 @@ document.addEventListener('DOMContentLoaded', function() {
   runForce(120);
   render();
   renderMasterStatus();
+  renderExecutionConsole();
   renderSidebar();
   renderPlanBoard();
   updateStatusBar();
@@ -1288,6 +1530,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setupKeyboard();
   hydrateFromApi();
   hydratePlanningSnapshot();
+  hydrateExecutionRuntime();
   connectSSE();
 
   selectNode(S.statusSummary.currentLaneId || 'root');
@@ -1647,7 +1890,9 @@ function renderMasterStatus() {
   );
   nextEl.textContent = S.statusSummary.nextTask || 'NONE';
 
-  var autoOn = S.statusSummary.autoSendEnabled === true;
+  var autoOn = S.execution.runtimeAvailable
+    ? S.execution.schedulerRunning === true
+    : S.statusSummary.autoSendEnabled === true;
   if (autoSendEl) {
     autoSendEl.textContent = autoOn ? 'ON' : 'OFF';
     autoSendEl.className = autoOn ? 'master-auto-on' : 'master-auto-off';
@@ -1656,6 +1901,691 @@ function renderMasterStatus() {
     topbarBadgeEl.textContent = autoOn ? '자동전송 ON' : '자동전송 OFF';
     topbarBadgeEl.className = 'tb-auto-badge ' + (autoOn ? 'tb-auto-on' : 'tb-auto-off');
   }
+}
+
+function currentExecutionActivity() {
+  return S.execution.lastError || S.execution.currentActivity || S.execution.lastActivity || null;
+}
+
+function selectedExecutionSession() {
+  var selected = String(S.execution.selectedPts || '').trim();
+  var sessions = Array.isArray(S.execution.sessions) ? S.execution.sessions : [];
+  for (var i = 0; i < sessions.length; i++) {
+    if (String(sessions[i].pts || '') === selected) {
+      return sessions[i];
+    }
+  }
+  return null;
+}
+
+function executionSummaryTone() {
+  var activity = currentExecutionActivity();
+  if (activity && activity.error) return 'error';
+  if (S.execution.schedulerRunning) return 'success';
+  if (selectedExecutionSession()) return 'idle';
+  return 'warning';
+}
+
+function executionSummaryTitle() {
+  var activity = currentExecutionActivity();
+  if (activity && activity.error) return '실행 실패 감지';
+  if (S.execution.schedulerRunning) return '자동 전송 실행 중';
+  if (selectedExecutionSession()) return '수동 제어 대기';
+  return S.execution.runtimeAvailable ? '터미널 선택 필요' : '브리지 오프라인';
+}
+
+function executionNextAction() {
+  if (String(S.execution.nextActionHint || '').trim()) {
+    return String(S.execution.nextActionHint || '').trim();
+  }
+  var activity = currentExecutionActivity();
+  if (activity && activity.error) {
+    return '실패 원인을 확인한 뒤 이전 내용 다시 실행 또는 프롬프트 전송을 누르세요.';
+  }
+  if (S.execution.schedulerRunning) {
+    return '중지가 필요하면 자동 전송 중지를 누르고, 즉시 진행은 다음 단계 엔터를 사용하세요.';
+  }
+  if (selectedExecutionSession()) {
+    return '추천 프롬프트를 채우거나 직접 입력한 뒤 전송 또는 자동 전송 시작을 누르세요.';
+  }
+  return 'PTY 세션을 먼저 선택하거나 브리지를 연결하세요.';
+}
+
+function executionFailureLocation(activity) {
+  if (!activity || !activity.error) {
+    return '없음';
+  }
+  return [
+    activity.action || 'action 없음',
+    activity.worker || 'worker 없음',
+    activity.pts || 'pts 없음',
+  ].join(' / ');
+}
+
+function htmlDisabled(disabled) {
+  return disabled ? ' disabled aria-disabled="true"' : '';
+}
+
+function applyControlCenterRuntimeState(runtimePayload) {
+  var runtimeState = runtimePayload && runtimePayload.runtime_state ? runtimePayload.runtime_state : null;
+  if (!runtimeState) {
+    return null;
+  }
+
+  var execution = runtimeState.execution || {};
+  var scheduler = runtimeState.scheduler || {};
+  var controls = runtimeState.user_controls || {};
+
+  S.execution.runtimeAvailable = execution.runtime_available === true;
+  S.execution.schedulerRunning = scheduler.running === true;
+  S.execution.schedulerWorkers = Array.isArray(scheduler.workers) ? scheduler.workers : [];
+  S.execution.currentActivity = execution.current_activity || scheduler.current_activity || null;
+  S.execution.lastActivity = execution.last_activity || scheduler.last_activity || null;
+  S.execution.lastError = execution.last_error || null;
+  S.execution.nextActionHint = String(execution.next_action || '').trim();
+  S.execution.controls = {
+    sendPrompt: controls.send_prompt === true,
+    autoSendToggle: controls.auto_send_toggle === true,
+    stop: controls.stop === true,
+    retryLastPrompt: controls.retry_last_prompt === true,
+    rollback: controls.rollback === true,
+    terminalStatusVisible: controls.terminal_status_visible !== false,
+    failureReasonVisible: controls.failure_reason_visible === true,
+  };
+  S.rollbackEnabled = controls.rollback === true;
+  S.statusSummary.autoSendEnabled = scheduler.running === true;
+
+  if (String(execution.last_prompt_text || '').trim()) {
+    S.execution.lastPromptText = String(execution.last_prompt_text || '').trim();
+  }
+
+  return runtimeState;
+}
+
+function renderExecutionConsole() {
+  var container = document.getElementById('execution-console');
+  if (!container) return;
+
+  var sessions = Array.isArray(S.execution.sessions) ? S.execution.sessions : [];
+  var selectedSession = selectedExecutionSession();
+  var activity = currentExecutionActivity();
+  var activitySummary = activity
+    ? [activity.action || 'activity', activity.worker || 'manual', activity.pts || 'pts 없음', activity.packet_id || 'packet 없음']
+      .filter(Boolean)
+      .join(' / ')
+    : '최근 실행 없음';
+  var promptValue = S.execution.promptText || S.execution.optimizedPrompt || '';
+  var lastPrompt = (activity && activity.prompt_preview) || S.execution.lastPromptText || '없음';
+  var errorText = activity && activity.error ? String(activity.error) : '없음';
+  var failureLocation = executionFailureLocation(activity);
+  var summaryTone = executionSummaryTone();
+  var runtimeBadgeClass = 'execution-badge '
+    + (activity && activity.error ? 'is-error' : (S.execution.runtimeAvailable ? 'is-live' : ''));
+  var sendDisabled = !S.execution.controls.sendPrompt;
+  var retryDisabled = !S.execution.controls.retryLastPrompt;
+  var autoToggleDisabled = !(S.execution.controls.autoSendToggle || S.execution.controls.stop);
+  var immediateDispatchDisabled = !Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1;
+  var selectedWorkerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
+  var selectedWorker = immediateDispatchDisabled ? null : (S.execution.schedulerWorkers[selectedWorkerIndex] || null);
+  var selectedWorkerSummary = selectedWorker
+    ? String(selectedWorker.name || ('Worker ' + (selectedWorkerIndex + 1)))
+      + (String(selectedWorker.pts || '').trim() ? ' / ' + String(selectedWorker.pts || '').trim() : '')
+      + (String(selectedWorker.plan_id || '').trim() ? ' / ' + String(selectedWorker.plan_id || '').trim() : '')
+    : '없음';
+  var runtimeWorkerActivity = S.execution.currentActivity || S.execution.lastActivity || null;
+  var runtimeWorkerError = S.execution.lastError || null;
+  var workerRosterSummary = immediateDispatchDisabled
+    ? '등록된 worker 없음'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      return label + (pts ? ' [' + pts + ']' : '');
+    }).join(', ');
+  var workerActivitySummary = immediateDispatchDisabled
+    ? '활동 중인 worker 없음'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
+      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var workerStatus = '대기';
+      if (isErrorWorker) {
+        workerStatus = '실패: ' + String(runtimeWorkerError.error || runtimeWorkerError.action || '원인 미상');
+      } else if (isActiveWorker) {
+        workerStatus = (runtimeWorkerActivity.action === 'running' ? '실행 중' : '최근 ' + String(runtimeWorkerActivity.action || 'activity'));
+      }
+      return label + (pts ? ' [' + pts + ']' : '') + ' - ' + workerStatus;
+    }).join(', ');
+  var workerBadgeSummary = immediateDispatchDisabled
+    ? '표시할 worker 배지 없음'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      var preview = String((worker && worker.prompt_preview) || '').trim();
+      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
+      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var badge = isErrorWorker
+        ? 'ERR ' + String(runtimeWorkerError.error || runtimeWorkerError.action || '원인 미상')
+        : isActiveWorker
+          ? String(runtimeWorkerActivity.action === 'running' ? 'RUN' : String(runtimeWorkerActivity.action || 'RECENT').toUpperCase())
+          : 'IDLE';
+      var detail = isErrorWorker
+        ? String(runtimeWorkerError.prompt_preview || preview || '').trim()
+        : isActiveWorker
+          ? String(runtimeWorkerActivity.prompt_preview || preview || '').trim()
+          : preview;
+      return label
+        + (pts ? ' [' + pts + ']' : '')
+        + ' {' + badge + '}'
+        + (detail ? ' ' + detail : '');
+    }).join(' | ');
+  var workerCardMarkup = immediateDispatchDisabled
+    ? ''
+    : '<div class="execution-worker-cards">' + S.execution.schedulerWorkers.map(function(worker, index) {
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      var planId = String((worker && worker.plan_id) || '').trim();
+      var preview = String((worker && worker.prompt_preview) || '').trim();
+      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
+      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var isSelectedWorker = index === selectedWorkerIndex;
+      var statusLabel = isErrorWorker
+        ? '실패'
+        : isActiveWorker
+          ? (runtimeWorkerActivity.action === 'running' ? '실행 중' : '최근 ' + String(runtimeWorkerActivity.action || 'activity'))
+          : '대기';
+      var detail = isErrorWorker
+        ? String(runtimeWorkerError.error || '원인 미상')
+        : isActiveWorker
+          ? String(runtimeWorkerActivity.prompt_preview || preview || '최근 프롬프트 없음')
+          : (preview || '대기 중');
+      var cardClass = 'execution-worker-card'
+        + (isSelectedWorker ? ' is-selected' : '')
+        + (isErrorWorker ? ' is-error' : '');
+      var pillClass = 'execution-worker-pill'
+        + (isSelectedWorker ? ' is-selected' : '')
+        + (isErrorWorker ? ' is-error' : '');
+      var selectButtonLabel = isSelectedWorker ? '선택됨' : '이 worker 선택';
+      return '<div class="' + cardClass + '">' +
+        '<div class="execution-worker-card-head">' +
+          '<strong class="execution-worker-card-title">' + escHtml(label) + '</strong>' +
+          '<span class="' + pillClass + '">' + escHtml(statusLabel) + '</span>' +
+        '</div>' +
+        '<div class="execution-worker-meta">' + escHtml((pts ? pts : 'pts 없음') + (planId ? ' / ' + planId : '')) + '</div>' +
+        '<div class="execution-worker-detail">' + escHtml(detail) + '</div>' +
+        '<div class="execution-worker-actions">' +
+          '<button type="button" class="execution-worker-action secondary" onclick="focusExecutionWorker(' + String(index) + ')"' + htmlDisabled(isSelectedWorker) + '>' + escHtml(selectButtonLabel) + '</button>' +
+          '<button type="button" class="execution-worker-action primary" onclick="sendExecutionWorkerNow(' + String(index) + ')">이 worker 즉시 전송</button>' +
+          (isErrorWorker ? '<button type="button" class="execution-worker-action warn" onclick="retryExecutionWorker(' + String(index) + ')">이 worker 재시도</button>' : '') +
+          (isErrorWorker && S.execution.schedulerRunning ? '<button type="button" class="execution-worker-action warn" onclick="stopAutoSendFromWorkerCard(' + String(index) + ')">이 worker에서 자동 전송 중지</button>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  var sessionOptions = sessions.length
+    ? sessions.map(function(session) {
+      var selected = String(session.pts || '') === String(S.execution.selectedPts || '');
+      return '<option value="' + escHtml(session.pts || '') + '"' + (selected ? ' selected' : '') + '>'
+        + escHtml(session.label || session.pts || 'unknown pts') + '</option>';
+    }).join('')
+    : '<option value="">연결된 PTY 세션 없음</option>';
+  var workerOptions = immediateDispatchDisabled
+    ? '<option value="0">사용 가능한 worker 없음</option>'
+    : S.execution.schedulerWorkers.map(function(worker, index) {
+      var selected = index === selectedWorkerIndex;
+      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var pts = String((worker && worker.pts) || '').trim();
+      return '<option value="' + String(index) + '"' + (selected ? ' selected' : '') + '>'
+        + escHtml(label + (pts ? ' [' + pts + ']' : '')) + '</option>';
+    }).join('');
+
+  container.innerHTML = '<div class="sidebar-console">' +
+    '<div class="execution-summary is-' + escHtml(summaryTone) + '">' +
+      '<span class="' + runtimeBadgeClass + '">' + escHtml(S.execution.schedulerRunning ? '자동 전송 실행 중' : (S.execution.runtimeAvailable ? '수동 제어 가능' : '브리지 오프라인')) + '</span>' +
+      '<strong>' + escHtml(S.execution.statusTitle || executionSummaryTitle()) + '</strong>' +
+      '<p>' + escHtml(S.execution.statusDetail || executionNextAction()) + '</p>' +
+    '</div>' +
+    '<div class="execution-grid">' +
+      '<div class="execution-row"><span>선택 터미널</span><strong>' + escHtml(selectedSession ? selectedSession.label : '없음') + '</strong></div>' +
+      '<div class="execution-row"><span>자동 전송</span><strong>' + escHtml(S.execution.schedulerRunning ? '실행 중' : '중지됨') + '</strong></div>' +
+      '<div class="execution-row"><span>활성 worker</span><strong>' + escHtml(String(Array.isArray(S.execution.schedulerWorkers) ? S.execution.schedulerWorkers.length : 0)) + '</strong></div>' +
+      '<div class="execution-row"><span>선택 worker</span><strong>' + escHtml(selectedWorkerSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>worker 배치</span><strong>' + escHtml(workerRosterSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>worker 상태 요약</span><strong>' + escHtml(workerActivitySummary) + '</strong></div>' +
+      '<div class="execution-row"><span>worker 최근 배지</span><strong>' + escHtml(workerBadgeSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>마지막 실행</span><strong>' + escHtml(activitySummary) + '</strong></div>' +
+      '<div class="execution-row"><span>마지막 프롬프트</span><strong>' + escHtml(lastPrompt) + '</strong></div>' +
+      '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(failureLocation) + '</strong></div>' +
+      '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(errorText) + '</strong></div>' +
+      '<div class="execution-row"><span>지금 할 일</span><strong>' + escHtml(executionNextAction()) + '</strong></div>' +
+    '</div>' +
+    workerCardMarkup +
+    '<div class="execution-row">' +
+      '<span>전송 대상</span>' +
+      '<select id="execution-pts-select" class="execution-select" onchange="syncExecutionInputs()"' + htmlDisabled(sendDisabled) + '>' + sessionOptions + '</select>' +
+    '</div>' +
+    '<div class="execution-row">' +
+      '<span>프롬프트 입력</span>' +
+      '<textarea id="execution-prompt" class="execution-textarea" placeholder="여기에 직접 프롬프트를 입력하거나 추천 프롬프트를 불러오세요." oninput="syncExecutionInputs()"' + htmlDisabled(sendDisabled) + '>' + escHtml(promptValue) + '</textarea>' +
+    '</div>' +
+    '<div class="execution-row">' +
+      '<span>즉시 제어 worker</span>' +
+      '<select id="execution-worker-select" class="execution-select" onchange="syncExecutionInputs()"' + htmlDisabled(immediateDispatchDisabled) + '>' + workerOptions + '</select>' +
+    '</div>' +
+    '<div class="execution-actions">' +
+      '<button type="button" class="execution-button primary" onclick="sendPromptNow()"' + htmlDisabled(sendDisabled) + '>프롬프트 전송</button>' +
+      '<button type="button" class="execution-button secondary" onclick="loadRecommendedPrompt()">추천 프롬프트</button>' +
+      '<button type="button" class="execution-button secondary" onclick="sendEnterNow()"' + htmlDisabled(sendDisabled) + '>다음 단계 엔터</button>' +
+      '<button type="button" class="execution-button secondary" onclick="dispatchSchedulerPromptNow()"' + htmlDisabled(immediateDispatchDisabled) + '>현재 worker 즉시 전송</button>' +
+      '<button type="button" class="execution-button secondary" onclick="dispatchSchedulerEnterNow()"' + htmlDisabled(immediateDispatchDisabled) + '>전체 worker 즉시 엔터</button>' +
+      '<button type="button" class="execution-button secondary" onclick="retryLastPrompt()"' + htmlDisabled(retryDisabled) + '>이전 내용 다시 실행</button>' +
+      '<button type="button" class="execution-button warn" onclick="toggleAutoSendRuntime()"' + htmlDisabled(autoToggleDisabled) + '>' + escHtml(S.execution.schedulerRunning ? '자동 전송 중지' : '자동 전송 시작') + '</button>' +
+    '</div>' +
+    '<div class="execution-note">실행 중지, 재시도, 자동 전송 on/off, worker 즉시 전송, 현재 실패 원인, 다음 행동을 한 카드에 모았습니다. 기존 롤백은 도메인 패널에서 그대로 유지됩니다.</div>' +
+  '</div>';
+}
+
+function syncExecutionInputs() {
+  var selectEl = document.getElementById('execution-pts-select');
+  var promptEl = document.getElementById('execution-prompt');
+  var workerEl = document.getElementById('execution-worker-select');
+  if (selectEl) S.execution.selectedPts = selectEl.value;
+  if (promptEl) S.execution.promptText = promptEl.value;
+  if (workerEl) S.execution.selectedWorkerIndex = Math.max(0, Number.parseInt(workerEl.value, 10) || 0);
+}
+
+function focusExecutionWorker(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', 'worker 선택 확인 필요', '선택할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+}
+
+function sendExecutionWorkerNow(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', '즉시 전송 비활성화', '즉시 전송할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+  dispatchSchedulerPromptNow();
+}
+
+function retryExecutionWorker(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', '재시도 비활성화', '재시도할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+  dispatchSchedulerPromptNow();
+}
+
+function stopAutoSendFromWorkerCard(index) {
+  if (!Array.isArray(S.execution.schedulerWorkers) || index < 0 || index >= S.execution.schedulerWorkers.length) {
+    setExecutionStatus('warning', '자동 전송 중지 비활성화', '자동 전송을 중지할 worker가 유효하지 않습니다.');
+    return;
+  }
+  S.execution.selectedWorkerIndex = index;
+  renderExecutionConsole();
+  if (!S.execution.schedulerRunning) {
+    setExecutionStatus('warning', '자동 전송 중지 비활성화', '이미 자동 전송이 중지되어 있습니다.');
+    return;
+  }
+  toggleAutoSendRuntime();
+}
+
+function setExecutionStatus(tone, title, detail) {
+  S.execution.statusTone = tone;
+  S.execution.statusTitle = title;
+  S.execution.statusDetail = detail;
+  renderExecutionConsole();
+}
+
+function resolveCurrentPacketId() {
+  var snapshotPacketId = String((((S.planningSnapshot || {}).current_wp || {}).id) || '').trim();
+  if (snapshotPacketId) return snapshotPacketId;
+  return String(((RAW.meta.report || {}).current_wp) || 'NONE');
+}
+
+function loadRecommendedPrompt() {
+  var prompt = String(S.execution.optimizedPrompt || '').trim();
+  if (!prompt) {
+    prompt = '[실행 지시]\\n현재 목표: ' + String(S.statusSummary.goal || '목표 미정') + '\\n다음 작업: ' + String(S.statusSummary.nextTask || 'NONE');
+  }
+  S.execution.promptText = prompt;
+  setExecutionStatus('idle', '추천 프롬프트 적용 완료', '내용을 검토한 뒤 프롬프트 전송 또는 자동 전송 시작을 누르세요.');
+  showToast('추천 프롬프트를 실행 패널에 채웠습니다.');
+}
+
+function hydrateExecutionRuntime() {
+  Promise.all([
+    fetchJson('/api/pty/sessions').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson('/ui/control-center-runtime').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetchJson('/api/automation/optimize-prompt').then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+  ]).then(function(results) {
+    var sessionsPayload = results[0];
+    var runtimePayload = results[1];
+    var optimizedPromptPayload = results[2];
+    var sessions = Array.isArray(sessionsPayload && sessionsPayload.sessions) ? sessionsPayload.sessions : [];
+    var runtimeState = applyControlCenterRuntimeState(runtimePayload);
+    var preferredPts = String(S.execution.selectedPts || '').trim()
+      || String((((runtimeState || {}).execution || {}).selected_pts_hint) || '').trim()
+      || String((((runtimeState || {}).execution || {}).current_activity || {}).pts || '').trim()
+      || String((((runtimeState || {}).execution || {}).last_activity || {}).pts || '').trim();
+
+    S.execution.sessions = sessions;
+    if (!runtimeState) {
+      S.execution.runtimeAvailable = Boolean(sessionsPayload);
+      S.execution.schedulerRunning = false;
+      S.execution.schedulerWorkers = [];
+      S.execution.currentActivity = null;
+      S.execution.lastActivity = null;
+      S.execution.lastError = null;
+      S.execution.nextActionHint = '';
+      S.execution.controls = {
+        sendPrompt: sessions.length > 0,
+        autoSendToggle: sessions.length > 0,
+        stop: false,
+        retryLastPrompt: Boolean(String(S.execution.lastPromptText || '').trim()),
+        rollback: S.rollbackEnabled === true,
+        terminalStatusVisible: true,
+        failureReasonVisible: false,
+      };
+    }
+    S.execution.optimizedPrompt = String((optimizedPromptPayload && optimizedPromptPayload.prompt) || S.execution.optimizedPrompt || '');
+
+    if (preferredPts && sessions.some(function(session) { return String(session.pts || '') === preferredPts; })) {
+      S.execution.selectedPts = preferredPts;
+    } else if (sessions.length > 0) {
+      S.execution.selectedPts = String(sessions[0].pts || '');
+    } else {
+      S.execution.selectedPts = '';
+    }
+    if (!Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1) {
+      S.execution.selectedWorkerIndex = 0;
+    } else if (!Number.isInteger(S.execution.selectedWorkerIndex) || S.execution.selectedWorkerIndex < 0 || S.execution.selectedWorkerIndex >= S.execution.schedulerWorkers.length) {
+      S.execution.selectedWorkerIndex = 0;
+    }
+
+    if (!String(S.execution.promptText || '').trim()) {
+      S.execution.promptText = S.execution.optimizedPrompt || String(S.statusSummary.goal || '');
+    }
+
+    S.execution.statusTone = executionSummaryTone();
+    S.execution.statusTitle = executionSummaryTitle();
+    S.execution.statusDetail = executionNextAction();
+    renderExecutionConsole();
+    renderMasterStatus();
+  });
+}
+
+function sendPromptNow() {
+  if (!S.execution.controls.sendPrompt) {
+    setExecutionStatus('warning', '프롬프트 전송 비활성화', '현재 상태에서는 전송 가능한 터미널이 없습니다.');
+    return;
+  }
+  syncExecutionInputs();
+  var pts = String(S.execution.selectedPts || '').trim();
+  var prompt = String(S.execution.promptText || '').trim();
+  if (!pts) {
+    setExecutionStatus('warning', '전송 대상 필요', '먼저 PTY 세션을 선택하세요.');
+    return;
+  }
+  if (!prompt) {
+    setExecutionStatus('warning', '프롬프트 입력 필요', '추천 프롬프트를 불러오거나 직접 입력하세요.');
+    return;
+  }
+
+  setExecutionStatus('idle', '프롬프트 전송 중', '선택한 터미널로 프롬프트를 보내는 중입니다.');
+  fetchJson('/api/pty/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-send:' + pts + ':prompt',
+    idempotencyPayload: {
+      pts: pts,
+      prompt: prompt,
+      action: 'prompt',
+      packet_id: resolveCurrentPacketId(),
+    },
+    body: JSON.stringify({
+      pts: pts,
+      text: prompt.endsWith('\r') ? prompt : prompt + '\r',
+      prompt: prompt,
+      action: 'prompt',
+      name: 'Control Center',
+      packet_id: resolveCurrentPacketId(),
+    }),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      if (!result.ok || result.body.ok === false) {
+        throw new Error(String(result.body.detail || result.body.message || result.body.error || 'prompt send failed'));
+      }
+      S.execution.lastPromptText = prompt;
+      showToast('프롬프트 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '프롬프트 전송 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function sendEnterNow() {
+  if (!S.execution.controls.sendPrompt) {
+    setExecutionStatus('warning', '엔터 전송 비활성화', '현재 상태에서는 엔터를 보낼 터미널이 없습니다.');
+    return;
+  }
+  syncExecutionInputs();
+  var pts = String(S.execution.selectedPts || '').trim();
+  if (!pts) {
+    setExecutionStatus('warning', '전송 대상 필요', '엔터를 보낼 PTY 세션을 먼저 선택하세요.');
+    return;
+  }
+
+  setExecutionStatus('idle', '다음 단계 엔터 전송 중', '선택한 터미널에 엔터를 보내는 중입니다.');
+  fetchJson('/api/pty/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-send:' + pts + ':enter',
+    idempotencyPayload: {
+      pts: pts,
+      prompt: String(S.execution.lastPromptText || S.execution.promptText || '').trim(),
+      action: 'enter',
+      packet_id: resolveCurrentPacketId(),
+    },
+    body: JSON.stringify({
+      pts: pts,
+      text: '\r',
+      prompt: String(S.execution.lastPromptText || S.execution.promptText || '').trim(),
+      action: 'enter',
+      name: 'Control Center',
+      packet_id: resolveCurrentPacketId(),
+    }),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      if (!result.ok || result.body.ok === false) {
+        throw new Error(String(result.body.detail || result.body.message || result.body.error || 'enter send failed'));
+      }
+      showToast('다음 단계 엔터 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '엔터 전송 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function dispatchSchedulerPromptNow() {
+  if (!Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1) {
+    setExecutionStatus('warning', '즉시 전송 비활성화', '즉시 전송할 scheduler worker가 아직 없습니다.');
+    return;
+  }
+  syncExecutionInputs();
+  var workerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
+  var worker = S.execution.schedulerWorkers[workerIndex];
+  if (!worker) {
+    setExecutionStatus('warning', 'worker 선택 확인 필요', '즉시 전송할 worker를 다시 선택하세요.');
+    return;
+  }
+  var workerName = String(worker.name || ('Worker ' + (workerIndex + 1)));
+
+  setExecutionStatus('idle', '현재 worker 즉시 전송 중', workerName + ' 프롬프트를 즉시 전송하는 중입니다.');
+  fetchJson('/api/pty/send-now', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-scheduler:send-now',
+    idempotencyPayload: { worker_index: workerIndex },
+    body: JSON.stringify({ worker_index: workerIndex }),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      var firstResult = Array.isArray(result.body.results) ? result.body.results[0] : null;
+      if (!result.ok || !firstResult || firstResult.ok !== true) {
+        throw new Error(String((firstResult && firstResult.error) || result.body.detail || result.body.message || 'scheduler send-now failed'));
+      }
+      showToast(workerName + ' 즉시 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '현재 worker 즉시 전송 실패', workerName + ': ' + String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function dispatchSchedulerEnterNow() {
+  if (!Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1) {
+    setExecutionStatus('warning', '즉시 엔터 비활성화', '즉시 엔터를 보낼 scheduler worker가 아직 없습니다.');
+    return;
+  }
+
+  setExecutionStatus('idle', '전체 worker 즉시 엔터 전송 중', '현재 scheduler worker 전체에 즉시 엔터를 보내는 중입니다.');
+  fetchJson('/api/pty/enter-now', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-scheduler:enter-now',
+    idempotencyPayload: {},
+    body: JSON.stringify({}),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      var results = Array.isArray(result.body.results) ? result.body.results : [];
+      var failed = results.find(function(item) { return !item || item.ok !== true; });
+      if (!result.ok || results.length < 1 || failed) {
+        throw new Error(String((failed && failed.error) || result.body.detail || result.body.message || 'scheduler enter-now failed'));
+      }
+      showToast('전체 worker 즉시 엔터 전송 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '전체 worker 즉시 엔터 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
+}
+
+function retryLastPrompt() {
+  if (!S.execution.controls.retryLastPrompt) {
+    setExecutionStatus('warning', '재시도 비활성화', '마지막 프롬프트가 기록되기 전에는 다시 실행할 수 없습니다.');
+    return;
+  }
+  if (!String(S.execution.lastPromptText || '').trim()) {
+    setExecutionStatus('warning', '재시도할 내용 없음', '먼저 한 번이라도 프롬프트를 전송해야 다시 실행할 수 있습니다.');
+    return;
+  }
+  S.execution.promptText = S.execution.lastPromptText;
+  renderExecutionConsole();
+  sendPromptNow();
+}
+
+function buildSchedulerWorkers() {
+  var snapshot = S.planningSnapshot || {};
+  var automation = snapshot.automation || snapshot.automation_config || {};
+  var selectedPts = String(S.execution.selectedPts || '').trim();
+  var basePrompt = String(S.execution.promptText || S.execution.lastPromptText || S.execution.optimizedPrompt || '계속').trim();
+  var cycleMinutes = Number(automation.cycle_minutes || 30);
+  var enterSeconds = Number(automation.enter_seconds || 10);
+  var configuredWorkers = Array.isArray(automation.workers) ? automation.workers : [];
+  var workers = configuredWorkers.map(function(worker, index) {
+    return {
+      name: String(worker.name || 'Worker ' + (index + 1)),
+      plan_id: String(worker.plan_id || resolveCurrentPacketId()),
+      pts: String(worker.pts || selectedPts),
+      prompt: String(worker.prompt || basePrompt),
+      use_home_operator_prompt: worker.use_home_operator_prompt === true,
+      cycle_minutes: Number(worker.cycle_minutes || cycleMinutes),
+      enter_seconds: Number(worker.enter_seconds || enterSeconds),
+    };
+  }).filter(function(worker) { return String(worker.pts || '').trim(); });
+
+  if (!workers.length && selectedPts) {
+    workers.push({
+      name: 'Control Center Worker',
+      plan_id: resolveCurrentPacketId(),
+      pts: selectedPts,
+      prompt: basePrompt || '계속',
+      use_home_operator_prompt: false,
+      cycle_minutes: cycleMinutes,
+      enter_seconds: enterSeconds,
+    });
+  }
+
+  return {
+    cycle_minutes: cycleMinutes,
+    enter_seconds: enterSeconds,
+    workers: workers,
+  };
+}
+
+function toggleAutoSendRuntime() {
+  if (!(S.execution.controls.autoSendToggle || S.execution.controls.stop)) {
+    setExecutionStatus('warning', '자동 전송 비활성화', '세션과 실행 상태를 확인한 뒤 다시 시도하세요.');
+    return;
+  }
+  syncExecutionInputs();
+  if (S.execution.schedulerRunning) {
+    setExecutionStatus('warning', '자동 전송 중지 중', '현재 실행 중인 자동 전송을 중지하는 중입니다.');
+    fetchJson('/api/pty/scheduler/stop', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      idempotencyScope: 'pty-scheduler:stop',
+      idempotencyPayload: {},
+      body: JSON.stringify({}),
+    })
+      .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+      .then(function(result) { if (!result.ok) { throw new Error(String(result.body.detail || result.body.message || result.body.error || 'scheduler stop failed')); } return result.body; })
+      .then(function() {
+        showToast('자동 전송 중지 완료');
+        hydrateExecutionRuntime();
+      })
+      .catch(function(error) {
+        setExecutionStatus('error', '자동 전송 중지 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+      });
+    return;
+  }
+
+  var schedulerPayload = buildSchedulerWorkers();
+  if (!schedulerPayload.workers.length) {
+    setExecutionStatus('warning', '자동 전송 시작 불가', '세션을 선택하고 전송할 프롬프트를 준비해야 자동 전송을 시작할 수 있습니다.');
+    return;
+  }
+
+  setExecutionStatus('idle', '자동 전송 시작 중', '선택한 세션과 프롬프트로 자동 전송을 시작하는 중입니다.');
+  fetchJson('/api/pty/scheduler/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'pty-scheduler:start',
+    idempotencyPayload: schedulerPayload,
+    body: JSON.stringify(schedulerPayload),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) { if (!result.ok) { throw new Error(String(result.body.detail || result.body.message || result.body.error || 'scheduler start failed')); } return result.body; })
+    .then(function() {
+      S.execution.lastPromptText = String(S.execution.promptText || S.execution.lastPromptText || '').trim();
+      showToast('자동 전송 시작 완료');
+      hydrateExecutionRuntime();
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', '자동 전송 시작 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+    });
 }
 
 function renderSidebar() {
@@ -2265,6 +3195,8 @@ function previewModuleScaffold() {
   fetchJson(S.planningApiBase + '/scaffold-preview', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'scaffold-preview:' + S.scaffoldForm.domain + ':' + S.scaffoldForm.blueprint,
+    idempotencyPayload: S.scaffoldForm,
     body: JSON.stringify(S.scaffoldForm),
   })
     .then(function(r) {
@@ -2332,6 +3264,8 @@ function createModuleScaffold() {
   fetchJson(S.planningApiBase + '/scaffold-create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'scaffold-create:' + S.scaffoldForm.domain + ':' + S.scaffoldForm.blueprint,
+    idempotencyPayload: S.scaffoldForm,
     body: JSON.stringify(S.scaffoldForm),
   })
     .then(function(r) {
@@ -2425,10 +3359,64 @@ function mergeHeaders(base, extra) {
   return next;
 }
 
+var PENDING_IDEMPOTENCY_KEYS = {};
+
+function stableStringifyForIdempotency(value) {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return '[' + value.map(function(item) { return stableStringifyForIdempotency(item); }).join(',') + ']';
+  }
+  var keys = Object.keys(value).sort();
+  return '{' + keys.map(function(key) {
+    return JSON.stringify(key) + ':' + stableStringifyForIdempotency(value[key]);
+  }).join(',') + '}';
+}
+
+function createClientIdempotencyKey(scope) {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return scope + ':' + window.crypto.randomUUID();
+  }
+  return scope + ':' + Date.now() + ':' + Math.random().toString(16).slice(2);
+}
+
+function reserveIdempotencyKey(scope, payload) {
+  var fingerprint = stableStringifyForIdempotency(payload || {});
+  var entry = PENDING_IDEMPOTENCY_KEYS[scope];
+  if (entry && entry.fingerprint === fingerprint) {
+    return entry.key;
+  }
+  var key = createClientIdempotencyKey(scope);
+  PENDING_IDEMPOTENCY_KEYS[scope] = { key: key, fingerprint: fingerprint };
+  return key;
+}
+
+function releaseIdempotencyKey(scope, key) {
+  var entry = PENDING_IDEMPOTENCY_KEYS[scope];
+  if (entry && entry.key === key) {
+    delete PENDING_IDEMPOTENCY_KEYS[scope];
+  }
+}
+
 function fetchJson(url, options) {
   var opts = options || {};
   var headers = mergeHeaders(AUTH_HEADERS, opts.headers || {});
-  return fetch(url, Object.assign({}, opts, { headers: headers }));
+  var method = String(opts.method || 'GET').toUpperCase();
+  var idempotencyScope = opts.idempotencyScope;
+  var reservedKey = '';
+  if (method === 'POST' && idempotencyScope) {
+    reservedKey = reserveIdempotencyKey(idempotencyScope, opts.idempotencyPayload);
+    headers['Idempotency-Key'] = reservedKey;
+  }
+  var requestOptions = Object.assign({}, opts, { headers: headers });
+  delete requestOptions.idempotencyScope;
+  delete requestOptions.idempotencyPayload;
+  return fetch(url, requestOptions).finally(function() {
+    if (reservedKey && idempotencyScope) {
+      releaseIdempotencyKey(idempotencyScope, reservedKey);
+    }
+  });
 }
 
 function fetchAuditLog(domainId) {
@@ -2568,6 +3556,9 @@ function applyPlanningSnapshot(snapshot) {
   if (automationConfig && typeof automationConfig.enabled === 'boolean') {
     S.statusSummary.autoSendEnabled = automationConfig.enabled;
   }
+  if (!String(S.execution.promptText || '').trim() && currentWp.goal) {
+    S.execution.promptText = '[현재 목표]\n' + String(currentWp.goal) + '\n\n[다음 작업]\n' + String(nextActions.next_wp || 'NONE');
+  }
 
   S.planRows = [
     {
@@ -2651,6 +3642,7 @@ function applyPlanningSnapshot(snapshot) {
   ];
 
   renderMasterStatus();
+  renderExecutionConsole();
   renderPlanBoard();
   if (S.selected) renderPanel(S.selected);
 }
@@ -2879,6 +3871,18 @@ window.openRollbackModal  = openRollbackModal;
 window.confirmRollback    = confirmRollback;
 window.fitView            = fitView;
 window.selectControlNode  = selectControlNode;
+window.syncExecutionInputs = syncExecutionInputs;
+window.focusExecutionWorker = focusExecutionWorker;
+window.sendExecutionWorkerNow = sendExecutionWorkerNow;
+window.retryExecutionWorker = retryExecutionWorker;
+window.stopAutoSendFromWorkerCard = stopAutoSendFromWorkerCard;
+window.sendPromptNow = sendPromptNow;
+window.sendEnterNow = sendEnterNow;
+window.dispatchSchedulerPromptNow = dispatchSchedulerPromptNow;
+window.dispatchSchedulerEnterNow = dispatchSchedulerEnterNow;
+window.retryLastPrompt = retryLastPrompt;
+window.toggleAutoSendRuntime = toggleAutoSendRuntime;
+window.loadRecommendedPrompt = loadRecommendedPrompt;
 window.handleScaffoldInput = handleScaffoldInput;
 window.handleScaffoldBlueprint = handleScaffoldBlueprint;
 window.previewModuleScaffold = previewModuleScaffold;
@@ -2886,6 +3890,7 @@ window.createModuleScaffold = createModuleScaffold;
 window.loadScaffoldCommand = loadScaffoldCommand;
 
 setInterval(updateStatusBar, 10000);
+setInterval(hydrateExecutionRuntime, 15000);
 
 })();`;
 
@@ -2924,6 +3929,10 @@ ${css}
 </section>
 
 <aside id="control-sidebar">
+  <section class="sidebar-section">
+    <div class="sidebar-title">실행 제어</div>
+    <div id="execution-console"></div>
+  </section>
   <section class="sidebar-section">
     <div class="sidebar-title">\ud1b5\uc81c \ud750\ub984</div>
     <div id="control-sidebar-list" class="sidebar-stack"></div>
