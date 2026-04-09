@@ -26,12 +26,26 @@ plugin_flags:
   video.transcode.enabled: false
   video.admin.enabled: false
 
+# ── 환경 변수 오버라이드 (런타임 활성화) ────────────────────────────────
+# .env 또는 OS 환경 변수로 yaml 기본값을 코드 변경 없이 덮어쓸 수 있다.
+# 변환 규칙: 플래그 키의 dot/hyphen → underscore, 대문자, WOS_FLAG_ 접두어
+#
+# 예시 (.env 또는 export):
+#   WOS_FLAG_ENABLE_TASK_MANAGEMENT=true
+#   WOS_FLAG_BILLING_ENABLED=true
+#   WOS_FLAG_VIDEO_ENABLED=true
+#   WOS_FLAG_VIDEO_UPLOAD_ENABLED=true
+#
+# 주의: yaml에 선언되지 않은 키는 env로도 생성되지 않는다 (phantom flag 방지).
+# 적용 시 서버 stderr에 "[FeatureFlagProvider] ENV override: ..." 로그 출력됨.
+#
 # ── 활성화 절차 ──────────────────────────────────────────────────────────
 # 1. Stage D 품질 게이트 전체 PASS
-# 2. enable_task_management: true (내부 환경 먼저)
+# 2. .env에 WOS_FLAG_ENABLE_TASK_MANAGEMENT=true 추가 (즉시 활성화, 코드 변경 불필요)
+#    또는 이 파일에서 enable_task_management: true 로 직접 변경 (영구 정책 변경 시)
 # 3. plugin-registry의 rollout.percentage를 10으로 상향 (canary)
 # 4. 모니터링 후 이상 없으면 100으로 상향
 # 5. plugin status: inactive → active 변경
 #
 # 긴급 비활성화:
-# enable_task_management: false 로 즉시 변경 → 코드 배포 없이 기능 비활성화
+# .env에 WOS_FLAG_ENABLE_TASK_MANAGEMENT=false → 서버 재시작만으로 즉시 비활성화
