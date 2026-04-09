@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-09T13:53:41.808346+00:00",
+  "generated_at": "2026-04-09T14:11:14.316090+00:00",
   "goal": "plan-and-learn",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -235,13 +235,13 @@
       "feature-flag-provider"
     ],
     "selected_adapters": [
-      "feature-flag-provider",
-      "remote-mcp-connector",
-      "observability-otel",
-      "openai-responses-agent",
       "master-ui-plugin-shell",
-      "master-ui-static-planner",
-      "planner-state-memory"
+      "remote-mcp-connector",
+      "openai-responses-agent",
+      "observability-otel",
+      "planner-state-memory",
+      "feature-flag-provider",
+      "master-ui-static-planner"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-09T13:53:41.808328+00:00",
+    "generated_at": "2026-04-09T14:11:14.316071+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-09 22:51:43 +0900",
+            "timestamp": "2026-04-09 23:03:12 +0900",
             "title": "git commit",
-            "detail": "feat(ui-shell-contract): register /flags endpoint + contract 3-way validation complete",
+            "detail": "chore(artifacts): rebuild master-planner after L5 gate audit entry",
             "tag": "git"
           }
         ]
