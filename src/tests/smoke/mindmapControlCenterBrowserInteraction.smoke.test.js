@@ -195,3 +195,60 @@ test('[mindmap control center browser interaction smoke] selected failing worker
     await runtime.shutdown({ reason: 'test' });
   }
 });
+
+test('[mindmap control center browser interaction smoke] send-now idempotency key replays completed response', async (t) => {
+  const runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+  if (!runtime) {
+    return;
+  }
+
+  try {
+    const ptySessions = await requestJson(runtime.url, '/api/pty/sessions');
+    assert.equal(ptySessions.status, 200);
+    assert.ok(ptySessions.body.sessions.length >= 1);
+
+    const selectedSession = ptySessions.body.sessions[0];
+    const schedulerStart = await postJson(runtime.url, '/api/pty/scheduler/start', {
+      cycle_minutes: 15,
+      enter_seconds: 5,
+      workers: [
+        {
+          name: 'Idempotency Worker',
+          plan_id: 'WP-IDEM-TEST',
+          pts: selectedSession.pts,
+          prompt: 'idempotency test prompt',
+          cycle_minutes: 15,
+          enter_seconds: 5,
+        },
+      ],
+    });
+    assert.equal(schedulerStart.status, 200);
+
+    const idempotencyKey = `send-now-idem-${Date.now()}`;
+
+    // First request — should succeed and store result
+    const first = await fetch(new URL('/api/pty/send-now', runtime.url), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'idempotency-key': idempotencyKey },
+      body: JSON.stringify({ worker_index: 0 }),
+    });
+    const firstBody = await first.json();
+    assert.equal(first.status, 200);
+    assert.equal(first.headers.get('idempotency-replayed'), null, 'first request must not be replayed');
+    assert.ok(Array.isArray(firstBody.results));
+    assert.equal(firstBody.results[0].ok, true);
+
+    // Second request — same key, same path → must replay
+    const second = await fetch(new URL('/api/pty/send-now', runtime.url), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'idempotency-key': idempotencyKey },
+      body: JSON.stringify({ worker_index: 0 }),
+    });
+    const secondBody = await second.json();
+    assert.equal(second.status, 200);
+    assert.equal(second.headers.get('idempotency-replayed'), 'true', 'second request must be replayed');
+    assert.deepEqual(secondBody, firstBody, 'replayed body must match original');
+  } finally {
+    await runtime.shutdown({ reason: 'test' });
+  }
+});

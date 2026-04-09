@@ -334,6 +334,8 @@ paths:
       summary: "현재 worker 프롬프트 즉시 전송"
       operationId: "dispatchSchedulerPromptNow"
       tags: [scheduler]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       requestBody:
         required: false
         content:
@@ -343,6 +345,9 @@ paths:
       responses:
         "200":
           description: "전송 결과"
+          headers:
+            Idempotency-Replayed:
+              $ref: "#/components/headers/IdempotencyReplayed"
           content:
             application/json:
               schema:
@@ -370,9 +375,14 @@ paths:
       summary: "모든 worker에 Enter 즉시 전송"
       operationId: "dispatchSchedulerEnterNow"
       tags: [scheduler]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       responses:
         "200":
           description: "전송 결과"
+          headers:
+            Idempotency-Replayed:
+              $ref: "#/components/headers/IdempotencyReplayed"
           content:
             application/json:
               schema:

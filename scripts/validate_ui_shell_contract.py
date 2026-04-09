@@ -53,6 +53,8 @@ IDEMPOTENT_OPERATIONS = {
     ("POST", "/pty/send"),
     ("POST", "/pty/scheduler/start"),
     ("POST", "/pty/scheduler/stop"),
+    ("POST", "/pty/send-now"),
+    ("POST", "/pty/enter-now"),
 }
 
 
