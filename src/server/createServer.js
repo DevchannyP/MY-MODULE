@@ -1260,7 +1260,7 @@ function createAppHandler({
           'stage_run.mode': executeStage ? 'execute' : 'dry-run',
           'stage_run.status': stageReport.status || 'unknown',
         });
-        spawnSync('python3', [
+        const saveStageRunResult = spawnSync('python3', [
           path.resolve(__dirname, '../../scripts/planning_studio_api.py'),
           'save-stage-run',
         ], {
@@ -1271,6 +1271,23 @@ function createAppHandler({
             requested_module: requestedModule || '',
           }),
         });
+        if (saveStageRunResult.status !== 0 || saveStageRunResult.error) {
+          logger.warn('stage_run.save_failed', {
+            correlation_id: correlationId,
+            request_id: requestId,
+            stage: requestedStage,
+            exit_code: saveStageRunResult.status,
+            stderr: (saveStageRunResult.stderr || '').trim().slice(0, 200),
+            error: saveStageRunResult.error ? String(saveStageRunResult.error.message) : null,
+          });
+        } else {
+          logger.info('stage_run.save_ok', {
+            correlation_id: correlationId,
+            request_id: requestId,
+            stage: requestedStage,
+            module: requestedModule || '',
+          });
+        }
         const stageRunResponseBody = {
           ok: true,
           data: stageReport,
