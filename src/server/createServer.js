@@ -1260,6 +1260,17 @@ function createAppHandler({
           'stage_run.mode': executeStage ? 'execute' : 'dry-run',
           'stage_run.status': stageReport.status || 'unknown',
         });
+        spawnSync('python3', [
+          path.resolve(__dirname, '../../scripts/planning_studio_api.py'),
+          'save-stage-run',
+        ], {
+          cwd: runtimeRoot,
+          encoding: 'utf8',
+          input: JSON.stringify({
+            ...stageReport,
+            requested_module: requestedModule || '',
+          }),
+        });
         const stageRunResponseBody = {
           ok: true,
           data: stageReport,

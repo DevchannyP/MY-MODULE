@@ -25,6 +25,9 @@ NEXT_ACTIONS_PATH = ROOT / "memory" / "next-actions.yaml"
 WP_QUEUE_PATH = ROOT / "memory" / "wp-queue.yaml"
 PLANNER_DRAFT_PATH = ROOT / "memory" / "project" / "master-planner-draft.yaml"
 AUTOMATION_CONFIG_PATH = ROOT / "memory" / "project" / "vscode-cli-automation.yaml"
+STAGE_RUN_REPORT_PATH = ROOT / "memory" / "project" / "stage-run-latest.yaml"
+STAGE_RUN_HISTORY_PATH = ROOT / "memory" / "project" / "stage-run-history.yaml"
+STAGE_RUN_HISTORY_LIMIT = 5
 
 COMPLETED_STATUSES = {"done", "completed", "complete"}
 
@@ -219,6 +222,10 @@ def collect_snapshot():
     wp_queue = load_yaml(WP_QUEUE_PATH, {})
     planner_draft = load_yaml(PLANNER_DRAFT_PATH, {"updated_at": "", "sections": []})
     automation_config = load_yaml(AUTOMATION_CONFIG_PATH, {"enabled": False, "cycle_minutes": 30, "enter_seconds": 10, "workers": []})
+    stage_run_last_report = load_yaml(STAGE_RUN_REPORT_PATH, {})
+    stage_run_recent_reports = load_yaml(STAGE_RUN_HISTORY_PATH, [])
+    if not isinstance(stage_run_recent_reports, list):
+        stage_run_recent_reports = []
 
     packets_by_id = {}
 
@@ -306,6 +313,8 @@ def collect_snapshot():
             "seeded": seeded,
         },
         "automation_config": automation_config,
+        "stage_run_last_report": stage_run_last_report,
+        "stage_run_recent_reports": stage_run_recent_reports[:STAGE_RUN_HISTORY_LIMIT],
         "code_status": {
             "branch": git_output("rev-parse", "--abbrev-ref", "HEAD") or "unknown",
             "head": git_output("rev-parse", "--short", "HEAD") or "",
@@ -319,6 +328,8 @@ def collect_snapshot():
             "wp_queue": str(WP_QUEUE_PATH.relative_to(ROOT)),
             "planner_draft": str(PLANNER_DRAFT_PATH.relative_to(ROOT)),
             "automation_config": str(AUTOMATION_CONFIG_PATH.relative_to(ROOT)),
+            "stage_run_last_report": str(STAGE_RUN_REPORT_PATH.relative_to(ROOT)),
+            "stage_run_recent_reports": str(STAGE_RUN_HISTORY_PATH.relative_to(ROOT)),
         },
     }
 
@@ -444,6 +455,40 @@ def update_automation_file(payload):
     save_yaml(AUTOMATION_CONFIG_PATH, data)
 
 
+def update_stage_run_file(payload):
+    if not isinstance(payload, dict):
+        raise SystemExit("save-stage-run requires object payload")
+
+    requested_stage = str(payload.get("requested_stage", "")).strip().upper()
+    if not requested_stage:
+        raise SystemExit("save-stage-run requires requested_stage")
+
+    data = dict(payload)
+    data["requested_stage"] = requested_stage
+    data["requested_module"] = str(payload.get("requested_module", "")).strip()
+    data["recorded_at"] = now_iso()
+
+    existing_history = load_yaml(STAGE_RUN_HISTORY_PATH, [])
+    if not isinstance(existing_history, list):
+        existing_history = []
+
+    deduped_history = []
+    for item in existing_history:
+        if not isinstance(item, dict):
+            continue
+        if (
+            str(item.get("requested_stage", "")).strip().upper() == data["requested_stage"]
+            and str(item.get("requested_module", "")).strip() == data["requested_module"]
+            and str(item.get("execution_mode", "")).strip() == str(data.get("execution_mode", "")).strip()
+            and str(item.get("recorded_at", "")).strip() == str(data["recorded_at"]).strip()
+        ):
+            continue
+        deduped_history.append(item)
+
+    save_yaml(STAGE_RUN_REPORT_PATH, data)
+    save_yaml(STAGE_RUN_HISTORY_PATH, [data, *deduped_history][:STAGE_RUN_HISTORY_LIMIT])
+
+
 def regenerate_artifacts(*targets):
     commands = []
     if "home" in targets:
@@ -461,7 +506,7 @@ def read_stdin_json():
 
 def main():
     if len(sys.argv) < 2:
-        raise SystemExit("usage: planning_studio_api.py <snapshot|save-packet|save-sections|save-automation>")
+        raise SystemExit("usage: planning_studio_api.py <snapshot|save-packet|save-sections|save-automation|save-stage-run>")
 
     command = sys.argv[1]
     if command == "snapshot":
@@ -486,6 +531,12 @@ def main():
         payload = read_stdin_json()
         update_automation_file(payload)
         regenerate_artifacts("home")
+        print(json.dumps(collect_snapshot(), ensure_ascii=False))
+        return
+
+    if command == "save-stage-run":
+        payload = read_stdin_json()
+        update_stage_run_file(payload)
         print(json.dumps(collect_snapshot(), ensure_ascii=False))
         return
 
