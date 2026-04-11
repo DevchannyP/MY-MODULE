@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-11T12:01:25.741451+00:00",
+  "generated_at": "2026-04-11T12:10:47.103454+00:00",
   "goal": "plan-and-learn",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -235,13 +235,13 @@
       "feature-flag-provider"
     ],
     "selected_adapters": [
-      "master-ui-static-planner",
-      "observability-otel",
       "master-ui-plugin-shell",
-      "remote-mcp-connector",
       "feature-flag-provider",
-      "openai-responses-agent",
-      "planner-state-memory"
+      "master-ui-static-planner",
+      "planner-state-memory",
+      "observability-otel",
+      "remote-mcp-connector",
+      "openai-responses-agent"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-11T12:01:25.741435+00:00",
+    "generated_at": "2026-04-11T12:10:47.103419+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-11 20:52:46 +0900",
+            "timestamp": "2026-04-11 21:02:07 +0900",
             "title": "git commit",
-            "detail": "chore(gitignore): exclude runtime-generated stage-run YAML files",
+            "detail": "chore(artifacts): final master-planner rebuild",
             "tag": "git"
           }
         ]

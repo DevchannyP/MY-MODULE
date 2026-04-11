@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-11T12:01:25.313482+00:00",
+  "generated_at_utc": "2026-04-11T12:10:46.673019+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "2bb2d055281708dc6e9019391bfbd2515e6e002f",
+  "head_commit": "284fb790aed4909f4a7a1d2304a180d109c46718",
   "build_environment": {
     "ci": "false",
-    "github_sha": "2bb2d055281708dc6e9019391bfbd2515e6e002f",
+    "github_sha": "284fb790aed4909f4a7a1d2304a180d109c46718",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -26,8 +26,8 @@
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "scripts/generate-mindmap.js",
-      "src/tests/smoke/mindmapControlCenterInteraction.smoke.test.js"
+      "src/server/createServer.js",
+      "src/tests/smoke/stageRun.smoke.test.js"
     ],
     "untracked_paths": []
   },
