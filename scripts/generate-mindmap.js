@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { buildReport } = require('./project_status');
-const { readYamlMany } = require('./run_stage');
+const { readYaml, readYamlMany } = require('./run_stage');
 
 const ROOT = path.join(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'artifacts', 'mindmap');
@@ -488,6 +488,32 @@ function buildGraphData(bundle) {
 
 // ─── Build HTML ───────────────────────────────────────────────────────────────
 
+function escHtmlStatic(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderStageRunHistoryStatic(history) {
+  if (!Array.isArray(history) || history.length === 0) return '';
+  return history.slice(0, 5).map(function(item, index) {
+    const status = String(item.status || 'ready');
+    const tone = status === 'fail' ? 'error' : status === 'blocked' ? 'warn' : 'info';
+    const stage = escHtmlStatic(item.requested_stage || 'D');
+    const module = escHtmlStatic(item.requested_module || '전체');
+    const recordedAt = escHtmlStatic(item.recorded_at || '');
+    return '<div id="execution-history-item-' + index + '" class="execution-history-item is-' + tone + '">' +
+      '<div class="execution-failure-badges">' +
+        '<span class="execution-history-pill is-' + tone + '">' + escHtmlStatic(status) + '</span>' +
+      '</div>' +
+      '<strong>Stage ' + stage + ' / ' + module + '</strong>' +
+      '<div class="execution-history-meta">' + recordedAt + '</div>' +
+    '</div>';
+  }).join('');
+}
+
 function buildHtml(graphData) {
   const graphJson = JSON.stringify(graphData)
     .replace(/</g, '\\u003c')
@@ -829,6 +855,9 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .execution-button.primary { background: linear-gradient(135deg, #0f766e, #1d4ed8); color: white; }
 .execution-button.secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
 .execution-button.warn { background: #c2410c; color: white; }
+.execution-button.is-active {
+  box-shadow: inset 0 0 0 2px rgba(15,118,110,0.18);
+}
 .execution-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -841,6 +870,111 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   font-size: 11px;
   line-height: 1.6;
   color: var(--muted);
+}
+.execution-history-list {
+  display: grid;
+  gap: 8px;
+}
+.execution-history-anchor {
+  border-radius: 12px;
+  border: 1px dashed rgba(29,78,216,0.28);
+  background: rgba(29,78,216,0.05);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.execution-history-item {
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: rgba(255,255,255,0.82);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.execution-history-item.is-pass {
+  border-color: rgba(15,118,110,0.34);
+  background: rgba(15,118,110,0.06);
+}
+.execution-history-item.is-fail {
+  border-color: rgba(220,38,38,0.3);
+  background: rgba(220,38,38,0.06);
+}
+.execution-history-item.is-blocked,
+.execution-history-item.is-out-of-route {
+  border-color: rgba(245,158,11,0.34);
+  background: rgba(245,158,11,0.08);
+}
+.execution-history-item.is-highlighted {
+  box-shadow: 0 0 0 2px rgba(29,78,216,0.22), 0 12px 24px rgba(29,78,216,0.10);
+  transform: translateY(-1px);
+}
+.execution-history-meta {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+.execution-history-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.execution-history-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: none;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(148,163,184,0.12);
+  color: var(--slate);
+}
+.execution-history-pill.is-action {
+  cursor: pointer;
+}
+.execution-history-pill.is-pass {
+  background: rgba(15,118,110,0.12);
+  color: var(--green);
+}
+.execution-history-pill.is-fail {
+  background: rgba(220,38,38,0.12);
+  color: var(--accent-2);
+}
+.execution-history-pill.is-blocked,
+.execution-history-pill.is-out-of-route {
+  background: rgba(245,158,11,0.16);
+  color: var(--amber);
+}
+.execution-history-pill.is-info {
+  background: rgba(29,78,216,0.12);
+  color: #1d4ed8;
+}
+.execution-history-pill.is-focus {
+  background: rgba(15,118,110,0.12);
+  color: var(--green);
+}
+.execution-failure-focus {
+  border-radius: 14px;
+  border: 1px solid rgba(220,38,38,0.22);
+  background: rgba(220,38,38,0.06);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+.execution-failure-focus strong {
+  display: block;
+}
+.execution-failure-focus .execution-history-meta {
+  color: var(--text);
+}
+.execution-failure-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .execution-badge {
   display: inline-flex;
@@ -1482,6 +1616,7 @@ const S = {
     sessions: [],
     selectedPts: '',
     selectedWorkerIndex: 0,
+    rollbackTargetDomain: '',
     promptText: '',
     optimizedPrompt: '',
     lastPromptText: '',
@@ -1500,9 +1635,31 @@ const S = {
       terminalStatusVisible: true,
       failureReasonVisible: false,
     },
+    controlMatrix: {},
     statusTone: 'warning',
     statusTitle: '터미널 연결 확인 필요',
     statusDetail: 'PTY 세션과 스케줄러 상태를 불러오는 중입니다.',
+  },
+  stageRun: {
+    selectedStage: 'D',
+    selectedModule: '',
+    supportedStages: ['A', 'B', 'C', 'D', 'E'],
+    runEndpoint: '/api/planning-studio/stage-run',
+    history: [],
+    historyFilter: 'all',
+    historySignalView: 'all',
+    historySignalCollapsed: false,
+    historySort: 'risk-first',
+    highlightedHistoryIndex: -1,
+    matchedHistoryIndexes: [],
+    matchedHistoryCursor: -1,
+    focusedSignalType: '',
+    focusedSignalValue: '',
+    lastRequest: null,
+    lastReport: null,
+    statusTone: 'idle',
+    statusTitle: 'Stage 실행 대기',
+    statusDetail: 'dry-run 또는 execute를 선택하면 결과가 여기에 표시됩니다.',
   },
 };
 
@@ -1962,6 +2119,732 @@ function executionFailureLocation(activity) {
   ].join(' / ');
 }
 
+function deriveExecutionControlMatrix() {
+  var sessionCount = Array.isArray(S.execution.sessions) ? S.execution.sessions.length : 0;
+  var hasSessions = sessionCount > 0;
+  var schedulerRunning = S.execution.schedulerRunning === true;
+  var hasLastPrompt = Boolean(String(S.execution.lastPromptText || '').trim());
+  var failureVisible = Boolean(S.execution.lastError && S.execution.lastError.error);
+
+  return {
+    send_prompt: {
+      enabled: hasSessions,
+      reason: hasSessions ? '연결된 PTY 세션으로 즉시 전송할 수 있습니다.' : '연결된 PTY 세션이 없어 전송할 수 없습니다.',
+    },
+    auto_send_toggle: {
+      enabled: hasSessions,
+      reason: hasSessions
+        ? (schedulerRunning ? '자동 전송이 실행 중이며 중지로 전환할 수 있습니다.' : '선택한 세션과 프롬프트로 자동 전송을 시작할 수 있습니다.')
+        : '연결된 PTY 세션이 없어 자동 전송을 제어할 수 없습니다.',
+    },
+    stop: {
+      enabled: schedulerRunning,
+      reason: schedulerRunning ? '현재 자동 전송이 실행 중이라 즉시 중지할 수 있습니다.' : '실행 중인 자동 전송이 없어 중지할 대상이 없습니다.',
+    },
+    retry_last_prompt: {
+      enabled: hasLastPrompt,
+      reason: hasLastPrompt ? '마지막 프롬프트가 기록되어 다시 실행할 수 있습니다.' : '마지막 프롬프트가 없어 재시도할 수 없습니다.',
+    },
+    rollback: {
+      enabled: S.rollbackEnabled === true,
+      reason: S.rollbackEnabled === true ? '도메인 롤백 UI가 활성화되어 있습니다.' : 'system_api.rollback_ui.enabled=false 상태라 롤백 UI가 비활성화되어 있습니다.',
+    },
+    terminal_status_visible: {
+      enabled: true,
+      reason: '현재 터미널, worker, 최근 실행 상태를 화면에 표시합니다.',
+    },
+    failure_reason_visible: {
+      enabled: failureVisible,
+      reason: failureVisible ? '최근 실패 원인을 바로 확인할 수 있습니다.' : '최근 실패가 없어 표시할 실패 원인이 없습니다.',
+    },
+  };
+}
+
+function normalizeExecutionControlMatrix(controlMatrix) {
+  var fallback = deriveExecutionControlMatrix();
+  if (!controlMatrix || typeof controlMatrix !== 'object') {
+    return fallback;
+  }
+
+  var normalized = {};
+  Object.keys(fallback).forEach(function(key) {
+    var incoming = controlMatrix[key] || {};
+    normalized[key] = {
+      enabled: incoming.enabled === true,
+      reason: String(incoming.reason || fallback[key].reason),
+    };
+  });
+  return normalized;
+}
+
+function executionControlSummary() {
+  var matrix = normalizeExecutionControlMatrix(S.execution.controlMatrix);
+  return [
+    '프롬프트 전송: ' + (matrix.send_prompt.enabled ? '가능' : '대기') + ' / ' + matrix.send_prompt.reason,
+    '자동 전송: ' + (matrix.auto_send_toggle.enabled ? '가능' : '대기') + ' / ' + matrix.auto_send_toggle.reason,
+    '중지: ' + (matrix.stop.enabled ? '가능' : '대기') + ' / ' + matrix.stop.reason,
+    '재시도: ' + (matrix.retry_last_prompt.enabled ? '가능' : '대기') + ' / ' + matrix.retry_last_prompt.reason,
+    '롤백: ' + (matrix.rollback.enabled ? '가능' : '대기') + ' / ' + matrix.rollback.reason,
+  ].join('\n');
+}
+
+function normalizeStageRunReport(report) {
+  if (!report || typeof report !== 'object') {
+    return null;
+  }
+
+  var commandResults = Array.isArray(report.command_results) ? report.command_results : [];
+  var failingCommand = commandResults.find(function(item) { return item && item.ok === false; }) || null;
+  var unmetPrerequisites = Array.isArray(report.unmet_prerequisites) ? report.unmet_prerequisites : [];
+  var recommendedCommands = Array.isArray(report.recommended_commands) ? report.recommended_commands : [];
+
+  return {
+    requested_stage: String(report.requested_stage || ''),
+    requested_module: String(report.requested_module || ''),
+    execution_mode: String(report.execution_mode || 'dry-run-only'),
+    status: String(report.status || 'unknown'),
+    quality_gate_result: String(report.quality_gate_result || ''),
+    summary: String(report.summary || ''),
+    docs_ref: String(report.docs_ref || ''),
+    unmet_prerequisites: unmetPrerequisites,
+    recommended_commands: recommendedCommands,
+    failed_command: failingCommand ? String(failingCommand.command || '') : '',
+    failed_detail: failingCommand ? String(failingCommand.stderr || failingCommand.stdout || '') : '',
+    executed_command_count: Number(report.executed_command_count || 0),
+    failed_command_count: Number(report.failed_command_count || 0),
+    requirements_stage: String(report.requirements_stage || ''),
+    recorded_at: String(report.recorded_at || ''),
+  };
+}
+
+function sameStageRunReport(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+  return String(left.requested_stage || '') === String(right.requested_stage || '')
+    && String(left.requested_module || '') === String(right.requested_module || '')
+    && String(left.execution_mode || '') === String(right.execution_mode || '')
+    && String(left.recorded_at || '') === String(right.recorded_at || '');
+}
+
+function normalizeStageRunHistory(reports) {
+  if (!Array.isArray(reports)) {
+    return [];
+  }
+  var normalized = [];
+  reports.forEach(function(report) {
+    var entry = normalizeStageRunReport(report);
+    if (!entry) {
+      return;
+    }
+    var duplicated = normalized.some(function(existing) { return sameStageRunReport(existing, entry); });
+    if (!duplicated) {
+      normalized.push(entry);
+    }
+  });
+  return normalized.slice(0, 5);
+}
+
+function rememberStageRunReport(report) {
+  var entry = normalizeStageRunReport(report);
+  if (!entry) {
+    return;
+  }
+  var nextHistory = [entry].concat(normalizeStageRunHistory(S.stageRun.history).filter(function(existing) {
+    return !sameStageRunReport(existing, entry);
+  }));
+  S.stageRun.history = nextHistory.slice(0, 5);
+}
+
+function deriveStageRunNextAction(report) {
+  if (!report) {
+    return 'Stage를 고른 뒤 dry-run으로 현재 경로를 먼저 확인하세요.';
+  }
+  if (report.status === 'blocked' && report.unmet_prerequisites.length > 0) {
+    return '선행 Stage ' + report.unmet_prerequisites.join(', ') + '를 먼저 PASS 상태로 만든 뒤 다시 실행하세요.';
+  }
+  if (report.status === 'out-of-route') {
+    return 'requirements stage 경로와 현재 packet 단계를 확인한 뒤 다시 dry-run 하세요.';
+  }
+  if (report.execution_mode === 'execute' && report.status === 'fail') {
+    return report.failed_command
+      ? '실패 명령을 수정한 뒤 마지막 stage 재실행을 누르세요.'
+      : '실패 원인을 해소한 뒤 마지막 stage 재실행을 누르세요.';
+  }
+  if (report.execution_mode === 'execute' && report.status === 'pass') {
+    return '품질 게이트 결과를 확인하고 다음 Stage 또는 운영 증거 생성으로 이동하세요.';
+  }
+  if (report.status === 'ready') {
+    return 'dry-run 결과를 검토한 뒤 execute 실행 여부를 결정하세요.';
+  }
+  return '현재 결과를 검토하고 필요한 Stage를 다시 실행하세요.';
+}
+
+function stageRunSummaryText(report) {
+  if (!report) {
+    return '최근 stage 실행 없음';
+  }
+  return [
+    'Stage ' + (report.requested_stage || '-'),
+    report.execution_mode === 'execute' ? 'execute' : 'dry-run',
+    report.status || 'unknown',
+    report.quality_gate_result || 'gate 미실행',
+  ].join(' / ');
+}
+
+function stageRunFailureLocation(report) {
+  if (!report) {
+    return '없음';
+  }
+  var stage = String(report.requested_stage || '-');
+  var moduleId = String(report.requested_module || '').trim() || '전체';
+  return 'Stage ' + stage + ' / module ' + moduleId;
+}
+
+function stageRunFailureReason(report) {
+  if (!report) {
+    return '없음';
+  }
+  if (String(report.failed_detail || '').trim()) {
+    return String(report.failed_detail || '').trim();
+  }
+  if (String(report.summary || '').trim()) {
+    return String(report.summary || '').trim();
+  }
+  if (report.status === 'blocked') {
+    return '선행 조건 미충족';
+  }
+  if (report.status === 'out-of-route') {
+    return '요구사항 stage 경로 불일치';
+  }
+  return '원인 기록 없음';
+}
+
+function stageRunFailureBadgeMarkup(report, historyIndex) {
+  if (!report) {
+    return '';
+  }
+  return stageRunFailureBadgeMarkupWithHandler(report, historyIndex, 'focusStageRunFailureSignal');
+}
+
+function stageRunFailureBadgeMarkupWithHandler(report, historyIndex, handlerName) {
+  if (!report) {
+    return '';
+  }
+  var badges = [];
+  var entryIndex = Number.isInteger(historyIndex) ? historyIndex : -1;
+  var clickHandlerName = String(handlerName || 'focusStageRunFailureSignal').trim() || 'focusStageRunFailureSignal';
+  if (String(report.failed_command || '').trim()) {
+    badges.push('<button type="button" class="execution-history-pill is-fail is-action" onclick="' + clickHandlerName + "('failed_command'," + entryIndex + ')">실패 명령: ' + escHtml(String(report.failed_command || '').trim()) + '</button>');
+  }
+  if (Array.isArray(report.unmet_prerequisites) && report.unmet_prerequisites.length > 0) {
+    badges.push('<button type="button" class="execution-history-pill is-blocked is-action" onclick="' + clickHandlerName + "('prerequisites'," + entryIndex + ')">선행 조건: ' + escHtml(report.unmet_prerequisites.join(', ')) + '</button>');
+  }
+  if (badges.length < 1) {
+    return '';
+  }
+  return '<div class="execution-failure-badges">' + badges.join('') + '</div>';
+}
+
+function stageRunSignalValue(report, signalType) {
+  if (!report) {
+    return '';
+  }
+  if (signalType === 'failed_command') {
+    return String(report.failed_command || '').trim();
+  }
+  if (signalType === 'prerequisites') {
+    return Array.isArray(report.unmet_prerequisites) ? report.unmet_prerequisites.join(', ') : '';
+  }
+  return '';
+}
+
+function matchingStageRunHistoryIndexes(signalType, signalValue) {
+  var expectedValue = String(signalValue || '').trim();
+  if (!expectedValue) {
+    return [];
+  }
+  return normalizeStageRunHistory(S.stageRun.history).map(function(report, index) {
+    return {
+      index: index,
+      value: stageRunSignalValue(report, signalType),
+    };
+  }).filter(function(entry) {
+    return String(entry.value || '').trim() === expectedValue;
+  }).map(function(entry) {
+    return entry.index;
+  });
+}
+
+function focusStageRunFailureSignal(signalType, historyIndex) {
+  S.stageRun.historyFilter = 'failures';
+  S.stageRun.historySort = 'risk-first';
+  if (Number.isInteger(historyIndex) && historyIndex >= 0) {
+    var history = normalizeStageRunHistory(S.stageRun.history);
+    var report = history[historyIndex] || null;
+    if (report) {
+      var signalValue = stageRunSignalValue(report, signalType);
+      var matchedIndexes = matchingStageRunHistoryIndexes(signalType, signalValue);
+      S.stageRun.focusedSignalType = String(signalType || '');
+      S.stageRun.focusedSignalValue = signalValue;
+      S.stageRun.historySignalView = 'all';
+      S.stageRun.historySignalCollapsed = false;
+      S.stageRun.matchedHistoryIndexes = matchedIndexes;
+      S.stageRun.matchedHistoryCursor = matchedIndexes.indexOf(historyIndex);
+      restoreStageRunHistorySelection(report);
+      setStageRunHistoryHighlight(historyIndex);
+      return;
+    }
+  }
+  S.stageRun.focusedSignalType = String(signalType || '');
+  S.stageRun.focusedSignalValue = '';
+  S.stageRun.historySignalView = 'all';
+  S.stageRun.historySignalCollapsed = false;
+  S.stageRun.matchedHistoryIndexes = [];
+  S.stageRun.matchedHistoryCursor = -1;
+  setExecutionStatus(
+    'idle',
+    signalType === 'prerequisites' ? '선행 조건 기준으로 실패 이력 집중' : '실패 명령 기준으로 실패 이력 집중',
+    '실패/차단 이력만 보이도록 좁혔습니다. 필요한 항목을 선택해 dry-run 또는 execute를 다시 실행하세요.',
+  );
+}
+
+function focusPinnedStageRunFailureSignal(signalType, historyIndex) {
+  focusStageRunFailureSignal(signalType, historyIndex);
+  if (!Number.isInteger(historyIndex) || historyIndex < 0) {
+    return;
+  }
+  var indexes = Array.isArray(S.stageRun.matchedHistoryIndexes) ? S.stageRun.matchedHistoryIndexes : [];
+  if (indexes.length < 1 || indexes.indexOf(historyIndex) < 0) {
+    return;
+  }
+  S.stageRun.historySignalView = 'matched';
+  S.stageRun.historySignalCollapsed = true;
+  setExecutionStatus(
+    'idle',
+    signalType === 'prerequisites' ? '헤더 선행 조건 기준 단일 고정' : '헤더 실패 명령 기준 단일 고정',
+    '현재 포커스 카드 헤더에서 선택한 실패 신호만 남기고 단일 이력으로 고정했습니다. 필요하면 같은 신호 펼치기로 나머지 이력을 다시 확인하세요.',
+  );
+}
+
+function focusFailedCommandSignal(historyIndex) {
+  focusStageRunFailureSignal('failed_command', historyIndex);
+}
+
+function focusPrerequisitesSignal(historyIndex) {
+  focusStageRunFailureSignal('prerequisites', historyIndex);
+}
+
+function pinFailedCommandSignal(historyIndex) {
+  focusPinnedStageRunFailureSignal('failed_command', historyIndex);
+}
+
+function pinPrerequisitesSignal(historyIndex) {
+  focusPinnedStageRunFailureSignal('prerequisites', historyIndex);
+}
+
+function stepStageRunFailureMatch(direction) {
+  var indexes = Array.isArray(S.stageRun.matchedHistoryIndexes) ? S.stageRun.matchedHistoryIndexes : [];
+  if (indexes.length < 2) {
+    setExecutionStatus('warning', '매칭 이력 부족', '같은 실패 신호를 가진 다른 이력이 없어 이동할 수 없습니다.');
+    return;
+  }
+  var cursor = Number.isInteger(S.stageRun.matchedHistoryCursor) ? S.stageRun.matchedHistoryCursor : 0;
+  var nextCursor = cursor + (direction === 'prev' ? -1 : 1);
+  if (nextCursor < 0) {
+    nextCursor = indexes.length - 1;
+  } else if (nextCursor >= indexes.length) {
+    nextCursor = 0;
+  }
+  var nextIndex = indexes[nextCursor];
+  var history = normalizeStageRunHistory(S.stageRun.history);
+  var report = history[nextIndex] || null;
+  if (!report) {
+    setExecutionStatus('warning', '매칭 이력 이동 실패', '다음으로 이동할 이력을 찾을 수 없습니다.');
+    return;
+  }
+  S.stageRun.matchedHistoryCursor = nextCursor;
+  restoreStageRunHistorySelection(report);
+  setExecutionStatus('idle', direction === 'prev' ? '이전 매칭 이력으로 이동' : '다음 매칭 이력으로 이동', '같은 실패 신호를 가진 다른 이력으로 이동했습니다.');
+  setStageRunHistoryHighlight(nextIndex);
+}
+
+function setStageRunHistoryHighlight(historyIndex) {
+  S.stageRun.highlightedHistoryIndex = Number.isInteger(historyIndex) ? historyIndex : -1;
+  renderExecutionConsole();
+  if (!Number.isInteger(historyIndex) || historyIndex < 0 || typeof document === 'undefined') {
+    return;
+  }
+  setTimeout(function() {
+    var target = document.getElementById('execution-history-item-' + historyIndex);
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, 0);
+}
+
+function stageRunHistoryTone(report) {
+  if (!report) {
+    return 'unknown';
+  }
+  if (report.status === 'pass') {
+    return 'pass';
+  }
+  if (report.status === 'fail') {
+    return 'fail';
+  }
+  if (report.status === 'blocked') {
+    return 'blocked';
+  }
+  if (report.status === 'out-of-route') {
+    return 'out-of-route';
+  }
+  return 'ready';
+}
+
+function matchesStageRunHistoryFilter(report, filter) {
+  if (!report) {
+    return false;
+  }
+  if (filter === 'failures') {
+    return report.status === 'fail' || report.status === 'blocked' || report.status === 'out-of-route';
+  }
+  if (filter === 'execute') {
+    return report.execution_mode === 'execute';
+  }
+  return true;
+}
+
+function stageRunHistoryPriority(report) {
+  if (!report) {
+    return 99;
+  }
+  if (report.status === 'fail') {
+    return 0;
+  }
+  if (report.status === 'blocked' || report.status === 'out-of-route') {
+    return 1;
+  }
+  if (report.execution_mode === 'execute') {
+    return 2;
+  }
+  if (report.status === 'ready') {
+    return 3;
+  }
+  if (report.status === 'pass') {
+    return 4;
+  }
+  return 5;
+}
+
+function compareStageRunHistoryEntries(left, right, sortMode) {
+  var leftReport = left && left.report ? left.report : null;
+  var rightReport = right && right.report ? right.report : null;
+  if (sortMode === 'recent-first') {
+    return String(rightReport && rightReport.recorded_at || '').localeCompare(String(leftReport && leftReport.recorded_at || ''));
+  }
+  var priorityDiff = stageRunHistoryPriority(leftReport) - stageRunHistoryPriority(rightReport);
+  if (priorityDiff !== 0) {
+    return priorityDiff;
+  }
+  return String(rightReport && rightReport.recorded_at || '').localeCompare(String(leftReport && leftReport.recorded_at || ''));
+}
+
+function firstStageRunFailureEntry(entries) {
+  if (!Array.isArray(entries)) {
+    return null;
+  }
+  var failureEntries = entries.filter(function(entry) {
+    return stageRunHistoryPriority(entry && entry.report) <= 1;
+  });
+  if (failureEntries.length < 1) {
+    return null;
+  }
+  return failureEntries.sort(function(left, right) {
+    return compareStageRunHistoryEntries(left, right, 'risk-first');
+  })[0] || null;
+}
+
+function stageRunMatchedSignalSummary() {
+  var indexes = Array.isArray(S.stageRun.matchedHistoryIndexes) ? S.stageRun.matchedHistoryIndexes : [];
+  var cursor = Number.isInteger(S.stageRun.matchedHistoryCursor) ? S.stageRun.matchedHistoryCursor : -1;
+  if (indexes.length < 2 || cursor < 0) {
+    return '';
+  }
+  return (cursor + 1) + ' / ' + indexes.length;
+}
+
+function stageRunMatchedCountLabel() {
+  var indexes = Array.isArray(S.stageRun.matchedHistoryIndexes) ? S.stageRun.matchedHistoryIndexes : [];
+  if (indexes.length < 2) {
+    return '';
+  }
+  return '매칭 ' + indexes.length + '건';
+}
+
+function stageRunSecondaryMatchCountLabel() {
+  var indexes = Array.isArray(S.stageRun.matchedHistoryIndexes) ? S.stageRun.matchedHistoryIndexes : [];
+  if (indexes.length < 2) {
+    return '';
+  }
+  return Math.max(0, indexes.length - 1) + '건';
+}
+
+function stageRunQualityGateTone(report) {
+  var gate = String(report && report.quality_gate_result || '').trim().toLowerCase();
+  if (!gate) {
+    return 'info';
+  }
+  if (gate.indexOf('pass') >= 0) {
+    return 'pass';
+  }
+  if (gate.indexOf('fail') >= 0) {
+    return 'fail';
+  }
+  return 'info';
+}
+
+function stageRunFocusedSignalLabel() {
+  if (S.stageRun.focusedSignalType === 'failed_command' && String(S.stageRun.focusedSignalValue || '').trim()) {
+    return '실패 명령 / ' + String(S.stageRun.focusedSignalValue || '').trim();
+  }
+  if (S.stageRun.focusedSignalType === 'prerequisites' && String(S.stageRun.focusedSignalValue || '').trim()) {
+    return '선행 조건 / ' + String(S.stageRun.focusedSignalValue || '').trim();
+  }
+  return '';
+}
+
+function pinStageRunFocusedEntry(entries) {
+  if (!Array.isArray(entries) || entries.length < 2 || !Number.isInteger(S.stageRun.highlightedHistoryIndex) || S.stageRun.highlightedHistoryIndex < 0) {
+    return Array.isArray(entries) ? entries : [];
+  }
+  var pinned = entries.find(function(entry) {
+    return entry.index === S.stageRun.highlightedHistoryIndex;
+  }) || null;
+  if (!pinned) {
+    return entries;
+  }
+  return [pinned].concat(entries.filter(function(entry) {
+    return entry.index !== pinned.index;
+  }));
+}
+
+function renderStageRunWorkbench() {
+  var report = normalizeStageRunReport(S.stageRun.lastReport);
+  var history = normalizeStageRunHistory(S.stageRun.history);
+  var historyFilter = String(S.stageRun.historyFilter || 'all').trim() || 'all';
+  var historySignalView = String(S.stageRun.historySignalView || 'all').trim() || 'all';
+  var historySignalCollapsed = S.stageRun.historySignalCollapsed === true;
+  var historySort = String(S.stageRun.historySort || 'risk-first').trim() || 'risk-first';
+  var historyEntries = history.map(function(item, index) {
+    return { report: item, index: index };
+  });
+  var filteredHistory = historyEntries.filter(function(entry) {
+    return matchesStageRunHistoryFilter(entry.report, historyFilter);
+  }).filter(function(entry) {
+    if (historySignalView !== 'matched') {
+      return true;
+    }
+    return Array.isArray(S.stageRun.matchedHistoryIndexes) && S.stageRun.matchedHistoryIndexes.indexOf(entry.index) >= 0;
+  }).filter(function(entry) {
+    if (historySignalView !== 'matched' || historySignalCollapsed !== true) {
+      return true;
+    }
+    return entry.index === S.stageRun.highlightedHistoryIndex;
+  }).sort(function(left, right) {
+    return compareStageRunHistoryEntries(left, right, historySort);
+  });
+  if (historySignalView === 'matched' && historySignalCollapsed !== true) {
+    filteredHistory = pinStageRunFocusedEntry(filteredHistory);
+  }
+  var failureFocusEntry = firstStageRunFailureEntry(historyEntries);
+  var stages = Array.isArray(S.stageRun.supportedStages) && S.stageRun.supportedStages.length > 0
+    ? S.stageRun.supportedStages
+    : ['A', 'B', 'C', 'D', 'E'];
+  var stageOptions = stages.map(function(stage) {
+    return '<option value="' + escHtml(stage) + '"' + (String(S.stageRun.selectedStage || '') === stage ? ' selected' : '') + '>'
+      + escHtml('Stage ' + stage) + '</option>';
+  }).join('');
+  var retryDisabled = !S.stageRun.lastRequest;
+  var failedCommandLabel = report && report.failed_command ? report.failed_command : '없음';
+  var unmetLabel = report && report.unmet_prerequisites.length > 0 ? report.unmet_prerequisites.join(', ') : '없음';
+  var commandsLabel = report && report.recommended_commands.length > 0 ? report.recommended_commands.join('\n') : '없음';
+  var nextActionLabel = deriveStageRunNextAction(report);
+  var moduleLabel = report && report.requested_module ? report.requested_module : (String(S.stageRun.selectedModule || '').trim() || '전체');
+  var recordedAtLabel = report && report.recorded_at ? report.recorded_at : '없음';
+  var historyFilterMarkup = '<div class="execution-actions">' +
+      '<button type="button" class="execution-button secondary' + (historyFilter === 'all' ? ' is-active' : '') + '" onclick="setStageRunHistoryFilter(' + "'all'" + ')">전체 보기</button>' +
+      '<button type="button" class="execution-button secondary' + (historyFilter === 'failures' ? ' is-active' : '') + '" onclick="setStageRunHistoryFilter(' + "'failures'" + ')">실패/차단만</button>' +
+      '<button type="button" class="execution-button secondary' + (historyFilter === 'execute' ? ' is-active' : '') + '" onclick="setStageRunHistoryFilter(' + "'execute'" + ')">execute만</button>' +
+    '</div>';
+  var historySortMarkup = '<div class="execution-actions">' +
+      '<button type="button" class="execution-button secondary' + (historySort === 'risk-first' ? ' is-active' : '') + '" onclick="setStageRunHistorySort(' + "'risk-first'" + ')">실패 우선 정렬</button>' +
+      '<button type="button" class="execution-button secondary' + (historySort === 'recent-first' ? ' is-active' : '') + '" onclick="setStageRunHistorySort(' + "'recent-first'" + ')">최신순 정렬</button>' +
+    '</div>';
+  var highlightedHistoryEntry = historyEntries.find(function(entry) {
+    return entry.index === S.stageRun.highlightedHistoryIndex;
+  }) || null;
+  var highlightedHistoryReport = highlightedHistoryEntry && highlightedHistoryEntry.report ? highlightedHistoryEntry.report : null;
+  var pinnedHistoryHeaderMarkup = '';
+  if (historySignalView === 'matched' && historySignalCollapsed !== true && highlightedHistoryReport) {
+    var pinnedSecondaryLabel = stageRunSecondaryMatchCountLabel();
+    var pinnedExecutionModeLabel = highlightedHistoryReport.execution_mode === 'execute' ? 'execute' : 'dry-run';
+    var pinnedQualityGateLabel = highlightedHistoryReport.quality_gate_result || '미실행';
+    pinnedHistoryHeaderMarkup = '<div class="execution-history-anchor">' +
+      '<div class="execution-failure-badges">' +
+        '<span class="execution-history-pill is-focus">현재 포커스 카드</span>' +
+        '<span class="execution-history-pill is-info">상단 고정</span>' +
+        '<span class="execution-history-pill is-info">' + escHtml(pinnedExecutionModeLabel) + '</span>' +
+        '<span class="execution-history-pill is-' + escHtml(stageRunQualityGateTone(highlightedHistoryReport)) + '">gate ' + escHtml(pinnedQualityGateLabel) + '</span>' +
+        (pinnedSecondaryLabel ? '<span class="execution-history-pill is-info">보조 이력 ' + escHtml(pinnedSecondaryLabel) + '</span>' : '') +
+      '</div>' +
+      '<strong>' + escHtml(stageRunSummaryText(highlightedHistoryReport)) + '</strong>' +
+      stageRunFailureBadgeMarkupWithHandler(highlightedHistoryReport, highlightedHistoryEntry.index, 'focusPinnedStageRunFailureSignal') +
+      '<div class="execution-history-meta">' + escHtml('같은 신호 그룹에서 현재 포커스 이력을 최상단에 고정했습니다.') + '</div>' +
+      '<div class="execution-history-actions">' +
+        '<button type="button" class="execution-button secondary" onclick="rerunStageHistory(' + highlightedHistoryEntry.index + ', false)">현재 포커스 dry-run</button>' +
+        '<button type="button" class="execution-button warn" onclick="rerunStageHistory(' + highlightedHistoryEntry.index + ', true)">현재 포커스 execute</button>' +
+      '</div>' +
+    '</div>';
+  }
+  var failureFocusMarkup = '';
+  if (failureFocusEntry && failureFocusEntry.report) {
+    var focusReport = failureFocusEntry.report;
+    var matchedSignalSummary = stageRunMatchedSignalSummary();
+    var matchedCountLabel = stageRunMatchedCountLabel();
+    var secondaryMatchCountLabel = stageRunSecondaryMatchCountLabel();
+    var focusedSignalLabel = stageRunFocusedSignalLabel();
+    var highlightedEntry = historyEntries.find(function(entry) {
+      return entry.index === S.stageRun.highlightedHistoryIndex;
+    }) || null;
+    var highlightedReport = highlightedEntry && highlightedEntry.report ? highlightedEntry.report : null;
+    var focusSummary = stageRunSummaryText(focusReport);
+    var focusMeta = [
+      'module: ' + (focusReport.requested_module || '전체'),
+      '기록 시각: ' + (focusReport.recorded_at || '없음'),
+      '실패 명령: ' + (focusReport.failed_command || '없음'),
+      '다음 행동: ' + deriveStageRunNextAction(focusReport),
+    ].join('\n');
+    failureFocusMarkup = '<div class="execution-failure-focus">' +
+      '<div class="execution-failure-badges">' +
+        '<span class="execution-history-pill is-' + escHtml(stageRunHistoryTone(focusReport)) + '">최근 실패 우선</span>' +
+        (matchedCountLabel ? '<span class="execution-history-pill is-info">' + escHtml(matchedCountLabel) + '</span>' : '') +
+        (matchedSignalSummary && highlightedReport ? '<span class="execution-history-pill is-focus">현재 포커스</span>' : '') +
+      '</div>' +
+      '<strong>' + escHtml(focusSummary) + '</strong>' +
+      stageRunFailureBadgeMarkup(focusReport, failureFocusEntry.index) +
+      (matchedSignalSummary ? '<div class="execution-row"><span>같은 신호 탐색</span><strong>' + escHtml(matchedSignalSummary) + '</strong></div>' : '') +
+      (focusedSignalLabel ? '<div class="execution-row"><span>탐색 기준</span><strong>' + escHtml(focusedSignalLabel) + '</strong></div>' : '') +
+      (matchedSignalSummary && highlightedReport ? '<div class="execution-row"><span>현재 포커스 이력</span><strong>' + escHtml(stageRunSummaryText(highlightedReport)) + '</strong></div>' : '') +
+      (matchedSignalSummary && highlightedReport ? '<div class="execution-row"><span>현재 포커스 배치</span><strong>' + escHtml(historySignalCollapsed ? '단일 고정' : '상단 고정') + '</strong></div>' : '') +
+      (secondaryMatchCountLabel ? '<div class="execution-row"><span>보조 이력</span><strong>' + escHtml(secondaryMatchCountLabel) + '</strong></div>' : '') +
+      (matchedSignalSummary ? '<div class="execution-actions">' +
+        '<button type="button" class="execution-button secondary' + (historySignalView === 'matched' ? ' is-active' : '') + '" onclick="setStageRunSignalHistoryView(' + "'matched'" + ')">같은 신호만 보기</button>' +
+        '<button type="button" class="execution-button secondary' + (historySignalView === 'all' ? ' is-active' : '') + '" onclick="setStageRunSignalHistoryView(' + "'all'" + ')">전체 이력 복원</button>' +
+      '</div>' : '') +
+      (matchedSignalSummary ? '<div class="execution-actions">' +
+        '<button type="button" class="execution-button secondary' + (historySignalCollapsed ? ' is-active' : '') + '" onclick="setStageRunSignalGroupCollapsed(true)">같은 신호 접기</button>' +
+        '<button type="button" class="execution-button secondary' + (!historySignalCollapsed ? ' is-active' : '') + '" onclick="setStageRunSignalGroupCollapsed(false)">같은 신호 펼치기</button>' +
+      '</div>' : '') +
+      '<div class="execution-actions">' +
+        '<button type="button" class="execution-button secondary" onclick="focusFailedCommandSignal(' + failureFocusEntry.index + ')">실패 명령 기준</button>' +
+        '<button type="button" class="execution-button secondary" onclick="focusPrerequisitesSignal(' + failureFocusEntry.index + ')">선행 조건 기준</button>' +
+        '<button type="button" class="execution-button secondary" onclick="pinFailedCommandSignal(' + failureFocusEntry.index + ')">핀 실패 명령</button>' +
+        '<button type="button" class="execution-button secondary" onclick="pinPrerequisitesSignal(' + failureFocusEntry.index + ')">핀 선행 조건</button>' +
+      '</div>' +
+      '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(stageRunFailureLocation(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(stageRunFailureReason(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>가능한 다음 행동</span><strong>' + escHtml(deriveStageRunNextAction(focusReport)) + '</strong></div>' +
+      '<div class="execution-history-meta">' + escHtml(focusMeta) + '</div>' +
+      (matchedSignalSummary ? '<div class="execution-history-actions">' +
+        '<button type="button" class="execution-button secondary" onclick="stepStageRunFailureMatch(' + "'prev'" + ')">이전 매칭</button>' +
+        '<button type="button" class="execution-button secondary" onclick="stepStageRunFailureMatch(' + "'next'" + ')">다음 매칭</button>' +
+      '</div>' : '') +
+      '<div class="execution-history-actions">' +
+        '<button type="button" class="execution-button secondary" onclick="reuseStageRunHistory(' + failureFocusEntry.index + ')">첫 실패 불러오기</button>' +
+        '<button type="button" class="execution-button secondary" onclick="rerunStageHistory(' + failureFocusEntry.index + ', false)">첫 실패 dry-run</button>' +
+        '<button type="button" class="execution-button warn" onclick="rerunStageHistory(' + failureFocusEntry.index + ', true)">첫 실패 execute</button>' +
+      '</div>' +
+    '</div>';
+  }
+  var historySummaryLabel = '표시 ' + filteredHistory.length + ' / 전체 ' + history.length + ' / 정렬 ' + (historySort === 'risk-first' ? '실패 우선' : '최신순') + (historySignalView === 'matched' ? ' / 같은 신호만' : '') + (historySignalView === 'matched' && historySignalCollapsed ? ' / 그룹 접힘' : '');
+  var historyMarkup = history.length > 0
+    ? failureFocusMarkup + historyFilterMarkup + historySortMarkup + '<div class="execution-row"><span>표시 개수</span><strong>' + escHtml(historySummaryLabel) + '</strong></div>' + pinnedHistoryHeaderMarkup
+      + (filteredHistory.length > 0
+        ? '<div class="execution-history-list">' + filteredHistory.map(function(entry) {
+      var item = entry.report;
+      var itemSummary = stageRunSummaryText(item);
+      var itemTone = stageRunHistoryTone(item);
+      var itemNextAction = deriveStageRunNextAction(item);
+      var isHighlightedEntry = S.stageRun.highlightedHistoryIndex === entry.index;
+      var isMatchedEntry = Array.isArray(S.stageRun.matchedHistoryIndexes) && S.stageRun.matchedHistoryIndexes.indexOf(entry.index) >= 0;
+      var itemMeta = [
+        'module: ' + (item.requested_module || '전체'),
+        '기록 시각: ' + (item.recorded_at || '없음'),
+        '실패 명령: ' + (item.failed_command || '없음'),
+        '다음 행동: ' + itemNextAction,
+      ].join('\n');
+      return '<div id="execution-history-item-' + entry.index + '" class="execution-history-item is-' + escHtml(itemTone) + (isHighlightedEntry ? ' is-highlighted' : '') + '">' +
+        '<div class="execution-failure-badges">' +
+          '<span class="execution-history-pill is-' + escHtml(itemTone) + '">' + escHtml(item.status || 'ready') + '</span>' +
+          (isMatchedEntry ? '<span class="execution-history-pill is-info">같은 신호</span>' : '') +
+          (isHighlightedEntry ? '<span class="execution-history-pill is-focus">현재 포커스</span>' : '') +
+        '</div>' +
+        '<strong>' + escHtml(itemSummary) + '</strong>' +
+        '<div class="execution-history-meta">' + escHtml(itemMeta) + '</div>' +
+        '<div class="execution-history-actions">' +
+          '<button type="button" class="execution-button secondary" onclick="reuseStageRunHistory(' + entry.index + ')">이 기록 불러오기</button>' +
+          '<button type="button" class="execution-button secondary" onclick="rerunStageHistory(' + entry.index + ', false)">dry-run 재실행</button>' +
+          '<button type="button" class="execution-button warn" onclick="rerunStageHistory(' + entry.index + ', true)">execute 재실행</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>'
+        : '<strong>현재 필터에 맞는 최근 stage 이력 없음</strong>')
+    : '<strong>최근 stage 이력 없음</strong>';
+
+  return '<div class="execution-row">' +
+      '<span>Stage 실행</span>' +
+      '<div class="execution-grid">' +
+        '<div class="execution-row"><span>선택 Stage</span><select id="execution-stage-select" class="execution-select" onchange="syncStageRunInputs()">' + stageOptions + '</select></div>' +
+        '<div class="execution-row"><span>대상 module</span><input id="execution-stage-module" class="execution-select" value="' + escHtml(S.stageRun.selectedModule || '') + '" placeholder="예: billing 또는 task-management" oninput="syncStageRunInputs()"></div>' +
+        '<div class="execution-actions">' +
+          '<button type="button" class="execution-button secondary" onclick="runSelectedStage(false)">Stage dry-run</button>' +
+          '<button type="button" class="execution-button warn" onclick="runSelectedStage(true)">Stage execute</button>' +
+          '<button type="button" class="execution-button secondary" onclick="retryLastStageRun()"' + htmlDisabled(retryDisabled) + '>마지막 stage 재실행</button>' +
+        '</div>' +
+        '<div class="execution-row"><span>최근 결과</span><strong>' + escHtml(stageRunSummaryText(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>기록 module</span><strong>' + escHtml(moduleLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>기록 시각</span><strong>' + escHtml(recordedAtLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>품질 게이트</span><strong>' + escHtml(report ? (report.quality_gate_result || '미실행') : '미실행') + '</strong></div>' +
+        '<div class="execution-row"><span>선행 조건 미충족</span><strong>' + escHtml(unmetLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>실패 명령</span><strong>' + escHtml(failedCommandLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>권장 명령</span><strong>' + escHtml(commandsLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>다음 행동</span><strong>' + escHtml(nextActionLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>최근 이력</span>' + historyMarkup + '</div>' +
+        '<div class="execution-row"><span>참조 문서</span><strong>' + escHtml(report ? (report.docs_ref || '없음') : '없음') + '</strong></div>' +
+        '<div class="execution-row"><span>상세</span><strong>' + escHtml(report ? (report.failed_detail || report.summary || '상세 없음') : (S.stageRun.statusDetail || '상세 없음')) + '</strong></div>' +
+      '</div>' +
+    '</div>';
+}
+
+function rollbackDomainNodes() {
+  return S.nodes.filter(function(node) { return node.type === 'domain'; });
+}
+
+function selectedRollbackDomain() {
+  var domainId = String(S.execution.rollbackTargetDomain || '').trim();
+  if (!domainId) {
+    return null;
+  }
+  var nodes = rollbackDomainNodes();
+  for (var i = 0; i < nodes.length; i++) {
+    if (String(nodes[i].id || '') === domainId) {
+      return nodes[i];
+    }
+  }
+  return null;
+}
+
 function htmlDisabled(disabled) {
   return disabled ? ' disabled aria-disabled="true"' : '';
 }
@@ -1992,6 +2875,7 @@ function applyControlCenterRuntimeState(runtimePayload) {
     terminalStatusVisible: controls.terminal_status_visible !== false,
     failureReasonVisible: controls.failure_reason_visible === true,
   };
+  S.execution.controlMatrix = normalizeExecutionControlMatrix(controls.control_matrix);
   S.rollbackEnabled = controls.rollback === true;
   S.statusSummary.autoSendEnabled = scheduler.running === true;
 
@@ -2025,6 +2909,8 @@ function renderExecutionConsole() {
   var retryDisabled = !S.execution.controls.retryLastPrompt;
   var autoToggleDisabled = !(S.execution.controls.autoSendToggle || S.execution.controls.stop);
   var immediateDispatchDisabled = !Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1;
+  var rollbackTarget = selectedRollbackDomain();
+  var rollbackDisabled = !(S.rollbackEnabled && rollbackTarget);
   var selectedWorkerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
   var selectedWorker = immediateDispatchDisabled ? null : (S.execution.schedulerWorkers[selectedWorkerIndex] || null);
   var selectedWorkerSummary = selectedWorker
@@ -2137,6 +3023,11 @@ function renderExecutionConsole() {
       return '<option value="' + String(index) + '"' + (selected ? ' selected' : '') + '>'
         + escHtml(label + (pts ? ' [' + pts + ']' : '')) + '</option>';
     }).join('');
+  var rollbackOptions = '<option value="">도메인 선택</option>' + rollbackDomainNodes().map(function(node) {
+    var selected = String(node.id || '') === String(S.execution.rollbackTargetDomain || '');
+    return '<option value="' + escHtml(node.id || '') + '"' + (selected ? ' selected' : '') + '>'
+      + escHtml(node.label + ' (' + node.id + ')') + '</option>';
+  }).join('');
 
   container.innerHTML = '<div class="sidebar-console">' +
     '<div class="execution-summary is-' + escHtml(summaryTone) + '">' +
@@ -2156,9 +3047,11 @@ function renderExecutionConsole() {
       '<div class="execution-row"><span>마지막 프롬프트</span><strong>' + escHtml(lastPrompt) + '</strong></div>' +
       '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(failureLocation) + '</strong></div>' +
       '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(errorText) + '</strong></div>' +
+      '<div class="execution-row"><span>제어 가능 상태</span><strong>' + escHtml(executionControlSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>지금 할 일</span><strong>' + escHtml(executionNextAction()) + '</strong></div>' +
     '</div>' +
     workerCardMarkup +
+    renderStageRunWorkbench() +
     '<div class="execution-row">' +
       '<span>전송 대상</span>' +
       '<select id="execution-pts-select" class="execution-select" onchange="syncExecutionInputs()"' + htmlDisabled(sendDisabled) + '>' + sessionOptions + '</select>' +
@@ -2171,6 +3064,10 @@ function renderExecutionConsole() {
       '<span>즉시 제어 worker</span>' +
       '<select id="execution-worker-select" class="execution-select" onchange="syncExecutionInputs()"' + htmlDisabled(immediateDispatchDisabled) + '>' + workerOptions + '</select>' +
     '</div>' +
+    '<div class="execution-row">' +
+      '<span>롤백 대상</span>' +
+      '<select id="execution-rollback-target" class="execution-select" onchange="syncExecutionInputs()"' + htmlDisabled(!S.rollbackEnabled) + '>' + rollbackOptions + '</select>' +
+    '</div>' +
     '<div class="execution-actions">' +
       '<button type="button" class="execution-button primary" onclick="sendPromptNow()"' + htmlDisabled(sendDisabled) + '>프롬프트 전송</button>' +
       '<button type="button" class="execution-button secondary" onclick="loadRecommendedPrompt()">추천 프롬프트</button>' +
@@ -2179,8 +3076,9 @@ function renderExecutionConsole() {
       '<button type="button" class="execution-button secondary" onclick="dispatchSchedulerEnterNow()"' + htmlDisabled(immediateDispatchDisabled) + '>전체 worker 즉시 엔터</button>' +
       '<button type="button" class="execution-button secondary" onclick="retryLastPrompt()"' + htmlDisabled(retryDisabled) + '>이전 내용 다시 실행</button>' +
       '<button type="button" class="execution-button warn" onclick="toggleAutoSendRuntime()"' + htmlDisabled(autoToggleDisabled) + '>' + escHtml(S.execution.schedulerRunning ? '자동 전송 중지' : '자동 전송 시작') + '</button>' +
+      '<button type="button" class="execution-button warn" onclick="openExecutionRollbackModal()"' + htmlDisabled(rollbackDisabled) + '>선택 domain 롤백</button>' +
     '</div>' +
-    '<div class="execution-note">실행 중지, 재시도, 자동 전송 on/off, worker 즉시 전송, 현재 실패 원인, 다음 행동을 한 카드에 모았습니다. 기존 롤백은 도메인 패널에서 그대로 유지됩니다.</div>' +
+    '<div class="execution-note">실행 중지, 재시도, 자동 전송 on/off, worker 즉시 전송, 롤백 대상 선택, 현재 실패 원인, 다음 행동을 한 카드에 모았습니다.</div>' +
   '</div>';
 }
 
@@ -2188,9 +3086,34 @@ function syncExecutionInputs() {
   var selectEl = document.getElementById('execution-pts-select');
   var promptEl = document.getElementById('execution-prompt');
   var workerEl = document.getElementById('execution-worker-select');
+  var rollbackEl = document.getElementById('execution-rollback-target');
   if (selectEl) S.execution.selectedPts = selectEl.value;
   if (promptEl) S.execution.promptText = promptEl.value;
   if (workerEl) S.execution.selectedWorkerIndex = Math.max(0, Number.parseInt(workerEl.value, 10) || 0);
+  if (rollbackEl) S.execution.rollbackTargetDomain = String(rollbackEl.value || '').trim();
+}
+
+function syncStageRunInputs() {
+  var stageEl = document.getElementById('execution-stage-select');
+  var moduleEl = document.getElementById('execution-stage-module');
+  if (stageEl) S.stageRun.selectedStage = String(stageEl.value || 'D').trim().toUpperCase();
+  if (moduleEl) S.stageRun.selectedModule = String(moduleEl.value || '').trim();
+}
+
+function applyStageCapabilities(runtimePayload) {
+  var capabilities = runtimePayload && runtimePayload.data ? runtimePayload.data.stage_capabilities : null;
+  if (!capabilities || typeof capabilities !== 'object') {
+    return;
+  }
+
+  S.stageRun.runEndpoint = String(capabilities.run_endpoint || S.stageRun.runEndpoint || '/api/planning-studio/stage-run');
+  S.stageRun.supportedStages = Array.isArray(capabilities.supported_stages) && capabilities.supported_stages.length > 0
+    ? capabilities.supported_stages.map(function(stage) { return String(stage || '').trim().toUpperCase(); }).filter(Boolean)
+    : S.stageRun.supportedStages;
+
+  if (!String(S.stageRun.selectedStage || '').trim()) {
+    S.stageRun.selectedStage = String(capabilities.default_stage || S.stageRun.supportedStages[0] || 'D').trim().toUpperCase();
+  }
 }
 
 function focusExecutionWorker(index) {
@@ -2236,6 +3159,175 @@ function stopAutoSendFromWorkerCard(index) {
   toggleAutoSendRuntime();
 }
 
+function openExecutionRollbackModal() {
+  syncExecutionInputs();
+  if (!S.rollbackEnabled) {
+    setExecutionStatus('warning', '롤백 비활성화', 'system_api.rollback_ui.enabled 플래그가 비활성화되어 있어 롤백할 수 없습니다.');
+    return;
+  }
+  var rollbackTarget = selectedRollbackDomain();
+  if (!rollbackTarget) {
+    setExecutionStatus('warning', '롤백 대상 필요', '먼저 롤백할 도메인을 선택하세요.');
+    return;
+  }
+  selectNode(rollbackTarget.id);
+  openRollbackModal(rollbackTarget.id);
+}
+
+function applyStageRunReport(report) {
+  var normalized = normalizeStageRunReport(report);
+  S.stageRun.lastReport = normalized;
+  rememberStageRunReport(normalized);
+  if (normalized && normalized.requested_stage) {
+    S.stageRun.selectedStage = normalized.requested_stage;
+  }
+  if (normalized && normalized.requested_module) {
+    S.stageRun.selectedModule = normalized.requested_module;
+  }
+  S.stageRun.lastRequest = normalized ? {
+    stage: normalized.requested_stage,
+    module: String(normalized.requested_module || S.stageRun.selectedModule || '').trim(),
+    execute: normalized.execution_mode === 'execute',
+  } : null;
+  renderExecutionConsole();
+}
+
+function applyStageRunHistory(reports) {
+  S.stageRun.history = normalizeStageRunHistory(reports);
+}
+
+function setStageRunHistoryFilter(filter) {
+  var nextFilter = String(filter || 'all').trim();
+  if (nextFilter !== 'all' && nextFilter !== 'failures' && nextFilter !== 'execute') {
+    nextFilter = 'all';
+  }
+  S.stageRun.historyFilter = nextFilter;
+  renderExecutionConsole();
+}
+
+function setStageRunHistorySort(sortMode) {
+  var nextSort = String(sortMode || 'risk-first').trim();
+  if (nextSort !== 'risk-first' && nextSort !== 'recent-first') {
+    nextSort = 'risk-first';
+  }
+  S.stageRun.historySort = nextSort;
+  renderExecutionConsole();
+}
+
+function setStageRunSignalHistoryView(mode) {
+  var indexes = Array.isArray(S.stageRun.matchedHistoryIndexes) ? S.stageRun.matchedHistoryIndexes : [];
+  var nextMode = String(mode || 'all').trim();
+  if (nextMode !== 'matched' || indexes.length < 2) {
+    nextMode = 'all';
+  }
+  S.stageRun.historySignalView = nextMode;
+  if (nextMode !== 'matched') {
+    S.stageRun.historySignalCollapsed = false;
+  }
+  renderExecutionConsole();
+}
+
+function setStageRunSignalGroupCollapsed(collapsed) {
+  var indexes = Array.isArray(S.stageRun.matchedHistoryIndexes) ? S.stageRun.matchedHistoryIndexes : [];
+  if (indexes.length < 2 || String(S.stageRun.historySignalView || 'all') !== 'matched') {
+    S.stageRun.historySignalCollapsed = false;
+    renderExecutionConsole();
+    return;
+  }
+  S.stageRun.historySignalCollapsed = collapsed === true;
+  renderExecutionConsole();
+}
+
+function restoreStageRunHistorySelection(report) {
+  if (!report) {
+    return false;
+  }
+  S.stageRun.selectedStage = String(report.requested_stage || S.stageRun.selectedStage || 'D').trim().toUpperCase();
+  S.stageRun.selectedModule = String(report.requested_module || '').trim();
+  S.stageRun.lastReport = report;
+  S.stageRun.lastRequest = {
+    stage: S.stageRun.selectedStage,
+    module: S.stageRun.selectedModule,
+    execute: report.execution_mode === 'execute',
+  };
+  return true;
+}
+
+function reuseStageRunHistory(index) {
+  var history = normalizeStageRunHistory(S.stageRun.history);
+  var report = history[index] || null;
+  if (!report) {
+    setExecutionStatus('warning', '기록 불러오기 실패', '선택한 최근 stage 기록을 찾을 수 없습니다.');
+    return;
+  }
+  restoreStageRunHistorySelection(report);
+  setExecutionStatus('idle', '최근 stage 기록 불러오기 완료', '선택값을 복원했습니다. 필요하면 마지막 stage 재실행 또는 dry-run/execute를 누르세요.');
+  setStageRunHistoryHighlight(index);
+}
+
+function rerunStageHistory(index, executeMode) {
+  var history = normalizeStageRunHistory(S.stageRun.history);
+  var report = history[index] || null;
+  if (!report || !restoreStageRunHistorySelection(report)) {
+    setExecutionStatus('warning', '최근 stage 재실행 실패', '재실행할 stage 기록을 찾을 수 없습니다.');
+    return;
+  }
+  setStageRunHistoryHighlight(index);
+  runSelectedStage(executeMode === true);
+}
+
+function runSelectedStage(executeMode) {
+  syncStageRunInputs();
+  var stage = String(S.stageRun.selectedStage || '').trim().toUpperCase();
+  var moduleId = String(S.stageRun.selectedModule || '').trim();
+  if (!stage) {
+    setExecutionStatus('warning', 'Stage 선택 필요', '먼저 실행할 Stage를 선택하세요.');
+    return;
+  }
+
+  var payload = { stage: stage };
+  if (moduleId) payload.module = moduleId;
+  if (executeMode === true) payload.execute = true;
+
+  renderExecutionConsole();
+  setExecutionStatus('idle', executeMode ? 'Stage execute 실행 중' : 'Stage dry-run 실행 중', 'planning studio stage-run 결과를 수집하는 중입니다.');
+  fetchJson(S.stageRun.runEndpoint || '/api/planning-studio/stage-run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    idempotencyScope: 'planning-stage-run:' + (executeMode ? 'execute' : 'dry-run'),
+    idempotencyPayload: payload,
+    body: JSON.stringify(payload),
+  })
+    .then(function(r) { return r.json().then(function(body) { return { ok: r.ok, body: body }; }); })
+    .then(function(result) {
+      if (!result.ok || result.body.ok === false) {
+        throw new Error(String(result.body.detail || result.body.message || result.body.error || 'stage run failed'));
+      }
+      applyStageRunReport(result.body.data);
+      showToast('Stage ' + stage + ' ' + (executeMode ? 'execute' : 'dry-run') + ' 완료');
+      if (executeMode) {
+        hydratePlanningSnapshot();
+      }
+    })
+    .catch(function(error) {
+      S.stageRun.lastRequest = payload;
+      S.stageRun.lastReport = null;
+      setExecutionStatus('error', executeMode ? 'Stage execute 실패' : 'Stage dry-run 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+      renderExecutionConsole();
+    });
+}
+
+function retryLastStageRun() {
+  if (!S.stageRun.lastRequest) {
+    setExecutionStatus('warning', '재실행 비활성화', '이전에 실행한 stage 요청이 없어 다시 실행할 수 없습니다.');
+    return;
+  }
+  S.stageRun.selectedStage = String(S.stageRun.lastRequest.stage || S.stageRun.selectedStage || 'D').trim().toUpperCase();
+  S.stageRun.selectedModule = String(S.stageRun.lastRequest.module || '').trim();
+  renderExecutionConsole();
+  runSelectedStage(S.stageRun.lastRequest.execute === true);
+}
+
 function setExecutionStatus(tone, title, detail) {
   S.execution.statusTone = tone;
   S.execution.statusTitle = title;
@@ -2270,6 +3362,7 @@ function hydrateExecutionRuntime() {
     var optimizedPromptPayload = results[2];
     var sessions = Array.isArray(sessionsPayload && sessionsPayload.sessions) ? sessionsPayload.sessions : [];
     var runtimeState = applyControlCenterRuntimeState(runtimePayload);
+    applyStageCapabilities(runtimePayload);
     var preferredPts = String(S.execution.selectedPts || '').trim()
       || String((((runtimeState || {}).execution || {}).selected_pts_hint) || '').trim()
       || String((((runtimeState || {}).execution || {}).current_activity || {}).pts || '').trim()
@@ -2294,6 +3387,7 @@ function hydrateExecutionRuntime() {
         failureReasonVisible: false,
       };
     }
+    S.execution.controlMatrix = normalizeExecutionControlMatrix(S.execution.controlMatrix);
     S.execution.optimizedPrompt = String((optimizedPromptPayload && optimizedPromptPayload.prompt) || S.execution.optimizedPrompt || '');
 
     if (preferredPts && sessions.some(function(session) { return String(session.pts || '') === preferredPts; })) {
@@ -2783,6 +3877,11 @@ function updateNodePosition(id) {
 // ─── Selection ────────────────────────────────────────────────────────────────
 function selectNode(id) {
   S.selected = id;
+  var selectedNode = S.byId[id];
+  if (selectedNode && selectedNode.type === 'domain') {
+    S.execution.rollbackTargetDomain = selectedNode.id;
+    renderExecutionConsole();
+  }
   document.querySelectorAll('.node').forEach(function(el) {
     var isSelected = el.dataset.id === id;
     el.classList.toggle('node-selected', isSelected);
@@ -3552,6 +4651,13 @@ function applyPlanningSnapshot(snapshot) {
   if (nextActions.next_wp) S.statusSummary.nextTask = String(nextActions.next_wp);
   if (changedCount > 0) S.statusSummary.blocker = '확인 필요 ' + changedCount + '개 변경';
 
+  if (Array.isArray(snapshot.stage_run_recent_reports) && snapshot.stage_run_recent_reports.length > 0) {
+    applyStageRunHistory(snapshot.stage_run_recent_reports);
+  }
+  if (snapshot.stage_run_last_report && typeof snapshot.stage_run_last_report === 'object' && Object.keys(snapshot.stage_run_last_report).length > 0) {
+    applyStageRunReport(snapshot.stage_run_last_report);
+  }
+
   var automationConfig = snapshot.automation || snapshot.automation_config || null;
   if (automationConfig && typeof automationConfig.enabled === 'boolean') {
     S.statusSummary.autoSendEnabled = automationConfig.enabled;
@@ -3872,6 +4978,7 @@ window.confirmRollback    = confirmRollback;
 window.fitView            = fitView;
 window.selectControlNode  = selectControlNode;
 window.syncExecutionInputs = syncExecutionInputs;
+window.syncStageRunInputs = syncStageRunInputs;
 window.focusExecutionWorker = focusExecutionWorker;
 window.sendExecutionWorkerNow = sendExecutionWorkerNow;
 window.retryExecutionWorker = retryExecutionWorker;
@@ -3882,6 +4989,22 @@ window.dispatchSchedulerPromptNow = dispatchSchedulerPromptNow;
 window.dispatchSchedulerEnterNow = dispatchSchedulerEnterNow;
 window.retryLastPrompt = retryLastPrompt;
 window.toggleAutoSendRuntime = toggleAutoSendRuntime;
+window.openExecutionRollbackModal = openExecutionRollbackModal;
+window.runSelectedStage = runSelectedStage;
+window.retryLastStageRun = retryLastStageRun;
+window.reuseStageRunHistory = reuseStageRunHistory;
+window.rerunStageHistory = rerunStageHistory;
+window.focusStageRunFailureSignal = focusStageRunFailureSignal;
+window.focusPinnedStageRunFailureSignal = focusPinnedStageRunFailureSignal;
+window.focusFailedCommandSignal = focusFailedCommandSignal;
+window.focusPrerequisitesSignal = focusPrerequisitesSignal;
+window.pinFailedCommandSignal = pinFailedCommandSignal;
+window.pinPrerequisitesSignal = pinPrerequisitesSignal;
+window.stepStageRunFailureMatch = stepStageRunFailureMatch;
+window.setStageRunHistoryFilter = setStageRunHistoryFilter;
+window.setStageRunSignalHistoryView = setStageRunSignalHistoryView;
+window.setStageRunSignalGroupCollapsed = setStageRunSignalGroupCollapsed;
+window.setStageRunHistorySort = setStageRunHistorySort;
 window.loadRecommendedPrompt = loadRecommendedPrompt;
 window.handleScaffoldInput = handleScaffoldInput;
 window.handleScaffoldBlueprint = handleScaffoldBlueprint;
@@ -3931,7 +5054,7 @@ ${css}
 <aside id="control-sidebar">
   <section class="sidebar-section">
     <div class="sidebar-title">실행 제어</div>
-    <div id="execution-console"></div>
+    <div id="execution-console">${renderStageRunHistoryStatic(graphData.meta.stageRunHistory)}</div>
   </section>
   <section class="sidebar-section">
     <div class="sidebar-title">\ud1b5\uc81c \ud750\ub984</div>
@@ -4055,7 +5178,13 @@ function buildData() {
     'master-shell/catalog/ai-runtime-recipes.yaml',
     'master-shell/catalog/adapter-compatibility-matrix.yaml',
   ]);
-  return buildGraphData(bundle);
+
+  const graphData = buildGraphData(bundle);
+
+  const stageRunHistoryRaw = readYaml('memory/project/stage-run-history.yaml');
+  graphData.meta.stageRunHistory = Array.isArray(stageRunHistoryRaw) ? stageRunHistoryRaw.slice(0, 5) : [];
+
+  return graphData;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
