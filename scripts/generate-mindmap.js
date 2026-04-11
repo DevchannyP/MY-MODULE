@@ -1678,6 +1678,12 @@ document.addEventListener('DOMContentLoaded', function() {
   runForce(120);
   render();
   renderMasterStatus();
+  if (Array.isArray(RAW.meta.stageRunHistory) && RAW.meta.stageRunHistory.length > 0) {
+    applyStageRunHistory(RAW.meta.stageRunHistory);
+  }
+  if (RAW.meta.stageRunLatest && typeof RAW.meta.stageRunLatest === 'object') {
+    S.stageRun.lastReport = normalizeStageRunReport(RAW.meta.stageRunLatest);
+  }
   renderExecutionConsole();
   renderSidebar();
   renderPlanBoard();
@@ -5183,6 +5189,14 @@ function buildData() {
 
   const stageRunHistoryRaw = readYaml('memory/project/stage-run-history.yaml');
   graphData.meta.stageRunHistory = Array.isArray(stageRunHistoryRaw) ? stageRunHistoryRaw.slice(0, 5) : [];
+
+  const stageRunLatestRaw = readYaml('memory/project/stage-run-latest.yaml');
+  graphData.meta.stageRunLatest = (
+    stageRunLatestRaw &&
+    typeof stageRunLatestRaw === 'object' &&
+    !Array.isArray(stageRunLatestRaw) &&
+    Object.keys(stageRunLatestRaw).length > 0
+  ) ? stageRunLatestRaw : null;
 
   return graphData;
 }

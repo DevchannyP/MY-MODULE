@@ -64,6 +64,8 @@ test('[mindmap control center interaction smoke] worker selection is wired to im
   assert.match(html, /snapshot\.stage_run_recent_reports/);
   assert.match(html, /applyStageRunReport\(snapshot\.stage_run_last_report\)/);
   assert.match(html, /applyStageRunHistory\(snapshot\.stage_run_recent_reports\)/);
+  assert.match(html, /applyStageRunHistory\(RAW\.meta\.stageRunHistory\)/);
+  assert.match(html, /RAW\.meta\.stageRunLatest/);
   assert.match(html, /최근 이력/);
   assert.match(html, /전체 보기/);
   assert.match(html, /실패\/차단만/);
