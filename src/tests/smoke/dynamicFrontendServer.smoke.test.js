@@ -64,6 +64,8 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(mindmap.status, 200);
     assert.match(mindmap.text, /통합 통제 센터/);
     assert.match(mindmap.text, /실행 계획표/);
+    assert.match(mindmap.text, /Stage dry-run/);
+    assert.match(mindmap.text, /Stage execute/);
     assert.ok(typeof mindmap.headers.etag === 'string' && mindmap.headers.etag.length > 0);
 
     const mindmapCached = await fetch(new URL('/mindmap/index.html', runtime.url), {
@@ -123,6 +125,10 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(controlRuntime.body.runtime_state.control_endpoints.rollback_base, '/api/v1/system/rollback');
     assert.equal(typeof controlRuntime.body.runtime_state.user_controls.send_prompt, 'boolean');
     assert.equal(typeof controlRuntime.body.runtime_state.user_controls.retry_last_prompt, 'boolean');
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.send_prompt.enabled, 'boolean');
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.send_prompt.reason, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.rollback.enabled, 'boolean');
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.rollback.reason, 'string');
     assert.equal(controlRuntime.body.runtime_state.user_controls.terminal_status_visible, true);
     assert.equal(typeof controlRuntime.body.runtime_state.as_of, 'string');
 
@@ -130,6 +136,7 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(snapshotResponse.status, 200);
     const snapshotBody = await snapshotResponse.json();
     assert.equal(snapshotBody.ok, true);
+    assert.ok(Array.isArray(snapshotBody.data.stage_run_recent_reports));
 
     const promptRecommendation = await requestJson(runtime.url, '/api/automation/optimize-prompt');
     assert.equal(promptRecommendation.status, 200);
@@ -162,6 +169,7 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(controlRuntimeAfterSend.status, 200);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.execution.last_prompt_text, 'Roundtrip prompt');
     assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.retry_last_prompt, true);
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.control_matrix.retry_last_prompt.enabled, true);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.failure_reason_visible, false);
 
     const ptySendReplay = await postJson(runtime.url, '/api/pty/send', {
@@ -294,6 +302,7 @@ test('[dynamic frontend server smoke] PTY send errors return RFC 7807 Problem De
     assert.equal(controlRuntimeAfterMissingPts.status, 200);
     assert.equal(controlRuntimeAfterMissingPts.body.runtime_state.execution.last_error.error, 'pts 필드가 필수입니다.');
     assert.equal(controlRuntimeAfterMissingPts.body.runtime_state.user_controls.failure_reason_visible, true);
+    assert.equal(controlRuntimeAfterMissingPts.body.runtime_state.user_controls.control_matrix.failure_reason_visible.enabled, true);
     assert.match(controlRuntimeAfterMissingPts.body.runtime_state.execution.next_action, /실패 원인/);
 
     // Case 2: 존재하지 않는 pts → NOT_FOUND (404)

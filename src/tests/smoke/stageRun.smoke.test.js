@@ -72,6 +72,40 @@ test('[stage run smoke] POST /api/planning-studio/stage-run returns dry-run repo
     assert.equal(second.status, 200);
     assert.equal(second.headers['idempotency-replayed'], 'true');
     assert.deepEqual(second.json, first.json);
+
+    const snapshotResponse = await new Promise((resolve, reject) => {
+      const req = http.request({
+        hostname: '127.0.0.1',
+        port: handle.port,
+        method: 'GET',
+        path: '/api/planning-studio/snapshot',
+      }, (res) => {
+        const chunks = [];
+        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('end', () => {
+          resolve({
+            status: res.statusCode,
+            json: JSON.parse(Buffer.concat(chunks).toString('utf8')),
+          });
+        });
+      });
+      req.on('error', reject);
+      req.end();
+    });
+    assert.equal(snapshotResponse.status, 200);
+    assert.equal(snapshotResponse.json.ok, true);
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.requested_stage, 'D');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.requested_module, 'task-management');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.status, first.json.data.status);
+    assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.recorded_at, 'string');
+    assert.ok(Array.isArray(snapshotResponse.json.data.stage_run_recent_reports));
+    assert.ok(snapshotResponse.json.data.stage_run_recent_reports.length >= 1);
+    assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].requested_stage, 'D');
+    assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].requested_module, 'task-management');
+    assert.equal(
+      snapshotResponse.json.data.stage_run_recent_reports[0].recorded_at,
+      snapshotResponse.json.data.stage_run_last_report.recorded_at,
+    );
   } finally {
     await handle.shutdown();
   }
