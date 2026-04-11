@@ -1,4 +1,4 @@
-id: WP-PROMOTE-2026-04-09-PLAN
+id: WP-PROMOTE-2026-04-11-PLAN
 goal: 최근 audit 시그널을 기준으로 actor? 9543a440d4e4
 type: planning
 stage: A
@@ -70,5 +70,5 @@ context_budget:
   budget_total_tokens: 205442
 template_id: planner-implementation
 planning_mode: ''
-generated_at: '2026-04-09T14:19:11.028687+00:00'
-applied_at: '2026-04-09T14:19:11.028702+00:00'
+generated_at: '2026-04-11T11:43:21.218636+00:00'
+applied_at: '2026-04-11T11:43:21.218653+00:00'
