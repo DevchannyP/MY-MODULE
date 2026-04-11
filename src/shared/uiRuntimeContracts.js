@@ -98,6 +98,50 @@ function deriveExecutionNextAction({ sessionCount, schedulerRunning, lastError, 
   return '추천 프롬프트를 불러오거나 직접 입력한 뒤 전송하세요.';
 }
 
+function buildControlMatrix({
+  sessionCount,
+  schedulerRunning,
+  lastPromptText,
+  rollbackEnabled,
+  failureReasonVisible,
+} = {}) {
+  const hasSessions = sessionCount > 0;
+  const hasLastPrompt = Boolean(String(lastPromptText || '').trim());
+
+  return {
+    send_prompt: {
+      enabled: hasSessions,
+      reason: hasSessions ? '연결된 PTY 세션으로 즉시 전송할 수 있습니다.' : '연결된 PTY 세션이 없어 전송할 수 없습니다.',
+    },
+    auto_send_toggle: {
+      enabled: hasSessions,
+      reason: hasSessions
+        ? (schedulerRunning ? '자동 전송이 실행 중이며 중지로 전환할 수 있습니다.' : '선택한 세션과 프롬프트로 자동 전송을 시작할 수 있습니다.')
+        : '연결된 PTY 세션이 없어 자동 전송을 제어할 수 없습니다.',
+    },
+    stop: {
+      enabled: schedulerRunning === true,
+      reason: schedulerRunning === true ? '현재 자동 전송이 실행 중이라 즉시 중지할 수 있습니다.' : '실행 중인 자동 전송이 없어 중지할 대상이 없습니다.',
+    },
+    retry_last_prompt: {
+      enabled: hasLastPrompt,
+      reason: hasLastPrompt ? '마지막 프롬프트가 기록되어 다시 실행할 수 있습니다.' : '마지막 프롬프트가 없어 재시도할 수 없습니다.',
+    },
+    rollback: {
+      enabled: rollbackEnabled === true,
+      reason: rollbackEnabled === true ? '도메인 롤백 UI가 활성화되어 있습니다.' : 'system_api.rollback_ui.enabled=false 상태라 롤백 UI가 비활성화되어 있습니다.',
+    },
+    terminal_status_visible: {
+      enabled: true,
+      reason: '현재 터미널, worker, 최근 실행 상태를 화면에 표시합니다.',
+    },
+    failure_reason_visible: {
+      enabled: failureReasonVisible === true,
+      reason: failureReasonVisible === true ? '최근 실패 원인을 바로 확인할 수 있습니다.' : '최근 실패가 없어 표시할 실패 원인이 없습니다.',
+    },
+  };
+}
+
 function buildControlCenterRuntimeState({
   flagStatus = {},
   bridgeState = {},
@@ -109,6 +153,15 @@ function buildControlCenterRuntimeState({
   const normalizedLastActivity = normalizeExecutionActivity(schedulerStatus.last_activity);
   const normalizedCurrentActivity = normalizeExecutionActivity(schedulerStatus.current_activity);
   const rollbackEnabled = enabledFlags.includes('system_api.rollback_ui.enabled');
+  const lastPromptText = String(bridgeState.lastPromptText || '');
+  const failureReasonVisible = Boolean(normalizedLastError?.error || normalizedLastActivity?.error);
+  const controlMatrix = buildControlMatrix({
+    sessionCount: sessions.length,
+    schedulerRunning: schedulerStatus.running === true,
+    lastPromptText,
+    rollbackEnabled,
+    failureReasonVisible,
+  });
 
   return {
     feature_flags: {
@@ -127,7 +180,7 @@ function buildControlCenterRuntimeState({
         || sessions[0]?.pts
         || '',
       ),
-      last_prompt_text: String(bridgeState.lastPromptText || ''),
+      last_prompt_text: lastPromptText,
       current_activity: normalizedCurrentActivity,
       last_activity: normalizedLastActivity,
       last_error: normalizedLastError,
@@ -135,7 +188,7 @@ function buildControlCenterRuntimeState({
         sessionCount: sessions.length,
         schedulerRunning: schedulerStatus.running === true,
         lastError: normalizedLastError,
-        lastPromptText: String(bridgeState.lastPromptText || ''),
+        lastPromptText,
       }),
     },
     scheduler: {
@@ -161,10 +214,11 @@ function buildControlCenterRuntimeState({
       send_prompt: sessions.length > 0,
       auto_send_toggle: sessions.length > 0,
       stop: schedulerStatus.running === true,
-      retry_last_prompt: Boolean(String(bridgeState.lastPromptText || '').trim()),
+      retry_last_prompt: Boolean(lastPromptText.trim()),
       rollback: rollbackEnabled,
       terminal_status_visible: true,
-      failure_reason_visible: Boolean(normalizedLastError?.error || normalizedLastActivity?.error),
+      failure_reason_visible: failureReasonVisible,
+      control_matrix: controlMatrix,
     },
     as_of: new Date().toISOString(),
   };
