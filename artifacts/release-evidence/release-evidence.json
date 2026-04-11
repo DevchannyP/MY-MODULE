@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-11T11:43:20.750064+00:00",
+  "generated_at_utc": "2026-04-11T12:01:25.313482+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "87d319685ecb27c301d733a00bf25a909d295c70",
+  "head_commit": "2bb2d055281708dc6e9019391bfbd2515e6e002f",
   "build_environment": {
     "ci": "false",
-    "github_sha": "87d319685ecb27c301d733a00bf25a909d295c70",
+    "github_sha": "2bb2d055281708dc6e9019391bfbd2515e6e002f",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -26,20 +26,10 @@
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "artifacts/release-evidence/release-evidence.json",
       "scripts/generate-mindmap.js",
-      "scripts/planning_studio_api.py",
-      "src/server/createServer.js",
-      "src/shared/uiRuntimeContracts.js",
-      "src/tests/smoke/dynamicFrontendServer.smoke.test.js",
-      "src/tests/smoke/mindmapControlCenterBrowserInteraction.smoke.test.js",
-      "src/tests/smoke/mindmapControlCenterInteraction.smoke.test.js",
-      "src/tests/smoke/stageRun.smoke.test.js"
+      "src/tests/smoke/mindmapControlCenterInteraction.smoke.test.js"
     ],
-    "untracked_paths": [
-      "memory/project/stage-run-history.yaml",
-      "memory/project/stage-run-latest.yaml"
-    ]
+    "untracked_paths": []
   },
   "memory_sources": {
     "current_state": "memory/current-state.yaml",
