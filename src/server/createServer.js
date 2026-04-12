@@ -55,18 +55,25 @@ function createTaskController(
   });
 }
 
-function createBillingController() {
+function createBillingController(eventPublisher = null) {
+  // billing/video의 eventPublisher는 (event) => void 시그니처 — EventBusPublisher 래핑
+  const billingPublisher = eventPublisher
+    || ((event) => _sharedDomainEventPublisher.publish(event));
   return new BillingController({
     invoiceRepo: new InMemoryInvoiceRepository(),
     paymentRepo: new InMemoryPaymentRepository(),
     exceptionRepo: new InMemoryBillingExceptionRepository(),
+    eventPublisher: billingPublisher,
   });
 }
 
-function createVideoController() {
+function createVideoController(eventPublisher = null) {
+  const videoPublisher = eventPublisher
+    || ((event) => _sharedDomainEventPublisher.publish(event));
   return new VideoController({
     videoRepository: new InMemoryVideoRepository(),
     transcodeJobRepository: new InMemoryTranscodeJobRepository(),
+    eventPublisher: videoPublisher,
   });
 }
 
