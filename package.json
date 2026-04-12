@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env src/index.js",
     "start:dev": "node --env-file-if-exists=.env --env-file-if-exists=.env.local src/index.js",
-    "test": "node --test 'domains/**/tests/**/*.test.js' 'src/tests/**/*.test.js'",
+    "test": "node --test 'domains/**/tests/**/*.test.js' 'src/tests/unit/**/*.test.js'",
     "test:contract": "python3 scripts/validate_contract_drift.py",
     "test:integration": "node --test 'domains/**/tests/application/**/*.test.js'",
     "test:e2e-smoke": "node --test 'domains/**/tests/smoke/**/*.test.js' 'src/tests/smoke/**/*.test.js'",
