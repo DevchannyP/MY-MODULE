@@ -2,8 +2,8 @@
 # STATUS: legacy detail surface
 # 실제 다음 Work Packet 선택은 root memory/wp-queue.yaml 과 memory/current-wp.yaml 이 기준이다.
 # 이 파일은 legacy 코어 업그레이드 히스토리와 상세 우선순위 참고용이다.
-as_of: "2026-03-20"
-current_phase: "core-platform-upgrade-for-video-era"
+as_of: "2026-04-12"
+current_phase: "spiral-7-readiness"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"
 
 execution_policy:
@@ -15,11 +15,37 @@ execution_policy:
     - "사용자 변경사항은 되돌리지 않는다."
     - "한 턴에서 안전하게 끝낼 수 있는 범위는 연속 처리한다."
 
+queue_status:
+  total: 35
+  done: 35
+  ready: 0
+  blocked: 0
+  note: "2026-04-12 기준 35/35 WP 완료. 신규 Spiral 7 WP 정의 필요."
+
+next_actions:
+  - priority: 1
+    id: "NEXT-001"
+    action: "main 브랜치로 PR 준비 (156 commits ahead)"
+    track: "SCM-RELEASE"
+    done: false
+    goal: "chore/core-git-governance-activation 브랜치를 main으로 PR하여 AI 하네스 v0.2 + 3도메인 완성 릴리즈."
+    success_criteria:
+      - "PR 제목/본문 Conventional Commit 스타일"
+      - "570/570 tests PASS CI 확인"
+      - "release-evidence 산출물 갱신"
+
+  - priority: 2
+    id: "NEXT-002"
+    action: "Spiral 7 — 동시성/성능 강화 WP 설계"
+    track: "SPIRAL-7"
+    done: false
+    goal: "NFR extended concurrency 요건 (async-first, Worker Thread, RateLimit 강화) 기반 신규 WP 정의."
+    trigger: "NEXT-001 완료 또는 사용자 명시 요청"
+    success_criteria:
+      - "CAP-PERF capability로 wp-queue.yaml에 등록"
+      - "Stage A 진입 조건 명시"
+
 queue:
-  - priority: 0
-    action: "root memory/wp-queue.yaml 기준으로 다음 Work Packet 정의"
-    done: true
-    note: "2026-03-20 기준 root queue 가 비어 있으므로 현재 미완료 packet 은 없다. 신규 Work Packet 이 필요해질 때만 root memory/wp-queue.yaml 에서 새로 정의한다."
   - priority: 1
     id: "Q-101"
     track: "CORE-QUALITY"

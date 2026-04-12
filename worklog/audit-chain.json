@@ -135,7 +135,15 @@
       "details": "전체 품질 게이트 PASS: contract-drift PASS, openapi-governance PASS, feature-flags 12/12, ui-shell-contract 16/16, architecture-fitness 0위반, requirements PASS, ESLint PASS, 570/570 domain, 110/110 smoke",
       "prev_hash": "e1c3728210592be6489540b7ee82d17e52190fb824418c832c1906d8b529a41f",
       "hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd"
+    },
+    {
+      "seq": 18,
+      "timestamp": "2026-04-12T05:21:02.230Z",
+      "action": "memory-sync/platform",
+      "details": "next-actions + current-state + reflection-log 2026-04-12로 재정렬 — 35/35 WP 완료 상태 반영",
+      "prev_hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd",
+      "hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84"
     }
   ],
-  "last_hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd"
+  "last_hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84"
 }

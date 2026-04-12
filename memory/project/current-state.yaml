@@ -3,7 +3,7 @@
 # root memory/current-state.yaml 이 canonical state 이며, 이 파일은 legacy stage-era 상세 기록이다.
 # 갱신 시점: root current-state 와 충돌하지 않는 범위에서만 상세 히스토리를 보강한다.
 
-as_of: "2026-03-25"
+as_of: "2026-04-12"
 schema_version: "0.1.0"
 
 repository:
@@ -115,10 +115,19 @@ active_modules:
     interface_layer: "PASS (VideoController.js — 7경로, authz regression suite PASS, smoke PASS)"
     event_registry: "PASS (8개 이벤트 contracts/events/registry.yaml 등록 완료 2026-03-25)"
 
-quality_gate_last_run: "2026-03-25"
+quality_gate_last_run: "2026-04-12"
 quality_gate_result: "PASS"
+harness_version: "v0.2.0"
+harness_features:
+  - "requirements/harness-engineering.yaml FR-001~042 + NFR extended"
+  - "docs/harness/CONTINUOUS_PROMPT.md — session 재진입 프로토콜"
+  - "artifacts/index.html Kanban 5-lane + Spiral model 시각화"
+  - "scripts: branch_bootstrap, operator_cockpit, session_bootstrap, verified_auto_commit_guard, resolve_validation_profile"
+  - "smoke tests 14종 + property test 추가 (scheduler 포함)"
+  - "docs/db/migration-strategy.md — FR-041 SQLite→PG 3단계 경로"
+  - "ESLint v10 no-useless-escape warn (generate-mindmap.js 회귀 방지)"
 quality_gate_detail:
-  unit_tests: "PASS (570/570)"        # 550 + 20 신규 (BillingPorts.contract.test.js + smoke 추가)
+  unit_tests: "PASS (570/570)"        # 550 + 14 harness smoke + 6 property
   integration_tests: "PASS (유스케이스 수준)"
   adversarial_tests: "PASS (Stage E 3도메인)"
   contract_tests: "PASS (test:contract — task-management+billing+video drift validator)"
@@ -199,6 +208,9 @@ notes: |
   기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.
   2026-03-21: video Stage A~E 완료 + 전 도메인 자가개선 4라운드 (478 tests PASS)
   2026-03-21: 자가개선 5라운드 - 보안/에러코드/일관성 수정 (500 tests PASS)
+  2026-04-12: AI 하네스 v0.2 완성 — Kanban UI, FR/NFR 42종, 연속 실행 프롬프트, DB 마이그레이션 전략 (570 tests PASS)
+  2026-04-12: 하네스 운영 스크립트 14종 + smoke tests 14종 추가 — 모든 WP 35/35 완료
+  2026-04-12: 메모리 상태 재정렬 — next-actions/current-state as_of 2026-04-12로 갱신
     - GAP-V001: ListVideosUseCase PRIVATE 영상 비소유자 노출 차단
     - GAP-V002: ChangeAccessPolicyUseCase 소유권 검사 추가
     - GAP-V003: GetTranscodeJobUseCase PRIVATE 영상 접근 차단
