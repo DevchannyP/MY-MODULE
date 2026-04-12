@@ -41,9 +41,13 @@ const {
   buildControlCenterRuntimeState,
 } = require('../shared/uiRuntimeContracts');
 
-function createTaskController(taskRepository = new InMemoryTaskRepository(), eventPublisher = new EventBusPublisher()) {
+function createTaskController(
+  taskRepository = new InMemoryTaskRepository(),
+  eventPublisher = new EventBusPublisher(),
+  outboxRepository = null,
+) {
   return new TaskController({
-    createTask:           new CreateTaskUseCase(taskRepository, eventPublisher),
+    createTask:           new CreateTaskUseCase(taskRepository, eventPublisher, outboxRepository),
     getTask:              new GetTaskUseCase(taskRepository),
     listTasks:            new ListTasksUseCase(taskRepository),
     transitionTaskStatus: new TransitionTaskStatusUseCase(taskRepository),
@@ -815,7 +819,7 @@ function recordControlCenterOperation({
 }
 
 function createAppHandler({
-  taskController = createTaskController(new InMemoryTaskRepository(), _sharedDomainEventPublisher),
+  taskController = createTaskController(new InMemoryTaskRepository(), _sharedDomainEventPublisher, _sharedOutboxRepo),
   billingController = createBillingController(),
   videoController = createVideoController(),
   idempotencyStore = new InMemoryIdempotencyStore(),

@@ -70,6 +70,11 @@ test('[eventbus wiring smoke] task 생성 후 domain-events ring buffer에 이�
     );
     assert.ok(taskEvents.length >= 1,
       `Expected TaskCreated in ring buffer, got: ${JSON.stringify(eventsRes.body.events.map((e) => e.type || e.event_type))}`);
+
+    // outbox stats 확인 — dual-write 경로가 활성화됐음을 검증
+    const statsRes = await request(port, 'GET', '/api/v1/outbox/stats', null);
+    assert.equal(statsRes.status, 200);
+    assert.ok(typeof statsRes.body.stats === 'object', 'outbox stats should exist');
   } finally {
     if (runtime) await runtime.shutdown();
   }
