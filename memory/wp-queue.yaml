@@ -873,12 +873,16 @@ capabilities:
     work_packets:
       - id: "WP-S10-001"
         goal: "/health 엔드포인트에 EventBus + OutboxPoller 관찰 데이터 추가"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — /health.observability { event_bus, outbox_poller, dlq_size } 구현"
         tier: "infra"
         depends_on: ["WP-S9-001", "WP-S9-002"]
 
       - id: "WP-S10-002"
         goal: "EventBus 내부 publish/error 통계 (stats) 추가 — 운영 메트릭 기반"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — EventBus.getStats() + 4 unit tests"
         tier: "infra"
         depends_on: ["WP-S10-001"]
