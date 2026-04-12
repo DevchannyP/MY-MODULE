@@ -38,6 +38,8 @@ class EventBus {
     /** @type {Array<Record<string, unknown>>} */
     this._publishedHistory = [];
     this._recordHistory = false;
+    /** @type {((entry: { event: Record<string,unknown>, handlerName: string, error: Error }) => void) | null} */
+    this._handlerErrorCb = null;
   }
 
   /**
@@ -131,6 +133,9 @@ class EventBus {
       for (const { handler: name, error } of errors) {
         // eslint-disable-next-line no-console
         console.warn(`[EventBus] handler "${name}" threw:`, error);
+        if (this._handlerErrorCb) {
+          try { this._handlerErrorCb({ event, handlerName: name, error }); } catch { /* DLQ callback 오류 격리 */ }
+        }
       }
     }
   }
@@ -179,12 +184,21 @@ class EventBus {
   }
 
   /**
+   * 핸들러 오류 발생 시 호출할 콜백을 등록한다 (DLQ 연동 등).
+   * @param {((entry: { event: Record<string,unknown>, handlerName: string, error: Error }) => void) | null} fn
+   */
+  setHandlerErrorCallback(fn) {
+    this._handlerErrorCb = fn;
+  }
+
+  /**
    * 테스트 전용: 핸들러와 히스토리를 모두 지운다 (인스턴스는 유지).
    */
   clearForTest() {
     this._handlers.clear();
     this._publishedHistory = [];
     this._recordHistory = false;
+    this._handlerErrorCb = null;
   }
 }
 

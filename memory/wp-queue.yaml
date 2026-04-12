@@ -838,3 +838,25 @@ capabilities:
         result: "PASS — 2/2 smoke tests PASS; 746/746 전체 테스트 PASS"
         tier: "infra"
         depends_on: ["WP-S8-001", "WP-S8-002"]
+
+  - capability: "CAP-S9"
+    label: "Spiral 9 — 이벤트 내구성·관찰가능성 강화"
+    spiral: 9
+    work_packets:
+      - id: "WP-S9-001"
+        goal: "서버에 SQLiteOutboxRepository + OutboxPoller 배선 — 프로덕션 내구성 경로 (Task → outbox → poller → EventBus)"
+        status: "pending"
+        tier: "infra"
+        depends_on: ["WP-S8-003"]
+
+      - id: "WP-S9-002"
+        goal: "EventBus Dead-Letter Queue(DLQ) — 구독자 오류 격리, /api/v1/domain-events/dlq 엔드포인트"
+        status: "pending"
+        tier: "infra"
+        depends_on: ["WP-S9-001"]
+
+      - id: "WP-S9-003"
+        goal: "서버 graceful shutdown — OutboxPoller 정상 종료 보장, 진행 중인 poll 완료 후 server.close()"
+        status: "pending"
+        tier: "infra"
+        depends_on: ["WP-S9-001"]

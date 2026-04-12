@@ -19,7 +19,8 @@ const { InMemoryTaskRepository } = require('../../domains/productivity/task-trac
 const { BillingController } = require('../../domains/billing/src/interface/BillingController');
 const { VideoController } = require('../../domains/video/src/interface/VideoController');
 const { fromError } = require('../shared/ProblemDetails');
-const { InMemoryEventPublisher } = require('../shared/EventPublisher');
+const { EventBusPublisher } = require('../shared/EventBusPublisher');
+const { EventBus } = require('../shared/EventBus');
 const { InMemoryIdempotencyStore } = require('../shared/IdempotencyStore');
 const { InMemoryRateLimiter } = require('../shared/RateLimiter');
 const { getFeatureFlags } = require('../infrastructure/FeatureFlagProvider');
@@ -31,6 +32,8 @@ const { InMemoryVideoRepository } = require('../../domains/video/src/infrastruct
 const { InMemoryTranscodeJobRepository } = require('../../domains/video/src/infrastructure/InMemoryTranscodeJobRepository');
 const { tryServeDynamicUi } = require('../frontend/renderDynamicUi');
 const { buildOperatorCockpitSummary } = require('../../scripts/operator_cockpit');
+const { InMemoryOutboxRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/OutboxRepository');
+const { OutboxPoller } = require('../../domains/productivity/task-tracking/src/infrastructure/OutboxPoller');
 const {
   buildHomeRuntimeState,
   buildHomeRuntimeResponse,
@@ -38,7 +41,7 @@ const {
   buildControlCenterRuntimeState,
 } = require('../shared/uiRuntimeContracts');
 
-function createTaskController(taskRepository = new InMemoryTaskRepository(), eventPublisher = new InMemoryEventPublisher()) {
+function createTaskController(taskRepository = new InMemoryTaskRepository(), eventPublisher = new EventBusPublisher()) {
   return new TaskController({
     createTask:           new CreateTaskUseCase(taskRepository, eventPublisher),
     getTask:              new GetTaskUseCase(taskRepository),
@@ -419,12 +422,38 @@ function createAllEnabledFlags() {
 const DOMAIN_EVENT_RING_MAX = 100;
 const _domainEventRingBuffer = [];
 
-const _sharedDomainEventPublisher = new InMemoryEventPublisher();
-_sharedDomainEventPublisher.onPublish((evt) => {
+// EventBus 싱글톤 — 도메인 이벤트의 단일 in-process 라우팅 허브
+const _sharedEventBus = EventBus.getInstance();
+// wildcard 구독: 모든 도메인 이벤트를 ring buffer로 라우팅 (관측성 유지)
+_sharedEventBus.subscribe('*', (evt) => {
   _domainEventRingBuffer.push(Object.assign({ _observed_at: new Date().toISOString() }, evt));
   if (_domainEventRingBuffer.length > DOMAIN_EVENT_RING_MAX) {
     _domainEventRingBuffer.shift();
   }
+});
+// EventBusPublisher: Use case → EventBus → ring buffer (+ 향후 모든 구독자)
+const _sharedDomainEventPublisher = new EventBusPublisher(_sharedEventBus);
+
+// ── Outbox 인프라 — Transactional Outbox 패턴의 서버 측 배선 ─────────────────
+// DLQ(Dead-Letter Queue): 구독자 오류로 미전달된 이벤트를 캡처하는 링 버퍼
+const DOMAIN_EVENT_DLQ_MAX = 50;
+const _domainEventDlq = [];
+// EventBus 핸들러 오류 → DLQ 링 버퍼로 라우팅
+_sharedEventBus.setHandlerErrorCallback(({ event, handlerName, error }) => {
+  _domainEventDlq.push({
+    event,
+    handlerName,
+    errorMessage: error?.message ?? String(error),
+    failed_at:    new Date().toISOString(),
+  });
+  if (_domainEventDlq.length > DOMAIN_EVENT_DLQ_MAX) _domainEventDlq.shift();
+});
+const _sharedOutboxRepo = new InMemoryOutboxRepository();
+const _sharedOutboxPoller = new OutboxPoller({
+  outboxRepo: _sharedOutboxRepo,
+  eventBus:   _sharedEventBus,
+  intervalMs: 500,
+  batchSize:  50,
 });
 
 function buildControlBridgePrompt(snapshotData = {}) {
@@ -1201,6 +1230,24 @@ function createAppHandler({
         return;
       }
 
+      // ── Domain Event DLQ — 구독자 오류 격리 링 버퍼 ────────────────────────
+      if (url.pathname === '/api/v1/domain-events/dlq' && method === 'GET') {
+        const limit = Math.min(parseInt(query.limit || '50', 10) || 50, 100);
+        const snapshot = _domainEventDlq.slice(-limit);
+        sendResponse(req, res, 200, { total: _domainEventDlq.length, entries: snapshot },
+          mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      // ── Outbox Poller Stats ───────────────────────────────────────────────────
+      if (url.pathname === '/api/v1/outbox/stats' && method === 'GET') {
+        sendResponse(req, res, 200, {
+          running:        _sharedOutboxPoller.isRunning,
+          stats:          _sharedOutboxPoller.stats,
+        }, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
       // ── UI Runtime API ────────────────────────────────────────────────────
       if (method === 'GET' && url.pathname === '/ui/home-runtime') {
         const runtimeData = buildHomeRuntimeResponse();
@@ -1910,6 +1957,9 @@ function startServer({
         return;
       }
 
+      // OutboxPoller 자동 시작 (서버 시작과 함께)
+      _sharedOutboxPoller.start();
+
       resolve({
         server,
         port: address.port,
@@ -1923,6 +1973,8 @@ function startServer({
             return shutdownPromise;
           }
           enterDrainMode(lifecycleState, reason);
+          // OutboxPoller 정상 종료 (진행 중인 poll 완료 후 정지)
+          await _sharedOutboxPoller.stop();
           shutdownPromise = new Promise((resolveShutdown, rejectShutdown) => {
             const forceCloseTimer = setTimeout(() => {
               for (const socket of sockets) {
@@ -1953,4 +2005,6 @@ module.exports = {
   startServer,
   createAllEnabledFlags,
   _domainEventRingBuffer,
+  _domainEventDlq,
+  _sharedOutboxPoller,
 };

@@ -147,6 +147,33 @@ describe('EventBus.listenerCount', () => {
   });
 });
 
+// ── DLQ (Handler Error Callback) ────────────────────────────────────────────
+
+describe('EventBus handler error callback (DLQ)', () => {
+  it('setHandlerErrorCallback: 구독자 오류 발생 시 콜백이 호출된다', () => {
+    const bus = EventBus.getInstance();
+    const dlq = [];
+    bus.setHandlerErrorCallback((entry) => dlq.push(entry));
+    bus.subscribe('fail.event', () => { throw new Error('boom'); });
+
+    bus.publish({ type: 'fail.event', id: 'X-1' });
+
+    assert.equal(dlq.length, 1);
+    assert.equal(dlq[0].event.id, 'X-1');
+    assert.ok(dlq[0].errorMessage || dlq[0].error, 'error info should be present');
+  });
+
+  it('clearForTest()는 handler error callback을 null로 초기화한다', () => {
+    const bus = EventBus.getInstance();
+    const called = [];
+    bus.setHandlerErrorCallback((e) => called.push(e));
+    bus.clearForTest();
+    bus.subscribe('e', () => { throw new Error('x'); });
+    bus.publish({ type: 'e' });
+    assert.equal(called.length, 0, 'callback should be cleared');
+  });
+});
+
 // ── History (테스트 유틸) ───────────────────────────────────────────────────
 
 describe('EventBus history', () => {
