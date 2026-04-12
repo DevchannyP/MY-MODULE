@@ -2618,7 +2618,7 @@ function executionActivityWorkerLabel(activity) {
   if (!workerName) {
     return '';
   }
-  if (/^\[\d+\]\s/.test(workerName)) {
+  if (/^[[][0-9]+][ \t\r\n\f\v]/.test(workerName)) {
     return workerName;
   }
   if (Array.isArray(S.execution.schedulerWorkers)) {

@@ -354,6 +354,23 @@ paths:
                 $ref: "#/components/schemas/SchedulerDispatchResponse"
         "500": { $ref: "#/components/responses/LegacyInternalError" }
 
+  /ui/home-runtime:
+    servers:
+      - url: /
+    get:
+      summary: "홈 런타임 상태 조회 — WP 큐, 현재 레인, 칸반 데이터"
+      operationId: "getHomeRuntime"
+      tags: [ui]
+      responses:
+        "200":
+          description: "성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                description: "홈 UI 런타임 상태 페이로드"
+        "500": { $ref: "#/components/responses/LegacyInternalError" }
+
   /flags:
     servers:
       - url: /

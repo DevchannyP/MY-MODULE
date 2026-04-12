@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-11T12:10:46.673019+00:00",
+  "generated_at_utc": "2026-04-12T06:01:30.549884+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "284fb790aed4909f4a7a1d2304a180d109c46718",
+  "head_commit": "5fe4df9bddbfe1224d8e7e227d7241b60710abfd",
   "build_environment": {
     "ci": "false",
-    "github_sha": "284fb790aed4909f4a7a1d2304a180d109c46718",
+    "github_sha": "5fe4df9bddbfe1224d8e7e227d7241b60710abfd",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -20,16 +20,30 @@
       "artifacts/decision-apply/latest/decision-apply-report.json",
       "artifacts/decision-apply/latest/handoff-bundle.json",
       "artifacts/decision-apply/latest/promoted-packet.yaml",
+      "artifacts/index.html",
       "artifacts/master-planner/index.html",
       "artifacts/mindmap/index.html",
       "artifacts/promotion-pipeline/latest/benchmark-pack.json",
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "src/server/createServer.js",
-      "src/tests/smoke/stageRun.smoke.test.js"
+      "artifacts/provenance/workflow-os-provenance.json",
+      "artifacts/release-evidence/release-evidence.json",
+      "contracts/ui-shell/openapi.yaml",
+      "docs/db/migration-strategy.md",
+      "eslint.config.mjs",
+      "master-shell/observability/health-scores.yaml",
+      "memory/wp-queue.yaml",
+      "package.json",
+      "requirements/harness-engineering.yaml",
+      "scripts/generate-mindmap.js",
+      "scripts/validate_ui_shell_contract.py",
+      "src/tests/smoke/projectStatus.smoke.test.js"
     ],
-    "untracked_paths": []
+    "untracked_paths": [
+      "src/shared/EventBus.js",
+      "src/tests/unit/"
+    ]
   },
   "memory_sources": {
     "current_state": "memory/current-state.yaml",
@@ -58,7 +72,7 @@
     "provenance": {
       "path": "artifacts/provenance/workflow-os-provenance.json",
       "exists": true,
-      "sha256": "bf8f41b5d57808ca055fdb25daf1d9d7f3de422d78d251ab38373f43e85f8f2c"
+      "sha256": "c1983da8ee4cd4990aa5fd7db51f2fe935cc2274b7f3f0cbac3ee3f9b027bd28"
     },
     "sbom": {
       "path": "artifacts/sbom/workflow-os.spdx.json",

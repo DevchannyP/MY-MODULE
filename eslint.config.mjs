@@ -49,8 +49,8 @@ export default [
       // 도메인 코어 순수성 보조 (C002)
       "no-console": "warn",
 
-      // 생성형 스크립트의 복잡한 regex 이스케이프 허용 (false-positive 방지)
-      "no-useless-escape": "warn",
+      // 이스케이프 규칙: error로 복구 (generate-mindmap.js 수정 완료 2026-04-12)
+      "no-useless-escape": "error",
     },
   },
   {

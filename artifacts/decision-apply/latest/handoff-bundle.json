@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-11T12:10:46.180177+00:00",
+  "generated_at": "2026-04-12T06:01:29.924300+00:00",
   "goal": "stateful-ops",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -237,9 +237,9 @@
     ],
     "selected_adapters": [
       "observability-otel",
-      "master-ui-plugin-shell",
-      "repository-sqlite",
       "repository-inmemory",
+      "repository-sqlite",
+      "master-ui-plugin-shell",
       "feature-flag-provider",
       "http-problem-details"
     ],
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-11T12:10:46.180158+00:00",
+    "generated_at": "2026-04-12T06:01:29.924278+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
@@ -313,6 +313,12 @@
         "track_title": "마스터 OS 기초",
         "matched": [
           {
+            "timestamp": "2026-04-12",
+            "title": "reflection harness-v0.2",
+            "detail": "Conventional Commit subject는 영문 명사구로 시작",
+            "tag": "reflection"
+          },
+          {
             "timestamp": "2026-03-20",
             "title": "reflection D(4차)",
             "detail": "Phase 5 CLAUDE.md 재작성부터 새 프로토콜 적용",
@@ -330,12 +336,6 @@
             "title": "report 2026-03-25_011_D_video",
             "detail": "worklog/reports/2026-03-25_011_D_video/REPORT.md",
             "tag": "report"
-          },
-          {
-            "timestamp": "",
-            "title": "report 2026-03-25_001_A_billing",
-            "detail": "worklog/reports/2026-03-25_001_A_billing/REPORT.md",
-            "tag": "report"
           }
         ]
       },
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-11 21:02:07 +0900",
+            "timestamp": "2026-04-12 14:21:30 +0900",
             "title": "git commit",
-            "detail": "chore(artifacts): final master-planner rebuild",
+            "detail": "chore(memory): sync L0-hot state to 2026-04-12 — 35/35 WP done",
             "tag": "git"
           }
         ]

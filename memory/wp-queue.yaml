@@ -675,3 +675,131 @@ capabilities:
         depends_on: ["WP-HRN-001"]
         completed_at: "2026-04-12"
         result: "PASS — SQLite→PG 전환 경로, 스키마 명명, 인덱스 정책, 낙관적 잠금, 자료사전 동기화 의무 정의"
+
+  # ──────────────────────────────────────────────
+  # CAP-S7  Spiral 7 — 동시성·이벤트·데이터 강화
+  # ──────────────────────────────────────────────
+  - id: "CAP-S7"
+    name: "Spiral 7 — Concurrency / Event / Data hardening"
+    priority: 10
+    work_packets:
+      - id: "WP-S7-001"
+        goal: "In-process EventBus singleton — Observer 패턴 인프라 기반 수립"
+        status: "done"
+        tier: "infra"
+        depends_on: []
+        completed_at: "2026-04-12"
+        result: "PASS — src/shared/EventBus.js Singleton 구현 (subscribe/publish/unsubscribe/wildcard/history), 18/18 단위 테스트 PASS"
+        context_budget:
+          tier_reads: ["memory/L0-hot/current-state.yaml"]
+          context_reads: ["requirements/harness-engineering.yaml#nfr_extended.design_patterns.observer"]
+          estimated_turns: 4
+        intake_packet:
+          goal: "NFR observer 규칙 준수 — 도메인 이벤트 발행/구독을 EventBus 경유로 강제하는 인프라 모듈 생성"
+          context:
+            - "현재 도메인 이벤트는 use case 내부에서 직접 결과 반환 또는 callback 방식"
+            - "task_outbox 스키마 인덱스는 schema.sql에 존재하지만 OutboxRepository 없음"
+          constraints:
+            - "기존 domain core 변경 최소화 — Port 인터페이스만 추가"
+            - "동기 in-process 구현으로 시작 (async 확장 path 열어둠)"
+          done_when:
+            - "src/shared/EventBus.js Singleton 구현 + subscribe/publish API"
+            - "단위 테스트 최소 5개 PASS"
+          verification:
+            - "npm test PASS (기존 570 + 신규)"
+
+      - id: "WP-S7-002"
+        goal: "OutboxRepository + OutboxPoller — task-tracking 도메인 이벤트 전달 완성"
+        status: "pending"
+        tier: "domain"
+        depends_on: ["WP-S7-001"]
+        context_budget:
+          tier_reads: ["memory/L0-hot/current-state.yaml"]
+          context_reads: ["domains/productivity/task-tracking/src/infrastructure/schema.sql"]
+          estimated_turns: 6
+        intake_packet:
+          goal: "task_outbox 스키마 인덱스(idx_outbox_pending)를 실제로 사용하는 OutboxRepository + OutboxPoller 구현"
+          context:
+            - "schema.sql에 task_outbox 테이블 + idx_outbox_pending 인덱스 이미 정의됨"
+            - "delivered=0 행을 polling → EventBus publish → delivered=1 업데이트"
+          constraints:
+            - "도메인 코어(Task, use case) 변경 없음"
+            - "SQLiteTaskRepository 인터페이스 유지"
+          done_when:
+            - "OutboxRepository.js (Port + SQLite 구현체)"
+            - "OutboxPoller.js (setInterval 기반 polling)"
+            - "단위 테스트 최소 8개 PASS"
+          verification:
+            - "npm test PASS + schema 적합성 확인"
+
+      - id: "WP-S7-003"
+        goal: "Worker Thread로 generate-mindmap.js CPU 바운드 작업 분리"
+        status: "pending"
+        tier: "infra"
+        depends_on: []
+        context_budget:
+          tier_reads: ["memory/L0-hot/current-state.yaml"]
+          context_reads: ["scripts/generate-mindmap.js", "src/server/createServer.js"]
+          estimated_turns: 5
+        intake_packet:
+          goal: "mindmap HTML 생성(~700KB, 동기)을 Worker Thread로 분리해 이벤트 루프 블로킹 제거"
+          context:
+            - "scripts/generate-mindmap.js는 동기 실행으로 ~100ms 이상 메인 루프 블로킹"
+            - "createServer.js가 mindmap 재생성을 POST /api/mindmap/rebuild에서 호출"
+          constraints:
+            - "generate-mindmap.js 내부 로직 변경 없음 — Worker 래퍼만 추가"
+            - "기존 npm run generate-mindmap CLI 동작 유지"
+          done_when:
+            - "scripts/generateMindmapWorker.js — Worker Thread entry"
+            - "createServer.js rebuild 엔드포인트가 workerData로 호출"
+            - "smoke test PASS"
+          verification:
+            - "npm test PASS + rebuild 엔드포인트 응답 확인"
+
+      - id: "WP-S7-004"
+        goal: "data-dictionary 경로 정렬 — NFR 참조 경로와 실제 파일 일치"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — harness-engineering.yaml + migration-strategy.md 경로를 ai-harness-data-dictionary.md로 통일"
+        tier: "infra"
+        depends_on: []
+        context_budget:
+          tier_reads: []
+          context_reads: ["requirements/harness-engineering.yaml#nfr_extended.data_dictionary"]
+          estimated_turns: 2
+        intake_packet:
+          goal: "NFR이 가리키는 docs/reference/data-dictionary.md 경로와 실제 파일 docs/reference/ai-harness-data-dictionary.md를 정렬"
+          context:
+            - "harness-engineering.yaml nfr_extended.data_dictionary.location: docs/reference/data-dictionary.md"
+            - "실제 파일: docs/reference/ai-harness-data-dictionary.md"
+          constraints:
+            - "기존 링크/참조 깨지지 않도록 symlink 또는 NFR 경로 수정 선택"
+          done_when:
+            - "NFR location 경로로 파일 접근 가능"
+            - "migration-strategy.md 참조 경로 일치"
+          verification:
+            - "npm run lint PASS + 경로 참조 정합성 확인"
+
+      - id: "WP-S7-005"
+        goal: "validation-profiles.yaml 명령 갭 감사 — 누락 npm scripts 추가"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — 모든 15개 validation-profile 명령이 package.json에 존재, 갭 없음 확인"
+        tier: "governance"
+        depends_on: []
+        context_budget:
+          tier_reads: []
+          context_reads: ["requirements/validation-profiles.yaml", "package.json"]
+          estimated_turns: 3
+        intake_packet:
+          goal: "validation-profiles.yaml에 선언된 모든 npm 명령이 package.json에 실제 존재하는지 검증하고 누락 명령 추가"
+          context:
+            - "validation-profiles.yaml에 wp:reconcile, wp:check-fit, test:integration 등 명령 선언됨"
+            - "package.json에 해당 scripts가 없으면 프로파일 실행 시 실패"
+          constraints:
+            - "기존 scripts 동작 변경 없음 — 누락 scripts만 추가"
+          done_when:
+            - "validation-profiles.yaml의 모든 commands가 package.json에 존재"
+            - "각 script 실행 시 0 exit code"
+          verification:
+            - "npm run wp:reconcile && npm run wp:check-fit && npm run test:integration PASS"

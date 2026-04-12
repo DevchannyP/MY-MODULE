@@ -704,7 +704,7 @@
         <div class="side-list">
           <div class="side-item"><span class="muted">요구사항 Stage</span><strong>D</strong></div>
           <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">WP-RUN-004</strong></div>
-          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>NONE</strong></div>
+          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>WP-S7-001</strong></div>
           <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>clean</strong></div>
           <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
           <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
@@ -759,7 +759,7 @@
         <h2>칸반 보드 · 작업 흐름</h2>
         <p>Work Packet 상태를 레인별로 시각화합니다. 각 카드의 A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
       </div>
-      <div class="spiral-iteration">반복 <strong>#19</strong> / 19 능력</div>
+      <div class="spiral-iteration">반복 <strong>#19</strong> / 20 능력</div>
     </div>
 
     <div class="spiral-row">
@@ -804,9 +804,49 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #475569">
           <span class="kb-lane-label">Backlog</span>
-          <span class="kb-lane-count">0</span>
+          <span class="kb-lane-count">5</span>
         </div>
-        <div class="kb-cards"><div class="kb-empty">없음</div></div>
+        <div class="kb-cards">
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S7-001</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">In-process EventBus singleton — Observer 패턴 인프라 기반 수립</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S7-002</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">OutboxRepository + OutboxPoller — task-tracking 도메인 이벤트 전달 완성</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S7-003</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">Worker Thread로 generate-mindmap.js CPU 바운드 작업 분리</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S7-004</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">data-dictionary 경로 정렬 — NFR 참조 경로와 실제 파일 일치</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S7-005</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">validation-profiles.yaml 명령 갭 감사 — 누락 npm scripts 추가</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div></div>
       </div>
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #1d4ed8">
@@ -832,7 +872,7 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #0f766e">
           <span class="kb-lane-label">Done</span>
-          <span class="kb-lane-count">34</span>
+          <span class="kb-lane-count">35</span>
         </div>
         <div class="kb-cards">
         <div class="kb-card">
@@ -1105,6 +1145,14 @@
             <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
           </div>
           <div class="kb-goal">scheduler property/adversarial 테스트 수정 — rate limit + pts 없음 접미사</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HRN-005</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">docs/db/migration-strategy.md — FR-041 DB 마이그레이션 전략 문서화</div>
           <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
         </div></div>
       </div>

@@ -35,12 +35,15 @@ REQUIRED_OPERATIONS = {
     ("POST", "/pty/enter-now"): [NODE_RUNTIME_PATH, STATIC_RUNTIME_PATH],
     # /flags uses path-level server override (url: /) — actual path is /flags, not /api/flags
     ("GET", "/flags"): [NODE_RUNTIME_PATH],
+    # /ui/home-runtime — 홈 런타임 상태 (WP 큐, 칸반 데이터)
+    ("GET", "/ui/home-runtime"): [NODE_RUNTIME_PATH],
 }
 
 # Operations whose spec path is relative to root (/) not the default /api server.
 # Used to compute the correct runtime_path when checking source files.
 ROOT_SERVER_OPERATIONS: set[tuple[str, str]] = {
     ("GET", "/flags"),
+    ("GET", "/ui/home-runtime"),
 }
 
 IDEMPOTENT_OPERATIONS = {

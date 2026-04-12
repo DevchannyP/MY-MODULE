@@ -143,7 +143,15 @@
       "details": "next-actions + current-state + reflection-log 2026-04-12로 재정렬 — 35/35 WP 완료 상태 반영",
       "prev_hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd",
       "hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84"
+    },
+    {
+      "seq": 19,
+      "timestamp": "2026-04-12T06:02:53.201Z",
+      "action": "spiral7/platform",
+      "details": "WP-S7-001 EventBus Singleton 18/18 PASS + WP-S7-004 data-dict 경로 정렬 + WP-S7-005 validation-profiles 갭 0 + ESLint 0 errors + UI shell contract /ui/home-runtime 등록 + test 708/708 PASS",
+      "prev_hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84",
+      "hash": "1385bbb9778dd76dea08aaa75e8edadd37134e3db0bede28eaf0bf7b406a46ca"
     }
   ],
-  "last_hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84"
+  "last_hash": "1385bbb9778dd76dea08aaa75e8edadd37134e3db0bede28eaf0bf7b406a46ca"
 }

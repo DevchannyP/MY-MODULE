@@ -160,7 +160,7 @@ ADR 참조: `docs/adr/0003-optimistic-locking-policy.md`
 
 계약(`contracts/*.yaml`) 또는 스키마(`schema.sql`) 변경 시:
 
-1. `docs/reference/ai-harness-data-dictionary.md` 업데이트
+1. `docs/reference/ai-harness-data-dictionary.md` 업데이트 (NFR FR-042 location)
 2. 변경된 도메인의 `capability.yaml`에 schema_version 증가
 3. `npm run test:contract` 재실행으로 드리프트 확인
 

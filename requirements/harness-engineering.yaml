@@ -243,7 +243,7 @@ functional_requirements:
 
   - id: "FR-042"
     category: "database"
-    description: "자료사전(Data Dictionary)을 docs/reference/data-dictionary.md에 유지하고 도메인 계약 변경 시 동기화한다."
+    description: "자료사전(Data Dictionary)을 docs/reference/ai-harness-data-dictionary.md에 유지하고 도메인 계약 변경 시 동기화한다."
     priority: "P1"
     verification: "계약 변경 시 자료사전 업데이트 여부 확인"
 
@@ -267,7 +267,7 @@ nfr_extended:
     index_policy: "쿼리 패턴 먼저 확정 후 인덱스 추가. 선제적 인덱스 금지."
 
   data_dictionary:
-    location: "docs/reference/data-dictionary.md"
+    location: "docs/reference/ai-harness-data-dictionary.md"
     sync_trigger: "계약(contracts/*.yaml) 변경 시 반드시 동기화"
     fields_required:
       - "field_name"
