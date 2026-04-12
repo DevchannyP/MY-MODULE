@@ -3,7 +3,7 @@
 # 실제 다음 Work Packet 선택은 root memory/wp-queue.yaml 과 memory/current-wp.yaml 이 기준이다.
 # 이 파일은 legacy 코어 업그레이드 히스토리와 상세 우선순위 참고용이다.
 as_of: "2026-04-12"
-current_phase: "spiral-14-complete"
+current_phase: "spiral-15-complete"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"
 
 execution_policy:
@@ -16,11 +16,11 @@ execution_policy:
     - "한 턴에서 안전하게 끝낼 수 있는 범위는 연속 처리한다."
 
 queue_status:
-  total: 53
-  done: 53
+  total: 54
+  done: 54
   ready: 0
   blocked: 0
-  note: "2026-04-12 기준 53/53 WP 완료. Spiral 14 완료 (Outbox 듀얼 라이트, at-least-once 보장). 766+ tests PASS."
+  note: "2026-04-12 기준 54/54 WP 완료. Spiral 15 완료 (전 use case 이벤트 배선, TaskStatusChanged/Reassigned 버그 수정). 197/197 domain PASS."
 
 next_actions:
   - priority: 1

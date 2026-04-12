@@ -935,3 +935,16 @@ capabilities:
         tier: "domain"
         depends_on: ["WP-S9-001"]
         pattern: "microservices.io Outbox Pattern"
+
+  - capability: "CAP-S15"
+    label: "Spiral 15 — 전 Use Case 이벤트 배선 완성"
+    spiral: 15
+    work_packets:
+      - id: "WP-S15-001"
+        goal: "TransitionTask/ReassignTask에 EventPublisher + Outbox 주입 (누락 배선 수정)"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — 197/197 task-tracking PASS, 통합 테스트 4건 (전 use case 생명주기)"
+        tier: "domain"
+        fix: "TaskStatusChanged/TaskReassigned이 EventBus에 미발행된 버그 수정"
+        depends_on: ["WP-S14-001"]
