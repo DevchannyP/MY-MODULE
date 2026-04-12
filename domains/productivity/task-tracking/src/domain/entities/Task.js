@@ -15,6 +15,7 @@ const { TaskCreated, TaskStatusChanged, TaskReassigned } = require('../events/Ta
  *   status: string|import('../value-objects/TaskStatus').TaskStatus,
  *   created_at?: string,
  *   updated_at?: string,
+ *   version?: number,
  * }} TaskSnapshot
  */
 /**
@@ -41,11 +42,12 @@ class Task {
   #created_at;
   #updated_at;
   #domainEvents;
+  #version;
 
   /**
    * @param {TaskSnapshot} param0
    */
-  constructor({ id, title, assignee_id, due_date, description, status, created_at, updated_at }) {
+  constructor({ id, title, assignee_id, due_date, description, status, created_at, updated_at, version }) {
     this.#id          = id;
     this.#title       = title;
     this.#assignee_id = assignee_id;
@@ -55,6 +57,7 @@ class Task {
     this.#created_at  = created_at ?? new Date().toISOString();
     this.#updated_at  = updated_at ?? this.#created_at;
     this.#domainEvents = [];
+    this.#version     = typeof version === 'number' ? version : 1;
   }
 
   // ── 팩토리: 새 작업 생성 (INV001, INV003 강제) ──────────────────────────
@@ -138,6 +141,7 @@ class Task {
       ...this.toSnapshot(),
       status:     nextStatus,
       updated_at: new Date().toISOString(),
+      version:    this.#version + 1,
     });
     updated.#domainEvents.push(new TaskStatusChanged({
       task_id:    this.#id,
@@ -165,6 +169,7 @@ class Task {
       ...this.toSnapshot(),
       assignee_id: trimmedId,
       updated_at:  new Date().toISOString(),
+      version:     this.#version + 1,
     });
     updated.#domainEvents.push(new TaskReassigned({
       task_id:         this.#id,
@@ -198,6 +203,7 @@ class Task {
       status:      this.#status.value,
       created_at:  this.#created_at,
       updated_at:  this.#updated_at,
+      version:     this.#version,
     };
   }
 
@@ -207,6 +213,7 @@ class Task {
   get assignee_id() { return this.#assignee_id; }
   get due_date()    { return this.#due_date; }
   get description() { return this.#description; }
+  get version()     { return this.#version; }
   get status()      { return this.#status.value; }
   get created_at()  { return this.#created_at; }
   get updated_at()  { return this.#updated_at; }
