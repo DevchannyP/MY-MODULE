@@ -38,23 +38,40 @@ function unique(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
+function normalizePacketType(packetType, aliases = {}) {
+  const requested = String(packetType || 'planning').trim().toLowerCase() || 'planning';
+  const canonical = String(aliases[requested] || requested).trim().toLowerCase() || 'planning';
+  return {
+    requested,
+    canonical,
+    used_alias: canonical !== requested,
+  };
+}
+
 function resolveValidationProfile(currentWp = {}, options = {}) {
   const profileDoc = readYaml(PROFILE_PATH);
-  const packetType = String(options.packetType || currentWp.type || 'planning').trim();
+  const normalizedPacketType = normalizePacketType(options.packetType || currentWp.type || 'planning', profileDoc.aliases || {});
   const stage = String(options.stage || currentWp.stage || '').trim().toUpperCase();
   const defaults = ensureList(profileDoc.defaults?.commands);
   const profiles = profileDoc.profiles || {};
-  const profile = profiles[packetType] || profiles.planning || {};
+  const profile = profiles[normalizedPacketType.canonical] || profiles.planning || {};
   const profileCommands = ensureList(profile.commands);
   const packetCommands = ensureList(currentWp.validation);
   const stageAdds = ensureList(profileDoc.stage_overrides?.[stage]?.add);
+  const commands = unique([...defaults, ...profileCommands, ...stageAdds, ...packetCommands]);
 
   return {
     path: PROFILE_PATH,
-    packet_type: packetType,
+    requested_packet_type: normalizedPacketType.requested,
+    packet_type: normalizedPacketType.canonical,
+    canonical_packet_type: normalizedPacketType.canonical,
+    resolved_from_alias: normalizedPacketType.used_alias,
     stage,
     description: String(profile.description || profileDoc.defaults?.description || ''),
-    commands: unique([...defaults, ...profileCommands, ...stageAdds, ...packetCommands]),
+    focus_tags: ensureList(profile.focus_tags),
+    success_criteria: ensureList(profile.success_criteria),
+    primary_command: commands[0] || '',
+    commands,
     source_breakdown: {
       defaults,
       profile: profileCommands,
@@ -77,8 +94,12 @@ function main() {
   const lines = [
     '=== Validation Profile ===',
     `Type        : ${summary.packet_type}`,
+    `Requested   : ${summary.requested_packet_type}`,
     `Stage       : ${summary.stage || 'UNKNOWN'}`,
     `Description : ${summary.description || 'n/a'}`,
+    '',
+    '[Focus Tags]',
+    ...summary.focus_tags.map((tag) => `- ${tag}`),
     '',
     '[Commands]',
     ...summary.commands.map((command) => `- ${command}`),

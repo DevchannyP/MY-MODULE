@@ -65,14 +65,29 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.match(home.text, /live-loop-primary-link/, 'home must have live-loop-primary-link element');
     assert.match(home.text, /live-loop-secondary-link/, 'home must have live-loop-secondary-link element');
     assert.match(home.text, /최근 Operator Loop/);
+    assert.match(home.text, /Action Sources/);
+    assert.match(home.text, /flow-source-summary/);
+    assert.match(home.text, /source 집계 없음/);
     assert.match(home.text, /실행 콘솔 열기/);
     assert.match(home.text, /plan board 열기/);
+    assert.match(home.text, /지금 실행할 카드/);
+    assert.match(home.text, /flow-chain-spotlight-title/);
+    assert.match(home.text, /flow-chain-spotlight-copy/);
+    assert.match(home.text, /flow-chain-spotlight-fill/);
+    assert.match(home.text, /명령 복사/);
+    assert.match(home.text, /실행 패널에 채우기/);
+    assert.match(home.text, /source=home-spotlight/);
+    assert.match(home.text, /바로 열기/);
     assert.match(home.text, /focus=execution-failure/);
     assert.match(home.text, /focus=guard/);
     assert.match(home.text, /focus=operator-summary/);
     assert.match(home.text, /reason=/);
     assert.match(home.text, /command=/);
     assert.match(home.text, /source=home-loop/);
+    assert.match(home.text, /flow-chain-delivery-/);
+    assert.match(home.text, /flow-chain-delivery-meta-/);
+    assert.match(home.text, /flow-chain-delivery-pill/);
+    assert.match(home.text, /data-chain-scope="chain:/);
     assert.match(home.text, /\/flags/, 'home must reference /flags endpoint');
 
     const mindmap = await requestText(runtime.url, '/mindmap/index.html');
@@ -140,8 +155,13 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
       || typeof rs.recent_operator_action === 'object',
       true,
     );
+    assert.ok(Array.isArray(rs.recent_operator_actions));
+    assert.equal(typeof rs.operator_action_sources.summary, 'string');
+    assert.ok(Array.isArray(rs.operator_action_sources.entries));
     assert.ok(rs.operator_cockpit);
     assert.equal(typeof rs.operator_cockpit.branch.recommended_branch, 'string');
+    assert.equal(typeof rs.operator_cockpit.promotion_evidence.path, 'string');
+    assert.ok(Array.isArray(rs.operator_cockpit.operator_chain));
     assert.equal(typeof rs.operator_cockpit.commit_guard.next_action, 'string');
     assert.equal(typeof rs.as_of, 'string');
 
@@ -195,17 +215,23 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.git.dirty, 'boolean');
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.branch.recommended_branch, 'string');
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.branch.commit_subject, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.promotion_evidence.quality_gate_result, 'string');
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.commit_guard.next_action, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.commit_guard.status, 'string');
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.commit_guard.can_apply, 'boolean');
     assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_cockpit.commit_guard.reasons));
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.validation_profile.packet_type, 'string');
     assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_cockpit.validation_profile.commands));
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_cockpit.operator_chain));
     assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_cockpit.operator_actions));
     assert.equal(
       controlRuntime.body.runtime_state.recent_operator_action === null
       || typeof controlRuntime.body.runtime_state.recent_operator_action === 'object',
       true,
     );
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.recent_operator_actions));
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_action_sources.summary, 'string');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_action_sources.entries));
     assert.equal(typeof controlRuntime.body.runtime_state.as_of, 'string');
 
     const snapshotResponse = await fetch(new URL('/api/planning-studio/snapshot', runtime.url));
@@ -246,6 +272,7 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
       action: 'loaded',
       label: '검증 명령',
       scope: 'validation',
+      source: 'home-spotlight',
       command: 'npm run commit:guard',
       delivery_status: 'unsent',
       delivery_message: '실제 전송 전',
@@ -257,12 +284,17 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(operatorActionSync.body.ok, true);
     assert.equal(operatorActionSync.body.data.label, '검증 명령');
     assert.equal(operatorActionSync.body.data.command, 'npm run commit:guard');
+    assert.equal(operatorActionSync.body.data.source, 'home-spotlight');
 
     const homeRuntimeAfterOperatorAction = await requestJson(runtime.url, '/ui/home-runtime');
     assert.equal(homeRuntimeAfterOperatorAction.status, 200);
     assert.ok(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_action);
     assert.equal(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_action.label, '검증 명령');
     assert.equal(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_action.command, 'npm run commit:guard');
+    assert.equal(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_action.source, 'home-spotlight');
+    assert.ok(Array.isArray(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_actions));
+    assert.ok(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_actions.length >= 1);
+    assert.match(homeRuntimeAfterOperatorAction.body.runtime_state.operator_action_sources.summary, /home-spotlight 1/);
     assert.ok(homeRuntimeAfterOperatorAction.body.runtime_state.operator_cockpit);
     assert.equal(typeof homeRuntimeAfterOperatorAction.body.runtime_state.operator_cockpit.branch.recommended_branch, 'string');
     assert.equal(typeof homeRuntimeAfterOperatorAction.body.runtime_state.operator_cockpit.commit_guard.next_action, 'string');
@@ -277,7 +309,11 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.ok(controlRuntimeAfterSend.body.runtime_state.recent_operator_action);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.recent_operator_action.label, '검증 명령');
     assert.equal(controlRuntimeAfterSend.body.runtime_state.recent_operator_action.command, 'npm run commit:guard');
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.recent_operator_action.source, 'home-spotlight');
     assert.equal(controlRuntimeAfterSend.body.runtime_state.recent_operator_action.delivery_status, 'unsent');
+    assert.ok(Array.isArray(controlRuntimeAfterSend.body.runtime_state.recent_operator_actions));
+    assert.ok(controlRuntimeAfterSend.body.runtime_state.recent_operator_actions.length >= 1);
+    assert.match(controlRuntimeAfterSend.body.runtime_state.operator_action_sources.summary, /home-spotlight 1/);
 
     const ptySendReplay = await postJson(runtime.url, '/api/pty/send', {
       pts: selectedSession.pts,

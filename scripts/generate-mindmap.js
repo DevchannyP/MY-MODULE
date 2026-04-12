@@ -6,6 +6,9 @@ const path = require('node:path');
 
 const { buildReport } = require('./project_status');
 const { readYaml, readYamlMany } = require('./run_stage');
+const { OPERATOR_ACTION_CLIENT_RUNTIME_SOURCE } = require('../src/shared/operatorActionClientRuntimeSource');
+const { DEEP_LINK_CLIENT_RUNTIME_SOURCE } = require('../src/shared/deepLinkClientRuntimeSource');
+const { BROWSER_UTILITY_RUNTIME_SOURCE } = require('../src/shared/browserUtilityRuntimeSource');
 
 const ROOT = path.join(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'artifacts', 'mindmap');
@@ -1940,8 +1943,11 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 }
 `;
 
-  const js = `(function() {
+const js = `(function() {
 'use strict';
+${OPERATOR_ACTION_CLIENT_RUNTIME_SOURCE}
+${DEEP_LINK_CLIENT_RUNTIME_SOURCE}
+${BROWSER_UTILITY_RUNTIME_SOURCE}
 
 // ─── Parse embedded data ─────────────────────────────────────────────────────
 const RAW = JSON.parse(document.getElementById('mindmap-data').textContent);
@@ -2811,6 +2817,75 @@ function executionOperatorCockpitActionsSummary() {
     : fallbackActions.join(', ');
 }
 
+function operatorChainStatusTone(status) {
+  var value = String(status || 'pending').trim();
+  if (value === 'completed' || value === 'ready') return 'ready';
+  if (value === 'blocked') return 'blocked';
+  if (value === 'pending') return 'warn';
+  return 'info';
+}
+
+function operatorChainStatusLabel(status) {
+  var value = String(status || 'pending').trim();
+  if (value === 'completed') return '완료';
+  if (value === 'ready') return '준비됨';
+  if (value === 'blocked') return '차단';
+  if (value === 'pending') return '대기';
+  return value || '대기';
+}
+
+function operatorCockpitChainItems() {
+  var cockpit = S.execution.operatorCockpit || null;
+  return cockpit && Array.isArray(cockpit.operatorChain) ? cockpit.operatorChain : [];
+}
+
+function executionOperatorCockpitChainSummary() {
+  var chain = operatorCockpitChainItems();
+  if (chain.length < 1) {
+    return 'chain 정보 없음';
+  }
+  return chain.map(function(item) {
+    return item.label + ' ' + operatorChainStatusLabel(item.status);
+  }).join(' / ');
+}
+
+function executionOperatorCockpitReleaseEvidenceSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  var evidence = cockpit && cockpit.promotionEvidence ? cockpit.promotionEvidence : null;
+  if (!evidence) {
+    return 'release evidence 정보 없음';
+  }
+  return [
+    evidence.qualityGateResult || 'UNKNOWN',
+    String(evidence.artifactCount || 0) + ' artifacts',
+    evidence.nextActionId || 'NONE',
+  ].join(' / ');
+}
+
+function renderOperatorChainCards() {
+  var chain = operatorCockpitChainItems();
+  if (chain.length < 1) {
+    return '<div class="execution-operator-history-empty">operator chain 정보 없음</div>';
+  }
+  return '<div class="detail-grid-cards">' + chain.map(function(item) {
+    var tone = operatorCockpitStatusClass(operatorChainStatusTone(item.status));
+    var scope = 'chain:' + item.id;
+    var latestAction = latestOperatorActionForScope(scope);
+    var deliveryTone = latestAction ? operatorActionDeliveryTone(latestAction.delivery_status) : 'info';
+    return '<article class="detail-card">' +
+      '<span>' + escHtml(item.label) + '</span>' +
+      '<strong class="' + escHtml(tone) + '">' + escHtml(operatorChainStatusLabel(item.status)) + '</strong>' +
+      '<p>' + escHtml(item.reason || '다음 행동 설명 없음') + '</p>' +
+      '<div class="ov-mono mt8">' + escHtml(item.command || '명령 없음') + '</div>' +
+      '<div class="execution-operator-history-meta mt8"><span class="execution-history-pill is-' + escHtml(deliveryTone) + '">최근 전달</span> ' + escHtml(operatorActionDeliverySummary(latestAction)) + '</div>' +
+      '<div class="detail-card-actions">' +
+        '<button type="button" class="detail-card-action secondary" onclick="copyOperatorCommand(\\'' + escHtml(scope) + '\\')">명령 복사</button>' +
+        '<button type="button" class="detail-card-action primary" onclick="loadOperatorCommandPrompt(\\'' + escHtml(scope) + '\\')">실행 패널에 채우기</button>' +
+      '</div>' +
+    '</article>';
+  }).join('') + '</div>';
+}
+
 function operatorCockpitBranchState() {
   var cockpit = S.execution.operatorCockpit || null;
   if (!cockpit || !cockpit.branch) {
@@ -3006,96 +3081,41 @@ function renderOperatorGuideSection(guide) {
 }
 
 function normalizeOperatorActionHistory(entries) {
-  if (!Array.isArray(entries)) {
-    return [];
-  }
-  return entries.map(function(entry) {
-    return {
-      id: String(entry && entry.id || ''),
-      action: String(entry && entry.action || 'unknown'),
-      label: String(entry && entry.label || '명령'),
-      scope: String(entry && entry.scope || ''),
-      command: String(entry && entry.command || ''),
-      delivery_status: String(entry && entry.delivery_status || 'unsent'),
-      delivery_message: String(entry && entry.delivery_message || ''),
-      delivery_ts: String(entry && entry.delivery_ts || ''),
-      ts: String(entry && entry.ts || ''),
-    };
-  }).filter(function(entry) {
+  return normalizeOperatorActionClientEntries(entries).filter(function(entry) {
     return entry.id && entry.label && entry.command;
   }).slice(0, 6);
 }
 
+function operatorActionSourceLabel(source) {
+  return operatorActionClientSourceLabel(source);
+}
+
+function operatorActionSourceSummary(entries) {
+  return operatorActionClientSourceSummary(normalizeOperatorActionHistory(entries));
+}
+
 function loadOperatorActionHistory() {
-  try {
-    if (!window.sessionStorage) {
-      return [];
-    }
-    var raw = window.sessionStorage.getItem(OPERATOR_HISTORY_STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
-    return normalizeOperatorActionHistory(JSON.parse(raw));
-  } catch (error) {
-    return [];
-  }
+  return normalizeOperatorActionHistory(loadOperatorActionClientStorage(OPERATOR_HISTORY_STORAGE_KEY));
 }
 
 function saveOperatorActionHistory(entries) {
-  try {
-    if (!window.sessionStorage) {
-      return;
-    }
-    window.sessionStorage.setItem(OPERATOR_HISTORY_STORAGE_KEY, JSON.stringify(normalizeOperatorActionHistory(entries)));
-  } catch (error) {
-    return;
-  }
+  saveOperatorActionClientStorage(OPERATOR_HISTORY_STORAGE_KEY, normalizeOperatorActionHistory(entries));
 }
 
 function normalizeDeepLinkContext(context) {
-  return {
-    focus: String(context && context.focus || '').trim(),
-    reason: String(context && context.reason || '').trim(),
-    command: String(context && context.command || '').trim(),
-    label: String(context && context.label || '').trim(),
-    source: String(context && context.source || '').trim(),
-  };
+  return normalizeDeepLinkClientContext(context);
 }
 
 function hasDeepLinkContext(context) {
-  var normalized = normalizeDeepLinkContext(context);
-  return !!(normalized.focus || normalized.reason || normalized.command || normalized.label || normalized.source);
+  return hasDeepLinkClientContext(context);
 }
 
 function loadStoredDeepLinkContext() {
-  try {
-    if (!window.sessionStorage) {
-      return normalizeDeepLinkContext(null);
-    }
-    var raw = window.sessionStorage.getItem(DEEP_LINK_CONTEXT_STORAGE_KEY);
-    if (!raw) {
-      return normalizeDeepLinkContext(null);
-    }
-    return normalizeDeepLinkContext(JSON.parse(raw));
-  } catch (error) {
-    return normalizeDeepLinkContext(null);
-  }
+  return loadDeepLinkClientStorage(DEEP_LINK_CONTEXT_STORAGE_KEY);
 }
 
 function saveDeepLinkContext(context) {
-  try {
-    if (!window.sessionStorage) {
-      return;
-    }
-    var normalized = normalizeDeepLinkContext(context);
-    if (!hasDeepLinkContext(normalized)) {
-      window.sessionStorage.removeItem(DEEP_LINK_CONTEXT_STORAGE_KEY);
-      return;
-    }
-    window.sessionStorage.setItem(DEEP_LINK_CONTEXT_STORAGE_KEY, JSON.stringify(normalized));
-  } catch (error) {
-    return;
-  }
+  saveDeepLinkClientStorage(DEEP_LINK_CONTEXT_STORAGE_KEY, context);
 }
 
 function syncRecentOperatorAction(payload) {
@@ -3112,6 +3132,7 @@ function syncRecentOperatorAction(payload) {
       action: String(normalized.action || 'unknown'),
       label: String(normalized.label || ''),
       scope: String(normalized.scope || ''),
+      source: String(normalized.source || ''),
       command: String(normalized.command || ''),
       delivery_status: String(normalized.delivery_status || 'unsent'),
       delivery_message: String(normalized.delivery_message || ''),
@@ -3129,6 +3150,7 @@ function rememberOperatorAction(action, payload) {
     action: String(action || 'unknown'),
     label: String(payload && payload.title || '명령'),
     scope: String(payload && payload.scope || ''),
+    source: String(payload && payload.source || 'control-center'),
     command: String(payload && payload.command || '').trim(),
     delivery_status: 'unsent',
     delivery_message: '실제 전송 전',
@@ -3197,7 +3219,17 @@ function recentOperatorActionState() {
     : latest.delivery_status === 'failed'
       ? 'Action 실패'
       : 'Action 미전송';
+  if (String(latest.source || '').trim() === 'home-spotlight') {
+    label = 'Home Action';
+  }
   var summary = deliveryLabel + ' / ' + String(latest.label || '명령');
+  if (String(latest.source || '').trim()) {
+    summary += ' / ' + String(latest.source || '').trim();
+  }
+  var sourceSummary = operatorActionSourceSummary(history);
+  if (String(sourceSummary || '').trim()) {
+    summary += ' / ' + sourceSummary;
+  }
   if (String(latest.delivery_message || '').trim()) {
     summary += ' / ' + String(latest.delivery_message || '').trim();
   }
@@ -3219,10 +3251,14 @@ function renderOperatorActionHistory() {
     var deliveryMeta = operatorActionDeliveryLabel(entry.delivery_status)
       + (entry.delivery_ts ? ' / ' + entry.delivery_ts.replace('T', ' ').slice(0, 16) : '')
       + (entry.delivery_message ? ' / ' + entry.delivery_message : '');
+    var sourceBadge = String(entry.source || '').trim()
+      ? '<span class="execution-history-pill is-info">' + escHtml(entry.source) + '</span>'
+      : '';
     return '<div class="execution-operator-history-item">' +
       '<div class="execution-operator-history-head">' +
         '<strong>' + escHtml(entry.label) + '</strong>' +
         '<span class="execution-history-pill is-' + escHtml(tone) + '">' + escHtml(entry.action === 'copied' ? '복사' : '패널 반영') + '</span>' +
+        sourceBadge +
       '</div>' +
       '<div class="execution-operator-history-meta">' + escHtml(meta) + '</div>' +
       '<div class="execution-operator-history-meta"><span class="execution-history-pill is-' + escHtml(operatorActionDeliveryTone(entry.delivery_status)) + '">' + escHtml(operatorActionDeliveryLabel(entry.delivery_status)) + '</span> ' + escHtml(deliveryMeta) + '</div>' +
@@ -3235,27 +3271,61 @@ function renderOperatorActionHistory() {
   }).join('') + '</div>';
 }
 
+function latestOperatorActionForScope(scope) {
+  var targetScope = String(scope || '').trim();
+  if (!targetScope) {
+    return null;
+  }
+  var history = normalizeOperatorActionHistory(S.execution.operatorActionHistory);
+  for (var i = 0; i < history.length; i += 1) {
+    if (String(history[i].scope || '').trim() === targetScope) {
+      return history[i];
+    }
+  }
+  return null;
+}
+
+function operatorActionDeliverySummary(entry) {
+  if (!entry) {
+    return '아직 실행 이력 없음';
+  }
+  var summary = operatorActionDeliveryLabel(entry.delivery_status);
+  if (String(entry.delivery_message || '').trim()) {
+    summary += ' / ' + String(entry.delivery_message || '').trim();
+  }
+  return summary;
+}
+
 function mergeRecentOperatorActionFromRuntime(action) {
   if (!action || typeof action !== 'object') {
     return;
   }
-  var normalized = normalizeOperatorActionHistory([action]);
-  if (normalized.length < 1) {
+  var nextHistory = normalizeOperatorActionHistory(mergeOperatorActionClientEntries(S.execution.operatorActionHistory, action));
+  if (nextHistory.length === normalizeOperatorActionHistory(S.execution.operatorActionHistory).length) {
+    var latestCurrent = normalizeOperatorActionHistory(S.execution.operatorActionHistory)[0] || null;
+    var latestNext = nextHistory[0] || null;
+    if (
+      latestCurrent
+      && latestNext
+      && latestCurrent.id === latestNext.id
+      && latestCurrent.command === latestNext.command
+      && latestCurrent.ts === latestNext.ts
+    ) {
+      return;
+    }
+  }
+  if (nextHistory.length < 1) {
     return;
   }
-  var nextEntry = normalized[0];
-  var history = normalizeOperatorActionHistory(S.execution.operatorActionHistory);
-  var exists = history.some(function(entry) {
-    return entry.id === nextEntry.id
-      || (
-        String(entry.command || '').trim() === String(nextEntry.command || '').trim()
-        && String(entry.ts || '') === String(nextEntry.ts || '')
-      );
-  });
-  if (exists) {
+  S.execution.operatorActionHistory = nextHistory;
+  saveOperatorActionHistory(S.execution.operatorActionHistory);
+}
+
+function replaceOperatorActionHistoryFromRuntime(entries) {
+  if (!Array.isArray(entries)) {
     return;
   }
-  S.execution.operatorActionHistory = [nextEntry].concat(history).slice(0, 6);
+  S.execution.operatorActionHistory = normalizeOperatorActionHistory(entries);
   saveOperatorActionHistory(S.execution.operatorActionHistory);
 }
 
@@ -3281,6 +3351,7 @@ function replayOperatorActionCopy(entryId) {
       rememberOperatorAction('copied', {
         title: entry.label,
         scope: entry.scope,
+        source: entry.source,
         command: entry.command,
       });
       renderExecutionConsole();
@@ -3308,6 +3379,7 @@ function replayOperatorActionLoad(entryId) {
   rememberOperatorAction('loaded', {
     title: entry.label,
     scope: entry.scope,
+    source: entry.source,
     command: entry.command,
   });
   setExecutionStatus('idle', entry.label + ' 다시 준비 완료', '이전 operator action 명령을 실행 패널에 다시 채웠습니다. 전송 전에 세션과 명령을 확인하세요.');
@@ -4203,6 +4275,10 @@ function applyControlCenterRuntimeState(runtimePayload) {
       stage: String(runtimeState.operator_cockpit.current_wp.stage || 'UNKNOWN').trim(),
       type: String(runtimeState.operator_cockpit.current_wp.type || 'UNKNOWN').trim(),
     } : null,
+    currentLane: runtimeState.operator_cockpit.current_lane ? {
+      id: String(runtimeState.operator_cockpit.current_lane.id || '').trim(),
+      label: String(runtimeState.operator_cockpit.current_lane.label || '').trim(),
+    } : null,
     nextWp: String(runtimeState.operator_cockpit.next_wp || 'NONE').trim(),
     git: runtimeState.operator_cockpit.git ? {
       branch: String(runtimeState.operator_cockpit.git.branch || 'unknown').trim(),
@@ -4220,8 +4296,20 @@ function applyControlCenterRuntimeState(runtimePayload) {
       createCommand: String(runtimeState.operator_cockpit.branch.create_command || '').trim(),
       commitSubject: String(runtimeState.operator_cockpit.branch.commit_subject || '').trim(),
     } : null,
+    promotionEvidence: runtimeState.operator_cockpit.promotion_evidence ? {
+      path: String(runtimeState.operator_cockpit.promotion_evidence.path || '').trim(),
+      exists: runtimeState.operator_cockpit.promotion_evidence.exists === true,
+      qualityGateResult: String(runtimeState.operator_cockpit.promotion_evidence.quality_gate_result || 'UNKNOWN').trim(),
+      artifactCount: Number.isInteger(runtimeState.operator_cockpit.promotion_evidence.artifact_count)
+        ? runtimeState.operator_cockpit.promotion_evidence.artifact_count
+        : 0,
+      generatedAtUtc: String(runtimeState.operator_cockpit.promotion_evidence.generated_at_utc || '').trim(),
+      nextActionId: String(runtimeState.operator_cockpit.promotion_evidence.next_action_id || 'NONE').trim(),
+      nextAction: String(runtimeState.operator_cockpit.promotion_evidence.next_action || 'NONE').trim(),
+    } : null,
     commitGuard: runtimeState.operator_cockpit.commit_guard ? {
       nextAction: String(runtimeState.operator_cockpit.commit_guard.next_action || '').trim(),
+      status: String(runtimeState.operator_cockpit.commit_guard.status || '').trim(),
       protectedBranch: runtimeState.operator_cockpit.commit_guard.protected_branch === true,
       hasDirtyChanges: runtimeState.operator_cockpit.commit_guard.has_dirty_changes === true,
       validationsPassed: runtimeState.operator_cockpit.commit_guard.validations_passed === true,
@@ -4229,10 +4317,27 @@ function applyControlCenterRuntimeState(runtimePayload) {
       reasons: Array.isArray(runtimeState.operator_cockpit.commit_guard.reasons) ? runtimeState.operator_cockpit.commit_guard.reasons : [],
       commitSubject: String(runtimeState.operator_cockpit.commit_guard.commit_subject || '').trim(),
     } : null,
+    operatorChain: Array.isArray(runtimeState.operator_cockpit.operator_chain)
+      ? runtimeState.operator_cockpit.operator_chain.map(function(item) {
+        return {
+          id: String(item && item.id || '').trim(),
+          label: String(item && item.label || '').trim(),
+          status: String(item && item.status || 'pending').trim(),
+          command: String(item && item.command || '').trim(),
+          reason: String(item && item.reason || '').trim(),
+        };
+      }).filter(function(item) {
+        return item.id && item.label;
+      })
+      : [],
     operatorActions: Array.isArray(runtimeState.operator_cockpit.operator_actions) ? runtimeState.operator_cockpit.operator_actions : [],
     asOf: String(runtimeState.operator_cockpit.as_of || '').trim(),
   } : null;
-  mergeRecentOperatorActionFromRuntime(runtimeState.recent_operator_action || null);
+  if (Array.isArray(runtimeState.recent_operator_actions)) {
+    replaceOperatorActionHistoryFromRuntime(runtimeState.recent_operator_actions);
+  } else {
+    mergeRecentOperatorActionFromRuntime(runtimeState.recent_operator_action || null);
+  }
   S.execution.nextActionHint = String(execution.next_action || '').trim();
   S.execution.controls = {
     sendPrompt: controls.send_prompt === true,
@@ -4401,6 +4506,8 @@ function renderExecutionConsole() {
       + escHtml(node.label + ' (' + node.id + ')') + '</option>';
   }).join('');
   var operatorHistoryMarkup = renderOperatorActionHistory();
+  var operatorChainMarkup = renderOperatorChainCards();
+  var operatorSourceSummary = operatorActionSourceSummary(S.execution.operatorActionHistory);
 
   container.innerHTML = '<div class="sidebar-console">' +
     '<div class="execution-summary is-' + escHtml(summaryTone) + '">' +
@@ -4428,8 +4535,15 @@ function renderExecutionConsole() {
       '<div class="execution-row"><span>커밋 후보</span><strong>' + escHtml(executionOperatorCockpitCommitSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>커밋 가드</span><strong>' + escHtml(executionOperatorCockpitGuardSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>검증 프로파일</span><strong>' + escHtml(executionOperatorCockpitValidationSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Release Evidence</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Operator Chain</span><strong>' + escHtml(executionOperatorCockpitChainSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Action Sources</span><strong>' + escHtml(operatorSourceSummary) + '</strong></div>' +
       '<div class="execution-row"><span>운영 액션</span><strong>' + escHtml(executionOperatorCockpitActionsSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>Operator Action History</span>' + operatorHistoryMarkup + '</div>' +
+    '</div>' +
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">Operator Chain</div>' +
+      operatorChainMarkup +
     '</div>' +
     workerCardMarkup +
     renderStageRunWorkbench() +
@@ -5574,6 +5688,7 @@ function getOperatorCommandPayload(actionScope) {
       title: '검증 명령',
       command: operatorCockpitValidationCommands().join('\n'),
       scope: scope,
+      source: 'control-center',
       toast: '검증 명령을 준비했습니다.',
     };
   }
@@ -5586,6 +5701,7 @@ function getOperatorCommandPayload(actionScope) {
         ? branch.createCommand
         : operatorCockpitBranchActionSummary(),
       scope: scope,
+      source: 'control-center',
       toast: '브랜치 액션을 준비했습니다.',
     };
   }
@@ -5594,6 +5710,7 @@ function getOperatorCommandPayload(actionScope) {
       title: '커밋 가드',
       command: 'npm run commit:guard\nnpm run commit:guard:verify',
       scope: scope,
+      source: 'control-center',
       toast: '커밋 가드 명령을 준비했습니다.',
     };
   }
@@ -5602,7 +5719,21 @@ function getOperatorCommandPayload(actionScope) {
       title: 'Operator Cockpit',
       command: 'npm run operator:cockpit',
       scope: scope,
+      source: 'control-center',
       toast: 'operator cockpit 명령을 준비했습니다.',
+    };
+  }
+  if (scope.indexOf('chain:') === 0) {
+    var chainId = scope.slice('chain:'.length);
+    var chainItem = operatorCockpitChainItems().find(function(item) {
+      return item.id === chainId;
+    }) || null;
+    return {
+      title: chainItem ? chainItem.label : 'Operator Chain',
+      command: chainItem ? String(chainItem.command || '').trim() : '',
+      scope: scope,
+      source: 'control-center',
+      toast: (chainItem ? chainItem.label : 'operator chain') + ' 명령을 준비했습니다.',
     };
   }
   if (scope === 'deep-link') {
@@ -5610,6 +5741,7 @@ function getOperatorCommandPayload(actionScope) {
       title: 'Deep Link Command',
       command: String((S.deepLinkContext && S.deepLinkContext.command) || '').trim(),
       scope: scope,
+      source: String((S.deepLinkContext && S.deepLinkContext.source) || 'deep-link').trim(),
       toast: 'deep-link 권장 명령을 준비했습니다.',
     };
   }
@@ -5617,40 +5749,13 @@ function getOperatorCommandPayload(actionScope) {
     title: '명령',
     command: '',
     scope: scope,
+    source: 'control-center',
     toast: '준비할 명령이 없습니다.',
   };
 }
 
 function copyTextToClipboard(text) {
-  var value = String(text || '');
-  if (!value.trim()) {
-    return Promise.reject(new Error('empty command'));
-  }
-  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-    return navigator.clipboard.writeText(value);
-  }
-  return new Promise(function(resolve, reject) {
-    var textarea = document.createElement('textarea');
-    textarea.value = value;
-    textarea.setAttribute('readonly', 'readonly');
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    try {
-      var ok = document.execCommand('copy');
-      document.body.removeChild(textarea);
-      if (ok) {
-        resolve();
-      } else {
-        reject(new Error('copy failed'));
-      }
-    } catch (error) {
-      document.body.removeChild(textarea);
-      reject(error);
-    }
-  });
+  return copyTextToClipboardClient(text);
 }
 
 function copyOperatorCommand(actionScope) {
@@ -6088,64 +6193,11 @@ function mergeHeaders(base, extra) {
   return next;
 }
 
-var PENDING_IDEMPOTENCY_KEYS = {};
-
-function stableStringifyForIdempotency(value) {
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return '[' + value.map(function(item) { return stableStringifyForIdempotency(item); }).join(',') + ']';
-  }
-  var keys = Object.keys(value).sort();
-  return '{' + keys.map(function(key) {
-    return JSON.stringify(key) + ':' + stableStringifyForIdempotency(value[key]);
-  }).join(',') + '}';
-}
-
-function createClientIdempotencyKey(scope) {
-  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-    return scope + ':' + window.crypto.randomUUID();
-  }
-  return scope + ':' + Date.now() + ':' + Math.random().toString(16).slice(2);
-}
-
-function reserveIdempotencyKey(scope, payload) {
-  var fingerprint = stableStringifyForIdempotency(payload || {});
-  var entry = PENDING_IDEMPOTENCY_KEYS[scope];
-  if (entry && entry.fingerprint === fingerprint) {
-    return entry.key;
-  }
-  var key = createClientIdempotencyKey(scope);
-  PENDING_IDEMPOTENCY_KEYS[scope] = { key: key, fingerprint: fingerprint };
-  return key;
-}
-
-function releaseIdempotencyKey(scope, key) {
-  var entry = PENDING_IDEMPOTENCY_KEYS[scope];
-  if (entry && entry.key === key) {
-    delete PENDING_IDEMPOTENCY_KEYS[scope];
-  }
-}
-
 function fetchJson(url, options) {
   var opts = options || {};
-  var headers = mergeHeaders(AUTH_HEADERS, opts.headers || {});
-  var method = String(opts.method || 'GET').toUpperCase();
-  var idempotencyScope = opts.idempotencyScope;
-  var reservedKey = '';
-  if (method === 'POST' && idempotencyScope) {
-    reservedKey = reserveIdempotencyKey(idempotencyScope, opts.idempotencyPayload);
-    headers['Idempotency-Key'] = reservedKey;
-  }
-  var requestOptions = Object.assign({}, opts, { headers: headers });
-  delete requestOptions.idempotencyScope;
-  delete requestOptions.idempotencyPayload;
-  return fetch(url, requestOptions).finally(function() {
-    if (reservedKey && idempotencyScope) {
-      releaseIdempotencyKey(idempotencyScope, reservedKey);
-    }
-  });
+  return fetchJsonClient(url, Object.assign({}, opts, {
+    defaultHeaders: mergeHeaders(AUTH_HEADERS, opts.headers || {}),
+  }));
 }
 
 function fetchAuditLog(domainId) {
@@ -6628,18 +6680,7 @@ function controlCenterDeepLinkFocus() {
 }
 
 function readControlCenterDeepLinkContext() {
-  try {
-    var params = new URLSearchParams(window.location.search);
-    return normalizeDeepLinkContext({
-      focus: String(params.get('focus') || '').trim(),
-      reason: String(params.get('reason') || '').trim(),
-      command: String(params.get('command') || '').trim(),
-      label: String(params.get('label') || '').trim(),
-      source: String(params.get('source') || '').trim(),
-    });
-  } catch (error) {
-    return normalizeDeepLinkContext(null);
-  }
+  return readDeepLinkClientContextFromSearch(window.location.search);
 }
 
 function resolveControlCenterDeepLinkContext() {

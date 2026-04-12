@@ -13,6 +13,7 @@ test('[validation profiles smoke] packet type and stage resolve to a stable mini
   });
 
   assert.equal(governanceProfile.packet_type, 'governance');
+  assert.equal(governanceProfile.requested_packet_type, 'governance');
   assert.equal(governanceProfile.stage, 'E');
   assert.ok(governanceProfile.commands.includes('npm run validate:requirements'));
   assert.ok(governanceProfile.commands.includes('npm run lint'));
@@ -21,6 +22,10 @@ test('[validation profiles smoke] packet type and stage resolve to a stable mini
   assert.ok(governanceProfile.commands.includes('npm run check:deployment-environment-provisioning'));
   assert.ok(governanceProfile.commands.includes('npm run test:e2e-smoke'));
   assert.ok(governanceProfile.commands.includes('npm run wp:reconcile'));
+  assert.ok(Array.isArray(governanceProfile.focus_tags));
+  assert.ok(governanceProfile.focus_tags.includes('ci'));
+  assert.ok(Array.isArray(governanceProfile.success_criteria));
+  assert.equal(typeof governanceProfile.primary_command, 'string');
   assert.equal(new Set(governanceProfile.commands).size, governanceProfile.commands.length);
 
   const domainProfile = resolveValidationProfile({
@@ -36,4 +41,14 @@ test('[validation profiles smoke] packet type and stage resolve to a stable mini
   assert.ok(domainProfile.commands.includes('npm run test:e2e-smoke'));
   assert.ok(domainProfile.commands.includes('npm run test:authn-authz'));
   assert.ok(domainProfile.commands.includes('npm run lint'));
+
+  const aliasProfile = resolveValidationProfile({
+    type: 'bugfix',
+    stage: 'D',
+  });
+
+  assert.equal(aliasProfile.requested_packet_type, 'bugfix');
+  assert.equal(aliasProfile.packet_type, 'domain');
+  assert.equal(aliasProfile.resolved_from_alias, true);
+  assert.ok(aliasProfile.commands.includes('npm run test:integration'));
 });

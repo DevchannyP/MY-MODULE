@@ -6,9 +6,16 @@ const path = require('node:path');
 
 const { buildReport } = require('./project_status');
 const { readYaml } = require('./run_stage');
+const { KANBAN_LANES, inferLaneId, laneMeta, buildFocusPacket } = require('./packet_flow');
+const { buildBootstrapSummary } = require('./session_bootstrap');
+const { buildOperatorCockpitSummary } = require('./operator_cockpit');
+const { OPERATOR_ACTION_CLIENT_RUNTIME_SOURCE } = require('../src/shared/operatorActionClientRuntimeSource');
+const { DEEP_LINK_CLIENT_RUNTIME_SOURCE } = require('../src/shared/deepLinkClientRuntimeSource');
+const { BROWSER_UTILITY_RUNTIME_SOURCE } = require('../src/shared/browserUtilityRuntimeSource');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_PATH = path.join(ROOT, 'artifacts', 'index.html');
+const HOME_ACTION_SOURCE_STORAGE_KEY = 'workflow-os.home-action-sources';
 
 function esc(value) {
   return String(value ?? '')
@@ -17,6 +24,14 @@ function esc(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function domIdToken(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'item';
 }
 
 function statusClass(value) {
@@ -55,7 +70,207 @@ function buildNavigationSummary(nav, registry) {
   });
 }
 
-function buildHtml({ report, navSummary, currentState, wpQueue }) {
+function buildStaticControlCenterHref(focus, targetId, meta = {}) {
+  const params = new URLSearchParams();
+  if (focus) params.set('focus', String(focus).trim());
+  if (meta.reason) params.set('reason', String(meta.reason).trim());
+  if (meta.command) params.set('command', String(meta.command).trim());
+  if (meta.label) params.set('label', String(meta.label).trim());
+  if (meta.source) params.set('source', String(meta.source).trim());
+  const query = params.toString();
+  return `mindmap/index.html${query ? `?${query}` : ''}${targetId ? `#${targetId}` : ''}`;
+}
+
+function operatorChainPriority(status) {
+  const normalized = String(status || 'pending').trim().toLowerCase();
+  if (normalized === 'blocked') return 0;
+  if (normalized === 'pending') return 1;
+  if (normalized === 'ready') return 2;
+  if (normalized === 'completed') return 3;
+  return 4;
+}
+
+function selectPreferredOperatorChainItem(operatorChain) {
+  if (!Array.isArray(operatorChain) || operatorChain.length < 1) {
+    return null;
+  }
+  return operatorChain
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => {
+      const priorityGap = operatorChainPriority(left.item?.status) - operatorChainPriority(right.item?.status);
+      return priorityGap !== 0 ? priorityGap : left.index - right.index;
+    })[0].item;
+}
+
+function buildOperatorChainFocusMeta(item) {
+  const itemId = String(item?.id || '').trim();
+  const targetId = itemId === 'verify' || itemId === 'commit-guard' ? 'plan-board' : 'master-status';
+  const focus = itemId === 'verify' || itemId === 'commit-guard' ? 'guard' : 'operator-summary';
+  const href = buildStaticControlCenterHref(focus, targetId, {
+    reason: item?.reason || item?.label || 'operator chain step',
+    command: item?.command || '',
+    label: item?.label || item?.id || 'step',
+    source: 'home-chain',
+  });
+  return { targetId, focus, href };
+}
+
+function buildOperatorChainExecutionMeta(item) {
+  const href = buildStaticControlCenterHref('execution-failure', 'execution-console', {
+    reason: item?.reason || item?.label || 'operator chain command',
+    command: item?.command || '',
+    label: item?.label || item?.id || 'step',
+    source: 'home-spotlight',
+  });
+  return { href };
+}
+
+function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, operatorCockpit }) {
+  const focusPacket = buildFocusPacket({ report, nextActions, currentWp: bootstrap?.current_wp });
+  const currentLaneId = inferLaneId({
+    status: focusPacket.status,
+    stage: focusPacket.stage,
+    completed: !focusPacket.active && ['completed', 'pass', 'done', 'closed'].includes(String(focusPacket.status || '').toLowerCase()),
+  });
+  const currentLane = laneMeta(currentLaneId);
+  const qualityGateResult = String(currentState?.release_summary?.quality_gate_result || 'UNKNOWN');
+  const validationCommands = Array.isArray(bootstrap?.validation_profile?.commands)
+    ? bootstrap.validation_profile.commands
+    : [];
+  const recommendedReads = Array.isArray(bootstrap?.recommended_reads)
+    ? bootstrap.recommended_reads.slice(0, 3)
+    : [];
+  const nextActionLabel = focusPacket.active
+    ? `${String(focusPacket.id || 'WP')} · ${String(focusPacket.goal || '진행 중 작업')}`
+    : `${String(report.next_wp || nextActions?.next_wp || 'NONE')}`;
+  const operatorChain = Array.isArray(operatorCockpit?.operator_chain)
+    ? operatorCockpit.operator_chain.slice(0, 5)
+    : [];
+  const spotlightItem = selectPreferredOperatorChainItem(operatorChain);
+  const spotlightMeta = spotlightItem ? buildOperatorChainFocusMeta(spotlightItem) : null;
+  const spotlightExecutionMeta = spotlightItem ? buildOperatorChainExecutionMeta(spotlightItem) : null;
+  const spotlightHtml = spotlightItem
+    ? `
+      <article class="flow-chain-spotlight" id="flow-chain-spotlight" data-chain-id="${esc(spotlightItem.id || 'step')}">
+        <div class="flow-chain-spotlight-copy">
+          <span class="flow-kicker">지금 실행할 카드</span>
+          <strong id="flow-chain-spotlight-title">${esc(spotlightItem.label || spotlightItem.id || 'step')}</strong>
+          <p id="flow-chain-spotlight-reason">${esc(spotlightItem.reason || '다음 operator action 설명 없음')}</p>
+        </div>
+        <div class="flow-chain-spotlight-actions">
+          <span class="tag ${statusClass(spotlightItem.status || 'pending')}" id="flow-chain-spotlight-status">${esc(spotlightItem.status || 'pending')}</span>
+          <code id="flow-chain-spotlight-command">${esc(spotlightItem.command || '')}</code>
+          <div class="flow-chain-spotlight-links">
+            <button type="button" class="flow-chain-link is-button" id="flow-chain-spotlight-copy" data-command="${esc(spotlightItem.command || '')}">명령 복사</button>
+            <a class="flow-chain-link" id="flow-chain-spotlight-fill" href="${esc(spotlightExecutionMeta?.href || 'mindmap/index.html#execution-console')}">실행 패널에 채우기</a>
+            <a class="flow-chain-link" id="flow-chain-spotlight-link" href="${esc(spotlightMeta?.href || 'mindmap/index.html')}">바로 열기</a>
+          </div>
+        </div>
+      </article>`
+    : '';
+  const operatorChainHtml = operatorChain.length > 0
+    ? operatorChain.map((item) => {
+      const itemId = String(item.id || '').trim();
+      const scope = `chain:${itemId || 'step'}`;
+      const deliveryToken = domIdToken(itemId || item.label || 'step');
+      const deliveryId = `flow-chain-delivery-${deliveryToken}`;
+      const deliveryMetaId = `flow-chain-delivery-meta-${deliveryToken}`;
+      const focusMeta = buildOperatorChainFocusMeta(item);
+      return `
+      <div class="flow-chain-item${spotlightItem && spotlightItem.id === itemId ? ' is-active' : ''}" data-chain-id="${esc(itemId || 'step')}" data-chain-scope="${esc(scope)}" data-chain-command="${esc(item.command || '')}">
+        <span class="flow-chain-label">${esc(item.label || item.id || 'step')}</span>
+        <span class="tag ${statusClass(item.status || 'pending')}">${esc(item.status || 'pending')}</span>
+        <code>${esc(item.command || '')}</code>
+        <div class="flow-chain-delivery">
+          <span class="flow-chain-delivery-pill" id="${esc(deliveryId)}" data-delivery-status="none">최근 전달 없음</span>
+          <span class="flow-chain-delivery-meta" id="${esc(deliveryMetaId)}">실행 이력 없음</span>
+        </div>
+        <a class="flow-chain-link" href="${esc(focusMeta.href)}">control center에서 이어서 보기</a>
+      </div>`;
+    }).join('')
+    : '<div class="flow-chain-empty">operator chain 정보 없음</div>';
+  const releaseEvidence = operatorCockpit?.promotion_evidence || {};
+
+  return `
+    <div class="section-head" style="margin-top:36px">
+      <div>
+        <h2>연속 실행 오퍼레이터 바</h2>
+        <p>같은 짧은 프롬프트를 반복해도 현재 레인, 다음 액션, 검증 루프를 같은 기준으로 이어갑니다.</p>
+      </div>
+      <div class="flow-pill">반복 프롬프트 <strong>계속</strong></div>
+    </div>
+
+    <section class="flow-strip" aria-label="연속 실행 상태">
+      <article class="flow-card flow-card-primary">
+        <div class="flow-card-head">
+          <span class="flow-kicker">Current Lane</span>
+          <span class="tag tone-green">${esc(currentLane.label)}</span>
+        </div>
+        <h3>${esc(focusPacket.id || 'NONE')}</h3>
+        <p>${esc(focusPacket.goal || '현재 focus packet 없음')}</p>
+        <div class="flow-meta">
+          <span>stage ${esc(focusPacket.stage || '—')}</span>
+          <span>status ${esc(focusPacket.status || '—')}</span>
+        </div>
+      </article>
+
+      <article class="flow-card">
+        <div class="flow-card-head">
+          <span class="flow-kicker">Next Action</span>
+          <span class="tag tone-amber">${esc(report.next_wp || nextActions?.next_wp || 'NONE')}</span>
+        </div>
+        <h3>다음 한 단계</h3>
+        <p>${esc(nextActionLabel)}</p>
+        <div class="flow-meta">
+          <span>branch ${esc(bootstrap?.git?.branch || 'unknown')}</span>
+          <span>dirty ${bootstrap?.git?.dirty ? `${esc(bootstrap.git.dirty_count)}건` : '없음'}</span>
+        </div>
+      </article>
+
+      <article class="flow-card">
+        <div class="flow-card-head">
+          <span class="flow-kicker">Validation State</span>
+          <span class="tag ${statusClass(qualityGateResult)}">${esc(qualityGateResult)}</span>
+        </div>
+        <h3>검증 루프</h3>
+        <p>${validationCommands.length}개 명령이 현재 packet 프로파일에 연결돼 있습니다.</p>
+        <div class="flow-code-list">
+          ${validationCommands.slice(0, 3).map((command) => `<code>${esc(command)}</code>`).join('')}
+        </div>
+      </article>
+
+      <article class="flow-card">
+        <div class="flow-card-head">
+          <span class="flow-kicker">Read First</span>
+          <span class="tag tone-slate">${esc(bootstrap?.current_wp?.stage || '—')}</span>
+        </div>
+        <h3>세션 복구</h3>
+        <p>채팅 대신 고정 파일을 먼저 읽고 차이만 처리합니다.</p>
+        <div class="flow-code-list">
+          ${recommendedReads.map((item) => `<code>${esc(item)}</code>`).join('')}
+        </div>
+      </article>
+    </section>
+
+    <section class="flow-chain-panel" aria-label="operator chain">
+      <div class="flow-chain-head">
+        <div>
+          <h3>Operator Chain</h3>
+          <p>홈 화면과 control center가 같은 operator chain 상태를 공유합니다.</p>
+        </div>
+        <div class="flow-chain-head-pills">
+          <div class="flow-pill">Action Sources <strong id="flow-source-summary">source 집계 없음</strong></div>
+          <div class="flow-pill">Release Evidence <strong>${esc(releaseEvidence.quality_gate_result || 'UNKNOWN')}</strong></div>
+        </div>
+      </div>
+      ${spotlightHtml}
+      <div class="flow-chain-grid">
+        ${operatorChainHtml}
+      </div>
+    </section>`;
+}
+
+function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit }) {
   const improvements = Array.isArray(report.essential_improvements) ? report.essential_improvements : [];
   const issues = Array.isArray(report.known_issues) ? report.known_issues : [];
   const capabilities = Array.isArray(currentState?.working_capabilities) ? currentState.working_capabilities : [];
@@ -665,6 +880,8 @@ ${KANBAN_CSS}
       </article>
     </section>
 
+    ${buildFlowStatusSection({ report, currentState, nextActions, bootstrap, operatorCockpit })}
+
     ${buildKanbanSection(wpQueue)}
 
     <div class="section-head">
@@ -787,72 +1004,269 @@ ${KANBAN_CSS}
     <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
   </div>
 <script>
-const pendingIdempotencyKeys = {};
-function stableStringifyForIdempotency(value) {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return '[' + value.map((item) => stableStringifyForIdempotency(item)).join(',') + ']';
-  const keys = Object.keys(value).sort();
-  return '{' + keys.map((key) => JSON.stringify(key) + ':' + stableStringifyForIdempotency(value[key])).join(',') + '}';
-}
-function createIdempotencyKey(scope) {
-  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-    return scope + ':' + window.crypto.randomUUID();
-  }
-  return scope + ':' + Date.now() + ':' + Math.random().toString(16).slice(2);
-}
-function reserveIdempotencyKey(scope, payload) {
-  const fingerprint = stableStringifyForIdempotency(payload || {});
-  const existing = pendingIdempotencyKeys[scope];
-  if (existing && existing.fingerprint === fingerprint) return existing.key;
-  const key = createIdempotencyKey(scope);
-  pendingIdempotencyKeys[scope] = { key, fingerprint };
-  return key;
-}
-function releaseIdempotencyKey(scope, key) {
-  const existing = pendingIdempotencyKeys[scope];
-  if (existing && existing.key === key) delete pendingIdempotencyKeys[scope];
-}
+${OPERATOR_ACTION_CLIENT_RUNTIME_SOURCE}
+${DEEP_LINK_CLIENT_RUNTIME_SOURCE}
+${BROWSER_UTILITY_RUNTIME_SOURCE}
 async function callPlanningApi(endpoint, body) {
-  let idemScope = '';
-  let idemKey = '';
   try {
     const opts = body
-      ? (() => {
-        idemScope = 'planning-studio:' + endpoint;
-        idemKey = reserveIdempotencyKey(idemScope, body);
-        return {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', 'Idempotency-Key': idemKey },
-          body: JSON.stringify(body),
-        };
-      })()
+      ? {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        idempotencyScope: 'planning-studio:' + endpoint,
+        idempotencyPayload: body,
+      }
       : {};
-    const resp = await fetch('/api/planning-studio/' + endpoint, opts);
+    const resp = await fetchJsonClient('/api/planning-studio/' + endpoint, opts);
     if (!resp.ok) return null;
     return await resp.json();
   } catch (_) { return null; }
-  finally {
-    if (idemScope && idemKey) releaseIdempotencyKey(idemScope, idemKey);
-  }
 }
 async function callJson(path, { method = 'GET', body } = {}) {
   try {
     const opts = { method };
     if (body) { opts.headers = { 'content-type': 'application/json' }; opts.body = JSON.stringify(body); }
-    const resp = await fetch(path, opts);
+    const resp = await fetchJsonClient(path, opts);
     if (!resp.ok) return null;
     return await resp.json();
-  } catch (_) { return null; }
+    } catch (_) { return null; }
+}
+function normalizeHomeActionSourceEntries(entries) {
+  return normalizeOperatorActionClientEntries(entries).map(function(entry) {
+    return {
+      id: entry.id,
+      source: entry.source,
+      command: entry.command,
+      ts: entry.ts,
+    };
+  }).filter(function(entry) {
+    return entry.id || (entry.source && entry.command);
+  }).slice(0, 6);
+}
+function loadHomeActionSources() {
+  return normalizeHomeActionSourceEntries(loadOperatorActionClientStorage(HOME_ACTION_SOURCE_STORAGE_KEY));
+}
+function saveHomeActionSources(entries) {
+  saveOperatorActionClientStorage(HOME_ACTION_SOURCE_STORAGE_KEY, normalizeHomeActionSourceEntries(entries));
+}
+function mergeHomeActionSource(action) {
+  var nextHistory = normalizeHomeActionSourceEntries(mergeOperatorActionClientEntries(loadHomeActionSources(), action));
+  saveHomeActionSources(nextHistory);
+  return nextHistory;
+}
+function summarizeHomeActionSources(entries) {
+  return operatorActionClientSourceSummary(normalizeHomeActionSourceEntries(entries));
+}
+function updateHomeActionSourceSummary(entries) {
+  var summaryEl = document.getElementById('flow-source-summary');
+  if (!summaryEl) {
+    return;
+  }
+  summaryEl.textContent = summarizeHomeActionSources(entries);
+}
+function createHomeOperatorActionId(scope) {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return String(scope || 'home-action') + ':' + window.crypto.randomUUID();
+  }
+  return String(scope || 'home-action') + ':' + Date.now() + ':' + Math.random().toString(16).slice(2);
+}
+function copyTextToClipboard(value) {
+  return copyTextToClipboardClient(value);
 }
 function buildControlCenterHref(focus, targetId, meta = {}) {
-  const params = new URLSearchParams();
-  if (focus) params.set('focus', String(focus).trim());
-  if (meta.reason) params.set('reason', String(meta.reason).trim());
-  if (meta.command) params.set('command', String(meta.command).trim());
-  if (meta.label) params.set('label', String(meta.label).trim());
-  if (meta.source) params.set('source', String(meta.source).trim());
-  const query = params.toString();
-  return 'mindmap/index.html' + (query ? '?' + query : '') + (targetId ? ('#' + targetId) : '');
+  return buildDeepLinkClientHref('mindmap/index.html', focus, targetId, meta);
+}
+function buildHomeOperatorActionPayload(item, action) {
+  var itemId = String(item && item.id || '').trim();
+  return {
+    id: createHomeOperatorActionId('home-spotlight:' + (itemId || 'step')),
+    action: String(action || 'unknown'),
+    label: String(item && (item.label || item.id) || 'Operator Chain'),
+    scope: 'chain:' + itemId,
+    source: 'home-spotlight',
+    command: String(item && item.command || '').trim(),
+    delivery_status: 'unsent',
+    delivery_message: '실제 전송 전',
+    delivery_ts: '',
+    ts: new Date().toISOString(),
+  };
+}
+function syncHomeOperatorAction(payload, options) {
+  var normalized = payload && typeof payload === 'object' ? payload : null;
+  if (!normalized || !String(normalized.command || '').trim() || !String(normalized.label || '').trim()) {
+    return Promise.resolve(null);
+  }
+  var keepalive = !!(options && options.keepalive);
+  return fetch('/api/ui/operator-action', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(normalized),
+    keepalive: keepalive,
+  })
+    .then(function(response) {
+      if (!response.ok) return null;
+      return response.json().catch(function() { return null; });
+    })
+    .catch(function() { return null; });
+}
+function chainDeliveryDomId(itemId) {
+  return 'flow-chain-delivery-' + String(itemId || 'item')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+function chainDeliveryMetaDomId(itemId) {
+  return 'flow-chain-delivery-meta-' + String(itemId || 'item')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+function operatorActionDeliveryTone(status) {
+  if (status === 'success') return 'success';
+  if (status === 'failed') return 'failed';
+  if (status === 'unsent') return 'unsent';
+  return 'none';
+}
+function operatorChainItemPriority(status) {
+  var normalized = String(status || 'pending').trim().toLowerCase();
+  if (normalized === 'blocked') return 0;
+  if (normalized === 'pending') return 1;
+  if (normalized === 'ready') return 2;
+  if (normalized === 'completed') return 3;
+  return 4;
+}
+function selectHomeOperatorChainItem(operatorCockpit, recentAction) {
+  var chain = operatorCockpit && Array.isArray(operatorCockpit.operator_chain)
+    ? operatorCockpit.operator_chain
+    : [];
+  if (chain.length < 1) {
+    return null;
+  }
+  if (recentAction && typeof recentAction === 'object') {
+    for (var i = 0; i < chain.length; i += 1) {
+      var item = chain[i] || {};
+      var sameScope = String(recentAction.scope || '').trim() === ('chain:' + String(item.id || '').trim());
+      var sameCommand = String(recentAction.command || '').trim()
+        && String(recentAction.command || '').trim() === String(item.command || '').trim();
+      if (sameScope || sameCommand) {
+        return item;
+      }
+    }
+  }
+  var ranked = chain.slice().sort(function(left, right) {
+    return operatorChainItemPriority(left && left.status) - operatorChainItemPriority(right && right.status);
+  });
+  return ranked[0] || chain[0];
+}
+function updateHomeOperatorChainSpotlight(item) {
+  var spotlight = document.getElementById('flow-chain-spotlight');
+  var titleEl = document.getElementById('flow-chain-spotlight-title');
+  var reasonEl = document.getElementById('flow-chain-spotlight-reason');
+  var statusEl = document.getElementById('flow-chain-spotlight-status');
+  var commandEl = document.getElementById('flow-chain-spotlight-command');
+  var copyBtn = document.getElementById('flow-chain-spotlight-copy');
+  var fillEl = document.getElementById('flow-chain-spotlight-fill');
+  var linkEl = document.getElementById('flow-chain-spotlight-link');
+  var cards = document.querySelectorAll('.flow-chain-item[data-chain-id]');
+  for (var i = 0; i < cards.length; i += 1) {
+    cards[i].classList.remove('is-active');
+  }
+  if (!spotlight || !titleEl || !reasonEl || !statusEl || !commandEl || !copyBtn || !fillEl || !linkEl || !item) {
+    return;
+  }
+  var itemId = String(item.id || '').trim();
+  var targetId = itemId === 'verify' || itemId === 'commit-guard' ? 'plan-board' : 'master-status';
+  var focus = itemId === 'verify' || itemId === 'commit-guard' ? 'guard' : 'operator-summary';
+  spotlight.dataset.chainId = itemId || '';
+  titleEl.textContent = String(item.label || item.id || 'step');
+  reasonEl.textContent = String(item.reason || '다음 operator action 설명 없음');
+  statusEl.textContent = String(item.status || 'pending');
+  statusEl.className = 'tag ' + statusClass(String(item.status || 'pending'));
+  commandEl.textContent = String(item.command || '');
+  copyBtn.dataset.command = String(item.command || '');
+  copyBtn.dataset.label = String(item.label || item.id || 'step');
+  copyBtn.dataset.scope = 'chain:' + itemId;
+  copyBtn.dataset.chainId = itemId;
+  fillEl.href = buildControlCenterHref('execution-failure', 'execution-console', {
+    reason: item.reason || item.label || 'operator chain command',
+    command: item.command || '',
+    label: item.label || item.id || 'step',
+    source: 'home-spotlight',
+  });
+  fillEl.dataset.command = String(item.command || '');
+  fillEl.dataset.label = String(item.label || item.id || 'step');
+  fillEl.dataset.scope = 'chain:' + itemId;
+  fillEl.dataset.chainId = itemId;
+  linkEl.href = buildControlCenterHref(focus, targetId, {
+    reason: item.reason || item.label || 'operator chain step',
+    command: item.command || '',
+    label: item.label || item.id || 'step',
+    source: 'home-chain',
+  });
+  var activeCard = document.querySelector('.flow-chain-item[data-chain-id="' + itemId.replace(/"/g, '\\"') + '"]');
+  if (activeCard) {
+    activeCard.classList.add('is-active');
+  }
+}
+function operatorActionDeliveryLabel(status) {
+  if (status === 'success') return '성공';
+  if (status === 'failed') return '실패';
+  if (status === 'unsent') return '미전송';
+  return '없음';
+}
+function operatorActionDeliverySummary(action) {
+  if (!action || typeof action !== 'object') {
+    return {
+      label: '최근 전달 없음',
+      meta: '실행 이력 없음',
+      tone: 'none',
+    };
+  }
+  var deliveryStatus = String(action.delivery_status || 'unsent');
+  var meta = '';
+  if (String(action.delivery_message || '').trim()) {
+    meta = String(action.delivery_message || '').trim();
+  } else if (String(action.label || '').trim()) {
+    meta = String(action.label || '').trim();
+  }
+  return {
+    label: '최근 전달 ' + operatorActionDeliveryLabel(deliveryStatus),
+    meta: meta || '최근 메시지 없음',
+    tone: operatorActionDeliveryTone(deliveryStatus),
+  };
+}
+function updateHomeOperatorChainDeliveries(operatorCockpit, recentAction) {
+  var chain = operatorCockpit && Array.isArray(operatorCockpit.operator_chain)
+    ? operatorCockpit.operator_chain
+    : [];
+  for (var i = 0; i < chain.length; i += 1) {
+    var item = chain[i] || {};
+    var itemId = String(item.id || '').trim();
+    var deliveryEl = document.getElementById(chainDeliveryDomId(itemId || item.label || 'item'));
+    var deliveryMetaEl = document.getElementById(chainDeliveryMetaDomId(itemId || item.label || 'item'));
+    if (!deliveryEl) continue;
+    var expectedScope = 'chain:' + itemId;
+    var sameScope = recentAction
+      && String(recentAction.scope || '').trim()
+      && String(recentAction.scope || '').trim() === expectedScope;
+    var sameCommand = recentAction
+      && String(recentAction.command || '').trim()
+      && String(recentAction.command || '').trim() === String(item.command || '').trim();
+    var matchedAction = recentAction && (sameScope || sameCommand) ? recentAction : null;
+    var delivery = operatorActionDeliverySummary(matchedAction);
+    deliveryEl.textContent = delivery.label;
+    deliveryEl.dataset.deliveryStatus = delivery.tone;
+    if (deliveryMetaEl) {
+      deliveryMetaEl.textContent = delivery.meta;
+      deliveryMetaEl.dataset.deliveryStatus = delivery.tone;
+      deliveryMetaEl.title = matchedAction && String(matchedAction.command || '').trim()
+        ? String(matchedAction.command || '').trim()
+        : '';
+    }
+  }
 }
 function updateAutosendUi(autoSend) {
   const badge = document.getElementById('live-autosend-badge');
@@ -963,10 +1377,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const recentLoopNextEl = document.getElementById('live-loop-next');
   const recentLoopPrimaryLinkEl = document.getElementById('live-loop-primary-link');
   const recentLoopSecondaryLinkEl = document.getElementById('live-loop-secondary-link');
+  const recentAction = homeRuntime && homeRuntime.runtime_state
+    ? homeRuntime.runtime_state.recent_operator_action
+    : null;
   if (recentOperatorActionEl) {
-    const recentAction = homeRuntime && homeRuntime.runtime_state
-      ? homeRuntime.runtime_state.recent_operator_action
-      : null;
     if (recentAction && typeof recentAction === 'object') {
       const deliveryLabel = recentAction.delivery_status === 'success'
         ? '성공'
@@ -982,15 +1396,101 @@ document.addEventListener('DOMContentLoaded', async () => {
   const operatorCockpit = homeRuntime && homeRuntime.runtime_state
     ? homeRuntime.runtime_state.operator_cockpit
     : null;
+  var latestHomeRecentAction = recentAction;
+  var runtimeActionHistory = homeRuntime && homeRuntime.runtime_state && Array.isArray(homeRuntime.runtime_state.recent_operator_actions)
+    ? homeRuntime.runtime_state.recent_operator_actions
+    : [];
+  var homeActionSourceHistory = runtimeActionHistory.length > 0
+    ? normalizeHomeActionSourceEntries(runtimeActionHistory)
+    : mergeHomeActionSource(recentAction);
+  if (runtimeActionHistory.length > 0) {
+    saveHomeActionSources(homeActionSourceHistory);
+  }
+  updateHomeActionSourceSummary(homeActionSourceHistory);
+  function applyHomeRecentActionUi(nextAction) {
+    latestHomeRecentAction = nextAction;
+    homeActionSourceHistory = mergeHomeActionSource(nextAction);
+    updateHomeActionSourceSummary(homeActionSourceHistory);
+    if (recentOperatorActionEl) {
+      if (nextAction && typeof nextAction === 'object') {
+        const deliveryLabel = nextAction.delivery_status === 'success'
+          ? '성공'
+          : nextAction.delivery_status === 'failed'
+            ? '실패'
+            : '미전송';
+        recentOperatorActionEl.textContent = deliveryLabel + ' / ' + String(nextAction.label || '명령');
+        recentOperatorActionEl.title = String(nextAction.command || '');
+      } else {
+        recentOperatorActionEl.textContent = '기록 없음';
+        recentOperatorActionEl.title = '';
+      }
+    }
+    if (recentLoopStatusEl) {
+      if (nextAction && typeof nextAction === 'object') {
+        const deliveryLabel = nextAction.delivery_status === 'success'
+          ? '성공'
+          : nextAction.delivery_status === 'failed'
+            ? '실패'
+            : '미전송';
+        recentLoopStatusEl.textContent = deliveryLabel + ' / ' + String(nextAction.label || '명령');
+      } else {
+        recentLoopStatusEl.textContent = '기록 없음';
+      }
+    }
+    updateHomeOperatorChainSpotlight(selectHomeOperatorChainItem(operatorCockpit, nextAction));
+    updateHomeOperatorChainDeliveries(operatorCockpit, nextAction);
+  }
+  const spotlightCopyBtn = document.getElementById('flow-chain-spotlight-copy');
+  const spotlightFillEl = document.getElementById('flow-chain-spotlight-fill');
+  if (spotlightCopyBtn) {
+    spotlightCopyBtn.addEventListener('click', async () => {
+      const command = String(spotlightCopyBtn.dataset.command || '').trim();
+      const originalText = spotlightCopyBtn.textContent;
+      if (!command) {
+        spotlightCopyBtn.textContent = '명령 없음';
+        setTimeout(() => { spotlightCopyBtn.textContent = originalText; }, 1200);
+        return;
+      }
+      try {
+        await copyTextToClipboard(command);
+        const nextAction = buildHomeOperatorActionPayload({
+          id: spotlightCopyBtn.dataset.chainId,
+          label: spotlightCopyBtn.dataset.label,
+          command: command,
+        }, 'copied');
+        applyHomeRecentActionUi(nextAction);
+        syncHomeOperatorAction(nextAction, { keepalive: false });
+        spotlightCopyBtn.textContent = '복사됨';
+      } catch (_) {
+        spotlightCopyBtn.textContent = '복사 실패';
+      }
+      setTimeout(() => { spotlightCopyBtn.textContent = originalText; }, 1200);
+    });
+  }
+  if (spotlightFillEl) {
+    spotlightFillEl.addEventListener('click', () => {
+      const command = String(spotlightFillEl.dataset.command || '').trim();
+      if (!command) {
+        return;
+      }
+      const nextAction = buildHomeOperatorActionPayload({
+        id: spotlightFillEl.dataset.chainId,
+        label: spotlightFillEl.dataset.label,
+        command: command,
+      }, 'loaded');
+      applyHomeRecentActionUi(nextAction);
+      syncHomeOperatorAction(nextAction, { keepalive: true });
+    });
+  }
+  applyHomeRecentActionUi(recentAction);
   if (recentLoopStatusEl) {
-    if (recentOperatorActionEl && homeRuntime && homeRuntime.runtime_state && homeRuntime.runtime_state.recent_operator_action) {
-      const recentAction = homeRuntime.runtime_state.recent_operator_action;
-      const deliveryLabel = recentAction.delivery_status === 'success'
+    if (recentOperatorActionEl && latestHomeRecentAction) {
+      const deliveryLabel = latestHomeRecentAction.delivery_status === 'success'
         ? '성공'
-        : recentAction.delivery_status === 'failed'
+        : latestHomeRecentAction.delivery_status === 'failed'
           ? '실패'
           : '미전송';
-      recentLoopStatusEl.textContent = deliveryLabel + ' / ' + String(recentAction.label || '명령');
+      recentLoopStatusEl.textContent = deliveryLabel + ' / ' + String(latestHomeRecentAction.label || '명령');
     } else {
       recentLoopStatusEl.textContent = '기록 없음';
     }
@@ -1006,10 +1506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       : '기록 없음';
   }
   if (recentLoopPrimaryLinkEl) {
-    const recentAction = homeRuntime && homeRuntime.runtime_state
-      ? homeRuntime.runtime_state.recent_operator_action
-      : null;
-    const failedAction = recentAction && recentAction.delivery_status === 'failed';
+    const failedAction = latestHomeRecentAction && latestHomeRecentAction.delivery_status === 'failed';
     const validationCommands = operatorCockpit
       && operatorCockpit.validation_profile
       && Array.isArray(operatorCockpit.validation_profile.commands)
@@ -1017,11 +1514,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       : [];
     const recommendedCommand = String(
       failedAction
-        ? (recentAction.command || '')
+        ? (latestHomeRecentAction.command || '')
         : (validationCommands[0] || 'npm run operator:cockpit')
     ).trim();
     const reason = failedAction
-      ? String(recentAction.delivery_message || recentAction.label || '최근 operator action 실패').trim()
+      ? String(latestHomeRecentAction.delivery_message || latestHomeRecentAction.label || '최근 operator action 실패').trim()
       : String(
         operatorCockpit && operatorCockpit.commit_guard
           ? operatorCockpit.commit_guard.next_action || '최근 operator loop 상태 확인'
@@ -1031,7 +1528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? buildControlCenterHref('execution-failure', 'execution-console', {
         reason,
         command: recommendedCommand,
-        label: recentAction.label || '최근 operator action',
+        label: latestHomeRecentAction.label || '최근 operator action',
         source: 'home-loop',
       })
       : buildControlCenterHref('operator-summary', 'master-status', {
@@ -1069,9 +1566,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         : (
           homeRuntime
           && homeRuntime.runtime_state
-          && homeRuntime.runtime_state.recent_operator_action
-          && homeRuntime.runtime_state.recent_operator_action.command
-            ? homeRuntime.runtime_state.recent_operator_action.command
+          && latestHomeRecentAction
+          && latestHomeRecentAction.command
+            ? latestHomeRecentAction.command
             : 'npm run operator:cockpit'
         )
     ).trim();
@@ -1097,13 +1594,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 }
 
 // ── Kanban lane mapping ──────────────────────────────────
-const KANBAN_LANES = [
-  { id: 'backlog',  label: 'Backlog',   statuses: ['pending', 'todo', 'ready'],             color: '#475569' },
-  { id: 'analysis', label: 'Analysis',  statuses: ['in-analysis', 'stage-a', 'stage-b'],    color: '#1d4ed8' },
-  { id: 'build',    label: 'Build',     statuses: ['in-build', 'in-progress', 'stage-d'],   color: '#b45309' },
-  { id: 'verify',   label: 'Verify',    statuses: ['in-verify', 'stage-e', 'gate'],          color: '#7e22ce' },
-  { id: 'done',     label: 'Done',      statuses: ['done', 'completed', 'pass', 'closed'],  color: '#0f766e' },
-];
 const STAGE_CYCLE = ['A', 'B', 'C', 'D', 'E'];
 
 function classifyLane(wp) {
@@ -1209,6 +1699,246 @@ function buildKanbanSection(wpQueue) {
 }
 
 const KANBAN_CSS = `
+  /* ── Flow Status Strip ────────────────────── */
+  .flow-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .flow-card {
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.92);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    display: grid;
+    gap: 10px;
+  }
+  .flow-card-primary {
+    background:
+      linear-gradient(135deg, rgba(15,118,110,0.08), rgba(29,78,216,0.06)),
+      var(--surface);
+  }
+  .flow-card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+  }
+  .flow-kicker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .flow-card h3 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+  .flow-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .flow-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .flow-meta span,
+  .flow-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(15,118,110,0.07);
+    border: 1px solid rgba(15,118,110,0.18);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .flow-pill strong {
+    margin-left: 6px;
+    color: var(--accent);
+  }
+  .flow-code-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .flow-code-list code {
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 10px;
+    background: rgba(255,247,234,0.95);
+    border: 1px solid rgba(220,207,186,0.9);
+  }
+  .flow-chain-panel {
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.92);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .flow-chain-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .flow-chain-head-pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .flow-chain-head h3 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+  .flow-chain-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .flow-chain-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .flow-chain-spotlight {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: center;
+    background: rgba(15,118,110,0.07);
+    border: 1px solid rgba(15,118,110,0.18);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .flow-chain-spotlight-copy {
+    display: grid;
+    gap: 4px;
+  }
+  .flow-chain-spotlight-copy strong {
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+  .flow-chain-spotlight-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .flow-chain-spotlight-actions {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+  }
+  .flow-chain-spotlight-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .flow-chain-spotlight-actions code {
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.75);
+    border: 1px solid rgba(220,207,186,0.9);
+  }
+  .flow-chain-item {
+    display: grid;
+    gap: 8px;
+    background: var(--surface-strong);
+    border: 1px solid rgba(220,207,186,0.85);
+    border-radius: 12px;
+    padding: 12px;
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  }
+  .flow-chain-item.is-active {
+    border-color: rgba(15,118,110,0.42);
+    box-shadow: 0 12px 24px rgba(15,118,110,0.12);
+    transform: translateY(-1px);
+  }
+  .flow-chain-label {
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .flow-chain-item code {
+    font-size: 11px;
+    padding: 5px 7px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(220,207,186,0.85);
+    word-break: break-word;
+  }
+  .flow-chain-link {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .flow-chain-link.is-button {
+    appearance: none;
+    border: 1px solid rgba(15,118,110,0.24);
+    background: rgba(255,255,255,0.72);
+    border-radius: 999px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .flow-chain-delivery {
+    display: grid;
+    gap: 6px;
+  }
+  .flow-chain-delivery-pill {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: rgba(220,207,186,0.45);
+    color: var(--muted);
+  }
+  .flow-chain-delivery-pill[data-delivery-status="success"] {
+    background: rgba(15,118,110,0.14);
+    color: var(--green);
+  }
+  .flow-chain-delivery-pill[data-delivery-status="failed"] {
+    background: rgba(194,65,12,0.12);
+    color: var(--accent-2);
+  }
+  .flow-chain-delivery-pill[data-delivery-status="unsent"] {
+    background: rgba(180,83,9,0.12);
+    color: var(--amber);
+  }
+  .flow-chain-delivery-meta {
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 19px;
+  }
+  .flow-chain-delivery-meta[data-delivery-status="success"] {
+    color: var(--green);
+  }
+  .flow-chain-delivery-meta[data-delivery-status="failed"] {
+    color: var(--accent-2);
+  }
+  .flow-chain-delivery-meta[data-delivery-status="unsent"] {
+    color: var(--amber);
+  }
+  .flow-chain-empty {
+    color: var(--muted);
+    font-size: 13px;
+  }
   /* ── Kanban Board ─────────────────────────── */
   .kb-board {
     display: grid;
@@ -1353,9 +2083,25 @@ const KANBAN_CSS = `
   }
   .spiral-iteration strong { color: var(--accent); }
   @media (max-width: 980px) {
+    .flow-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .flow-chain-spotlight {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .flow-chain-head {
+      flex-direction: column;
+    }
+    .flow-chain-head-pills {
+      justify-content: flex-start;
+    }
+    .flow-chain-spotlight-actions { justify-items: flex-start; }
+    .flow-chain-spotlight-links { justify-content: flex-start; }
+    .flow-chain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .kb-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 600px) {
+    .flow-strip { grid-template-columns: 1fr; }
+    .flow-chain-grid { grid-template-columns: 1fr; }
     .kb-board { grid-template-columns: 1fr; }
     .spiral-row { gap: 2px; }
   }
@@ -1367,20 +2113,23 @@ function buildHomeData() {
   const registry = readYaml('master-shell/plugin-registry/registry.yaml');
   const currentState = readYaml('memory/current-state.yaml');
   const wpQueue = readYaml('memory/wp-queue.yaml');
+  const nextActions = readYaml('memory/next-actions.yaml');
+  const bootstrap = buildBootstrapSummary();
+  const operatorCockpit = buildOperatorCockpitSummary();
   const navSummary = buildNavigationSummary(nav, registry);
-  return { report, nav, registry, currentState, navSummary, wpQueue };
+  return { report, nav, registry, currentState, navSummary, wpQueue, nextActions, bootstrap, operatorCockpit };
 }
 
 function buildHomeRuntime() {
-  const { report, navSummary, currentState, wpQueue } = buildHomeData();
-  const html = buildHtml({ report, navSummary, currentState, wpQueue });
+  const { report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit } = buildHomeData();
+  const html = buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit });
   return { html, homeData: { report, generatedAt: new Date().toISOString() } };
 }
 
 function main() {
-  const { report, navSummary, currentState, wpQueue } = buildHomeData();
+  const { report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit } = buildHomeData();
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, buildHtml({ report, navSummary, currentState, wpQueue }), 'utf8');
+  fs.writeFileSync(OUT_PATH, buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit }), 'utf8');
   process.stdout.write('생성 완료: artifacts/index.html\n');
 }
 

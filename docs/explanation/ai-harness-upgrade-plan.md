@@ -95,44 +95,94 @@ master UI에는 이 흐름을 칸반 lane으로 시각화한다.
 
 ## 현재 프로젝트 기준 세분화 실행 계획
 
-### Spiral 1. Harness Contract 정착
+### Track 0. Canonical Truth Alignment
 
-- 완료 기준: intake schema, 설계/검증 정책, 패턴 적용 기준이 파일로 고정된다.
-- 산출물: `requirements/harness-engineering.yaml`, data dictionary, 반복 프롬프트
+- 목표: 문서, UI, 스크립트가 모두 같은 canonical state를 읽는다.
+- 현재 상태: root memory 구조는 정착됐지만 일부 연속 실행 문서는 legacy 경로 표현이 남아 있다.
+- 완료조건:
+  - `memory/current-state.yaml`, `memory/current-wp.yaml`, `memory/wp-queue.yaml`, `memory/next-actions.yaml`가 모든 운영 문서에서 일관되게 언급된다.
+  - 세션 프롬프트와 실제 bootstrap 스크립트의 읽기 순서가 일치한다.
+- 핵심 파일:
+  - `docs/harness/CONTINUOUS_PROMPT.md`
+  - `docs/how-to/repeatable-cli-master-prompt.md`
+  - `scripts/session_bootstrap.js`
 
-### Spiral 2. Prompt Compression
+### Track 1. Intake-First Execution
 
-- 완료 기준: 세션 프롬프트가 짧아지고 파일 로드 규칙으로 대체된다.
-- 산출물: [docs/how-to/repeatable-cli-master-prompt.md](/root/workspace/my-module/docs/how-to/repeatable-cli-master-prompt.md)
+- 목표: 어떤 자유 형식 요청도 6필드 Intake Packet으로 자동 재구성한다.
+- 현재 상태: 계약은 있으나, 사용자용 운영 문서와 UI가 이를 더 직접적으로 보여줄 필요가 있다.
+- 완료조건:
+  - `goal/context/constraints/done_when/work_mode/verification`가 모든 운영 surface에서 같은 이름으로 보인다.
+  - 버그 수정과 기능 추가 예시가 분리돼 있다.
+- 핵심 파일:
+  - `requirements/harness-engineering.yaml`
+  - `docs/reference/ai-harness-data-dictionary.md`
+  - `docs/how-to/repeatable-cli-master-prompt.md`
 
-### Spiral 3. Master UI Flow Visualization
+### Track 2. Session Continuity Hardening
 
-- 완료 기준: control center에서 현재 lane과 work flow가 칸반형으로 보인다.
-- 산출물: `scripts/generate-mindmap.js`, `ui/control-center-runtime`
+- 목표: 같은 프롬프트를 반복 입력하면 현재 packet이 끝났는지, 다음 packet이 무엇인지, 어느 레인에 있는지 자동으로 파악한다.
+- 현재 상태: `session:bootstrap`과 `project:status`는 존재하지만, 시각화와 운영 문구가 더 직결될 필요가 있다.
+- 완료조건:
+  - `계속` 프롬프트만으로 상태 복구가 가능한 운영 규약이 문서화된다.
+  - `current-wp`와 `next-actions`가 다른 경우에도 active focus가 분명하게 드러난다.
+- 핵심 파일:
+  - `scripts/session_bootstrap.js`
+  - `memory/next-actions.yaml`
+  - `scripts/generate-ui-home.js`
 
-### Spiral 4. Session Continuity Hardening
+### Track 3. Master UI Flow Visualization
 
-- 완료 기준: 같은 프롬프트 반복 시 current state와 current WP를 기반으로 다음 작업을 이어서 수행한다.
-- 후보 작업:
-  - `wp:next`, `wp:reconcile`, `project:status`를 묶은 session bootstrap
-  - current packet drift 감지 자동화
-  - prompt seed에서 읽을 파일 최소화
+- 목표: 마스터 UI 첫 화면에서 현재 lane, 다음 action, validation state, spiral cycle을 즉시 확인한다.
+- 현재 상태: 칸반과 spiral은 존재하지만 active focus strip이 약하다.
+- 완료조건:
+  - 홈 화면에 현재 레인, 다음 액션, 검증 상태, 반복 프롬프트가 보인다.
+  - 칸반은 backlog 분석 빌드 검증 완료 흐름을 유지하되, 현재 focus packet이 빈 보드처럼 보이지 않게 한다.
+- 핵심 파일:
+  - `scripts/generate-ui-home.js`
+  - `artifacts/index.html`
+  - 관련 smoke test
 
-### Spiral 5. Verification Harness Hardening
+### Track 4. Verification Harness Hardening
 
-- 완료 기준: packet 유형별 최소 검증 묶음이 명시된다.
-- 후보 작업:
+- 목표: packet 유형별 최소 검증 프로파일을 명시하고, 완료 선언 전에 자동으로 연결한다.
+- 현재 상태: 스크립트는 충분하지만 bugfix/UI/governance별 최소 세트의 설명 가능성이 더 필요하다.
+- 완료조건:
   - bugfix: unit + regression + integration
-  - UI: smoke + interaction
+  - UI: generate + smoke + interaction
   - governance: validator + artifact smoke
+  - 구조/계약: contract drift + composition + 필요한 smoke
+- 핵심 파일:
+  - `requirements/validation-profiles.yaml`
+  - `scripts/resolve_validation_profile.js`
+  - `scripts/verified_auto_commit_guard.js`
 
-### Spiral 6. Branch and Promotion Automation
+### Track 5. SCM and Promotion Flow
 
-- 완료 기준: 새 packet 시작, 검증 통과, 커밋/PR 준비 흐름이 더 자동화된다.
-- 후보 작업:
-  - branch bootstrap helper
-  - verified auto-commit guard
-  - release evidence / promotion pipeline 연결
+- 목표: 브랜치 생성, 검증 통과, 자동 커밋 후보, evidence 생성이 하나의 operator 흐름으로 이어진다.
+- 현재 상태: 부품은 존재한다. 다만 UX와 운영 지침 관점에서 하나의 체인으로 더 쉽게 보여줄 여지가 있다.
+- 완료조건:
+  - `branch:bootstrap` 추천 브랜치가 packet 유형과 일치한다.
+  - `commit:guard`가 검증 통과 전 커밋 후보를 막는다.
+  - promotion/release evidence 흐름이 operator cockpit에서 이해 가능하다.
+- 핵심 파일:
+  - `scripts/branch_bootstrap.js`
+  - `scripts/verified_auto_commit_guard.js`
+  - `scripts/operator_cockpit.js`
+
+### Track 6. Runtime and Data Posture
+
+- 목표: 현재 단독 개발 구조를 유지하면서도 추후 확장 가능한 저장/동시성 경계를 고정한다.
+- 현재 상태: SQLite/In-Memory 포트-어댑터 분리는 갖춰져 있다.
+- 완료조건:
+  - Repository port 중심 구조를 유지한다.
+  - 공유 가변 상태는 process-wide coordinator에만 남긴다.
+  - CPU 바운드 작업은 worker 분리 후보로만 관리하고, I/O는 async-first로 유지한다.
+  - 자료사전과 migration 전략이 계약 변경과 함께 갱신된다.
+- 핵심 파일:
+  - `domains/**/ports|application/ports`
+  - `docs/db/migration-strategy.md`
+  - `docs/reference/ai-harness-data-dictionary.md`
 
 ## 벤치마킹 포인트
 
@@ -175,7 +225,7 @@ master UI에는 이 흐름을 칸반 lane으로 시각화한다.
 
 ## 현재 턴 이후 우선순위
 
-1. control center runtime에 칸반 lane 데이터를 더 노출해 외부 surface에서도 같은 흐름을 재사용하게 만든다.
-2. session bootstrap script를 만들어 세션 시작 시 읽는 파일과 명령을 더 줄인다.
-3. packet 유형별 검증 프로파일을 표준화한다.
-4. branch bootstrap과 verified auto-commit을 현재 `wp:*` 흐름과 결합한다.
+1. 연속 실행 문서와 `session:bootstrap`의 truth source를 완전히 일치시킨다.
+2. 마스터 UI 홈에서 active focus, current lane, validation state를 더 직접적으로 보이게 한다.
+3. packet 유형별 검증 프로파일을 표준화하고 `commit:guard`와 연결한다.
+4. operator cockpit, branch bootstrap, promotion evidence를 하나의 실행 체인으로 정리한다.

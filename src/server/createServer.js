@@ -40,6 +40,10 @@ const {
   buildControlCenterRuntimeResponse,
   buildControlCenterRuntimeState,
 } = require('../shared/uiRuntimeContracts');
+const {
+  normalizeRecentOperatorAction,
+  mergeRecentOperatorActions,
+} = require('../shared/operatorActionRuntime');
 
 function createTaskController(
   taskRepository = new InMemoryTaskRepository(),
@@ -723,26 +727,6 @@ function buildBridgeSchedulerStatus(bridgeState) {
   };
 }
 
-function normalizeRecentOperatorAction(input = {}) {
-  const command = typeof input.command === 'string' ? input.command.trim() : '';
-  const label = typeof input.label === 'string' ? input.label.trim() : '';
-  if (!command || !label) {
-    return null;
-  }
-
-  return {
-    id: typeof input.id === 'string' ? input.id : '',
-    action: typeof input.action === 'string' ? input.action : 'unknown',
-    label,
-    scope: typeof input.scope === 'string' ? input.scope : '',
-    command,
-    delivery_status: typeof input.delivery_status === 'string' ? input.delivery_status : 'unsent',
-    delivery_message: typeof input.delivery_message === 'string' ? input.delivery_message : '',
-    delivery_ts: typeof input.delivery_ts === 'string' ? input.delivery_ts : '',
-    ts: typeof input.ts === 'string' ? input.ts : new Date().toISOString(),
-  };
-}
-
 function recordControlCenterOperation({
   parentSpan,
   operation,
@@ -841,6 +825,7 @@ function createAppHandler({
   const nodePtyBridge = createNodePtyBridge(runtimeRoot);
   const uiOperatorState = {
     recentOperatorAction: null,
+    recentOperatorActions: [],
   };
 
   return async function appHandler(req, res) {
@@ -1275,6 +1260,7 @@ function createAppHandler({
           schedulerStatus: buildBridgeSchedulerStatus(nodePtyBridge),
           operatorCockpit: buildOperatorCockpitSummary(),
           recentOperatorAction: uiOperatorState.recentOperatorAction,
+          recentOperatorActions: uiOperatorState.recentOperatorActions,
         });
         sendResponse(req, res, 200, runtimeData, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
@@ -1311,6 +1297,7 @@ function createAppHandler({
             schedulerStatus: buildBridgeSchedulerStatus(nodePtyBridge),
             operatorCockpit: buildOperatorCockpitSummary(),
             recentOperatorAction: uiOperatorState.recentOperatorAction,
+            recentOperatorActions: uiOperatorState.recentOperatorActions,
           }),
         });
         sendResponse(req, res, 200, runtimeData, mergeHeaders(responseBaseHeaders, responseHeaders));
@@ -1327,6 +1314,10 @@ function createAppHandler({
         }
 
         uiOperatorState.recentOperatorAction = normalizedAction;
+        uiOperatorState.recentOperatorActions = mergeRecentOperatorActions(
+          uiOperatorState.recentOperatorActions,
+          normalizedAction,
+        );
         const operatorActionResponseBody = {
           ok: true,
           data: normalizedAction,

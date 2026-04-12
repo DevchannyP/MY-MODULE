@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-12T07:14:41.400584+00:00",
+  "generated_at_utc": "2026-04-12T14:07:49.694698+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "3805188412e43fa6ac43a6f9c391e0d7989a71ed",
+  "head_commit": "eb9e0430957b927762a56938f3cd7e6a0c753393",
   "build_environment": {
     "ci": "false",
-    "github_sha": "3805188412e43fa6ac43a6f9c391e0d7989a71ed",
+    "github_sha": "eb9e0430957b927762a56938f3cd7e6a0c753393",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -20,19 +20,42 @@
       "artifacts/decision-apply/latest/decision-apply-report.json",
       "artifacts/decision-apply/latest/handoff-bundle.json",
       "artifacts/decision-apply/latest/promoted-packet.yaml",
+      "artifacts/index.html",
       "artifacts/master-planner/index.html",
       "artifacts/mindmap/index.html",
       "artifacts/promotion-pipeline/latest/benchmark-pack.json",
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "memory/project/next-actions.yaml",
-      "memory/wp-queue.yaml"
+      "artifacts/release-evidence/release-evidence.json",
+      "docs/explanation/ai-harness-upgrade-plan.md",
+      "docs/harness/CONTINUOUS_PROMPT.md",
+      "docs/how-to/repeatable-cli-master-prompt.md",
+      "docs/reference/ai-harness-data-dictionary.md",
+      "docs/reference/validation-profiles.md",
+      "requirements/validation-profiles.yaml",
+      "scripts/generate-mindmap.js",
+      "scripts/generate-ui-home.js",
+      "scripts/operator_cockpit.js",
+      "scripts/resolve_validation_profile.js",
+      "scripts/session_bootstrap.js",
+      "src/server/createServer.js",
+      "src/shared/uiRuntimeContracts.js",
+      "src/tests/smoke/dynamicFrontendServer.smoke.test.js",
+      "src/tests/smoke/mindmapControlCenter.smoke.test.js",
+      "src/tests/smoke/mindmapControlCenterBrowserInteraction.smoke.test.js",
+      "src/tests/smoke/operatorCockpit.smoke.test.js",
+      "src/tests/smoke/sessionBootstrap.smoke.test.js",
+      "src/tests/smoke/staticUiHome.smoke.test.js",
+      "src/tests/smoke/validationProfiles.smoke.test.js"
     ],
     "untracked_paths": [
-      "domains/productivity/task-tracking/tests/integration/",
-      "src/shared/EventBusPublisher.js",
-      "src/tests/unit/EventBusPublisher.test.js"
+      "domains/productivity/task-tracking/tests/infrastructure/SQLiteTaskRepository.optimisticLock.test.js",
+      "scripts/packet_flow.js",
+      "src/shared/browserUtilityRuntimeSource.js",
+      "src/shared/deepLinkClientRuntimeSource.js",
+      "src/shared/operatorActionClientRuntimeSource.js",
+      "src/shared/operatorActionRuntime.js"
     ]
   },
   "memory_sources": {

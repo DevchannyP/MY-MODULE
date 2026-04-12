@@ -11,13 +11,13 @@
 | WP Queue | 다음 실행 후보 packet의 DAG 큐 | `memory/wp-queue.yaml` |
 | Change Point | 결함 또는 요구사항을 닫기 위해 실제 수정이 필요한 최소 코드/문서 지점 | 세션 분석 결과 |
 | Validation Loop | 수정 후 즉시 실행하는 확인 절차. 테스트, smoke, 상태 비교, 재조회 확인을 포함 | `package.json` scripts, `worklog/` |
-| Current Lane | Intake → Planning → Execution → Validation → Complete 중 현재 packet이 머무는 UI 흐름 위치 | `scripts/generate-mindmap.js`, `ui/control-center-runtime` |
+| Current Lane | Backlog → Analysis → Build → Verify → Done 중 현재 packet이 머무는 UI 흐름 위치 | `scripts/generate-ui-home.js`, `artifacts/index.html`, `scripts/generate-mindmap.js` |
 | Spiral Cycle | 한 번에 크게 끝내지 않고 분석 → 계획 → 실행 → 검증 → 학습을 반복하는 운영 모델 | `docs/explanation/ai-harness-upgrade-plan.md` |
 | Harness Contract | 반복 프롬프트에서도 동일하게 적용되는 고정 규칙 묶음 | `requirements/harness-engineering.yaml` |
 | Canonical State | 세션 재개 시 가장 먼저 믿어야 하는 현재 상태 | `memory/checkpoint.yaml`, `memory/current-state.yaml`, `memory/current-wp.yaml`, `memory/wp-queue.yaml` |
 | Evidence | 완료를 주장하기 위한 검증 결과와 산출물 | `worklog/`, `artifacts/`, 테스트 로그 |
 | Benchmark Signal | 외부 모범 사례에서 차용했지만 이 저장소 구조에 맞게 변환된 운영 원칙 | `docs/explanation/ai-harness-upgrade-plan.md` |
-| Prompt Seed | 세션마다 복붙하는 짧은 프롬프트. 긴 규칙을 다시 적지 않고 파일을 읽게 한다 | `docs/how-to/repeatable-cli-master-prompt.md` |
+| Prompt Seed | 세션마다 복붙하는 짧은 프롬프트. 대표값은 `계속`, `검토`, `다음`이다 | `docs/how-to/repeatable-cli-master-prompt.md` |
 
 ## Canonical Files
 

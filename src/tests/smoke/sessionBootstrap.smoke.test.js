@@ -16,6 +16,7 @@ test('[session bootstrap smoke] bootstrap summary narrows session reads, command
   assert.equal(typeof summary.current_wp.goal, 'string');
   assert.equal(typeof summary.current_wp.stage, 'string');
   assert.equal(typeof summary.next_wp, 'string');
+  assert.equal(typeof summary.current_lane_hint, 'string');
   assert.ok(Array.isArray(summary.intake_packet_fields));
   assert.deepEqual(summary.intake_packet_fields, ['goal', 'context', 'constraints', 'done_when', 'work_mode', 'verification']);
   assert.ok(Array.isArray(summary.recommended_reads));
@@ -31,6 +32,7 @@ test('[session bootstrap smoke] bootstrap summary narrows session reads, command
   assert.equal(typeof summary.validation_profile.packet_type, 'string');
   assert.ok(Array.isArray(summary.validation_profile.commands));
   assert.ok(summary.validation_profile.commands.includes('npm run validate:requirements'));
+  assert.equal(typeof summary.validation_profile.primary_command, 'string');
   assert.ok(Array.isArray(summary.operator_focus));
   assert.ok(summary.operator_focus.length >= 3);
   assert.equal(typeof summary.git.branch, 'string');

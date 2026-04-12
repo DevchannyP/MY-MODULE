@@ -2,6 +2,11 @@
 
 const { buildHomeRuntime } = require('../../scripts/generate-ui-home');
 const { buildMindmapRuntime } = require('../../scripts/generate-mindmap');
+const {
+  normalizeRecentOperatorAction,
+  normalizeRecentOperatorActions,
+  buildOperatorActionSources,
+} = require('./operatorActionRuntime');
 
 function stageProgress(stageValue) {
   const stage = String(stageValue || '').toUpperCase();
@@ -118,6 +123,8 @@ function normalizeOperatorCockpit(input) {
   const commitGuard = input.commit_guard || {};
   const guard = commitGuard.guard || {};
   const commitCandidate = commitGuard.commit_candidate || {};
+  const promotionEvidence = input.promotion_evidence || {};
+  const operatorChain = Array.isArray(input.operator_chain) ? input.operator_chain : [];
 
   return {
     current_wp: {
@@ -143,8 +150,18 @@ function normalizeOperatorCockpit(input) {
       create_command: String(branch.create_command || ''),
       commit_subject: String(branch.commit_template?.subject || commitCandidate.subject || ''),
     },
+    promotion_evidence: {
+      path: String(promotionEvidence.path || ''),
+      exists: promotionEvidence.exists === true,
+      quality_gate_result: String(promotionEvidence.quality_gate_result || 'UNKNOWN'),
+      artifact_count: typeof promotionEvidence.artifact_count === 'number' ? promotionEvidence.artifact_count : 0,
+      generated_at_utc: String(promotionEvidence.generated_at_utc || ''),
+      next_action_id: String(promotionEvidence.next_action?.id || 'NONE'),
+      next_action: String(promotionEvidence.next_action?.action || 'NONE'),
+    },
     commit_guard: {
       next_action: String(commitGuard.next_action || ''),
+      status: String(commitGuard.status || ''),
       protected_branch: guard.protected_branch === true,
       has_dirty_changes: guard.has_dirty_changes === true,
       validations_passed: guard.validations_passed === true,
@@ -152,32 +169,15 @@ function normalizeOperatorCockpit(input) {
       reasons: Array.isArray(guard.reasons) ? guard.reasons.map(String) : [],
       commit_subject: String(commitCandidate.subject || branch.commit_template?.subject || ''),
     },
+    operator_chain: operatorChain.map((item) => ({
+      id: String(item.id || ''),
+      label: String(item.label || ''),
+      status: String(item.status || 'pending'),
+      command: String(item.command || ''),
+      reason: String(item.reason || ''),
+    })),
     operator_actions: Array.isArray(input.operator_actions) ? input.operator_actions.map(String) : [],
     as_of: String(input.as_of || new Date().toISOString()),
-  };
-}
-
-function normalizeRecentOperatorAction(input) {
-  if (!input || typeof input !== 'object') {
-    return null;
-  }
-
-  const command = String(input.command || '').trim();
-  const label = String(input.label || '').trim();
-  if (!command || !label) {
-    return null;
-  }
-
-  return {
-    id: String(input.id || ''),
-    action: String(input.action || 'unknown'),
-    label,
-    scope: String(input.scope || ''),
-    command,
-    delivery_status: String(input.delivery_status || 'unsent'),
-    delivery_message: String(input.delivery_message || ''),
-    delivery_ts: String(input.delivery_ts || ''),
-    ts: String(input.ts || ''),
   };
 }
 
@@ -320,6 +320,7 @@ function buildControlCenterRuntimeState({
   schedulerStatus = {},
   operatorCockpit = null,
   recentOperatorAction = null,
+  recentOperatorActions = [],
 } = {}) {
   const sessions = Array.isArray(bridgeState.sessions) ? bridgeState.sessions : [];
   const enabledFlags = Array.isArray(flagStatus.enabled_flags) ? flagStatus.enabled_flags : [];
@@ -409,6 +410,8 @@ function buildControlCenterRuntimeState({
     },
     operator_cockpit: normalizeOperatorCockpit(operatorCockpit),
     recent_operator_action: normalizeRecentOperatorAction(recentOperatorAction),
+    recent_operator_actions: normalizeRecentOperatorActions(recentOperatorActions),
+    operator_action_sources: buildOperatorActionSources(recentOperatorActions),
     as_of: new Date().toISOString(),
   };
 }
@@ -418,6 +421,7 @@ function buildHomeRuntimeState({
   schedulerStatus = {},
   operatorCockpit = null,
   recentOperatorAction = null,
+  recentOperatorActions = [],
 } = {}) {
   return {
     feature_flags: {
@@ -445,6 +449,8 @@ function buildHomeRuntimeState({
     },
     operator_cockpit: normalizeOperatorCockpit(operatorCockpit),
     recent_operator_action: normalizeRecentOperatorAction(recentOperatorAction),
+    recent_operator_actions: normalizeRecentOperatorActions(recentOperatorActions),
+    operator_action_sources: buildOperatorActionSources(recentOperatorActions),
     as_of: new Date().toISOString(),
   };
 }

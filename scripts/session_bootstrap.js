@@ -6,6 +6,7 @@ const { spawnSync } = require('node:child_process');
 
 const { buildReport } = require('./project_status');
 const { resolveValidationProfile } = require('./resolve_validation_profile');
+const { buildFocusPacket, inferLaneId } = require('./packet_flow');
 
 const ROOT = path.resolve(__dirname, '..');
 const HARNESS_CONTRACT = 'requirements/harness-engineering.yaml';
@@ -124,6 +125,7 @@ function buildBootstrapSummary() {
     packetType: report.current_wp_type,
     stage: report.current_wp_stage,
   });
+  const focusPacket = buildFocusPacket({ report, nextActions, currentWp });
 
   return {
     as_of: new Date().toISOString(),
@@ -139,7 +141,11 @@ function buildBootstrapSummary() {
     },
     next_wp: String(report.next_wp || nextActions.next_wp || 'NONE'),
     requirements_stage: String(report.requirements_stage || 'UNKNOWN'),
-    current_lane_hint: String(report.requirements_stage || 'UNKNOWN'),
+    current_lane_hint: inferLaneId({
+      status: focusPacket.status,
+      stage: focusPacket.stage,
+      completed: focusPacket.active !== true && ['completed', 'pass', 'done', 'closed'].includes(String(focusPacket.status || '').toLowerCase()),
+    }),
     git: gitStatus,
     validation_profile: validationProfile,
     intake_packet_fields: Array.isArray(harnessContract.intake_packet?.required_fields)
