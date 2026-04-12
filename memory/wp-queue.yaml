@@ -667,3 +667,11 @@ capabilities:
         depends_on: []
         completed_at: "2026-04-12"
         result: "PASS — HIGH_RATE_LIMIT 옵션 추가 + summarizeExecutionFailureLocation pts 없음 접미사 수정"
+
+      - id: "WP-HRN-005"
+        goal: "docs/db/migration-strategy.md — FR-041 DB 마이그레이션 전략 문서화"
+        status: "done"
+        tier: "infra"
+        depends_on: ["WP-HRN-001"]
+        completed_at: "2026-04-12"
+        result: "PASS — SQLite→PG 전환 경로, 스키마 명명, 인덱스 정책, 낙관적 잠금, 자료사전 동기화 의무 정의"
