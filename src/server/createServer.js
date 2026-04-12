@@ -50,8 +50,8 @@ function createTaskController(
     createTask:           new CreateTaskUseCase(taskRepository, eventPublisher, outboxRepository),
     getTask:              new GetTaskUseCase(taskRepository),
     listTasks:            new ListTasksUseCase(taskRepository),
-    transitionTaskStatus: new TransitionTaskStatusUseCase(taskRepository),
-    reassignTask:         new ReassignTaskUseCase(taskRepository),
+    transitionTaskStatus: new TransitionTaskStatusUseCase(taskRepository, eventPublisher, outboxRepository),
+    reassignTask:         new ReassignTaskUseCase(taskRepository, eventPublisher, outboxRepository),
   });
 }
 

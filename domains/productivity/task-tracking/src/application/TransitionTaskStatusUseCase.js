@@ -5,9 +5,13 @@ class TransitionTaskStatusUseCase {
    * @param {import('./ports/TaskRepository').TaskRepository} taskRepository
    * @param {import('../../../../../src/shared/EventPublisher').EventPublisher} [eventPublisher]
    */
-  constructor(taskRepository, eventPublisher = null) {
+  /**
+   * @param {import('../infrastructure/OutboxRepository').OutboxRepository} [outboxRepository]
+   */
+  constructor(taskRepository, eventPublisher = null, outboxRepository = null) {
     this._repo      = taskRepository;
     this._publisher = eventPublisher;
+    this._outbox    = outboxRepository;
   }
 
   async execute({ task_id, new_status }, caller) {
@@ -23,6 +27,15 @@ class TransitionTaskStatusUseCase {
     const events = updated.pullDomainEvents();
     if (this._publisher && events.length > 0) {
       await this._publisher.publish(events);
+    }
+    if (this._outbox && events.length > 0) {
+      await this._outbox.append(
+        events.map((e) => ({
+          event_type:   e.event_type || e.type || 'domain.unknown',
+          aggregate_id: task_id,
+          payload:      e,
+        }))
+      );
     }
 
     return { task_id, old_status: oldStatus, new_status: updated.status };
