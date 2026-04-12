@@ -24,7 +24,8 @@ const BASE_URI = 'https://workflow-os/errors';
 const ERROR_MAP = Object.freeze({
   FORBIDDEN:        { status: 403, slug: 'forbidden',         title: 'Forbidden' },
   NOT_FOUND:        { status: 404, slug: 'not-found',         title: 'Not Found' },
-  CONFLICT:         { status: 409, slug: 'conflict',          title: 'Conflict' },
+  CONFLICT:                  { status: 409, slug: 'conflict',                   title: 'Conflict' },
+  OPTIMISTIC_LOCK_CONFLICT:  { status: 409, slug: 'optimistic-lock-conflict',   title: 'Conflict' },
   VALIDATION_ERROR: { status: 400, slug: 'validation-error',  title: 'Validation Error' },
   IDEMPOTENCY_IN_PROGRESS: { status: 409, slug: 'idempotency-in-progress', title: 'Conflict' },
   IDEMPOTENCY_KEY_REUSE_MISMATCH: { status: 422, slug: 'idempotency-key-reuse-mismatch', title: 'Unprocessable Content' },
