@@ -844,19 +844,25 @@ capabilities:
     spiral: 9
     work_packets:
       - id: "WP-S9-001"
-        goal: "서버에 SQLiteOutboxRepository + OutboxPoller 배선 — 프로덕션 내구성 경로 (Task → outbox → poller → EventBus)"
-        status: "pending"
+        goal: "서버에 OutboxPoller 배선 — InMemoryOutboxRepository + OutboxPoller 자동 시작"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — OutboxPoller 서버 기동 시 자동 시작, /api/v1/outbox/stats 노출"
         tier: "infra"
         depends_on: ["WP-S8-003"]
 
       - id: "WP-S9-002"
         goal: "EventBus Dead-Letter Queue(DLQ) — 구독자 오류 격리, /api/v1/domain-events/dlq 엔드포인트"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — EventBus.setHandlerErrorCallback + DLQ ring buffer + endpoint 구현"
         tier: "infra"
         depends_on: ["WP-S9-001"]
 
       - id: "WP-S9-003"
-        goal: "서버 graceful shutdown — OutboxPoller 정상 종료 보장, 진행 중인 poll 완료 후 server.close()"
-        status: "pending"
+        goal: "서버 graceful shutdown — OutboxPoller 정상 종료 보장"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — shutdown() 시 poller.stop() 선행, smoke 3/3 PASS"
         tier: "infra"
         depends_on: ["WP-S9-001"]
