@@ -886,3 +886,15 @@ capabilities:
         result: "PASS — EventBus.getStats() + 4 unit tests"
         tier: "infra"
         depends_on: ["WP-S10-001"]
+
+  - capability: "CAP-S11"
+    label: "Spiral 11 — 동시성 안전성 (NFR thread_safety)"
+    spiral: 11
+    work_packets:
+      - id: "WP-S11-001"
+        goal: "Task 낙관적 잠금 — InMemoryTaskRepository OPTIMISTIC_LOCK_CONFLICT 충돌 감지"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — Task.version 필드 + 충돌 감지 8 tests PASS, 189/189 domain PASS"
+        tier: "domain"
+        nfr: "nfr_extended.concurrency.thread_safety"
