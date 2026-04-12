@@ -948,3 +948,18 @@ capabilities:
         tier: "domain"
         fix: "TaskStatusChanged/TaskReassigned이 EventBus에 미발행된 버그 수정"
         depends_on: ["WP-S14-001"]
+
+  - id: "CAP-SPIRAL-16"
+    label: "Spiral 16 — Billing/Video EventPublisher 배선"
+    spiral: 16
+    work_packets:
+      - id: "WP-S16-001"
+        goal: "createBillingController() / createVideoController()에 _sharedDomainEventPublisher 전달"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — InvoiceCreated / VideoUploaded 이벤트가 EventBus ring buffer에 기록됨. 3/3 smoke PASS"
+        tier: "domain"
+        deliverables:
+          - "src/server/createServer.js: billing/video publisher 어댑터 래핑"
+          - "src/tests/smoke/billingVideoEventWiring.smoke.test.js: 3건 smoke PASS"
+        depends_on: ["WP-S15-001"]
