@@ -830,3 +830,11 @@ capabilities:
         result: "PASS — 통합 테스트 5/5 PASS (Use case→EventBusPublisher→EventBus + Outbox→Poller→EventBus)"
         tier: "domain"
         depends_on: ["WP-S8-001"]
+
+      - id: "WP-S8-003"
+        goal: "서버 EventBusPublisher 배선 검증 — end-to-end smoke (POST /tasks → domain-events ring buffer)"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — 2/2 smoke tests PASS; 746/746 전체 테스트 PASS"
+        tier: "infra"
+        depends_on: ["WP-S8-001", "WP-S8-002"]
