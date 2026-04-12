@@ -904,9 +904,21 @@ capabilities:
     spiral: 12
     work_packets:
       - id: "WP-S12-001"
-        goal: "OPTIMISTIC_LOCK_CONFLICT → HTTP 409 ProblemDetails 배선"
+        goal: "OPTIMISTIC_LOCK_CONFLICT → HTTP 409 ProblemDetails 배선 + SQLiteTaskRepository 낙관적 잠금"
         status: "done"
         completed_at: "2026-04-12"
-        result: "PASS — ProblemDetails 매핑 + smoke 2/2 PASS"
+        result: "PASS — ProblemDetails 매핑 + SQLite UPDATE WHERE version + smoke 2/2 PASS"
         tier: "interface"
         depends_on: ["WP-S11-001"]
+
+  - capability: "CAP-S13"
+    label: "Spiral 13 — version API 노출"
+    spiral: 13
+    work_packets:
+      - id: "WP-S13-001"
+        goal: "Task API 응답에 version 필드 노출 — 클라이언트 낙관적 잠금 지원"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — TaskController._serializeTask() version 추가"
+        tier: "interface"
+        depends_on: ["WP-S12-001"]
