@@ -145,6 +145,24 @@ memory/wp-queue.yaml 확인
 queue가 비어 있으면 root `memory/current-wp.yaml`에 새 packet을 먼저 정의하고,
 `npm run wp:reconcile` 결과와 모순되지 않게 진행한다.
 
+## 3.1 AI Harness 시작점
+
+반복 프롬프트를 짧게 유지하려면 아래 3개를 같이 쓴다.
+
+- 하네스 계약: [requirements/harness-engineering.yaml](/root/workspace/my-module/requirements/harness-engineering.yaml)
+- 현재 프로젝트 기준 계획: [ai-harness-upgrade-plan.md](/root/workspace/my-module/docs/explanation/ai-harness-upgrade-plan.md)
+- 복붙 프롬프트: [repeatable-cli-master-prompt.md](/root/workspace/my-module/docs/how-to/repeatable-cli-master-prompt.md)
+- 세션 시작 요약: `npm run session:bootstrap`
+- 통합 운영 요약: `npm run operator:cockpit`
+- 커밋 가드: `npm run commit:guard`
+
+원칙은 간단하다.
+
+- 요청은 intake packet으로 재구성한다.
+- 바로 구현하지 말고 먼저 원인 분석과 change point를 좁힌다.
+- 작은 change set 뒤에 즉시 검증한다.
+- master UI에서 현재 lane과 다음 액션을 확인한다.
+
 ---
 
 ## 4. 요구사항 작성 가이드

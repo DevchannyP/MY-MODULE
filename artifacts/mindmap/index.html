@@ -44,7 +44,7 @@
   --masterbar-h: 74px;
   --sidebar-w: 248px;
   --detail-w: 360px;
-  --plan-board-h: 230px;
+  --plan-board-h: 390px;
   --panel-width: 340px;
   --status-bar-h: 40px;
   --canvas-bg: #f0ebe0;
@@ -78,7 +78,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .brand-copy strong { display: block; font-size: 14px; letter-spacing: -0.02em; }
 .brand-copy span { color: var(--muted); font-size: 11px; }
 
-.topbar-actions { display: flex; gap: 8px; align-items: center; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .tb-btn {
   padding: 6px 12px;
   background: var(--surface-strong);
@@ -110,6 +110,17 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
+.tb-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
 .tb-auto-on {
   background: rgba(15,118,110,0.12);
   border-color: rgba(15,118,110,0.45);
@@ -120,13 +131,33 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   border-color: rgba(148,163,184,0.45);
   color: var(--slate);
 }
+.tb-ready {
+  background: rgba(15,118,110,0.12);
+  border-color: rgba(15,118,110,0.45);
+  color: var(--green);
+}
+.tb-warn {
+  background: rgba(245,158,11,0.16);
+  border-color: rgba(180,83,9,0.36);
+  color: var(--amber);
+}
+.tb-blocked {
+  background: rgba(220,38,38,0.12);
+  border-color: rgba(220,38,38,0.34);
+  color: var(--accent-2);
+}
+.tb-info {
+  background: rgba(29,78,216,0.12);
+  border-color: rgba(29,78,216,0.34);
+  color: var(--accent-3);
+}
 
 #master-status {
   height: var(--masterbar-h);
   border-bottom: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(255,253,248,0.96), rgba(255,247,234,0.92));
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(9, minmax(0, 1fr));
   gap: 10px;
   padding: 12px 16px;
   z-index: 25;
@@ -356,6 +387,65 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   line-height: 1.6;
   color: var(--muted);
 }
+.deep-link-highlight {
+  box-shadow: 0 0 0 2px rgba(29,78,216,0.28), 0 16px 30px rgba(29,78,216,0.12);
+  border-color: rgba(29,78,216,0.34) !important;
+}
+.deep-link-context-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(220, 207, 186, 0.88);
+  background: linear-gradient(90deg, rgba(239,246,255,0.92), rgba(255,251,235,0.94));
+  z-index: 24;
+}
+.deep-link-context-bar[hidden] {
+  display: none;
+}
+.deep-link-context-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.deep-link-context-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+.deep-link-context-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.deep-link-context-reason {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 420px;
+}
+.deep-link-context-command {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.32);
+  background: rgba(255,255,255,0.88);
+  color: var(--accent);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 360px;
+}
+.deep-link-context-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .execution-history-list {
   display: grid;
   gap: 8px;
@@ -398,6 +488,43 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   line-height: 1.55;
   color: var(--muted);
   white-space: pre-wrap;
+}
+.execution-operator-history {
+  display: grid;
+  gap: 8px;
+}
+.execution-operator-history-item {
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: rgba(255,255,255,0.82);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+.execution-operator-history-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.execution-operator-history-head strong {
+  font-size: 12px;
+}
+.execution-operator-history-meta {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+.execution-operator-history-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.execution-operator-history-empty {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
 }
 .execution-history-actions {
   display: flex;
@@ -633,11 +760,113 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   color: var(--muted);
 }
 .plan-board-wrap {
-  height: calc(100% - 42px);
+  height: calc(100% - 226px);
   overflow: auto;
   border-radius: 16px;
   border: 1px solid rgba(220, 207, 186, 0.88);
   background: #fffdfa;
+}
+.kanban-board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.kanban-board-head strong {
+  display: block;
+  font-size: 13px;
+}
+.kanban-board-head span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.kanban-lane {
+  border-radius: 16px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: rgba(255,255,255,0.72);
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  min-height: 152px;
+}
+.kanban-lane.is-current {
+  border-color: rgba(29,78,216,0.34);
+  background: rgba(219,234,254,0.42);
+  box-shadow: inset 0 0 0 1px rgba(29,78,216,0.08);
+}
+.kanban-lane-head {
+  display: grid;
+  gap: 6px;
+}
+.kanban-lane-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.kanban-lane-title {
+  font-size: 12px;
+  font-weight: 700;
+}
+.kanban-lane-owner {
+  font-size: 10px;
+  color: var(--muted);
+}
+.kanban-lane-brief {
+  border-radius: 12px;
+  border: 1px dashed rgba(220, 207, 186, 0.92);
+  background: rgba(255,255,255,0.76);
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+}
+.kanban-lane-brief span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.kanban-lane-brief strong {
+  font-size: 11px;
+  line-height: 1.55;
+}
+.kanban-card-stack {
+  display: grid;
+  gap: 8px;
+}
+.kanban-card {
+  border-radius: 12px;
+  border: 1px solid rgba(220, 207, 186, 0.88);
+  background: #fffdfa;
+  padding: 9px;
+  display: grid;
+  gap: 6px;
+}
+.kanban-card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+}
+.kanban-card-title strong {
+  font-size: 12px;
+}
+.kanban-card-copy {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.kanban-card-copy b {
+  color: var(--text);
 }
 .plan-table {
   width: 100%;
@@ -735,6 +964,65 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .modal-icon { font-size: 32px; text-align: center; margin-bottom: 8px; }
 .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
 .modal-body { font-size: 12px; color: var(--muted); margin-bottom: 8px; line-height: 1.6; }
+.modal-warning-box {
+  background: #fff1f2;
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  color: #991b1b;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.modal-context-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.modal-context-row {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+.modal-context-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.modal-context-value {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+}
+.modal-warning-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.modal-validation-state {
+  margin: 0 0 12px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  color: var(--muted);
+}
+.modal-validation-state.is-ready {
+  background: rgba(15, 118, 110, 0.10);
+  border-color: rgba(15, 118, 110, 0.22);
+  color: #0f766e;
+}
+.modal-validation-state.is-blocked {
+  background: #fff1f2;
+  border-color: rgba(220, 38, 38, 0.18);
+  color: #991b1b;
+}
 .modal-reason {
   width: 100%; margin: 12px 0;
   padding: 8px; border: 1px solid var(--line);
@@ -754,6 +1042,11 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   cursor: pointer; font-weight: 600; font-family: var(--font-ui); font-size: 13px;
 }
 .btn-confirm-rollback:hover { background: #b91c1c; }
+.btn-confirm-rollback:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  background: #fca5a5;
+}
 
 #disabled-overlay {
   position: absolute; inset: 0;
@@ -852,6 +1145,18 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 .audit-seq { color: var(--muted); min-width: 28px; }
 .audit-ts { color: var(--muted); min-width: 90px; font-family: var(--font-mono); }
 .audit-action { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.detail-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.detail-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .detail-grid-cards { display: grid; gap: 10px; }
 .detail-card {
   border-radius: 16px;
@@ -877,6 +1182,30 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   font-size: 12px;
   line-height: 1.6;
   color: var(--muted);
+}
+.detail-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.detail-card-action {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+.detail-card-action.primary {
+  background: linear-gradient(135deg, #0f766e, #1d4ed8);
+  color: white;
+}
+.detail-card-action.secondary {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--text);
 }
 .module-workbench {
   margin-top: 16px;
@@ -1013,8 +1342,8 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
 
 @media (max-width: 980px) {
   :root {
-    --masterbar-h: 120px;
-    --plan-board-h: 260px;
+    --masterbar-h: 156px;
+    --plan-board-h: 520px;
   }
   #master-status {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1041,6 +1370,18 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   }
 }
 
+@media (max-width: 1280px) {
+  .kanban-board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .kanban-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1051,6 +1392,9 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   </div>
   <div class="topbar-actions">
     <span id="topbar-auto-send-badge" class="tb-auto-badge tb-auto-off" title="자동 전송 상태">자동전송 OFF</span>
+    <span id="topbar-branch-readiness" class="tb-status-badge tb-info" title="브랜치 준비도">브랜치 대기</span>
+    <span id="topbar-commit-guard-badge" class="tb-status-badge tb-info" title="커밋 가드">가드 대기</span>
+    <span id="topbar-operator-action-badge" class="tb-status-badge tb-info" title="최근 operator action">액션 대기</span>
     <button class="tb-btn" onclick="fitView()">↺ 맞춤</button>
     <a class="tb-btn tb-btn-studio" href="../index.html#automation-bridge">Planning Studio</a>
     <a class="tb-btn" href="../index.html">← 홈</a>
@@ -1064,7 +1408,28 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   <article class="master-card"><span>진행률</span><strong id="master-progress">0%</strong></article>
   <article class="master-card"><span>차단 여부</span><strong id="master-blocker" class="master-value">-</strong></article>
   <article class="master-card"><span>다음 작업</span><strong id="master-next">-</strong></article>
+  <article class="master-card"><span>권장 브랜치</span><strong id="master-branch" class="master-value">-</strong></article>
+  <article class="master-card"><span>커밋 가드</span><strong id="master-guard" class="master-value">-</strong></article>
+  <article class="master-card"><span>최근 action</span><strong id="master-action-history" class="master-value">-</strong></article>
   <article class="master-card master-card-auto"><span>자동 전송</span><strong id="master-auto-send" class="master-auto-off">OFF</strong></article>
+</section>
+
+<section id="deep-link-context-bar" class="deep-link-context-bar" hidden>
+  <div class="deep-link-context-copy">
+    <span class="deep-link-context-label">drill-down 포커스</span>
+    <strong id="deep-link-context-focus" class="deep-link-context-value">-</strong>
+  </div>
+  <div class="deep-link-context-copy">
+    <span class="deep-link-context-label">이동 이유</span>
+    <span id="deep-link-context-reason" class="deep-link-context-reason">-</span>
+  </div>
+  <div class="deep-link-context-copy">
+    <span class="deep-link-context-label">권장 명령</span>
+    <code id="deep-link-context-command" class="deep-link-context-command">-</code>
+  </div>
+  <div class="deep-link-context-actions">
+    <button id="deep-link-context-load" class="tb-btn" type="button" onclick="loadOperatorCommandPrompt('deep-link')">권장 명령 채우기</button>
+  </div>
 </section>
 
 <aside id="control-sidebar">
@@ -1123,6 +1488,13 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
       <p>노드 선택과 같은 데이터 모델을 보는 하단 통제표</p>
     </div>
   </div>
+  <div class="kanban-board-head">
+    <div>
+      <strong>칸반 흐름</strong>
+      <span>나선형 운영: Intake → Planning → Execution → Validation → Complete</span>
+    </div>
+  </div>
+  <div id="kanban-board" class="kanban-board"></div>
   <div class="plan-board-wrap">
     <table class="plan-table">
       <thead>
@@ -1165,6 +1537,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
     <div class="modal-title"></div>
     <div class="modal-body"></div>
     <textarea class="modal-reason" placeholder="롤백 사유 (선택)"></textarea>
+    <div class="modal-validation-state"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="document.getElementById('confirm-modal').style.display='none'">취소</button>
       <button class="btn-confirm-rollback" onclick="confirmRollback()">롤백 확인</button>
@@ -1172,7 +1545,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   </div>
 </div>
 
-<script id="mindmap-data" type="application/json">{"nodes":[{"id":"root","type":"root","label":"Workflow OS","x":800,"y":500,"fixed":true},{"id":"system","type":"domain","label":"시스템 운영","x":800,"y":320,"healthScore":95,"trend":"→","ejectable":false,"stageStatus":"E/PASS","description":"","flagActive":true},{"id":"system-A","type":"stage","label":"A","status":"PASS","parentId":"system","x":687.4166975080229,"y":255},{"id":"system-B","type":"stage","label":"B","status":"PASS","parentId":"system","x":735,"y":207.416697508023},{"id":"system-C","type":"stage","label":"C","status":"PASS","parentId":"system","x":800,"y":190},{"id":"system-D","type":"stage","label":"D","status":"PASS","parentId":"system","x":865,"y":207.416697508023},{"id":"system-E","type":"stage","label":"E","status":"PASS","parentId":"system","x":912.583302491977,"y":254.99999999999994},{"id":"billing","type":"domain","label":"정산관리","x":980,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 도메인 영역","flagActive":false},{"id":"billing-A","type":"stage","label":"A","status":"PASS","parentId":"billing","x":1045,"y":387.416697508023},{"id":"billing-B","type":"stage","label":"B","status":"PASS","parentId":"billing","x":1092.583302491977,"y":435},{"id":"billing-C","type":"stage","label":"C","status":"PASS","parentId":"billing","x":1110,"y":500},{"id":"billing-D","type":"stage","label":"D","status":"PASS","parentId":"billing","x":1092.583302491977,"y":565},{"id":"billing-E","type":"stage","label":"E","status":"PASS","parentId":"billing","x":1045,"y":612.5833024919771},{"id":"flag-billing.enabled","type":"flag","label":"billing.enabled","value":false,"parentId":"billing","group":"billing","x":1100.2081528017131,"y":620.208152801713},{"id":"flag-billing.invoice.enabled","type":"flag","label":"billing.invoice.enabled","value":false,"parentId":"billing","group":"billing","x":1023.9992376674286,"y":664.2073904691416},{"id":"flag-billing.payment.enabled","type":"flag","label":"billing.payment.enabled","value":false,"parentId":"billing","group":"billing","x":936.0007623325715,"y":664.2073904691416},{"id":"flag-billing.exception.enabled","type":"flag","label":"billing.exception.enabled","value":false,"parentId":"billing","group":"billing","x":859.791847198287,"y":620.2081528017131},{"id":"productivity","type":"domain","label":"생산성 관리","x":800,"y":680,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역","flagActive":false},{"id":"productivity-A","type":"stage","label":"A","status":"PASS","parentId":"productivity","x":912.5833024919771,"y":745},{"id":"productivity-B","type":"stage","label":"B","status":"PASS","parentId":"productivity","x":865,"y":792.5833024919771},{"id":"productivity-C","type":"stage","label":"C","status":"PASS","parentId":"productivity","x":800,"y":810},{"id":"productivity-D","type":"stage","label":"D","status":"PASS","parentId":"productivity","x":735,"y":792.5833024919771},{"id":"productivity-E","type":"stage","label":"E","status":"PASS","parentId":"productivity","x":687.4166975080229,"y":745},{"id":"flag-enable_task_management","type":"flag","label":"enable_task_management","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":723.9992376674286},{"id":"flag-enable_bulk_assign","type":"flag","label":"enable_bulk_assign","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":636.0007623325715},{"id":"video","type":"domain","label":"콘텐츠 관리","x":620,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역.","flagActive":false},{"id":"video-A","type":"stage","label":"A","status":"PASS","parentId":"video","x":555,"y":612.5833024919771},{"id":"video-B","type":"stage","label":"B","status":"PASS","parentId":"video","x":507.41669750802293,"y":565},{"id":"video-C","type":"stage","label":"C","status":"PASS","parentId":"video","x":490,"y":500},{"id":"video-D","type":"stage","label":"D","status":"PASS","parentId":"video","x":507.41669750802293,"y":435.00000000000006},{"id":"video-E","type":"stage","label":"E","status":"PASS","parentId":"video","x":555,"y":387.416697508023},{"id":"flag-video.enabled","type":"flag","label":"video.enabled","value":false,"parentId":"video","group":"video","x":499.79184719828686,"y":379.7918471982869},{"id":"flag-video.upload.enabled","type":"flag","label":"video.upload.enabled","value":false,"parentId":"video","group":"video","x":576.0007623325715,"y":335.7926095308584},{"id":"flag-video.transcode.enabled","type":"flag","label":"video.transcode.enabled","value":false,"parentId":"video","group":"video","x":663.9992376674285,"y":335.7926095308584},{"id":"flag-video.admin.enabled","type":"flag","label":"video.admin.enabled","value":false,"parentId":"video","group":"video","x":740.208152801713,"y":379.79184719828686},{"id":"contract-system-api","type":"contract","label":"System API","path":"contracts/system-api/openapi.yaml","x":650,"y":220},{"id":"contract-ui-shell","type":"contract","label":"UI Shell","path":"contracts/ui-shell/ui-contract.yaml","x":950,"y":220},{"id":"control-intake","type":"control","label":"입력 이해","hiddenInGraph":true,"status":"completed","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","controlKind":"control"},{"id":"control-planning","type":"control","label":"계획 수립","hiddenInGraph":true,"status":"completed","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","controlKind":"control"},{"id":"control-execution","type":"control","label":"실행","hiddenInGraph":true,"status":"completed","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","controlKind":"control"},{"id":"control-validation","type":"control","label":"검증","hiddenInGraph":true,"status":"completed","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","controlKind":"control"},{"id":"control-complete","type":"control","label":"완료","hiddenInGraph":true,"status":"in_progress","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","controlKind":"control"},{"id":"control-module","type":"control","label":"모듈 생성","hiddenInGraph":true,"status":"ready","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","controlKind":"module"}],"edges":[{"id":"root-system","source":"root","target":"system","type":"dependency"},{"id":"system-stage-A","source":"system","target":"system-A","type":"lifecycle"},{"id":"system-stage-B","source":"system","target":"system-B","type":"lifecycle"},{"id":"system-stage-C","source":"system","target":"system-C","type":"lifecycle"},{"id":"system-stage-D","source":"system","target":"system-D","type":"lifecycle"},{"id":"system-stage-E","source":"system","target":"system-E","type":"lifecycle"},{"id":"root-billing","source":"root","target":"billing","type":"dependency"},{"id":"billing-stage-A","source":"billing","target":"billing-A","type":"lifecycle"},{"id":"billing-stage-B","source":"billing","target":"billing-B","type":"lifecycle"},{"id":"billing-stage-C","source":"billing","target":"billing-C","type":"lifecycle"},{"id":"billing-stage-D","source":"billing","target":"billing-D","type":"lifecycle"},{"id":"billing-stage-E","source":"billing","target":"billing-E","type":"lifecycle"},{"id":"billing-flag-billing.enabled","source":"billing","target":"flag-billing.enabled","type":"flag"},{"id":"billing-flag-billing.invoice.enabled","source":"billing","target":"flag-billing.invoice.enabled","type":"flag"},{"id":"billing-flag-billing.payment.enabled","source":"billing","target":"flag-billing.payment.enabled","type":"flag"},{"id":"billing-flag-billing.exception.enabled","source":"billing","target":"flag-billing.exception.enabled","type":"flag"},{"id":"root-productivity","source":"root","target":"productivity","type":"dependency"},{"id":"productivity-stage-A","source":"productivity","target":"productivity-A","type":"lifecycle"},{"id":"productivity-stage-B","source":"productivity","target":"productivity-B","type":"lifecycle"},{"id":"productivity-stage-C","source":"productivity","target":"productivity-C","type":"lifecycle"},{"id":"productivity-stage-D","source":"productivity","target":"productivity-D","type":"lifecycle"},{"id":"productivity-stage-E","source":"productivity","target":"productivity-E","type":"lifecycle"},{"id":"productivity-flag-enable_task_management","source":"productivity","target":"flag-enable_task_management","type":"flag"},{"id":"productivity-flag-enable_bulk_assign","source":"productivity","target":"flag-enable_bulk_assign","type":"flag"},{"id":"root-video","source":"root","target":"video","type":"dependency"},{"id":"video-stage-A","source":"video","target":"video-A","type":"lifecycle"},{"id":"video-stage-B","source":"video","target":"video-B","type":"lifecycle"},{"id":"video-stage-C","source":"video","target":"video-C","type":"lifecycle"},{"id":"video-stage-D","source":"video","target":"video-D","type":"lifecycle"},{"id":"video-stage-E","source":"video","target":"video-E","type":"lifecycle"},{"id":"video-flag-video.enabled","source":"video","target":"flag-video.enabled","type":"flag"},{"id":"video-flag-video.upload.enabled","source":"video","target":"flag-video.upload.enabled","type":"flag"},{"id":"video-flag-video.transcode.enabled","source":"video","target":"flag-video.transcode.enabled","type":"flag"},{"id":"video-flag-video.admin.enabled","source":"video","target":"flag-video.admin.enabled","type":"flag"},{"id":"system-contract-api","source":"system","target":"contract-system-api","type":"contract"},{"id":"system-contract-ui","source":"system","target":"contract-ui-shell","type":"contract"}],"meta":{"generatedAt":"2026-04-11T12:11:18.281Z","flagStates":{"system_api.enabled":true,"system_api.sse_stream.enabled":true,"system_api.flag_toggle_ui.enabled":false,"system_api.rollback_ui.enabled":false},"apiBase":"/api/v1","sseUrl":"/api/v1/system/events","planningApiBase":"/api/planning-studio","report":{"execution_mode":"read-only-status","repository":"my-module","requirements_stage":"D","current_wp":"WP-RUN-004","current_wp_goal":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","current_wp_type":"governance","current_wp_stage":"E","current_wp_context_budget":{"tier_reads":2,"context_reads":3,"tier_files":2,"context_files":3,"estimated_tokens":6181},"current_wp_scope_boundary":{"scope_in":13,"scope_out":2,"protects_core":true},"promotion_pipeline":{"artifact_dir":"artifacts/promotion-pipeline/latest","available":true,"promotion_ready":true,"locked_tokens":10917,"locked_files":9,"drift_status":"clean","changed_files":0,"missing_files":0},"essential_improvements":[{"id":"master-planning-truth-surface","tracked":true,"ready":true,"detail":"planner artifact + intake canvas + benchmark-backed planning triad"},{"id":"minimum-context-routing-performance","tracked":true,"ready":true,"detail":"promotion pipeline + context lock + drift awareness"},{"id":"guided-learning-live-ops-cockpit","tracked":true,"ready":true,"detail":"timeline feed + replay lenses + observability surfaces"}],"last_completed_wp":"WP-RUN-004","next_wp":"NONE","legacy_last_completed_stage":"D(4차)","stage_summary":[{"stage":"A","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-a.md","recommended_commands":["npm run validate:requirements"]},{"stage":"B","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-b.md","recommended_commands":["npm run validate:requirements"]},{"stage":"C","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-c.md","recommended_commands":["npm run validate:requirements","npm run validate:composition"]},{"stage":"D","route_status":"ready","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"]},{"stage":"E","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-e.md","recommended_commands":["npm run validate:requirements","npm run test:e2e-smoke"]}],"capabilities":[{"id":"requirements-validation","status":"pass"},{"id":"work-packet-operator-protocol","status":"pass"},{"id":"requirements-validation-ci","status":"pass"},{"id":"root-memory-bridge","status":"pass"},{"id":"stage-executor-dry-run","status":"pass"},{"id":"project-status-runner","status":"pass"},{"id":"server-wiring-smoke","status":"pass"},{"id":"quality-gate-ci","status":"pass"},{"id":"how-to-truthfulness","status":"pass"},{"id":"video-domain-stage-a","status":"pass"},{"id":"billing-domain-contracts","status":"pass"},{"id":"dag-wp-scheduler","status":"pass"},{"id":"requirements-gap-detector","status":"pass"},{"id":"session-health-metrics","status":"pass"},{"id":"desired-state-reconciliation","status":"pass"},{"id":"wp-queue-ci-validation","status":"pass"},{"id":"release-evidence-automation","status":"pass"},{"id":"branch-protection-ci","status":"pass"},{"id":"cross-domain-event-bus","status":"pass"},{"id":"rfc7807-error-standard","status":"pass"},{"id":"feature-flag-runtime","status":"pass"},{"id":"event-publishing","status":"pass"},{"id":"opentelemetry-instrumentation","status":"pass"},{"id":"sqlite-persistence","status":"pass"},{"id":"self-improvement-loop","status":"pass"},{"id":"cloudevents-envelope","status":"pass"},{"id":"contract-drift-validation","status":"pass"},{"id":"master-shell-composition-validation","status":"pass"},{"id":"quality-gate-baseline","status":"pass"},{"id":"deployment-environment-smoke-runner","status":"pass"},{"id":"root-entry-doc-truthfulness","status":"pass"},{"id":"deployment-environment-binding","status":"pass"},{"id":"deployment-environment-provisioning-audit","status":"pass"}],"manual_placeholders":[{"id":"deployment-environment-smoke","status":"operator-triggered"},{"id":"deployment-environment-provisioning-audit","status":"operator-collected"}],"known_issues":[{"id":"KI-RUN-001","severity":"low"}],"memory_sources":{"current_state":"memory/current-state.yaml","current_wp":"memory/current-wp.yaml","next_actions":"memory/next-actions.yaml","legacy_project_state":"memory/project/current-state.yaml"}},"controlCenter":{"statusBar":{"goal":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","currentStage":"E","progress":100,"blocker":"확인 필요 1건","nextTask":"NONE","autoSendEnabled":false,"currentLaneId":"control-complete","summary":"현재 packet WP-RUN-004 기준 통제 상태"},"controlNodes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","status":"completed","kind":"control"},{"id":"control-planning","label":"계획 수립","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","status":"completed","kind":"control"},{"id":"control-execution","label":"실행","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","status":"completed","kind":"control"},{"id":"control-validation","label":"검증","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","status":"completed","kind":"control"},{"id":"control-complete","label":"완료","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","status":"in_progress","kind":"control"},{"id":"control-module","label":"모듈 생성","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","status":"ready","kind":"module"}],"planRows":[{"id":"plan-intake","nodeId":"control-intake","step":"1","task":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","status":"completed","priority":"최고","owner":"Planner","nextAction":"계획 수립"},{"id":"plan-planning","nodeId":"control-planning","step":"2","task":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 E / 다음 NONE","status":"completed","priority":"최고","owner":"Planner","nextAction":"실행 패널 동기화"},{"id":"plan-execution","nodeId":"control-execution","step":"3","task":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"WP-RUN-004","status":"completed","priority":"최고","owner":"Builder","nextAction":"검증 evidence 적재"},{"id":"plan-validation","nodeId":"control-validation","step":"4","task":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","status":"completed","priority":"최고","owner":"Reviewer","nextAction":"완료 판정"},{"id":"plan-complete","nodeId":"control-complete","step":"5","task":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","status":"in_progress","priority":"높음","owner":"Reporter","nextAction":"홈 또는 다음 작업 이동"},{"id":"plan-module","nodeId":"control-module","step":"6","task":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","status":"ready","priority":"최고","owner":"Builder","nextAction":"dry-run preview 실행"}],"roadmapSections":[],"scaffoldCatalog":{"blueprints":[{"id":"master-os-ai-studio","name":"마스터 OS AI 스튜디오","summary":"하나의 마스터 UI에서 AI 계획, 학습, 운영, 모듈 확장을 함께 다루는 기본 청사진","architecture_profile":"master-os-shell","starter_sequence":[{"step":"요구사항 정의","focus":"requirements, constraints, domain-map을 먼저 확정한다"},{"step":"도메인 포트 생성","focus":"OpenAPI, events, ui-contract, capability를 먼저 만든다"},{"step":"마스터 UI 편입","focus":"plugin-registry, navigation, feature-flags, planner guide를 연결한다"},{"step":"운영 게이트 고정","focus":"smoke, slo, rollout, rollback, observability를 활성화한다"}]},{"id":"domain-module-extension","name":"도메인 모듈 확장","summary":"기존 마스터 OS에 새 bounded context를 안전하게 추가하는 확장 청사진","architecture_profile":"workflow-domain-module","starter_sequence":[{"step":"Stage A 설계 메모 생성","focus":"유비쿼터스 언어, INV, 권한, 이벤트를 먼저 합의한다"},{"step":"어댑터 선택","focus":"transport, observability, storage를 profile로 선택한다"},{"step":"master-shell 등록","focus":"plugin-registry와 nav에 entry point를 연결한다"},{"step":"feature rollout 준비","focus":"flag metadata와 smoke 시나리오를 추가한다"}]},{"id":"stateful-workflow-service","name":"상태 저장형 워크플로우 서비스","summary":"영속 저장소와 운영 지표를 갖춘 실서비스형 워크플로우 모듈 청사진","architecture_profile":"stateful-domain-module","starter_sequence":[{"step":"포트 유지","focus":"repository port를 유지한 채 in-memory와 SQLite를 병행한다"},{"step":"관측 강화","focus":"trace, request id, deployment smoke를 먼저 연결한다"},{"step":"운영 안전장치","focus":"idempotency, timeout, drain, rate limit을 transport에 고정한다"}]}],"recipes":[{"id":"planner-first-hybrid","name":"Planner-First Hybrid","objective":"기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피","architecture_profile":"master-os-shell","blueprint_refs":["master-os-ai-studio"]},{"id":"contract-first-module-builder","name":"Contract-First Module Builder","objective":"새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피","architecture_profile":"workflow-domain-module","blueprint_refs":["domain-module-extension"]},{"id":"stateful-ops-guarded","name":"Stateful Ops Guarded","objective":"상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피","architecture_profile":"stateful-domain-module","blueprint_refs":["stateful-workflow-service"]}],"profiles":[{"id":"master-os-shell","notes":["마스터 UI와 planner를 동시에 가져가야 기획/학습 일관성이 유지된다."],"recommended_recipes":["planner-first-hybrid"]},{"id":"workflow-domain-module","notes":["도메인 확장 단계에서는 메모리 저장소로 빠르게 검증하고, 영속 저장소는 별도 profile로 분리한다."],"recommended_recipes":["contract-first-module-builder"]},{"id":"stateful-domain-module","notes":["영속 저장소를 쓰더라도 memory adapter를 유지해 테스트와 smoke를 빠르게 돌릴 수 있어야 한다."],"recommended_recipes":["stateful-ops-guarded"]}],"defaultBlueprint":"domain-module-extension","defaultRecipe":"contract-first-module-builder"}},"stageRunHistory":[{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:10:47"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-11T21:10:47"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:10:41"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-11T21:10:40"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:01:26"}],"stageRunLatest":{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:10:47"}}}</script>
+<script id="mindmap-data" type="application/json">{"nodes":[{"id":"root","type":"root","label":"Workflow OS","x":800,"y":500,"fixed":true},{"id":"system","type":"domain","label":"시스템 운영","x":800,"y":320,"healthScore":95,"trend":"→","ejectable":false,"stageStatus":"E/PASS","description":"","flagActive":true},{"id":"system-A","type":"stage","label":"A","status":"PASS","parentId":"system","x":687.4166975080229,"y":255},{"id":"system-B","type":"stage","label":"B","status":"PASS","parentId":"system","x":735,"y":207.416697508023},{"id":"system-C","type":"stage","label":"C","status":"PASS","parentId":"system","x":800,"y":190},{"id":"system-D","type":"stage","label":"D","status":"PASS","parentId":"system","x":865,"y":207.416697508023},{"id":"system-E","type":"stage","label":"E","status":"PASS","parentId":"system","x":912.583302491977,"y":254.99999999999994},{"id":"billing","type":"domain","label":"정산관리","x":980,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 도메인 영역","flagActive":false},{"id":"billing-A","type":"stage","label":"A","status":"PASS","parentId":"billing","x":1045,"y":387.416697508023},{"id":"billing-B","type":"stage","label":"B","status":"PASS","parentId":"billing","x":1092.583302491977,"y":435},{"id":"billing-C","type":"stage","label":"C","status":"PASS","parentId":"billing","x":1110,"y":500},{"id":"billing-D","type":"stage","label":"D","status":"PASS","parentId":"billing","x":1092.583302491977,"y":565},{"id":"billing-E","type":"stage","label":"E","status":"PASS","parentId":"billing","x":1045,"y":612.5833024919771},{"id":"flag-billing.enabled","type":"flag","label":"billing.enabled","value":false,"parentId":"billing","group":"billing","x":1100.2081528017131,"y":620.208152801713},{"id":"flag-billing.invoice.enabled","type":"flag","label":"billing.invoice.enabled","value":false,"parentId":"billing","group":"billing","x":1023.9992376674286,"y":664.2073904691416},{"id":"flag-billing.payment.enabled","type":"flag","label":"billing.payment.enabled","value":false,"parentId":"billing","group":"billing","x":936.0007623325715,"y":664.2073904691416},{"id":"flag-billing.exception.enabled","type":"flag","label":"billing.exception.enabled","value":false,"parentId":"billing","group":"billing","x":859.791847198287,"y":620.2081528017131},{"id":"productivity","type":"domain","label":"생산성 관리","x":800,"y":680,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역","flagActive":false},{"id":"productivity-A","type":"stage","label":"A","status":"PASS","parentId":"productivity","x":912.5833024919771,"y":745},{"id":"productivity-B","type":"stage","label":"B","status":"PASS","parentId":"productivity","x":865,"y":792.5833024919771},{"id":"productivity-C","type":"stage","label":"C","status":"PASS","parentId":"productivity","x":800,"y":810},{"id":"productivity-D","type":"stage","label":"D","status":"PASS","parentId":"productivity","x":735,"y":792.5833024919771},{"id":"productivity-E","type":"stage","label":"E","status":"PASS","parentId":"productivity","x":687.4166975080229,"y":745},{"id":"flag-enable_task_management","type":"flag","label":"enable_task_management","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":723.9992376674286},{"id":"flag-enable_bulk_assign","type":"flag","label":"enable_bulk_assign","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":636.0007623325715},{"id":"video","type":"domain","label":"콘텐츠 관리","x":620,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역.","flagActive":false},{"id":"video-A","type":"stage","label":"A","status":"PASS","parentId":"video","x":555,"y":612.5833024919771},{"id":"video-B","type":"stage","label":"B","status":"PASS","parentId":"video","x":507.41669750802293,"y":565},{"id":"video-C","type":"stage","label":"C","status":"PASS","parentId":"video","x":490,"y":500},{"id":"video-D","type":"stage","label":"D","status":"PASS","parentId":"video","x":507.41669750802293,"y":435.00000000000006},{"id":"video-E","type":"stage","label":"E","status":"PASS","parentId":"video","x":555,"y":387.416697508023},{"id":"flag-video.enabled","type":"flag","label":"video.enabled","value":false,"parentId":"video","group":"video","x":499.79184719828686,"y":379.7918471982869},{"id":"flag-video.upload.enabled","type":"flag","label":"video.upload.enabled","value":false,"parentId":"video","group":"video","x":576.0007623325715,"y":335.7926095308584},{"id":"flag-video.transcode.enabled","type":"flag","label":"video.transcode.enabled","value":false,"parentId":"video","group":"video","x":663.9992376674285,"y":335.7926095308584},{"id":"flag-video.admin.enabled","type":"flag","label":"video.admin.enabled","value":false,"parentId":"video","group":"video","x":740.208152801713,"y":379.79184719828686},{"id":"contract-system-api","type":"contract","label":"System API","path":"contracts/system-api/openapi.yaml","x":650,"y":220},{"id":"contract-ui-shell","type":"contract","label":"UI Shell","path":"contracts/ui-shell/ui-contract.yaml","x":950,"y":220},{"id":"control-intake","type":"control","label":"입력 이해","hiddenInGraph":true,"status":"completed","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","controlKind":"control"},{"id":"control-planning","type":"control","label":"계획 수립","hiddenInGraph":true,"status":"completed","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","controlKind":"control"},{"id":"control-execution","type":"control","label":"실행","hiddenInGraph":true,"status":"completed","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","controlKind":"control"},{"id":"control-validation","type":"control","label":"검증","hiddenInGraph":true,"status":"completed","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","controlKind":"control"},{"id":"control-complete","type":"control","label":"완료","hiddenInGraph":true,"status":"in_progress","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","controlKind":"control"},{"id":"control-module","type":"control","label":"모듈 생성","hiddenInGraph":true,"status":"ready","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","controlKind":"module"}],"edges":[{"id":"root-system","source":"root","target":"system","type":"dependency"},{"id":"system-stage-A","source":"system","target":"system-A","type":"lifecycle"},{"id":"system-stage-B","source":"system","target":"system-B","type":"lifecycle"},{"id":"system-stage-C","source":"system","target":"system-C","type":"lifecycle"},{"id":"system-stage-D","source":"system","target":"system-D","type":"lifecycle"},{"id":"system-stage-E","source":"system","target":"system-E","type":"lifecycle"},{"id":"root-billing","source":"root","target":"billing","type":"dependency"},{"id":"billing-stage-A","source":"billing","target":"billing-A","type":"lifecycle"},{"id":"billing-stage-B","source":"billing","target":"billing-B","type":"lifecycle"},{"id":"billing-stage-C","source":"billing","target":"billing-C","type":"lifecycle"},{"id":"billing-stage-D","source":"billing","target":"billing-D","type":"lifecycle"},{"id":"billing-stage-E","source":"billing","target":"billing-E","type":"lifecycle"},{"id":"billing-flag-billing.enabled","source":"billing","target":"flag-billing.enabled","type":"flag"},{"id":"billing-flag-billing.invoice.enabled","source":"billing","target":"flag-billing.invoice.enabled","type":"flag"},{"id":"billing-flag-billing.payment.enabled","source":"billing","target":"flag-billing.payment.enabled","type":"flag"},{"id":"billing-flag-billing.exception.enabled","source":"billing","target":"flag-billing.exception.enabled","type":"flag"},{"id":"root-productivity","source":"root","target":"productivity","type":"dependency"},{"id":"productivity-stage-A","source":"productivity","target":"productivity-A","type":"lifecycle"},{"id":"productivity-stage-B","source":"productivity","target":"productivity-B","type":"lifecycle"},{"id":"productivity-stage-C","source":"productivity","target":"productivity-C","type":"lifecycle"},{"id":"productivity-stage-D","source":"productivity","target":"productivity-D","type":"lifecycle"},{"id":"productivity-stage-E","source":"productivity","target":"productivity-E","type":"lifecycle"},{"id":"productivity-flag-enable_task_management","source":"productivity","target":"flag-enable_task_management","type":"flag"},{"id":"productivity-flag-enable_bulk_assign","source":"productivity","target":"flag-enable_bulk_assign","type":"flag"},{"id":"root-video","source":"root","target":"video","type":"dependency"},{"id":"video-stage-A","source":"video","target":"video-A","type":"lifecycle"},{"id":"video-stage-B","source":"video","target":"video-B","type":"lifecycle"},{"id":"video-stage-C","source":"video","target":"video-C","type":"lifecycle"},{"id":"video-stage-D","source":"video","target":"video-D","type":"lifecycle"},{"id":"video-stage-E","source":"video","target":"video-E","type":"lifecycle"},{"id":"video-flag-video.enabled","source":"video","target":"flag-video.enabled","type":"flag"},{"id":"video-flag-video.upload.enabled","source":"video","target":"flag-video.upload.enabled","type":"flag"},{"id":"video-flag-video.transcode.enabled","source":"video","target":"flag-video.transcode.enabled","type":"flag"},{"id":"video-flag-video.admin.enabled","source":"video","target":"flag-video.admin.enabled","type":"flag"},{"id":"system-contract-api","source":"system","target":"contract-system-api","type":"contract"},{"id":"system-contract-ui","source":"system","target":"contract-ui-shell","type":"contract"}],"meta":{"generatedAt":"2026-04-12T04:58:47.908Z","flagStates":{"system_api.enabled":true,"system_api.sse_stream.enabled":true,"system_api.flag_toggle_ui.enabled":false,"system_api.rollback_ui.enabled":false},"apiBase":"/api/v1","sseUrl":"/api/v1/system/events","planningApiBase":"/api/planning-studio","report":{"execution_mode":"read-only-status","repository":"my-module","requirements_stage":"D","current_wp":"WP-RUN-004","current_wp_goal":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","current_wp_type":"governance","current_wp_stage":"E","current_wp_context_budget":{"tier_reads":2,"context_reads":3,"tier_files":2,"context_files":3,"estimated_tokens":6181},"current_wp_scope_boundary":{"scope_in":13,"scope_out":2,"protects_core":true},"promotion_pipeline":{"artifact_dir":"artifacts/promotion-pipeline/latest","available":true,"promotion_ready":true,"locked_tokens":10917,"locked_files":9,"drift_status":"clean","changed_files":0,"missing_files":0},"essential_improvements":[{"id":"master-planning-truth-surface","tracked":true,"ready":true,"detail":"planner artifact + intake canvas + benchmark-backed planning triad"},{"id":"minimum-context-routing-performance","tracked":true,"ready":true,"detail":"promotion pipeline + context lock + drift awareness"},{"id":"guided-learning-live-ops-cockpit","tracked":true,"ready":true,"detail":"timeline feed + replay lenses + observability surfaces"}],"last_completed_wp":"WP-RUN-004","next_wp":"NONE","legacy_last_completed_stage":"D(4차)","stage_summary":[{"stage":"A","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-a.md","recommended_commands":["npm run validate:requirements"]},{"stage":"B","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-b.md","recommended_commands":["npm run validate:requirements"]},{"stage":"C","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-c.md","recommended_commands":["npm run validate:requirements","npm run validate:composition"]},{"stage":"D","route_status":"ready","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"]},{"stage":"E","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-e.md","recommended_commands":["npm run validate:requirements","npm run test:e2e-smoke"]}],"capabilities":[{"id":"requirements-validation","status":"pass"},{"id":"work-packet-operator-protocol","status":"pass"},{"id":"requirements-validation-ci","status":"pass"},{"id":"root-memory-bridge","status":"pass"},{"id":"stage-executor-dry-run","status":"pass"},{"id":"project-status-runner","status":"pass"},{"id":"server-wiring-smoke","status":"pass"},{"id":"quality-gate-ci","status":"pass"},{"id":"how-to-truthfulness","status":"pass"},{"id":"video-domain-stage-a","status":"pass"},{"id":"billing-domain-contracts","status":"pass"},{"id":"dag-wp-scheduler","status":"pass"},{"id":"requirements-gap-detector","status":"pass"},{"id":"session-health-metrics","status":"pass"},{"id":"desired-state-reconciliation","status":"pass"},{"id":"wp-queue-ci-validation","status":"pass"},{"id":"release-evidence-automation","status":"pass"},{"id":"branch-protection-ci","status":"pass"},{"id":"cross-domain-event-bus","status":"pass"},{"id":"rfc7807-error-standard","status":"pass"},{"id":"feature-flag-runtime","status":"pass"},{"id":"event-publishing","status":"pass"},{"id":"opentelemetry-instrumentation","status":"pass"},{"id":"sqlite-persistence","status":"pass"},{"id":"self-improvement-loop","status":"pass"},{"id":"cloudevents-envelope","status":"pass"},{"id":"contract-drift-validation","status":"pass"},{"id":"master-shell-composition-validation","status":"pass"},{"id":"quality-gate-baseline","status":"pass"},{"id":"deployment-environment-smoke-runner","status":"pass"},{"id":"root-entry-doc-truthfulness","status":"pass"},{"id":"deployment-environment-binding","status":"pass"},{"id":"deployment-environment-provisioning-audit","status":"pass"}],"manual_placeholders":[{"id":"deployment-environment-smoke","status":"operator-triggered"},{"id":"deployment-environment-provisioning-audit","status":"operator-collected"}],"known_issues":[{"id":"KI-RUN-001","severity":"low"}],"memory_sources":{"current_state":"memory/current-state.yaml","current_wp":"memory/current-wp.yaml","next_actions":"memory/next-actions.yaml","legacy_project_state":"memory/project/current-state.yaml"}},"controlCenter":{"statusBar":{"goal":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","currentStage":"E","progress":100,"blocker":"확인 필요 1건","nextTask":"NONE","autoSendEnabled":false,"currentLaneId":"control-complete","summary":"현재 packet WP-RUN-004 기준 통제 상태"},"controlNodes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","status":"completed","kind":"control"},{"id":"control-planning","label":"계획 수립","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","status":"completed","kind":"control"},{"id":"control-execution","label":"실행","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","status":"completed","kind":"control"},{"id":"control-validation","label":"검증","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","status":"completed","kind":"control"},{"id":"control-complete","label":"완료","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","status":"in_progress","kind":"control"},{"id":"control-module","label":"모듈 생성","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","status":"ready","kind":"module"}],"planRows":[{"id":"plan-intake","nodeId":"control-intake","step":"1","task":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","status":"completed","priority":"최고","owner":"Planner","nextAction":"계획 수립"},{"id":"plan-planning","nodeId":"control-planning","step":"2","task":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 E / 다음 NONE","status":"completed","priority":"최고","owner":"Planner","nextAction":"실행 패널 동기화"},{"id":"plan-execution","nodeId":"control-execution","step":"3","task":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"WP-RUN-004","status":"completed","priority":"최고","owner":"Builder","nextAction":"검증 evidence 적재"},{"id":"plan-validation","nodeId":"control-validation","step":"4","task":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","status":"completed","priority":"최고","owner":"Reviewer","nextAction":"완료 판정"},{"id":"plan-complete","nodeId":"control-complete","step":"5","task":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","status":"in_progress","priority":"높음","owner":"Reporter","nextAction":"홈 또는 다음 작업 이동"},{"id":"plan-module","nodeId":"control-module","step":"6","task":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","status":"ready","priority":"최고","owner":"Builder","nextAction":"dry-run preview 실행"}],"kanbanLanes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","status":"completed","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","is_current":false,"cards":[{"id":"plan-intake","title":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.","next_action":"계획 수립","owner":"Planner","priority":"최고","status":"completed"}]},{"id":"control-planning","label":"계획 수립","owner":"Planner","status":"completed","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","is_current":false,"cards":[{"id":"plan-planning","title":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 E / 다음 NONE","next_action":"실행 패널 동기화","owner":"Planner","priority":"최고","status":"completed"}]},{"id":"control-execution","label":"실행","owner":"Builder","status":"completed","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","is_current":false,"cards":[{"id":"plan-execution","title":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"WP-RUN-004","next_action":"검증 evidence 적재","owner":"Builder","priority":"최고","status":"completed"}]},{"id":"control-validation","label":"검증","owner":"Reviewer","status":"completed","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","is_current":false,"cards":[{"id":"plan-validation","title":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","next_action":"완료 판정","owner":"Reviewer","priority":"최고","status":"completed"}]},{"id":"control-complete","label":"완료","owner":"Reporter","status":"in_progress","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","is_current":true,"cards":[{"id":"plan-complete","title":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","next_action":"홈 또는 다음 작업 이동","owner":"Reporter","priority":"높음","status":"in_progress"}]},{"id":"control-module","label":"모듈 생성","owner":"Builder","status":"ready","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","is_current":false,"cards":[{"id":"plan-module","title":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","next_action":"dry-run preview 실행","owner":"Builder","priority":"최고","status":"ready"}]}],"roadmapSections":[],"scaffoldCatalog":{"blueprints":[{"id":"master-os-ai-studio","name":"마스터 OS AI 스튜디오","summary":"하나의 마스터 UI에서 AI 계획, 학습, 운영, 모듈 확장을 함께 다루는 기본 청사진","architecture_profile":"master-os-shell","starter_sequence":[{"step":"요구사항 정의","focus":"requirements, constraints, domain-map을 먼저 확정한다"},{"step":"도메인 포트 생성","focus":"OpenAPI, events, ui-contract, capability를 먼저 만든다"},{"step":"마스터 UI 편입","focus":"plugin-registry, navigation, feature-flags, planner guide를 연결한다"},{"step":"운영 게이트 고정","focus":"smoke, slo, rollout, rollback, observability를 활성화한다"}]},{"id":"domain-module-extension","name":"도메인 모듈 확장","summary":"기존 마스터 OS에 새 bounded context를 안전하게 추가하는 확장 청사진","architecture_profile":"workflow-domain-module","starter_sequence":[{"step":"Stage A 설계 메모 생성","focus":"유비쿼터스 언어, INV, 권한, 이벤트를 먼저 합의한다"},{"step":"어댑터 선택","focus":"transport, observability, storage를 profile로 선택한다"},{"step":"master-shell 등록","focus":"plugin-registry와 nav에 entry point를 연결한다"},{"step":"feature rollout 준비","focus":"flag metadata와 smoke 시나리오를 추가한다"}]},{"id":"stateful-workflow-service","name":"상태 저장형 워크플로우 서비스","summary":"영속 저장소와 운영 지표를 갖춘 실서비스형 워크플로우 모듈 청사진","architecture_profile":"stateful-domain-module","starter_sequence":[{"step":"포트 유지","focus":"repository port를 유지한 채 in-memory와 SQLite를 병행한다"},{"step":"관측 강화","focus":"trace, request id, deployment smoke를 먼저 연결한다"},{"step":"운영 안전장치","focus":"idempotency, timeout, drain, rate limit을 transport에 고정한다"}]}],"recipes":[{"id":"planner-first-hybrid","name":"Planner-First Hybrid","objective":"기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피","architecture_profile":"master-os-shell","blueprint_refs":["master-os-ai-studio"]},{"id":"contract-first-module-builder","name":"Contract-First Module Builder","objective":"새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피","architecture_profile":"workflow-domain-module","blueprint_refs":["domain-module-extension"]},{"id":"stateful-ops-guarded","name":"Stateful Ops Guarded","objective":"상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피","architecture_profile":"stateful-domain-module","blueprint_refs":["stateful-workflow-service"]}],"profiles":[{"id":"master-os-shell","notes":["마스터 UI와 planner를 동시에 가져가야 기획/학습 일관성이 유지된다."],"recommended_recipes":["planner-first-hybrid"]},{"id":"workflow-domain-module","notes":["도메인 확장 단계에서는 메모리 저장소로 빠르게 검증하고, 영속 저장소는 별도 profile로 분리한다."],"recommended_recipes":["contract-first-module-builder"]},{"id":"stateful-domain-module","notes":["영속 저장소를 쓰더라도 memory adapter를 유지해 테스트와 smoke를 빠르게 돌릴 수 있어야 한다."],"recommended_recipes":["stateful-ops-guarded"]}],"defaultBlueprint":"domain-module-extension","defaultRecipe":"contract-first-module-builder"}},"stageRunHistory":[{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:10:47"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-11T21:10:47"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:10:41"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-11T21:10:40"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:01:26"}],"stageRunLatest":{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"WP-RUN-004","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-11T21:10:47"}}}</script>
 <script>(function() {
 'use strict';
 
@@ -1183,6 +1556,8 @@ const AUTH_HEADERS = {
   'x-user-id': 'master-ui-operator',
   'x-permissions': 'domain.viewer,system.admin',
 };
+const OPERATOR_HISTORY_STORAGE_KEY = 'workflow-os.operator-action-history';
+const DEEP_LINK_CONTEXT_STORAGE_KEY = 'workflow-os.deep-link-context';
 
 // ─── State ───────────────────────────────────────────────────────────────────
 const S = {
@@ -1208,6 +1583,7 @@ const S = {
   statusSummary: Object.assign({ autoSendEnabled: false }, CONTROL.statusBar || {}),
   controlNodes: Array.isArray(CONTROL.controlNodes) ? CONTROL.controlNodes.slice() : [],
   planRows: Array.isArray(CONTROL.planRows) ? CONTROL.planRows.slice() : [],
+  kanbanLanes: Array.isArray(CONTROL.kanbanLanes) ? CONTROL.kanbanLanes.slice() : [],
   scaffoldCatalog: CONTROL.scaffoldCatalog || { blueprints: [], recipes: [], profiles: [], defaultBlueprint: '', defaultRecipe: '' },
   roadmapSections: Array.isArray(CONTROL.roadmapSections) ? CONTROL.roadmapSections.slice() : [],
   planningSnapshot: null,
@@ -1232,6 +1608,8 @@ const S = {
     sessions: [],
     selectedPts: '',
     selectedWorkerIndex: 0,
+    currentWorkerIndex: null,
+    activeWorkerIndex: null,
     rollbackTargetDomain: '',
     promptText: '',
     optimizedPrompt: '',
@@ -1241,6 +1619,9 @@ const S = {
     currentActivity: null,
     lastActivity: null,
     lastError: null,
+    operatorBrief: null,
+    operatorCockpit: null,
+    operatorActionHistory: [],
     nextActionHint: '',
     controls: {
       sendPrompt: false,
@@ -1255,6 +1636,13 @@ const S = {
     statusTone: 'warning',
     statusTitle: '터미널 연결 확인 필요',
     statusDetail: 'PTY 세션과 스케줄러 상태를 불러오는 중입니다.',
+  },
+  deepLinkContext: {
+    focus: '',
+    reason: '',
+    command: '',
+    label: '',
+    source: '',
   },
   stageRun: {
     selectedStage: 'D',
@@ -1281,6 +1669,7 @@ const S = {
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
+  S.execution.operatorActionHistory = loadOperatorActionHistory();
   S.nodes.forEach(function(n) { S.byId[n.id] = n; });
 
   if (RAW.meta.flagStates['system_api.enabled'] === false) {
@@ -1314,6 +1703,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   selectNode(S.statusSummary.currentLaneId || 'root');
   setTimeout(fitView, 50);
+  setTimeout(applyControlCenterDeepLink, 120);
+  window.addEventListener('popstate', applyControlCenterDeepLink);
+  window.addEventListener('hashchange', applyControlCenterDeepLink);
 });
 
 // ─── Canvas resize ───────────────────────────────────────────────────────────
@@ -1655,8 +2047,18 @@ function renderMasterStatus() {
   var blockerEl = document.getElementById('master-blocker');
   var nextEl = document.getElementById('master-next');
   var autoSendEl = document.getElementById('master-auto-send');
+  var branchEl = document.getElementById('master-branch');
+  var guardEl = document.getElementById('master-guard');
+  var actionEl = document.getElementById('master-action-history');
   var topbarBadgeEl = document.getElementById('topbar-auto-send-badge');
+  var topbarBranchEl = document.getElementById('topbar-branch-readiness');
+  var topbarGuardEl = document.getElementById('topbar-commit-guard-badge');
+  var topbarActionEl = document.getElementById('topbar-operator-action-badge');
   if (!goalEl) return;
+
+  var branchState = operatorCockpitBranchState();
+  var guardState = operatorCockpitGuardState();
+  var actionState = recentOperatorActionState();
 
   goalEl.textContent = S.statusSummary.goal || '현재 목표 미정';
   stageEl.textContent = S.statusSummary.currentStage || '-';
@@ -1676,9 +2078,36 @@ function renderMasterStatus() {
     autoSendEl.textContent = autoOn ? 'ON' : 'OFF';
     autoSendEl.className = autoOn ? 'master-auto-on' : 'master-auto-off';
   }
+  if (branchEl) {
+    branchEl.textContent = branchState.summary;
+    branchEl.className = 'master-value ' + operatorCockpitStatusClass(branchState.tone);
+  }
+  if (guardEl) {
+    guardEl.textContent = guardState.summary;
+    guardEl.className = 'master-value ' + operatorCockpitStatusClass(guardState.tone);
+  }
+  if (actionEl) {
+    actionEl.textContent = actionState.summary;
+    actionEl.className = 'master-value ' + operatorCockpitStatusClass(actionState.tone);
+  }
   if (topbarBadgeEl) {
     topbarBadgeEl.textContent = autoOn ? '자동전송 ON' : '자동전송 OFF';
     topbarBadgeEl.className = 'tb-auto-badge ' + (autoOn ? 'tb-auto-on' : 'tb-auto-off');
+  }
+  if (topbarBranchEl) {
+    topbarBranchEl.textContent = branchState.label;
+    topbarBranchEl.className = 'tb-status-badge ' + topbarBadgeClass(branchState.tone);
+    topbarBranchEl.title = branchState.summary;
+  }
+  if (topbarGuardEl) {
+    topbarGuardEl.textContent = guardState.label;
+    topbarGuardEl.className = 'tb-status-badge ' + topbarBadgeClass(guardState.tone);
+    topbarGuardEl.title = guardState.summary;
+  }
+  if (topbarActionEl) {
+    topbarActionEl.textContent = actionState.label;
+    topbarActionEl.className = 'tb-status-badge ' + topbarBadgeClass(actionState.tone);
+    topbarActionEl.title = actionState.summary;
   }
 }
 
@@ -1713,7 +2142,7 @@ function executionSummaryTitle() {
   return S.execution.runtimeAvailable ? '터미널 선택 필요' : '브리지 오프라인';
 }
 
-function executionNextAction() {
+function executionNextActionBase() {
   if (String(S.execution.nextActionHint || '').trim()) {
     return String(S.execution.nextActionHint || '').trim();
   }
@@ -1730,15 +2159,771 @@ function executionNextAction() {
   return 'PTY 세션을 먼저 선택하거나 브리지를 연결하세요.';
 }
 
+function executionNextAction() {
+  var message = executionNextActionBase();
+  var failureActivity = S.execution.lastError || currentExecutionActivity();
+  if (!failureActivity || !failureActivity.error) {
+    return executionSummaryWithIndexedWorker(message, failureActivity);
+  }
+  var failureLocation = executionFailureLocationSummary(
+    (S.execution.operatorBrief && S.execution.operatorBrief.blockedAt) || '',
+    failureActivity
+  );
+  if (!failureLocation || failureLocation === '없음') {
+    return executionSummaryWithIndexedWorker(message, failureActivity);
+  }
+  var indexedMessage = executionSummaryWithIndexedWorker(message, failureActivity);
+  if (indexedMessage.indexOf(failureLocation) >= 0) {
+    return indexedMessage;
+  }
+  return '실패 위치: ' + failureLocation + ' · ' + indexedMessage;
+}
+
 function executionFailureLocation(activity) {
   if (!activity || !activity.error) {
     return '없음';
   }
   return [
     activity.action || 'action 없음',
-    activity.worker || 'worker 없음',
+    executionActivityWorkerLabel(activity) || activity.worker || 'worker 없음',
     activity.pts || 'pts 없음',
   ].join(' / ');
+}
+
+function executionWorkerIndexValue(worker, fallbackIndex) {
+  if (worker && Number.isInteger(worker.worker_index)) {
+    return worker.worker_index;
+  }
+  return Number.isInteger(fallbackIndex) ? fallbackIndex : 0;
+}
+
+function executionWorkerLabel(worker, fallbackIndex) {
+  var indexValue = executionWorkerIndexValue(worker, fallbackIndex);
+  var name = String((worker && worker.name) || ('Worker ' + (indexValue + 1)));
+  return '[' + String(indexValue) + '] ' + name;
+}
+
+function executionMatchesWorker(activityWorkerName, worker, fallbackIndex) {
+  var activityName = String(activityWorkerName || '').trim();
+  if (!activityName) {
+    return false;
+  }
+  return activityName === executionWorkerLabel(worker, fallbackIndex)
+    || activityName === String((worker && worker.name) || '').trim();
+}
+
+function executionActivityWorkerLabel(activity) {
+  if (!activity || typeof activity !== 'object') {
+    return '';
+  }
+  var workerIndex = Number.isInteger(activity.worker_index) ? activity.worker_index : null;
+  if (Number.isInteger(workerIndex) && Array.isArray(S.execution.schedulerWorkers) && S.execution.schedulerWorkers[workerIndex]) {
+    return executionWorkerLabel(S.execution.schedulerWorkers[workerIndex], workerIndex);
+  }
+  var workerName = String(activity.worker || '').trim();
+  if (!workerName) {
+    return '';
+  }
+  if (/^[d+]s/.test(workerName)) {
+    return workerName;
+  }
+  if (Array.isArray(S.execution.schedulerWorkers)) {
+    for (var index = 0; index < S.execution.schedulerWorkers.length; index += 1) {
+      var worker = S.execution.schedulerWorkers[index];
+      if (executionMatchesWorker(workerName, worker, index)) {
+        return executionWorkerLabel(worker, index);
+      }
+    }
+  }
+  return workerName;
+}
+
+function executionSummaryWithIndexedWorker(summary, activity) {
+  var message = String(summary || '').trim();
+  if (!message) {
+    return '';
+  }
+  var workerName = String((activity && activity.worker) || '').trim();
+  var indexedLabel = executionActivityWorkerLabel(activity);
+  if (!indexedLabel || indexedLabel === workerName || message.indexOf(indexedLabel) >= 0) {
+    return message;
+  }
+  if (workerName && message.indexOf(workerName) >= 0) {
+    return message.replace(workerName, indexedLabel);
+  }
+  return message + ' / ' + indexedLabel;
+}
+
+function executionActivitySummary(activity, fallback) {
+  if (!activity) {
+    return fallback || '없음';
+  }
+  return [
+    activity.action || 'action 없음',
+    activity.worker || 'worker 없음',
+    activity.pts || 'pts 없음',
+    activity.packet_id || 'packet 없음',
+  ].filter(Boolean).join(' / ');
+}
+
+function executionCurrentSummary() {
+  var brief = S.execution.operatorBrief || {};
+  if (String(brief.currentExecution || '').trim()) {
+    return executionSummaryWithIndexedWorker(String(brief.currentExecution).trim(), S.execution.currentActivity);
+  }
+  if (!S.execution.schedulerRunning) {
+    return '중지됨';
+  }
+  return executionActivitySummary(S.execution.currentActivity, '실행 중인 worker 없음');
+}
+
+function executionLastDispatchSummary() {
+  var brief = S.execution.operatorBrief || {};
+  var dispatchActivity = S.execution.lastError || S.execution.lastActivity;
+  if (String(brief.lastDispatch || '').trim()) {
+    return executionSummaryWithIndexedWorker(String(brief.lastDispatch).trim(), dispatchActivity);
+  }
+  return executionActivitySummary(dispatchActivity, '최근 전송 없음');
+}
+
+function executionFailureLocationSummary(summary, activity) {
+  var message = String(summary || '').trim();
+  if (!message) {
+    return executionFailureLocation(activity);
+  }
+  return executionSummaryWithIndexedWorker(message, activity);
+}
+
+function executionFailureReasonSummary(summary, activity) {
+  var message = String(summary || '').trim();
+  if (!message || message === '없음') {
+    return '없음';
+  }
+  var indexedLabel = executionActivityWorkerLabel(activity);
+  if (!indexedLabel || message.indexOf(indexedLabel) >= 0) {
+    return message;
+  }
+  return indexedLabel + ' · ' + message;
+}
+
+function refreshExecutionSelectionUi() {
+  var selectedWorkerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
+  var selectedWorker = Array.isArray(S.execution.schedulerWorkers) ? S.execution.schedulerWorkers[selectedWorkerIndex] || null : null;
+  var rollbackTarget = selectedRollbackDomain();
+  var nextAction = executionNextAction();
+  var context = [];
+  if (selectedWorker) {
+    context.push('선택 worker: ' + executionWorkerLabel(selectedWorker, selectedWorkerIndex));
+  }
+  if (rollbackTarget) {
+    context.push('롤백 대상: ' + String(rollbackTarget.label || rollbackTarget.id || '없음'));
+  }
+  S.execution.statusTone = executionSummaryTone();
+  S.execution.statusTitle = executionSummaryTitle();
+  S.execution.statusDetail = context.length > 0 ? context.join(' · ') + ' · ' + nextAction : nextAction;
+  renderExecutionConsole();
+  refreshRollbackModalContext();
+  refreshRollbackModalValidation();
+}
+
+function executionAvailableControlsSummary() {
+  var brief = S.execution.operatorBrief || {};
+  if (String(brief.availableControlsSummary || '').trim()) {
+    return String(brief.availableControlsSummary).trim();
+  }
+  var controlMatrix = normalizeExecutionControlMatrix(S.execution.controlMatrix);
+  var controlLabels = {
+    send_prompt: '프롬프트 전송',
+    auto_send_toggle: '자동 전송',
+    stop: '중지',
+    retry_last_prompt: '재시도',
+    rollback: '롤백',
+  };
+  var enabled = Object.keys(controlLabels).filter(function(id) {
+    return controlMatrix[id] && controlMatrix[id].enabled === true;
+  }).map(function(id) {
+    return controlLabels[id];
+  });
+  return enabled.length > 0 ? enabled.join(', ') : '즉시 가능한 제어 없음';
+}
+
+function executionOperatorCockpitStatus() {
+  var cockpit = S.execution.operatorCockpit || null;
+  if (!cockpit) {
+    return '로딩 중';
+  }
+  var guard = cockpit.commitGuard || {};
+  if (guard.canApply) {
+    return 'apply 가능';
+  }
+  if (guard.validationsPassed) {
+    return '검증 통과';
+  }
+  return String(guard.nextAction || '검증 대기').trim() || '검증 대기';
+}
+
+function executionOperatorCockpitBranchSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  if (!cockpit || !cockpit.branch) {
+    return '없음';
+  }
+  return String(cockpit.branch.recommendedBranch || cockpit.branch.currentBranch || '없음').trim() || '없음';
+}
+
+function executionOperatorCockpitCommitSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  if (!cockpit || !cockpit.commitGuard) {
+    return '없음';
+  }
+  return String(cockpit.commitGuard.commitSubject || '없음').trim() || '없음';
+}
+
+function executionOperatorCockpitValidationSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  if (!cockpit || !cockpit.validationProfile) {
+    return '없음';
+  }
+  var profile = cockpit.validationProfile;
+  var commands = Array.isArray(profile.commands) && profile.commands.length > 0
+    ? profile.commands.join(', ')
+    : '명령 없음';
+  return [profile.packetType || 'UNKNOWN', profile.stage || 'UNKNOWN', commands].filter(Boolean).join(' / ');
+}
+
+function executionOperatorCockpitGuardSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  if (!cockpit || !cockpit.commitGuard) {
+    return '없음';
+  }
+  var guard = cockpit.commitGuard;
+  var reasons = Array.isArray(guard.reasons) ? guard.reasons.filter(Boolean) : [];
+  var prefix = executionOperatorCockpitStatus();
+  return reasons.length > 0 ? prefix + ' / ' + reasons.join(' / ') : prefix;
+}
+
+function executionOperatorCockpitActionsSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  var fallbackActions = [
+    'npm run operator:cockpit',
+    'npm run session:bootstrap',
+    'npm run branch:bootstrap',
+    'npm run commit:guard',
+  ];
+  if (!cockpit) {
+    return fallbackActions.join(', ');
+  }
+  return Array.isArray(cockpit.operatorActions) && cockpit.operatorActions.length > 0
+    ? cockpit.operatorActions.join(', ')
+    : fallbackActions.join(', ');
+}
+
+function operatorCockpitBranchState() {
+  var cockpit = S.execution.operatorCockpit || null;
+  if (!cockpit || !cockpit.branch) {
+    return {
+      label: '브랜치 대기',
+      tone: 'info',
+      summary: '브랜치 정보 없음',
+    };
+  }
+  var currentBranch = String(cockpit.branch.currentBranch || '').trim();
+  var recommendedBranch = String(cockpit.branch.recommendedBranch || '').trim();
+  var dirty = Boolean(cockpit.git && cockpit.git.dirty);
+
+  if (dirty) {
+    return {
+      label: '브랜치 점검',
+      tone: 'warn',
+      summary: recommendedBranch || currentBranch || '브랜치 정보 없음',
+    };
+  }
+  if (recommendedBranch && currentBranch && recommendedBranch !== currentBranch) {
+    return {
+      label: '브랜치 전환 권장',
+      tone: 'warn',
+      summary: recommendedBranch,
+    };
+  }
+  return {
+    label: '브랜치 준비',
+    tone: 'ready',
+    summary: recommendedBranch || currentBranch || '브랜치 정보 없음',
+  };
+}
+
+function operatorCockpitGuardState() {
+  var cockpit = S.execution.operatorCockpit || null;
+  var guard = cockpit && cockpit.commitGuard ? cockpit.commitGuard : null;
+  if (!guard) {
+    return {
+      label: '가드 대기',
+      tone: 'info',
+      summary: '커밋 가드 정보 없음',
+    };
+  }
+  if (guard.canApply) {
+    return {
+      label: '커밋 가능',
+      tone: 'ready',
+      summary: 'apply 가능',
+    };
+  }
+  if (guard.validationsPassed) {
+    return {
+      label: '검증 통과',
+      tone: 'info',
+      summary: String(guard.nextAction || '검증 통과').trim() || '검증 통과',
+    };
+  }
+  if (guard.protectedBranch) {
+    return {
+      label: '가드 차단',
+      tone: 'blocked',
+      summary: 'protected branch',
+    };
+  }
+  return {
+    label: '커밋 대기',
+    tone: 'warn',
+    summary: String(guard.nextAction || 'verify 대기').trim() || 'verify 대기',
+  };
+}
+
+function operatorCockpitStatusClass(tone) {
+  return tone === 'ready' ? 'status-ok'
+    : tone === 'blocked' ? 'status-blocked'
+      : tone === 'warn' ? 'status-attention'
+        : '';
+}
+
+function topbarBadgeClass(tone) {
+  return tone === 'ready' ? 'tb-ready'
+    : tone === 'blocked' ? 'tb-blocked'
+      : tone === 'warn' ? 'tb-warn'
+        : 'tb-info';
+}
+
+function kanbanLaneOperatorBrief(laneId) {
+  if (laneId === 'control-validation') {
+    return {
+      label: '검증 루프',
+      summary: executionOperatorCockpitGuardSummary(),
+    };
+  }
+  if (laneId === 'control-complete') {
+    return {
+      label: '브랜치 준비도',
+      summary: executionOperatorCockpitBranchSummary(),
+    };
+  }
+  return null;
+}
+
+function operatorCockpitValidationCommands() {
+  var cockpit = S.execution.operatorCockpit || null;
+  var commands = cockpit && cockpit.validationProfile && Array.isArray(cockpit.validationProfile.commands)
+    ? cockpit.validationProfile.commands.filter(Boolean)
+    : [];
+  if (commands.length > 0) {
+    return commands;
+  }
+  return [
+    'npm run operator:cockpit',
+    'npm run commit:guard',
+    'npm run commit:guard:verify',
+  ];
+}
+
+function operatorCockpitBranchActionSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  if (!cockpit || !cockpit.branch) {
+    return '권장 브랜치 정보 없음';
+  }
+  var currentBranch = String(cockpit.branch.currentBranch || '').trim();
+  var recommendedBranch = String(cockpit.branch.recommendedBranch || '').trim();
+  var createCommand = String(cockpit.branch.createCommand || '').trim();
+  if (recommendedBranch && currentBranch && recommendedBranch !== currentBranch) {
+    return recommendedBranch + ' / ' + (createCommand || 'git checkout -b ' + recommendedBranch);
+  }
+  return recommendedBranch || currentBranch || '권장 브랜치 정보 없음';
+}
+
+function operatorCockpitCommitGuardNextActionSummary() {
+  var cockpit = S.execution.operatorCockpit || null;
+  var guard = cockpit && cockpit.commitGuard ? cockpit.commitGuard : null;
+  if (!guard) {
+    return '커밋 가드 정보 없음';
+  }
+  var reasons = Array.isArray(guard.reasons) ? guard.reasons.filter(Boolean) : [];
+  var nextAction = String(guard.nextAction || '').trim() || '다음 행동 없음';
+  return reasons.length > 0 ? nextAction + ' / ' + reasons.join(' / ') : nextAction;
+}
+
+function operatorCockpitGuideForNode(nodeId) {
+  var normalizedId = String(nodeId || '').trim();
+  var commands = operatorCockpitValidationCommands();
+  var validationSummary = commands.join('
+');
+  var branchSummary = operatorCockpitBranchActionSummary();
+  var guardSummary = operatorCockpitCommitGuardNextActionSummary();
+
+  if (normalizedId === 'control-validation') {
+    return {
+      title: '운영 가이드',
+      cards: [
+        renderCommandActionCard('검증 명령', validationSummary, '현재 packet 기준 최소 검증 루프입니다. 실패 시 이 묶음부터 다시 실행합니다.', 'validation'),
+        renderCommandActionCard('커밋 가드 다음 행동', 'npm run commit:guard
+npm run commit:guard:verify', 'verify/apply 가능 상태를 판단하는 즉시 기준입니다.', 'guard'),
+        renderCommandActionCard('브랜치 액션', branchSummary, '검증 후 이어질 브랜치/커밋 흐름입니다.', 'branch'),
+      ],
+    };
+  }
+
+  if (normalizedId === 'control-complete') {
+    return {
+      title: '운영 가이드',
+      cards: [
+        renderCommandActionCard('브랜치 액션', branchSummary, '완료 보고 직전 권장 브랜치와 생성 명령입니다.', 'branch'),
+        renderCommandActionCard('커밋 가드 다음 행동', 'npm run commit:guard
+npm run commit:guard:verify', '커밋 후보를 열기 전에 해소해야 할 조건입니다.', 'guard'),
+        renderCommandActionCard('검증 명령', validationSummary, '완료 직전 다시 확인할 검증 묶음입니다.', 'validation'),
+      ],
+    };
+  }
+
+  if (normalizedId === 'control-planning' || normalizedId === 'control-execution') {
+    return {
+      title: '운영 가이드',
+      cards: [
+        renderCommandActionCard('브랜치 액션', branchSummary, '실행 전후로 유지할 브랜치 기준입니다.', 'branch'),
+        renderCommandActionCard('커밋 가드 다음 행동', 'npm run commit:guard
+npm run commit:guard:verify', '지금 단계에서 필요한 readiness 판단입니다.', 'guard'),
+      ],
+    };
+  }
+
+  return null;
+}
+
+function renderOperatorGuideSection(guide) {
+  if (!guide || !Array.isArray(guide.cards) || guide.cards.length < 1) {
+    return '';
+  }
+  return '<section class="detail-section">' +
+    '<div class="detail-section-title">' + escHtml(guide.title || '운영 가이드') + '</div>' +
+    '<div class="detail-grid-cards">' + guide.cards.join('') + '</div>' +
+    '</section>';
+}
+
+function normalizeOperatorActionHistory(entries) {
+  if (!Array.isArray(entries)) {
+    return [];
+  }
+  return entries.map(function(entry) {
+    return {
+      id: String(entry && entry.id || ''),
+      action: String(entry && entry.action || 'unknown'),
+      label: String(entry && entry.label || '명령'),
+      scope: String(entry && entry.scope || ''),
+      command: String(entry && entry.command || ''),
+      delivery_status: String(entry && entry.delivery_status || 'unsent'),
+      delivery_message: String(entry && entry.delivery_message || ''),
+      delivery_ts: String(entry && entry.delivery_ts || ''),
+      ts: String(entry && entry.ts || ''),
+    };
+  }).filter(function(entry) {
+    return entry.id && entry.label && entry.command;
+  }).slice(0, 6);
+}
+
+function loadOperatorActionHistory() {
+  try {
+    if (!window.sessionStorage) {
+      return [];
+    }
+    var raw = window.sessionStorage.getItem(OPERATOR_HISTORY_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+    return normalizeOperatorActionHistory(JSON.parse(raw));
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveOperatorActionHistory(entries) {
+  try {
+    if (!window.sessionStorage) {
+      return;
+    }
+    window.sessionStorage.setItem(OPERATOR_HISTORY_STORAGE_KEY, JSON.stringify(normalizeOperatorActionHistory(entries)));
+  } catch (error) {
+    return;
+  }
+}
+
+function normalizeDeepLinkContext(context) {
+  return {
+    focus: String(context && context.focus || '').trim(),
+    reason: String(context && context.reason || '').trim(),
+    command: String(context && context.command || '').trim(),
+    label: String(context && context.label || '').trim(),
+    source: String(context && context.source || '').trim(),
+  };
+}
+
+function hasDeepLinkContext(context) {
+  var normalized = normalizeDeepLinkContext(context);
+  return !!(normalized.focus || normalized.reason || normalized.command || normalized.label || normalized.source);
+}
+
+function loadStoredDeepLinkContext() {
+  try {
+    if (!window.sessionStorage) {
+      return normalizeDeepLinkContext(null);
+    }
+    var raw = window.sessionStorage.getItem(DEEP_LINK_CONTEXT_STORAGE_KEY);
+    if (!raw) {
+      return normalizeDeepLinkContext(null);
+    }
+    return normalizeDeepLinkContext(JSON.parse(raw));
+  } catch (error) {
+    return normalizeDeepLinkContext(null);
+  }
+}
+
+function saveDeepLinkContext(context) {
+  try {
+    if (!window.sessionStorage) {
+      return;
+    }
+    var normalized = normalizeDeepLinkContext(context);
+    if (!hasDeepLinkContext(normalized)) {
+      window.sessionStorage.removeItem(DEEP_LINK_CONTEXT_STORAGE_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(DEEP_LINK_CONTEXT_STORAGE_KEY, JSON.stringify(normalized));
+  } catch (error) {
+    return;
+  }
+}
+
+function syncRecentOperatorAction(payload) {
+  var normalized = payload && typeof payload === 'object' ? payload : null;
+  if (!normalized || !String(normalized.command || '').trim() || !String(normalized.label || '').trim()) {
+    return Promise.resolve(null);
+  }
+
+  return fetchJson('/api/ui/operator-action', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: String(normalized.id || ''),
+      action: String(normalized.action || 'unknown'),
+      label: String(normalized.label || ''),
+      scope: String(normalized.scope || ''),
+      command: String(normalized.command || ''),
+      delivery_status: String(normalized.delivery_status || 'unsent'),
+      delivery_message: String(normalized.delivery_message || ''),
+      delivery_ts: String(normalized.delivery_ts || ''),
+      ts: String(normalized.ts || ''),
+    }),
+  }).catch(function() {
+    return null;
+  });
+}
+
+function rememberOperatorAction(action, payload) {
+  var nextEntry = {
+    id: String(Date.now()) + ':' + Math.random().toString(16).slice(2),
+    action: String(action || 'unknown'),
+    label: String(payload && payload.title || '명령'),
+    scope: String(payload && payload.scope || ''),
+    command: String(payload && payload.command || '').trim(),
+    delivery_status: 'unsent',
+    delivery_message: '실제 전송 전',
+    delivery_ts: '',
+    ts: new Date().toISOString(),
+  };
+  S.execution.operatorActionHistory = [nextEntry].concat(normalizeOperatorActionHistory(S.execution.operatorActionHistory)).slice(0, 6);
+  saveOperatorActionHistory(S.execution.operatorActionHistory);
+  syncRecentOperatorAction(nextEntry);
+}
+
+function markOperatorActionDelivery(commandText, deliveryStatus, deliveryMessage) {
+  var command = String(commandText || '').trim();
+  if (!command) {
+    return;
+  }
+  var nextStatus = String(deliveryStatus || 'unsent').trim() || 'unsent';
+  var nextMessage = String(deliveryMessage || '').trim();
+  var updated = false;
+  var nextHistory = normalizeOperatorActionHistory(S.execution.operatorActionHistory).map(function(entry) {
+    if (updated || String(entry.command || '').trim() !== command) {
+      return entry;
+    }
+    updated = true;
+    return Object.assign({}, entry, {
+      delivery_status: nextStatus,
+      delivery_message: nextMessage,
+      delivery_ts: new Date().toISOString(),
+    });
+  });
+  if (!updated) {
+    return;
+  }
+  S.execution.operatorActionHistory = nextHistory;
+  saveOperatorActionHistory(S.execution.operatorActionHistory);
+  syncRecentOperatorAction(nextHistory[0]);
+}
+
+function operatorActionDeliveryTone(status) {
+  var value = String(status || 'unsent').trim();
+  if (value === 'success') return 'pass';
+  if (value === 'failed') return 'fail';
+  return 'info';
+}
+
+function operatorActionDeliveryLabel(status) {
+  var value = String(status || 'unsent').trim();
+  if (value === 'success') return '성공';
+  if (value === 'failed') return '실패';
+  return '미전송';
+}
+
+function recentOperatorActionState() {
+  var history = normalizeOperatorActionHistory(S.execution.operatorActionHistory);
+  var latest = history[0] || null;
+  if (!latest) {
+    return {
+      label: 'Action 대기',
+      tone: 'info',
+      summary: '최근 operator action 없음',
+    };
+  }
+  var deliveryLabel = operatorActionDeliveryLabel(latest.delivery_status);
+  var label = latest.delivery_status === 'success'
+    ? 'Action 성공'
+    : latest.delivery_status === 'failed'
+      ? 'Action 실패'
+      : 'Action 미전송';
+  var summary = deliveryLabel + ' / ' + String(latest.label || '명령');
+  if (String(latest.delivery_message || '').trim()) {
+    summary += ' / ' + String(latest.delivery_message || '').trim();
+  }
+  return {
+    label: label,
+    tone: latest.delivery_status === 'success' ? 'ready' : latest.delivery_status === 'failed' ? 'blocked' : 'warn',
+    summary: summary,
+  };
+}
+
+function renderOperatorActionHistory() {
+  var history = normalizeOperatorActionHistory(S.execution.operatorActionHistory);
+  if (history.length < 1) {
+    return '<div class="execution-operator-history-empty">아직 기록된 operator action 이력 없음</div>';
+  }
+  return '<div class="execution-operator-history">' + history.map(function(entry) {
+    var tone = entry.action === 'copied' ? 'info' : 'focus';
+    var meta = [entry.scope || 'scope 없음', entry.ts ? entry.ts.replace('T', ' ').slice(0, 16) : '시각 없음'].join(' / ');
+    var deliveryMeta = operatorActionDeliveryLabel(entry.delivery_status)
+      + (entry.delivery_ts ? ' / ' + entry.delivery_ts.replace('T', ' ').slice(0, 16) : '')
+      + (entry.delivery_message ? ' / ' + entry.delivery_message : '');
+    return '<div class="execution-operator-history-item">' +
+      '<div class="execution-operator-history-head">' +
+        '<strong>' + escHtml(entry.label) + '</strong>' +
+        '<span class="execution-history-pill is-' + escHtml(tone) + '">' + escHtml(entry.action === 'copied' ? '복사' : '패널 반영') + '</span>' +
+      '</div>' +
+      '<div class="execution-operator-history-meta">' + escHtml(meta) + '</div>' +
+      '<div class="execution-operator-history-meta"><span class="execution-history-pill is-' + escHtml(operatorActionDeliveryTone(entry.delivery_status)) + '">' + escHtml(operatorActionDeliveryLabel(entry.delivery_status)) + '</span> ' + escHtml(deliveryMeta) + '</div>' +
+      '<div class="execution-operator-history-meta">' + escHtml(entry.command) + '</div>' +
+      '<div class="execution-operator-history-actions">' +
+        '<button type="button" class="detail-card-action secondary" onclick="replayOperatorActionCopy(\'' + escHtml(entry.id) + '\')">다시 복사</button>' +
+        '<button type="button" class="detail-card-action primary" onclick="replayOperatorActionLoad(\'' + escHtml(entry.id) + '\')">다시 채우기</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function mergeRecentOperatorActionFromRuntime(action) {
+  if (!action || typeof action !== 'object') {
+    return;
+  }
+  var normalized = normalizeOperatorActionHistory([action]);
+  if (normalized.length < 1) {
+    return;
+  }
+  var nextEntry = normalized[0];
+  var history = normalizeOperatorActionHistory(S.execution.operatorActionHistory);
+  var exists = history.some(function(entry) {
+    return entry.id === nextEntry.id
+      || (
+        String(entry.command || '').trim() === String(nextEntry.command || '').trim()
+        && String(entry.ts || '') === String(nextEntry.ts || '')
+      );
+  });
+  if (exists) {
+    return;
+  }
+  S.execution.operatorActionHistory = [nextEntry].concat(history).slice(0, 6);
+  saveOperatorActionHistory(S.execution.operatorActionHistory);
+}
+
+function findOperatorActionHistoryEntry(entryId) {
+  var targetId = String(entryId || '').trim();
+  var history = normalizeOperatorActionHistory(S.execution.operatorActionHistory);
+  for (var i = 0; i < history.length; i += 1) {
+    if (history[i].id === targetId) {
+      return history[i];
+    }
+  }
+  return null;
+}
+
+function replayOperatorActionCopy(entryId) {
+  var entry = findOperatorActionHistoryEntry(entryId);
+  if (!entry) {
+    showToast('재적용할 operator action 이력이 없습니다.');
+    return;
+  }
+  copyTextToClipboard(entry.command)
+    .then(function() {
+      rememberOperatorAction('copied', {
+        title: entry.label,
+        scope: entry.scope,
+        command: entry.command,
+      });
+      renderExecutionConsole();
+      if (S.selected) renderPanel(S.selected);
+      showToast(entry.label + ' 다시 복사 완료');
+    })
+    .catch(function() {
+      showToast(entry.label + ' 다시 복사 실패');
+    });
+}
+
+function replayOperatorActionLoad(entryId) {
+  var entry = findOperatorActionHistoryEntry(entryId);
+  if (!entry) {
+    showToast('재적용할 operator action 이력이 없습니다.');
+    return;
+  }
+  S.execution.promptText = entry.command;
+  if (!String(S.execution.selectedPts || '').trim()) {
+    var sessions = Array.isArray(S.execution.sessions) ? S.execution.sessions : [];
+    if (sessions.length > 0) {
+      S.execution.selectedPts = String(sessions[0].pts || '').trim();
+    }
+  }
+  rememberOperatorAction('loaded', {
+    title: entry.label,
+    scope: entry.scope,
+    command: entry.command,
+  });
+  setExecutionStatus('idle', entry.label + ' 다시 준비 완료', '이전 operator action 명령을 실행 패널에 다시 채웠습니다. 전송 전에 세션과 명령을 확인하세요.');
+  renderExecutionConsole();
+  if (S.selected) renderPanel(S.selected);
+  showToast(entry.label + ' 다시 채우기 완료');
 }
 
 function deriveExecutionControlMatrix() {
@@ -2471,6 +3656,124 @@ function selectedRollbackDomain() {
   return null;
 }
 
+function selectedExecutionWorkerLabel() {
+  var selectedWorkerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
+  var selectedWorker = Array.isArray(S.execution.schedulerWorkers) ? S.execution.schedulerWorkers[selectedWorkerIndex] || null : null;
+  return selectedWorker ? executionWorkerLabel(selectedWorker, selectedWorkerIndex) : '없음';
+}
+
+function rollbackModalSummary(domainNode) {
+  var domainLabel = domainNode ? String(domainNode.label || domainNode.id || '없음') : '없음';
+  var currentExecution = executionCurrentSummary();
+  var parts = [
+    '선택 도메인: ' + domainLabel,
+    '선택 worker: ' + selectedExecutionWorkerLabel(),
+  ];
+  if (currentExecution && currentExecution !== '없음') {
+    parts.push('현재 실행: ' + currentExecution);
+  }
+  return parts.join(' · ') + '. 이 도메인의 모든 피처 플래그를 비활성화합니다. 이 작업은 즉시 적용됩니다.';
+}
+
+function rollbackModalContextEntries(domainNode) {
+  var domainLabel = domainNode ? String(domainNode.label || domainNode.id || '없음') : '없음';
+  return [
+    { label: '선택 도메인', value: domainLabel },
+    { label: '선택 worker', value: selectedExecutionWorkerLabel() },
+    { label: '현재 실행', value: executionCurrentSummary() || '없음' },
+  ];
+}
+
+function rollbackModalMarkup(domainNode) {
+  var entries = rollbackModalContextEntries(domainNode);
+  return '<div class="modal-warning-box">이 롤백은 즉시 적용되며 되돌리기 전까지 유지됩니다.</div>'
+    + '<div class="modal-context-list">'
+    + entries.map(function(entry) {
+      return '<div class="modal-context-row">'
+        + '<span class="modal-context-label">' + escHtml(entry.label || '') + '</span>'
+        + '<strong class="modal-context-value">' + escHtml(entry.value || '없음') + '</strong>'
+        + '</div>';
+    }).join('')
+    + '</div>'
+    + '<div class="modal-warning-note">' + escHtml(rollbackModalSummary(domainNode)) + '</div>';
+}
+
+function rollbackModalValidationState() {
+  var modal = document.getElementById('confirm-modal');
+  var modalTargetId = modal && modal.dataset ? String(modal.dataset.target || '').trim() : '';
+  if (!modalTargetId) {
+    return { ok: false, message: '롤백 대상이 없어 확인할 수 없습니다.' };
+  }
+  var modalTarget = S.byId[modalTargetId];
+  if (!modalTarget || modalTarget.type !== 'domain') {
+    return { ok: false, message: '롤백 대상 도메인이 더 이상 유효하지 않습니다.' };
+  }
+  var selectedTarget = selectedRollbackDomain();
+  if (!selectedTarget) {
+    return { ok: false, message: '현재 화면에서 롤백 대상이 선택되지 않아 확인 버튼을 잠급니다.' };
+  }
+  if (String(selectedTarget.id || '') !== modalTargetId) {
+    return {
+      ok: false,
+      message: '현재 선택된 롤백 대상과 확인 대상이 달라 다시 선택 확인이 필요합니다.',
+    };
+  }
+  return {
+    ok: true,
+    message: '현재 선택 컨텍스트가 확인되었습니다. 롤백 사유를 검토한 뒤 확인을 진행하세요.',
+  };
+}
+
+function refreshRollbackModalContext() {
+  var modal = document.getElementById('confirm-modal');
+  if (!modal || modal.style.display === 'none') {
+    return;
+  }
+  var modalTargetId = modal.dataset ? String(modal.dataset.target || '').trim() : '';
+  if (!modalTargetId) {
+    return;
+  }
+  var modalTarget = S.byId[modalTargetId];
+  if (!modalTarget || modalTarget.type !== 'domain') {
+    return;
+  }
+  var body = modal.querySelector('.modal-body');
+  if (!body) {
+    return;
+  }
+  body.innerHTML = rollbackModalMarkup(modalTarget);
+}
+
+function refreshRollbackModalValidation() {
+  var modal = document.getElementById('confirm-modal');
+  if (!modal) {
+    return;
+  }
+  var note = modal.querySelector('.modal-validation-state');
+  var confirmButton = modal.querySelector('.btn-confirm-rollback');
+  if (!note || !confirmButton) {
+    return;
+  }
+  if (modal.style.display === 'none') {
+    note.textContent = '';
+    note.className = 'modal-validation-state';
+    confirmButton.disabled = false;
+    confirmButton.setAttribute('aria-disabled', 'false');
+    confirmButton.removeAttribute('title');
+    return;
+  }
+  var state = rollbackModalValidationState();
+  note.textContent = state.message;
+  note.className = 'modal-validation-state ' + (state.ok ? 'is-ready' : 'is-blocked');
+  confirmButton.disabled = !state.ok;
+  confirmButton.setAttribute('aria-disabled', state.ok ? 'false' : 'true');
+  if (state.ok) {
+    confirmButton.removeAttribute('title');
+  } else {
+    confirmButton.setAttribute('title', state.message);
+  }
+}
+
 function htmlDisabled(disabled) {
   return disabled ? ' disabled aria-disabled="true"' : '';
 }
@@ -2488,9 +3791,62 @@ function applyControlCenterRuntimeState(runtimePayload) {
   S.execution.runtimeAvailable = execution.runtime_available === true;
   S.execution.schedulerRunning = scheduler.running === true;
   S.execution.schedulerWorkers = Array.isArray(scheduler.workers) ? scheduler.workers : [];
+  S.execution.currentWorkerIndex = Number.isInteger(execution.current_worker_index)
+    ? execution.current_worker_index
+    : (Number.isInteger(scheduler.current_worker_index) ? scheduler.current_worker_index : null);
+  S.execution.activeWorkerIndex = Number.isInteger(scheduler.active_worker_index)
+    ? scheduler.active_worker_index
+    : S.execution.currentWorkerIndex;
   S.execution.currentActivity = execution.current_activity || scheduler.current_activity || null;
   S.execution.lastActivity = execution.last_activity || scheduler.last_activity || null;
   S.execution.lastError = execution.last_error || null;
+  S.execution.operatorBrief = execution.operator_brief ? {
+    autoSendStatus: String(execution.operator_brief.auto_send_status || '').trim(),
+    currentExecution: String(execution.operator_brief.current_execution || '').trim(),
+    lastDispatch: String(execution.operator_brief.last_dispatch || '').trim(),
+    blockedAt: String(execution.operator_brief.blocked_at || '').trim(),
+    failureReason: String(execution.operator_brief.failure_reason || '').trim(),
+    nextAction: String(execution.operator_brief.next_action || '').trim(),
+    availableControlsSummary: String(execution.operator_brief.available_controls_summary || '').trim(),
+    availableControls: Array.isArray(execution.operator_brief.available_controls) ? execution.operator_brief.available_controls : [],
+  } : null;
+  S.execution.operatorCockpit = runtimeState.operator_cockpit && typeof runtimeState.operator_cockpit === 'object' ? {
+    currentWp: runtimeState.operator_cockpit.current_wp ? {
+      id: String(runtimeState.operator_cockpit.current_wp.id || 'UNKNOWN').trim(),
+      goal: String(runtimeState.operator_cockpit.current_wp.goal || 'UNKNOWN').trim(),
+      stage: String(runtimeState.operator_cockpit.current_wp.stage || 'UNKNOWN').trim(),
+      type: String(runtimeState.operator_cockpit.current_wp.type || 'UNKNOWN').trim(),
+    } : null,
+    nextWp: String(runtimeState.operator_cockpit.next_wp || 'NONE').trim(),
+    git: runtimeState.operator_cockpit.git ? {
+      branch: String(runtimeState.operator_cockpit.git.branch || 'unknown').trim(),
+      dirty: runtimeState.operator_cockpit.git.dirty === true,
+      dirtyCount: Number.isInteger(runtimeState.operator_cockpit.git.dirty_count) ? runtimeState.operator_cockpit.git.dirty_count : 0,
+    } : null,
+    validationProfile: runtimeState.operator_cockpit.validation_profile ? {
+      packetType: String(runtimeState.operator_cockpit.validation_profile.packet_type || 'UNKNOWN').trim(),
+      stage: String(runtimeState.operator_cockpit.validation_profile.stage || 'UNKNOWN').trim(),
+      commands: Array.isArray(runtimeState.operator_cockpit.validation_profile.commands) ? runtimeState.operator_cockpit.validation_profile.commands : [],
+    } : null,
+    branch: runtimeState.operator_cockpit.branch ? {
+      currentBranch: String(runtimeState.operator_cockpit.branch.current_branch || 'unknown').trim(),
+      recommendedBranch: String(runtimeState.operator_cockpit.branch.recommended_branch || '').trim(),
+      createCommand: String(runtimeState.operator_cockpit.branch.create_command || '').trim(),
+      commitSubject: String(runtimeState.operator_cockpit.branch.commit_subject || '').trim(),
+    } : null,
+    commitGuard: runtimeState.operator_cockpit.commit_guard ? {
+      nextAction: String(runtimeState.operator_cockpit.commit_guard.next_action || '').trim(),
+      protectedBranch: runtimeState.operator_cockpit.commit_guard.protected_branch === true,
+      hasDirtyChanges: runtimeState.operator_cockpit.commit_guard.has_dirty_changes === true,
+      validationsPassed: runtimeState.operator_cockpit.commit_guard.validations_passed === true,
+      canApply: runtimeState.operator_cockpit.commit_guard.can_apply === true,
+      reasons: Array.isArray(runtimeState.operator_cockpit.commit_guard.reasons) ? runtimeState.operator_cockpit.commit_guard.reasons : [],
+      commitSubject: String(runtimeState.operator_cockpit.commit_guard.commit_subject || '').trim(),
+    } : null,
+    operatorActions: Array.isArray(runtimeState.operator_cockpit.operator_actions) ? runtimeState.operator_cockpit.operator_actions : [],
+    asOf: String(runtimeState.operator_cockpit.as_of || '').trim(),
+  } : null;
+  mergeRecentOperatorActionFromRuntime(runtimeState.recent_operator_action || null);
   S.execution.nextActionHint = String(execution.next_action || '').trim();
   S.execution.controls = {
     sendPrompt: controls.send_prompt === true,
@@ -2519,15 +3875,19 @@ function renderExecutionConsole() {
   var sessions = Array.isArray(S.execution.sessions) ? S.execution.sessions : [];
   var selectedSession = selectedExecutionSession();
   var activity = currentExecutionActivity();
-  var activitySummary = activity
-    ? [activity.action || 'activity', activity.worker || 'manual', activity.pts || 'pts 없음', activity.packet_id || 'packet 없음']
-      .filter(Boolean)
-      .join(' / ')
-    : '최근 실행 없음';
+  var lastDispatchActivity = S.execution.lastError || S.execution.lastActivity || null;
+  var currentExecutionSummary = executionCurrentSummary();
+  var lastDispatchSummary = executionLastDispatchSummary();
   var promptValue = S.execution.promptText || S.execution.optimizedPrompt || '';
-  var lastPrompt = (activity && activity.prompt_preview) || S.execution.lastPromptText || '없음';
-  var errorText = activity && activity.error ? String(activity.error) : '없음';
-  var failureLocation = executionFailureLocation(activity);
+  var lastPrompt = (lastDispatchActivity && lastDispatchActivity.prompt_preview) || S.execution.lastPromptText || '없음';
+  var errorText = executionFailureReasonSummary(
+    (S.execution.operatorBrief && S.execution.operatorBrief.failureReason) || (activity && activity.error ? String(activity.error) : '없음'),
+    S.execution.lastError || activity
+  );
+  var failureLocation = executionFailureLocationSummary(
+    (S.execution.operatorBrief && S.execution.operatorBrief.blockedAt) || '',
+    S.execution.lastError || activity
+  );
   var summaryTone = executionSummaryTone();
   var runtimeBadgeClass = 'execution-badge '
     + (activity && activity.error ? 'is-error' : (S.execution.runtimeAvailable ? 'is-live' : ''));
@@ -2540,7 +3900,7 @@ function renderExecutionConsole() {
   var selectedWorkerIndex = Number.isInteger(S.execution.selectedWorkerIndex) ? S.execution.selectedWorkerIndex : 0;
   var selectedWorker = immediateDispatchDisabled ? null : (S.execution.schedulerWorkers[selectedWorkerIndex] || null);
   var selectedWorkerSummary = selectedWorker
-    ? String(selectedWorker.name || ('Worker ' + (selectedWorkerIndex + 1)))
+    ? executionWorkerLabel(selectedWorker, selectedWorkerIndex)
       + (String(selectedWorker.pts || '').trim() ? ' / ' + String(selectedWorker.pts || '').trim() : '')
       + (String(selectedWorker.plan_id || '').trim() ? ' / ' + String(selectedWorker.plan_id || '').trim() : '')
     : '없음';
@@ -2549,17 +3909,17 @@ function renderExecutionConsole() {
   var workerRosterSummary = immediateDispatchDisabled
     ? '등록된 worker 없음'
     : S.execution.schedulerWorkers.map(function(worker, index) {
-      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var label = executionWorkerLabel(worker, index);
       var pts = String((worker && worker.pts) || '').trim();
       return label + (pts ? ' [' + pts + ']' : '');
     }).join(', ');
   var workerActivitySummary = immediateDispatchDisabled
     ? '활동 중인 worker 없음'
     : S.execution.schedulerWorkers.map(function(worker, index) {
-      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var label = executionWorkerLabel(worker, index);
       var pts = String((worker && worker.pts) || '').trim();
-      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
-      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var isErrorWorker = runtimeWorkerError && executionMatchesWorker(runtimeWorkerError.worker, worker, index);
+      var isActiveWorker = runtimeWorkerActivity && executionMatchesWorker(runtimeWorkerActivity.worker, worker, index);
       var workerStatus = '대기';
       if (isErrorWorker) {
         workerStatus = '실패: ' + String(runtimeWorkerError.error || runtimeWorkerError.action || '원인 미상');
@@ -2571,11 +3931,11 @@ function renderExecutionConsole() {
   var workerBadgeSummary = immediateDispatchDisabled
     ? '표시할 worker 배지 없음'
     : S.execution.schedulerWorkers.map(function(worker, index) {
-      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var label = executionWorkerLabel(worker, index);
       var pts = String((worker && worker.pts) || '').trim();
       var preview = String((worker && worker.prompt_preview) || '').trim();
-      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
-      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var isErrorWorker = runtimeWorkerError && executionMatchesWorker(runtimeWorkerError.worker, worker, index);
+      var isActiveWorker = runtimeWorkerActivity && executionMatchesWorker(runtimeWorkerActivity.worker, worker, index);
       var badge = isErrorWorker
         ? 'ERR ' + String(runtimeWorkerError.error || runtimeWorkerError.action || '원인 미상')
         : isActiveWorker
@@ -2594,12 +3954,12 @@ function renderExecutionConsole() {
   var workerCardMarkup = immediateDispatchDisabled
     ? ''
     : '<div class="execution-worker-cards">' + S.execution.schedulerWorkers.map(function(worker, index) {
-      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var label = executionWorkerLabel(worker, index);
       var pts = String((worker && worker.pts) || '').trim();
       var planId = String((worker && worker.plan_id) || '').trim();
       var preview = String((worker && worker.prompt_preview) || '').trim();
-      var isErrorWorker = runtimeWorkerError && String(runtimeWorkerError.worker || '') === label;
-      var isActiveWorker = runtimeWorkerActivity && String(runtimeWorkerActivity.worker || '') === label;
+      var isErrorWorker = runtimeWorkerError && executionMatchesWorker(runtimeWorkerError.worker, worker, index);
+      var isActiveWorker = runtimeWorkerActivity && executionMatchesWorker(runtimeWorkerActivity.worker, worker, index);
       var isSelectedWorker = index === selectedWorkerIndex;
       var statusLabel = isErrorWorker
         ? '실패'
@@ -2644,7 +4004,7 @@ function renderExecutionConsole() {
     ? '<option value="0">사용 가능한 worker 없음</option>'
     : S.execution.schedulerWorkers.map(function(worker, index) {
       var selected = index === selectedWorkerIndex;
-      var label = String((worker && worker.name) || ('Worker ' + (index + 1)));
+      var label = executionWorkerLabel(worker, index);
       var pts = String((worker && worker.pts) || '').trim();
       return '<option value="' + String(index) + '"' + (selected ? ' selected' : '') + '>'
         + escHtml(label + (pts ? ' [' + pts + ']' : '')) + '</option>';
@@ -2654,6 +4014,7 @@ function renderExecutionConsole() {
     return '<option value="' + escHtml(node.id || '') + '"' + (selected ? ' selected' : '') + '>'
       + escHtml(node.label + ' (' + node.id + ')') + '</option>';
   }).join('');
+  var operatorHistoryMarkup = renderOperatorActionHistory();
 
   container.innerHTML = '<div class="sidebar-console">' +
     '<div class="execution-summary is-' + escHtml(summaryTone) + '">' +
@@ -2669,12 +4030,20 @@ function renderExecutionConsole() {
       '<div class="execution-row"><span>worker 배치</span><strong>' + escHtml(workerRosterSummary) + '</strong></div>' +
       '<div class="execution-row"><span>worker 상태 요약</span><strong>' + escHtml(workerActivitySummary) + '</strong></div>' +
       '<div class="execution-row"><span>worker 최근 배지</span><strong>' + escHtml(workerBadgeSummary) + '</strong></div>' +
-      '<div class="execution-row"><span>마지막 실행</span><strong>' + escHtml(activitySummary) + '</strong></div>' +
+      '<div class="execution-row"><span>현재 실행</span><strong>' + escHtml(currentExecutionSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>마지막 전송</span><strong>' + escHtml(lastDispatchSummary) + '</strong></div>' +
       '<div class="execution-row"><span>마지막 프롬프트</span><strong>' + escHtml(lastPrompt) + '</strong></div>' +
       '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(failureLocation) + '</strong></div>' +
       '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(errorText) + '</strong></div>' +
-      '<div class="execution-row"><span>제어 가능 상태</span><strong>' + escHtml(executionControlSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>즉시 가능 제어</span><strong>' + escHtml(executionAvailableControlsSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>지금 할 일</span><strong>' + escHtml(executionNextAction()) + '</strong></div>' +
+      '<div class="execution-row"><span>Operator Cockpit</span><strong>' + escHtml(executionOperatorCockpitStatus()) + '</strong></div>' +
+      '<div class="execution-row"><span>권장 브랜치</span><strong>' + escHtml(executionOperatorCockpitBranchSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>커밋 후보</span><strong>' + escHtml(executionOperatorCockpitCommitSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>커밋 가드</span><strong>' + escHtml(executionOperatorCockpitGuardSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>검증 프로파일</span><strong>' + escHtml(executionOperatorCockpitValidationSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>운영 액션</span><strong>' + escHtml(executionOperatorCockpitActionsSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Operator Action History</span>' + operatorHistoryMarkup + '</div>' +
     '</div>' +
     workerCardMarkup +
     renderStageRunWorkbench() +
@@ -2704,7 +4073,7 @@ function renderExecutionConsole() {
       '<button type="button" class="execution-button warn" onclick="toggleAutoSendRuntime()"' + htmlDisabled(autoToggleDisabled) + '>' + escHtml(S.execution.schedulerRunning ? '자동 전송 중지' : '자동 전송 시작') + '</button>' +
       '<button type="button" class="execution-button warn" onclick="openExecutionRollbackModal()"' + htmlDisabled(rollbackDisabled) + '>선택 domain 롤백</button>' +
     '</div>' +
-    '<div class="execution-note">실행 중지, 재시도, 자동 전송 on/off, worker 즉시 전송, 롤백 대상 선택, 현재 실패 원인, 다음 행동을 한 카드에 모았습니다.</div>' +
+    '<div class="execution-note">실행 중지, 재시도, 자동 전송 on/off, worker 즉시 전송, 롤백 대상 선택, 현재 실패 원인, 다음 행동, 브랜치 readiness와 커밋 가드를 한 카드에 모았습니다.</div>' +
   '</div>';
 }
 
@@ -2713,10 +4082,15 @@ function syncExecutionInputs() {
   var promptEl = document.getElementById('execution-prompt');
   var workerEl = document.getElementById('execution-worker-select');
   var rollbackEl = document.getElementById('execution-rollback-target');
+  var previousWorkerIndex = S.execution.selectedWorkerIndex;
+  var previousRollbackTarget = String(S.execution.rollbackTargetDomain || '').trim();
   if (selectEl) S.execution.selectedPts = selectEl.value;
   if (promptEl) S.execution.promptText = promptEl.value;
   if (workerEl) S.execution.selectedWorkerIndex = Math.max(0, Number.parseInt(workerEl.value, 10) || 0);
   if (rollbackEl) S.execution.rollbackTargetDomain = String(rollbackEl.value || '').trim();
+  if ((workerEl && previousWorkerIndex !== S.execution.selectedWorkerIndex) || (rollbackEl && previousRollbackTarget !== S.execution.rollbackTargetDomain)) {
+    refreshExecutionSelectionUi();
+  }
 }
 
 function syncStageRunInputs() {
@@ -2748,7 +4122,7 @@ function focusExecutionWorker(index) {
     return;
   }
   S.execution.selectedWorkerIndex = index;
-  renderExecutionConsole();
+  refreshExecutionSelectionUi();
 }
 
 function sendExecutionWorkerNow(index) {
@@ -2999,9 +4373,13 @@ function hydrateExecutionRuntime() {
       S.execution.runtimeAvailable = Boolean(sessionsPayload);
       S.execution.schedulerRunning = false;
       S.execution.schedulerWorkers = [];
+      S.execution.currentWorkerIndex = null;
+      S.execution.activeWorkerIndex = null;
       S.execution.currentActivity = null;
       S.execution.lastActivity = null;
       S.execution.lastError = null;
+      S.execution.operatorBrief = null;
+      S.execution.operatorCockpit = null;
       S.execution.nextActionHint = '';
       S.execution.controls = {
         sendPrompt: sessions.length > 0,
@@ -3023,8 +4401,13 @@ function hydrateExecutionRuntime() {
     } else {
       S.execution.selectedPts = '';
     }
+    var runtimeWorkerIndex = Number.isInteger(S.execution.currentWorkerIndex)
+      ? S.execution.currentWorkerIndex
+      : (Number.isInteger(S.execution.activeWorkerIndex) ? S.execution.activeWorkerIndex : null);
     if (!Array.isArray(S.execution.schedulerWorkers) || S.execution.schedulerWorkers.length < 1) {
       S.execution.selectedWorkerIndex = 0;
+    } else if (Number.isInteger(runtimeWorkerIndex) && runtimeWorkerIndex >= 0 && runtimeWorkerIndex < S.execution.schedulerWorkers.length) {
+      S.execution.selectedWorkerIndex = runtimeWorkerIndex;
     } else if (!Number.isInteger(S.execution.selectedWorkerIndex) || S.execution.selectedWorkerIndex < 0 || S.execution.selectedWorkerIndex >= S.execution.schedulerWorkers.length) {
       S.execution.selectedWorkerIndex = 0;
     }
@@ -3083,11 +4466,17 @@ function sendPromptNow() {
       if (!result.ok || result.body.ok === false) {
         throw new Error(String(result.body.detail || result.body.message || result.body.error || 'prompt send failed'));
       }
+      markOperatorActionDelivery(prompt, 'success', 'PTY prompt 전송 완료');
+      renderExecutionConsole();
+      if (S.selected) renderPanel(S.selected);
       S.execution.lastPromptText = prompt;
       showToast('프롬프트 전송 완료');
       hydrateExecutionRuntime();
     })
     .catch(function(error) {
+      markOperatorActionDelivery(prompt, 'failed', String(error && error.message || 'prompt send failed'));
+      renderExecutionConsole();
+      if (S.selected) renderPanel(S.selected);
       setExecutionStatus('error', '프롬프트 전송 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
     });
 }
@@ -3332,6 +4721,8 @@ function renderSidebar() {
 }
 
 function renderPlanBoard() {
+  S.kanbanLanes = buildClientKanbanLanes();
+  renderKanbanBoard();
   var table = document.getElementById('plan-table-body');
   if (!table) return;
   table.innerHTML = S.planRows.map(function(row) {
@@ -3346,6 +4737,89 @@ function renderPlanBoard() {
       '<td>' + escHtml(row.owner || '') + '</td>' +
       '<td class="plan-cell-wrap">' + escHtml(row.nextAction || '') + '</td>' +
       '</tr>';
+  }).join('');
+}
+
+function buildClientKanbanLanes() {
+  var laneOrder = [
+    'control-intake',
+    'control-planning',
+    'control-execution',
+    'control-validation',
+    'control-complete',
+    'control-module',
+  ];
+  var nodeById = {};
+  S.controlNodes.forEach(function(node) {
+    nodeById[node.id] = node;
+  });
+  var currentLaneId = String(S.statusSummary.currentLaneId || '').trim();
+
+  return laneOrder.map(function(laneId) {
+    var node = nodeById[laneId] || {};
+    var cards = S.planRows.filter(function(row) {
+      return String(row.nodeId || '') === laneId;
+    }).map(function(row) {
+      return {
+        id: String(row.id || laneId),
+        title: String(row.task || node.label || laneId),
+        purpose: String(row.purpose || ''),
+        input: String(row.input || ''),
+        output: String(row.output || ''),
+        next_action: String(row.nextAction || ''),
+        owner: String(row.owner || node.owner || ''),
+        priority: String(row.priority || ''),
+        status: String(row.status || node.status || 'pending'),
+      };
+    });
+
+    return {
+      id: laneId,
+      label: String(node.label || laneId),
+      owner: String(node.owner || ''),
+      status: String((cards[0] && cards[0].status) || node.status || 'pending'),
+      purpose: String(node.purpose || ''),
+      is_current: laneId === currentLaneId,
+      operator_brief: kanbanLaneOperatorBrief(laneId),
+      cards: cards,
+    };
+  });
+}
+
+function renderKanbanBoard() {
+  var board = document.getElementById('kanban-board');
+  if (!board) return;
+  board.innerHTML = S.kanbanLanes.map(function(lane) {
+    var currentBadge = lane.is_current ? '<span class="status-chip is-in_progress">현재 lane</span>' : '';
+    var operatorBrief = lane.operator_brief && lane.operator_brief.summary
+      ? '<div class="kanban-lane-brief"><span>' + escHtml(lane.operator_brief.label || '운영 요약') + '</span><strong>' + escHtml(lane.operator_brief.summary || '') + '</strong></div>'
+      : '';
+    var cardsMarkup = Array.isArray(lane.cards) && lane.cards.length > 0
+      ? lane.cards.map(function(card) {
+        return '<article class="kanban-card">' +
+          '<div class="kanban-card-title">' +
+            '<strong>' + escHtml(card.title || '') + '</strong>' +
+            '<span class="status-chip ' + statusClassName(card.status) + '">' + statusLabel(card.status) + '</span>' +
+          '</div>' +
+          '<div class="kanban-card-copy"><b>목적</b> ' + escHtml(card.purpose || '') + '</div>' +
+          '<div class="kanban-card-copy"><b>입력</b> ' + escHtml(card.input || '') + '</div>' +
+          '<div class="kanban-card-copy"><b>출력</b> ' + escHtml(card.output || '') + '</div>' +
+          '<div class="kanban-card-copy"><b>다음</b> ' + escHtml(card.next_action || '') + '</div>' +
+        '</article>';
+      }).join('')
+      : '<article class="kanban-card"><div class="kanban-card-copy">할당된 카드 없음</div></article>';
+
+    return '<section class="kanban-lane ' + (lane.is_current ? 'is-current' : '') + '" data-lane-id="' + escHtml(lane.id || '') + '">' +
+      '<div class="kanban-lane-head">' +
+        '<div class="kanban-lane-meta">' +
+          '<div><div class="kanban-lane-title">' + escHtml(lane.label || '') + '</div><div class="kanban-lane-owner">' + escHtml(lane.owner || '') + '</div></div>' +
+          (currentBadge || '<span class="status-chip ' + statusClassName(lane.status) + '">' + statusLabel(lane.status) + '</span>') +
+        '</div>' +
+        '<div class="kanban-card-copy">' + escHtml(lane.purpose || '') + '</div>' +
+        operatorBrief +
+      '</div>' +
+      '<div class="kanban-card-stack">' + cardsMarkup + '</div>' +
+      '</section>';
   }).join('');
 }
 
@@ -3506,7 +4980,7 @@ function selectNode(id) {
   var selectedNode = S.byId[id];
   if (selectedNode && selectedNode.type === 'domain') {
     S.execution.rollbackTargetDomain = selectedNode.id;
-    renderExecutionConsole();
+    refreshExecutionSelectionUi();
   }
   document.querySelectorAll('.node').forEach(function(el) {
     var isSelected = el.dataset.id === id;
@@ -3607,7 +5081,18 @@ function renderOverviewTab(n) {
       renderDetailCard('\uacb0\uacfc \ubbf8\ub9ac\ubcf4\uae30', S.passingTests + ' / ' + S.totalTests + ' PASS', 'system API, planning snapshot, quality gate\ub97c \ud569\uce5c \uae30\uc900 \uac12\uc785\ub2c8\ub2e4.') +
       renderDetailCard('\ubb38\uc81c\uc810', S.statusSummary.blocker || '\uc815\uc0c1', 'drift, known issues, \ud655\uc778 \ud544\uc694 \ud56d\ubaa9\uc744 \ud55c \uc904\ub85c \ubd84\ub9ac\ud569\ub2c8\ub2e4.') +
       renderDetailCard('\ub2e4\uc74c \ud589\ub3d9', S.statusSummary.nextTask || 'NONE', '\ub2e4\uc74c packet \ub610\ub294 module preview \uc2e4\ud589\uc73c\ub85c \uc774\uc5b4\uc9d1\ub2c8\ub2e4.') +
-      '</div>';
+      '</div>' +
+      renderOperatorGuideSection({
+        title: '운영 가이드',
+        cards: [
+          renderCommandActionCard('Operator Cockpit', 'npm run operator:cockpit', '세션 시작 요약과 readiness를 한 번에 다시 확인합니다.', 'cockpit'),
+          renderCommandActionCard('검증 명령', operatorCockpitValidationCommands().join('
+'), '현재 세션에서 가장 먼저 다시 확인할 검증 루프입니다.', 'validation'),
+          renderCommandActionCard('브랜치 액션', operatorCockpitBranchActionSummary(), '권장 브랜치와 전환 명령을 함께 봅니다.', 'branch'),
+          renderCommandActionCard('커밋 가드 다음 행동', 'npm run commit:guard
+npm run commit:guard:verify', '커밋 readiness를 여는 현재 기준입니다.', 'guard'),
+        ],
+      });
   }
   if (n.type === 'control') {
     return renderControlOverview(n);
@@ -3685,10 +5170,146 @@ function renderDetailCard(title, strongValue, description) {
     '</article>';
 }
 
+function renderCommandActionCard(title, commandText, description, actionScope) {
+  var command = String(commandText || '').trim();
+  return '<article class="detail-card">' +
+    '<span>' + escHtml(title) + '</span>' +
+    '<strong>' + escHtml(command || '명령 없음') + '</strong>' +
+    '<p>' + escHtml(description || '') + '</p>' +
+    '<div class="detail-card-actions">' +
+      '<button type="button" class="detail-card-action secondary" onclick="copyOperatorCommand(\'' + escHtml(actionScope) + '\')">명령 복사</button>' +
+      '<button type="button" class="detail-card-action primary" onclick="loadOperatorCommandPrompt(\'' + escHtml(actionScope) + '\')">실행 패널에 채우기</button>' +
+    '</div>' +
+    '</article>';
+}
+
+function getOperatorCommandPayload(actionScope) {
+  var scope = String(actionScope || '').trim();
+  if (scope === 'validation') {
+    return {
+      title: '검증 명령',
+      command: operatorCockpitValidationCommands().join('
+'),
+      scope: scope,
+      toast: '검증 명령을 준비했습니다.',
+    };
+  }
+  if (scope === 'branch') {
+    var cockpit = S.execution.operatorCockpit || null;
+    var branch = cockpit && cockpit.branch ? cockpit.branch : null;
+    return {
+      title: '브랜치 액션',
+      command: branch && branch.createCommand
+        ? branch.createCommand
+        : operatorCockpitBranchActionSummary(),
+      scope: scope,
+      toast: '브랜치 액션을 준비했습니다.',
+    };
+  }
+  if (scope === 'guard') {
+    return {
+      title: '커밋 가드',
+      command: 'npm run commit:guard
+npm run commit:guard:verify',
+      scope: scope,
+      toast: '커밋 가드 명령을 준비했습니다.',
+    };
+  }
+  if (scope === 'cockpit') {
+    return {
+      title: 'Operator Cockpit',
+      command: 'npm run operator:cockpit',
+      scope: scope,
+      toast: 'operator cockpit 명령을 준비했습니다.',
+    };
+  }
+  if (scope === 'deep-link') {
+    return {
+      title: 'Deep Link Command',
+      command: String((S.deepLinkContext && S.deepLinkContext.command) || '').trim(),
+      scope: scope,
+      toast: 'deep-link 권장 명령을 준비했습니다.',
+    };
+  }
+  return {
+    title: '명령',
+    command: '',
+    scope: scope,
+    toast: '준비할 명령이 없습니다.',
+  };
+}
+
+function copyTextToClipboard(text) {
+  var value = String(text || '');
+  if (!value.trim()) {
+    return Promise.reject(new Error('empty command'));
+  }
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    return navigator.clipboard.writeText(value);
+  }
+  return new Promise(function(resolve, reject) {
+    var textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', 'readonly');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      var ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (ok) {
+        resolve();
+      } else {
+        reject(new Error('copy failed'));
+      }
+    } catch (error) {
+      document.body.removeChild(textarea);
+      reject(error);
+    }
+  });
+}
+
+function copyOperatorCommand(actionScope) {
+  var payload = getOperatorCommandPayload(actionScope);
+  copyTextToClipboard(payload.command)
+    .then(function() {
+      rememberOperatorAction('copied', payload);
+      renderExecutionConsole();
+      if (S.selected) renderPanel(S.selected);
+      showToast(payload.title + ' 복사 완료');
+    })
+    .catch(function() {
+      showToast(payload.title + ' 복사 실패');
+    });
+}
+
+function loadOperatorCommandPrompt(actionScope) {
+  var payload = getOperatorCommandPayload(actionScope);
+  if (!String(payload.command || '').trim()) {
+    showToast('채울 명령이 없습니다.');
+    return;
+  }
+  S.execution.promptText = payload.command;
+  if (!String(S.execution.selectedPts || '').trim()) {
+    var sessions = Array.isArray(S.execution.sessions) ? S.execution.sessions : [];
+    if (sessions.length > 0) {
+      S.execution.selectedPts = String(sessions[0].pts || '').trim();
+    }
+  }
+  rememberOperatorAction('loaded', payload);
+  setExecutionStatus('idle', payload.title + ' 준비 완료', payload.toast + ' 전송 전에 세션과 명령을 확인하세요.');
+  renderExecutionConsole();
+  if (S.selected) renderPanel(S.selected);
+  showToast(payload.title + ' 실행 패널 반영 완료');
+}
+
 function renderControlOverview(n) {
   var inputs = Array.isArray(n.inputs) ? n.inputs.join(' / ') : '';
   var outputs = Array.isArray(n.outputs) ? n.outputs.join(' / ') : '';
   var issues = Array.isArray(n.issues) ? n.issues.join('\n') : '';
+  var operatorGuide = operatorCockpitGuideForNode(n.id);
   var cards = [
     renderDetailCard('\ubaa9\ud45c', n.purpose || '', '\uc774 \ub178\ub4dc\uac00 \ub2f4\ub2f9\ud558\ub294 \ucc45\uc784\uc744 \uc124\uba85\ud569\ub2c8\ub2e4.'),
     renderDetailCard('\ud604\uc7ac \uc791\uc5c5', statusLabel(n.status), '\uc9c0\uae08 \uc5b4\ub514\uae4c\uc9c0 \uc9c4\ud589\ub410\ub294\uc9c0 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.'),
@@ -3700,8 +5321,9 @@ function renderControlOverview(n) {
 
   return '<div class="detail-grid-cards">' +
     cards.join('') +
-    (n.controlKind === 'module' ? renderModuleWorkbench() : '') +
-    '</div>';
+    '</div>' +
+    renderOperatorGuideSection(operatorGuide) +
+    (n.controlKind === 'module' ? renderModuleWorkbench() : '');
 }
 
 function selectedBlueprint() {
@@ -4197,14 +5819,22 @@ function openRollbackModal(domainId) {
   if (!n) return;
   var modal = document.getElementById('confirm-modal');
   modal.querySelector('.modal-title').textContent = '\ub864\ubc31: ' + n.label;
-  modal.querySelector('.modal-body').textContent =
-    '\uc774 \ub3c4\uba54\uc778\uc758 \ubaa8\ub4e0 \ud53c\uce58 \ud50c\ub798\uadf8\ub97c \ube44\ud65c\uc131\ud654\ud569\ub2c8\ub2e4. \uc774 \uc791\uc5c5\uc740 \uc989\uc2dc \uc801\uc6a9\ub429\ub2c8\ub2e4.';
+  modal.querySelector('.modal-body').innerHTML = rollbackModalMarkup(n);
+  modal.querySelector('.modal-reason').value = '';
   modal.dataset.target = domainId;
   modal.style.display = 'flex';
+  refreshRollbackModalValidation();
 }
 
 function confirmRollback() {
   var modal = document.getElementById('confirm-modal');
+  var validation = rollbackModalValidationState();
+  if (!validation.ok) {
+    refreshRollbackModalValidation();
+    setExecutionStatus('warning', '롤백 확인 필요', validation.message);
+    showToast('롤백 대상 다시 확인 필요');
+    return;
+  }
   var domainId = modal.dataset.target;
   var reason = modal.querySelector('.modal-reason').value || '';
   modal.style.display = 'none';
@@ -4376,6 +6006,10 @@ function applyPlanningSnapshot(snapshot) {
       nextAction: 'dry-run preview 실행',
     },
   ];
+  var currentLaneRow = S.planRows.find(function(row) {
+    return row.status === 'in_progress';
+  });
+  S.statusSummary.currentLaneId = currentLaneRow ? currentLaneRow.nodeId : 'control-planning';
 
   renderMasterStatus();
   renderExecutionConsole();
@@ -4590,6 +6224,129 @@ function createToastEl() {
   return el;
 }
 
+function clearDeepLinkHighlights() {
+  ['execution-console', 'plan-board', 'master-status'].forEach(function(id) {
+    var target = document.getElementById(id);
+    if (target) target.classList.remove('deep-link-highlight');
+  });
+}
+
+function highlightDeepLinkTarget(id) {
+  clearDeepLinkHighlights();
+  var target = document.getElementById(id);
+  if (!target) return;
+  target.classList.add('deep-link-highlight');
+  setTimeout(function() {
+    if (target) target.classList.remove('deep-link-highlight');
+  }, 2800);
+}
+
+function controlCenterDeepLinkFocus() {
+  try {
+    return new URLSearchParams(window.location.search).get('focus') || '';
+  } catch (error) {
+    return '';
+  }
+}
+
+function readControlCenterDeepLinkContext() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    return normalizeDeepLinkContext({
+      focus: String(params.get('focus') || '').trim(),
+      reason: String(params.get('reason') || '').trim(),
+      command: String(params.get('command') || '').trim(),
+      label: String(params.get('label') || '').trim(),
+      source: String(params.get('source') || '').trim(),
+    });
+  } catch (error) {
+    return normalizeDeepLinkContext(null);
+  }
+}
+
+function resolveControlCenterDeepLinkContext() {
+  var liveContext = readControlCenterDeepLinkContext();
+  if (hasDeepLinkContext(liveContext)) {
+    saveDeepLinkContext(liveContext);
+    return liveContext;
+  }
+  return loadStoredDeepLinkContext();
+}
+
+function deepLinkFocusLabel(focus) {
+  var value = String(focus || '').trim();
+  if (value === 'execution-failure') return '실행 실패 drill-down';
+  if (value === 'guard') return '커밋 가드 drill-down';
+  if (value === 'operator-summary') return 'operator summary drill-down';
+  return 'drill-down';
+}
+
+function deepLinkDefaultReason(focus) {
+  var value = String(focus || '').trim();
+  if (value === 'execution-failure') return '최근 실패 기준으로 실행 콘솔을 확인하세요.';
+  if (value === 'guard') return '커밋 가드 사유를 먼저 정리하세요.';
+  if (value === 'operator-summary') return '최근 operator loop 상태를 먼저 확인하세요.';
+  return '선택한 drill-down 컨텍스트를 확인하세요.';
+}
+
+function applyDeepLinkContextBar() {
+  var context = resolveControlCenterDeepLinkContext();
+  S.deepLinkContext = context;
+  var bar = document.getElementById('deep-link-context-bar');
+  var focusEl = document.getElementById('deep-link-context-focus');
+  var reasonEl = document.getElementById('deep-link-context-reason');
+  var commandEl = document.getElementById('deep-link-context-command');
+  var loadEl = document.getElementById('deep-link-context-load');
+  if (!bar) return context;
+
+  var visible = !!(context.focus || context.reason || context.command);
+  bar.hidden = !visible;
+  if (!visible) {
+    return context;
+  }
+
+  if (focusEl) focusEl.textContent = deepLinkFocusLabel(context.focus);
+  if (reasonEl) reasonEl.textContent = context.reason || deepLinkDefaultReason(context.focus);
+  if (commandEl) {
+    commandEl.textContent = context.command || '권장 명령 없음';
+    commandEl.title = context.command || '';
+  }
+  if (loadEl) {
+    loadEl.disabled = !String(context.command || '').trim();
+    loadEl.title = String(context.command || '').trim()
+      ? 'deep-link로 전달된 권장 명령을 실행 패널에 채웁니다.'
+      : '전달된 권장 명령이 없습니다.';
+  }
+
+  return context;
+}
+
+function applyControlCenterDeepLink() {
+  var context = applyDeepLinkContextBar();
+  var focus = String(context.focus || controlCenterDeepLinkFocus() || '').trim();
+  if (!focus) return;
+
+  if (focus === 'execution-failure') {
+    selectNode('control-execution');
+    highlightDeepLinkTarget('execution-console');
+    showToast((context.reason || '최근 실패 기준') + ' / 실행 콘솔을 강조했습니다.');
+    return;
+  }
+
+  if (focus === 'guard') {
+    selectNode('control-validation');
+    highlightDeepLinkTarget('plan-board');
+    showToast((context.reason || '커밋 가드 기준') + ' / plan board를 강조했습니다.');
+    return;
+  }
+
+  if (focus === 'operator-summary') {
+    selectNode(S.statusSummary.currentLaneId || 'root');
+    highlightDeepLinkTarget('master-status');
+    showToast((context.reason || 'operator summary 기준') + ' / 통합 상태를 강조했습니다.');
+  }
+}
+
 // ─── HTML escape ──────────────────────────────────────────────────────────────
 function escHtml(str) {
   return String(str || '')
@@ -4636,6 +6393,10 @@ window.setStageRunSignalHistoryView = setStageRunSignalHistoryView;
 window.setStageRunSignalGroupCollapsed = setStageRunSignalGroupCollapsed;
 window.setStageRunHistorySort = setStageRunHistorySort;
 window.loadRecommendedPrompt = loadRecommendedPrompt;
+window.copyOperatorCommand = copyOperatorCommand;
+window.loadOperatorCommandPrompt = loadOperatorCommandPrompt;
+window.replayOperatorActionCopy = replayOperatorActionCopy;
+window.replayOperatorActionLoad = replayOperatorActionLoad;
 window.handleScaffoldInput = handleScaffoldInput;
 window.handleScaffoldBlueprint = handleScaffoldBlueprint;
 window.previewModuleScaffold = previewModuleScaffold;

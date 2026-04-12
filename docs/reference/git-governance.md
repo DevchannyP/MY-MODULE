@@ -69,9 +69,11 @@ Git 커밋도 같다.
 
 ## 5. 권장 흐름
 
-1. `main` 또는 `develop`에서 새 작업 브랜치를 만든다.
-2. 작은 작업 단위로 수정한다.
-3. 각 의미 단위마다 커밋한다.
+1. `npm run operator:cockpit`으로 현재 packet, 브랜치, 커밋 readiness를 먼저 읽는다.
+2. `main` 또는 `develop`에서 새 작업 브랜치를 만든다.
+3. 작은 작업 단위로 수정한다.
+4. `npm run commit:guard` 또는 `npm run commit:guard:verify`로 커밋 가능 상태를 먼저 확인한다.
+5. 각 의미 단위마다 커밋한다.
 4. 검증을 돌린다.
 5. release evidence를 만든다.
 6. PR을 생성한다.

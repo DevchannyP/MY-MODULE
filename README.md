@@ -171,6 +171,10 @@ docs/core-<short-topic>
 
 - 브랜치 전략: [branch-strategy.md](/root/workspace/my-module/docs/branch-strategy.md)
 - 개발/작업 흐름: [development-guide.md](/root/workspace/my-module/docs/development-guide.md)
+- AI 하네스 업그레이드 계획: [ai-harness-upgrade-plan.md](/root/workspace/my-module/docs/explanation/ai-harness-upgrade-plan.md)
+- 반복 프롬프트: [repeatable-cli-master-prompt.md](/root/workspace/my-module/docs/how-to/repeatable-cli-master-prompt.md)
+- 하네스 자료사전: [ai-harness-data-dictionary.md](/root/workspace/my-module/docs/reference/ai-harness-data-dictionary.md)
+- 검증 프로파일: [validation-profiles.md](/root/workspace/my-module/docs/reference/validation-profiles.md)
 - 트러블슈팅: [troubleshooting.md](/root/workspace/my-module/docs/troubleshooting.md)
 - 릴리즈 체크리스트: [release-checklist.md](/root/workspace/my-module/docs/release-checklist.md)
 - Git 거버넌스 기준: [git-governance.md](/root/workspace/my-module/docs/reference/git-governance.md)

@@ -5,6 +5,20 @@
 브랜치 이름은 작업 종류와 목적이 드러나야 한다.
 Work Packet id는 브랜치명보다 PR, 커밋, worklog에서 남기는 방식을 우선한다.
 
+현재 packet 기준 추천안을 먼저 보려면 아래를 사용한다.
+
+```bash
+npm run operator:cockpit
+npm run branch:bootstrap
+```
+
+실제 커밋 전에는 검증 가드로 먼저 확인한다.
+
+```bash
+npm run commit:guard
+npm run commit:guard:verify
+```
+
 권장 패턴:
 
 ```bash
