@@ -156,6 +156,7 @@ class TaskController {
       status:      snapshot.status,
       created_at:  snapshot.created_at,
       updated_at:  snapshot.updated_at,
+      version:     snapshot.version ?? 1,
     };
   }
 
