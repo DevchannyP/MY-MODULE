@@ -816,6 +816,10 @@ function createAppHandler({
   idempotencyStore = new InMemoryIdempotencyStore(),
   rateLimiter = new InMemoryRateLimiter(),
   rateLimitPolicy = { readLimit: 120, writeLimit: 30, windowMs: 60 * 1000 },
+  routeRateLimitPolicies = {
+    'POST:/billing/payments': { limit: 10, windowMs: 60 * 1000 },
+    'POST:/video/videos': { limit: 5, windowMs: 60 * 1000 },
+  },
   maxRequestBodyBytes = 1024 * 1024,
   requestBodyReadTimeoutMs = 5000,
   lifecycleState = createLifecycleState(),
@@ -966,6 +970,25 @@ function createAppHandler({
           retryAfterSeconds: rateLimitResult.retryAfterSeconds,
           rateLimitHeaders: responseHeaders,
         });
+      }
+
+      // ── Per-route stricter rate-limit (NFR: financial/storage risk routes) ─
+      const routePolicyKey = `${method}:${url.pathname}`;
+      const routePolicy = routeRateLimitPolicies[routePolicyKey];
+      if (routePolicy) {
+        const routeRateLimitKey = `${caller.userId}:route:${routePolicyKey}`;
+        const routeRateLimitResult = rateLimiter.consume({
+          key: routeRateLimitKey,
+          limit: routePolicy.limit,
+          windowMs: routePolicy.windowMs,
+        });
+        if (!routeRateLimitResult.allowed) {
+          throw Object.assign(new Error(`Rate limit exceeded for route ${routePolicyKey}`), {
+            code: 'RATE_LIMITED',
+            retryAfterSeconds: routeRateLimitResult.retryAfterSeconds,
+            rateLimitHeaders: rateLimitHeaders(routeRateLimitResult),
+          });
+        }
       }
 
       const body = method === 'GET' || method === 'HEAD'

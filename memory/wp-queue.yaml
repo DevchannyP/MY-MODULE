@@ -963,3 +963,50 @@ capabilities:
           - "src/server/createServer.js: billing/video publisher 어댑터 래핑"
           - "src/tests/smoke/billingVideoEventWiring.smoke.test.js: 3건 smoke PASS"
         depends_on: ["WP-S15-001"]
+
+  - id: "CAP-SPIRAL-17"
+    label: "Spiral 17 — 동시성/성능 강화 (NFR Extended)"
+    spiral: 17
+    nfr_ref: "nfr_extended.concurrency"
+    work_packets:
+      - id: "WP-S17-001"
+        goal: "Per-route rate-limit 강화 — billing payment/video upload 엔드포인트에 stricter limit tier 적용"
+        status: "pending"
+        tier: "domain"
+        nfr: "nfr_extended.concurrency.rule_shared_state"
+        depends_on: ["WP-S16-001"]
+        deliverables:
+          - "src/server/createServer.js: routeRateLimitPolicy map 추가 (payment=10/min, upload=5/min)"
+          - "src/tests/smoke/perRouteRateLimit.smoke.test.js: 3건 smoke PASS"
+        success_criteria:
+          - "POST /billing/payment: 10회/분 초과 시 429"
+          - "POST /video/upload: 5회/분 초과 시 429"
+          - "기존 전역 rate-limit 회귀 없음"
+
+      - id: "WP-S17-002"
+        goal: "GetBillingSummaryUseCase async-first 강화 — 순차 조회를 Promise.all 병렬화로 전환"
+        status: "pending"
+        tier: "domain"
+        nfr: "nfr_extended.concurrency.model"
+        depends_on: ["WP-S16-001"]
+        deliverables:
+          - "domains/billing/src/application/GetBillingSummaryUseCase.js: Promise.all 병렬화"
+          - "domains/billing/tests/application/GetBillingSummaryUseCase.test.js: 병렬 조회 검증 추가"
+        success_criteria:
+          - "invoices + payments 조회가 Promise.all로 병렬 실행됨"
+          - "기존 테스트 회귀 없음"
+
+      - id: "WP-S17-003"
+        goal: "StartTranscodeJobUseCase Worker Thread 분리 — CPU-bound 트랜스코딩 시뮬레이션 격리"
+        status: "pending"
+        tier: "domain"
+        nfr: "nfr_extended.concurrency.rule_cpu"
+        depends_on: ["WP-S17-002"]
+        deliverables:
+          - "domains/video/src/application/StartTranscodeJobUseCase.js: workerAdapter 주입 패턴"
+          - "src/shared/TranscodeWorkerAdapter.js: Worker Thread 래핑 어댑터"
+          - "domains/video/tests/application/StartTranscodeJobUseCase.workerThread.test.js"
+        success_criteria:
+          - "CPU-bound transcoding이 Worker Thread로 분리 실행됨"
+          - "메인 이벤트 루프 블로킹 없음 (타이밍 검증)"
+          - "기존 Stage D 617/617 회귀 없음"
