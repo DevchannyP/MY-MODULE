@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-12T06:01:30.549884+00:00",
+  "generated_at_utc": "2026-04-12T06:14:36.430933+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "5fe4df9bddbfe1224d8e7e227d7241b60710abfd",
+  "head_commit": "5d312c40238141c49951577bad3dc3de89434312",
   "build_environment": {
     "ci": "false",
-    "github_sha": "5fe4df9bddbfe1224d8e7e227d7241b60710abfd",
+    "github_sha": "5d312c40238141c49951577bad3dc3de89434312",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -27,22 +27,14 @@
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "artifacts/provenance/workflow-os-provenance.json",
       "artifacts/release-evidence/release-evidence.json",
       "contracts/ui-shell/openapi.yaml",
-      "docs/db/migration-strategy.md",
-      "eslint.config.mjs",
-      "master-shell/observability/health-scores.yaml",
-      "memory/wp-queue.yaml",
-      "package.json",
-      "requirements/harness-engineering.yaml",
-      "scripts/generate-mindmap.js",
       "scripts/validate_ui_shell_contract.py",
-      "src/tests/smoke/projectStatus.smoke.test.js"
+      "src/server/createServer.js"
     ],
     "untracked_paths": [
-      "src/shared/EventBus.js",
-      "src/tests/unit/"
+      "scripts/generateMindmapWorker.js",
+      "src/tests/smoke/mindmapRebuildWorker.smoke.test.js"
     ]
   },
   "memory_sources": {

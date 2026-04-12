@@ -354,6 +354,33 @@ paths:
                 $ref: "#/components/schemas/SchedulerDispatchResponse"
         "500": { $ref: "#/components/responses/LegacyInternalError" }
 
+  /mindmap/rebuild:
+    post:
+      summary: "마인드맵 HTML 재생성 (Worker Thread — 이벤트 루프 비블로킹)"
+      operationId: "rebuildMindmap"
+      tags: [ui]
+      responses:
+        "200":
+          description: "재생성 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, durationMs]
+                properties:
+                  ok: { type: boolean }
+                  durationMs: { type: number }
+        "500":
+          description: "재생성 실패"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, error]
+                properties:
+                  ok: { type: boolean }
+                  error: { type: string }
+
   /ui/home-runtime:
     servers:
       - url: /

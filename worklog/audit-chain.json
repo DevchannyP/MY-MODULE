@@ -151,7 +151,15 @@
       "details": "WP-S7-001 EventBus Singleton 18/18 PASS + WP-S7-004 data-dict 경로 정렬 + WP-S7-005 validation-profiles 갭 0 + ESLint 0 errors + UI shell contract /ui/home-runtime 등록 + test 708/708 PASS",
       "prev_hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84",
       "hash": "1385bbb9778dd76dea08aaa75e8edadd37134e3db0bede28eaf0bf7b406a46ca"
+    },
+    {
+      "seq": 20,
+      "timestamp": "2026-04-12T06:15:09.520Z",
+      "action": "spiral7/WP-S7-003",
+      "details": "Worker Thread generateMindmapWorker.js + POST /api/mindmap/rebuild + smoke 3/3 PASS + 711 tests",
+      "prev_hash": "1385bbb9778dd76dea08aaa75e8edadd37134e3db0bede28eaf0bf7b406a46ca",
+      "hash": "9b07a557c92bdd39d76964c498b805945c0f0a6d76e121995b54aae376d1ad2c"
     }
   ],
-  "last_hash": "1385bbb9778dd76dea08aaa75e8edadd37134e3db0bede28eaf0bf7b406a46ca"
+  "last_hash": "9b07a557c92bdd39d76964c498b805945c0f0a6d76e121995b54aae376d1ad2c"
 }

@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { Worker } = require('node:worker_threads');
 const { URL } = require('node:url');
 
 const { TaskController } = require('../../domains/productivity/task-tracking/src/interface/TaskController');
@@ -1210,6 +1211,29 @@ function createAppHandler({
           recentOperatorAction: uiOperatorState.recentOperatorAction,
         });
         sendResponse(req, res, 200, runtimeData, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
+      // ── Mindmap Rebuild (Worker Thread — CPU-bound) ───────────────────────
+      if (method === 'POST' && url.pathname === '/api/mindmap/rebuild') {
+        const workerPath = path.resolve(runtimeRoot, 'scripts', 'generateMindmapWorker.js');
+        const worker = new Worker(workerPath, { workerData: { repoRoot: runtimeRoot } });
+        worker.once('message', (msg) => {
+          if (msg.ok) {
+            sendResponse(req, res, 200,
+              { ok: true, durationMs: msg.durationMs },
+              mergeHeaders(responseBaseHeaders, responseHeaders));
+          } else {
+            sendResponse(req, res, 500,
+              { ok: false, error: msg.error },
+              mergeHeaders(responseBaseHeaders, responseHeaders));
+          }
+        });
+        worker.once('error', (err) => {
+          sendResponse(req, res, 500,
+            { ok: false, error: String(err.message) },
+            mergeHeaders(responseBaseHeaders, responseHeaders));
+        });
         return;
       }
 

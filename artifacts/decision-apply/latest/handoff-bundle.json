@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-12T06:01:29.924300+00:00",
+  "generated_at": "2026-04-12T06:14:35.764898+00:00",
   "goal": "stateful-ops",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -236,12 +236,12 @@
       "repository-sqlite"
     ],
     "selected_adapters": [
-      "observability-otel",
       "repository-inmemory",
+      "http-problem-details",
       "repository-sqlite",
       "master-ui-plugin-shell",
-      "feature-flag-provider",
-      "http-problem-details"
+      "observability-otel",
+      "feature-flag-provider"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-12T06:01:29.924278+00:00",
+    "generated_at": "2026-04-12T06:14:35.764875+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-12 14:21:30 +0900",
+            "timestamp": "2026-04-12 15:03:18 +0900",
             "title": "git commit",
-            "detail": "chore(memory): sync L0-hot state to 2026-04-12 — 35/35 WP done",
+            "detail": "feat(spiral7): spiral 7 baseline — EventBus + contract fixes + 708 tests",
             "tag": "git"
           }
         ]

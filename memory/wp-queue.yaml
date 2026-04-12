@@ -734,7 +734,9 @@ capabilities:
 
       - id: "WP-S7-003"
         goal: "Worker Thread로 generate-mindmap.js CPU 바운드 작업 분리"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — scripts/generateMindmapWorker.js + POST /api/mindmap/rebuild + smoke 3/3 + 711 tests"
         tier: "infra"
         depends_on: []
         context_budget:

@@ -37,6 +37,8 @@ REQUIRED_OPERATIONS = {
     ("GET", "/flags"): [NODE_RUNTIME_PATH],
     # /ui/home-runtime — 홈 런타임 상태 (WP 큐, 칸반 데이터)
     ("GET", "/ui/home-runtime"): [NODE_RUNTIME_PATH],
+    # /mindmap/rebuild — Worker Thread 기반 마인드맵 재생성 (runtime: /api/mindmap/rebuild)
+    ("POST", "/mindmap/rebuild"): [NODE_RUNTIME_PATH],
 }
 
 # Operations whose spec path is relative to root (/) not the default /api server.
