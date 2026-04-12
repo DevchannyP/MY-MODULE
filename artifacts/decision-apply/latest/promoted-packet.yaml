@@ -68,8 +68,8 @@ context_budget:
   max_new_files: 2
   max_modified_files: 6
   budget_primary_tokens: 5559
-  budget_total_tokens: 205916
+  budget_total_tokens: 207390
 template_id: ops-hardening-packet
 planning_mode: ''
-generated_at: '2026-04-12T07:03:21.210322+00:00'
-applied_at: '2026-04-12T07:03:21.210352+00:00'
+generated_at: '2026-04-12T07:14:40.878233+00:00'
+applied_at: '2026-04-12T07:14:40.878250+00:00'

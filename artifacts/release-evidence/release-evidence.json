@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-12T07:03:21.839031+00:00",
+  "generated_at_utc": "2026-04-12T07:14:41.400584+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "3dfa4484ea3e3e4005c17aaba7525927c8d906bb",
+  "head_commit": "3805188412e43fa6ac43a6f9c391e0d7989a71ed",
   "build_environment": {
     "ci": "false",
-    "github_sha": "3dfa4484ea3e3e4005c17aaba7525927c8d906bb",
+    "github_sha": "3805188412e43fa6ac43a6f9c391e0d7989a71ed",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -25,13 +25,14 @@
       "artifacts/promotion-pipeline/latest/benchmark-pack.json",
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
-      "artifacts/promotion-pipeline/latest/promoted-packet.yaml"
+      "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
+      "memory/project/next-actions.yaml",
+      "memory/wp-queue.yaml"
     ],
     "untracked_paths": [
-      "domains/productivity/task-tracking/src/infrastructure/OutboxPoller.js",
-      "domains/productivity/task-tracking/src/infrastructure/OutboxRepository.js",
-      "domains/productivity/task-tracking/tests/infrastructure/OutboxPoller.test.js",
-      "domains/productivity/task-tracking/tests/infrastructure/OutboxRepository.test.js"
+      "domains/productivity/task-tracking/tests/integration/",
+      "src/shared/EventBusPublisher.js",
+      "src/tests/unit/EventBusPublisher.test.js"
     ]
   },
   "memory_sources": {

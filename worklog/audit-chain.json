@@ -167,7 +167,15 @@
       "details": "OutboxRepository Port+InMemory+SQLite + OutboxPoller setInterval + 20 tests + 731/731",
       "prev_hash": "9b07a557c92bdd39d76964c498b805945c0f0a6d76e121995b54aae376d1ad2c",
       "hash": "be6b3acaa9a995fd3f6d1f56c29c2c00dea8fe453c28399888700182aa997aa2"
+    },
+    {
+      "seq": 22,
+      "timestamp": "2026-04-12T07:15:28.349Z",
+      "action": "spiral8/event-wiring",
+      "details": "WP-S8-001 EventBusPublisher 8/8 + WP-S8-002 통합테스트 5/5 + 744/744 PASS — Use case→EventBus→Outbox 루프 완성",
+      "prev_hash": "be6b3acaa9a995fd3f6d1f56c29c2c00dea8fe453c28399888700182aa997aa2",
+      "hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681"
     }
   ],
-  "last_hash": "be6b3acaa9a995fd3f6d1f56c29c2c00dea8fe453c28399888700182aa997aa2"
+  "last_hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681"
 }

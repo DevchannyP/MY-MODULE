@@ -807,3 +807,26 @@ capabilities:
             - "각 script 실행 시 0 exit code"
           verification:
             - "npm run wp:reconcile && npm run wp:check-fit && npm run test:integration PASS"
+
+  # ──────────────────────────────────────────────
+  # CAP-S8  Spiral 8 — Event wiring & integration
+  # ──────────────────────────────────────────────
+  - id: "CAP-S8"
+    name: "Spiral 8 — EventBus domain wiring"
+    priority: 11
+    work_packets:
+      - id: "WP-S8-001"
+        goal: "EventBusPublisher 어댑터 — EventPublisher 포트 → EventBus 싱글톤 브릿지"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — src/shared/EventBusPublisher.js 8/8 unit tests"
+        tier: "infra"
+        depends_on: ["WP-S7-001"]
+
+      - id: "WP-S8-002"
+        goal: "CreateTaskUseCase 통합 테스트 — EventBus publish + Outbox 연결 검증"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — 통합 테스트 5/5 PASS (Use case→EventBusPublisher→EventBus + Outbox→Poller→EventBus)"
+        tier: "domain"
+        depends_on: ["WP-S8-001"]
