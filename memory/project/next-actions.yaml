@@ -3,7 +3,7 @@
 # 실제 다음 Work Packet 선택은 root memory/wp-queue.yaml 과 memory/current-wp.yaml 이 기준이다.
 # 이 파일은 legacy 코어 업그레이드 히스토리와 상세 우선순위 참고용이다.
 as_of: "2026-04-12"
-current_phase: "spiral-16-complete"
+current_phase: "spiral-17-complete"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"
 
 execution_policy:
@@ -41,22 +41,38 @@ next_actions:
 
   - priority: 3
     id: "NEXT-003"
-    action: "WP-S17-001 실행 — Per-route rate-limit 강화"
+    action: "Spiral 17 완료 — WP-S17-001~003 all done"
     track: "SPIRAL-17"
-    done: false
-    goal: "createServer.js에 routeRateLimitPolicy map 추가 (payment=10/min, upload=5/min). smoke 3건 PASS."
-    success_criteria:
-      - "POST /billing/payment: 10회/분 초과 시 429"
-      - "POST /video/upload: 5회/분 초과 시 429"
-      - "617/617 회귀 없음"
+    done: true
+    completed_at: "2026-04-12"
+    result: "621/621 tests PASS. per-route rate-limit, Promise.all, Worker Thread 완료"
 
   - priority: 4
     id: "NEXT-004"
-    action: "WP-S17-002 실행 — GetBillingSummaryUseCase Promise.all 병렬화"
-    track: "SPIRAL-17"
+    action: "CI 수정 — pip cache 제거 + lint 3건 해소 + push"
+    track: "SCM-RELEASE"
+    done: true
+    completed_at: "2026-04-12"
+    result: "fix(ci) + fix(lint) push 완료. CI 재트리거됨 (commit 8f1f55c)"
+
+  - priority: 5
+    id: "NEXT-005"
+    action: "CI PASS 확인 후 PR#1 머지"
+    track: "SCM-RELEASE"
     done: false
-    goal: "invoices + payments 병렬 조회 전환. 기존 테스트 회귀 없음."
-    trigger: "NEXT-003 완료 후"
+    goal: "GitHub Actions quality-gates PASS 확인 → PR#1 머지"
+    blocked_by: "CI 실행 대기"
+    success_criteria:
+      - "quality-gates 3 jobs PASS"
+      - "PR#1 머지 가능 상태"
+
+  - priority: 6
+    id: "NEXT-006"
+    action: "Spiral 18 설계 — DB 마이그레이션 SQLite→PostgreSQL Phase 2"
+    track: "SPIRAL-18"
+    done: false
+    goal: "docs/db/migration-strategy.md Phase 2 기반 WP 설계"
+    trigger: "NEXT-005 완료 후"
 
 queue:
   - priority: 1
