@@ -117,11 +117,57 @@ test('[mindmap control center browser interaction smoke] selected worker wiring 
     assert.match(mindmap.text, /execution-history-pill is-info/);
     assert.match(mindmap.text, /execution-history-pill is-focus/);
     assert.match(mindmap.text, /execution-history-anchor/);
+    assert.match(mindmap.text, /현재 실행/);
+    assert.match(mindmap.text, /마지막 전송/);
+    assert.match(mindmap.text, /즉시 가능 제어/);
     assert.match(mindmap.text, /focusExecutionWorker\(/);
     assert.match(mindmap.text, /sendExecutionWorkerNow\(/);
     assert.match(mindmap.text, /function focusExecutionWorker\(index\)/);
     assert.match(mindmap.text, /function sendExecutionWorkerNow\(index\)/);
+    assert.match(mindmap.text, /function executionWorkerLabel\(worker, fallbackIndex\)/);
+    assert.match(mindmap.text, /function executionMatchesWorker\(activityWorkerName, worker, fallbackIndex\)/);
+    assert.match(mindmap.text, /function executionActivityWorkerLabel\(activity\)/);
+    assert.match(mindmap.text, /function executionSummaryWithIndexedWorker\(summary, activity\)/);
+    assert.match(mindmap.text, /function executionFailureLocationSummary\(summary, activity\)/);
+    assert.match(mindmap.text, /function executionFailureReasonSummary\(summary, activity\)/);
+    assert.match(mindmap.text, /function refreshExecutionSelectionUi\(\)/);
+    assert.match(mindmap.text, /function selectedExecutionWorkerLabel\(\)/);
+    assert.match(mindmap.text, /function rollbackModalSummary\(domainNode\)/);
+    assert.match(mindmap.text, /function rollbackModalContextEntries\(domainNode\)/);
+    assert.match(mindmap.text, /function rollbackModalMarkup\(domainNode\)/);
+    assert.match(mindmap.text, /function rollbackModalValidationState\(\)/);
+    assert.match(mindmap.text, /function refreshRollbackModalContext\(\)/);
+    assert.match(mindmap.text, /function refreshRollbackModalValidation\(\)/);
+    assert.match(mindmap.text, /function executionNextActionBase\(\)/);
+    assert.match(mindmap.text, /function executionNextAction\(\)/);
     assert.match(mindmap.text, /S\.execution\.selectedWorkerIndex = index;/);
+    assert.match(mindmap.text, /var previousWorkerIndex = S\.execution\.selectedWorkerIndex;/);
+    assert.match(mindmap.text, /var previousRollbackTarget = String\(S\.execution\.rollbackTargetDomain \|\| ''\)\.trim\(\);/);
+    assert.match(mindmap.text, /if \(\(workerEl && previousWorkerIndex !== S\.execution\.selectedWorkerIndex\) \|\| \(rollbackEl && previousRollbackTarget !== S\.execution\.rollbackTargetDomain\)\) \{/);
+    assert.match(mindmap.text, /refreshExecutionSelectionUi\(\);/);
+    assert.match(mindmap.text, /executionWorkerLabel\(worker, index\)/);
+    assert.match(mindmap.text, /executionSummaryWithIndexedWorker\(String\(brief\.currentExecution\)\.trim\(\), S\.execution\.currentActivity\)/);
+    assert.match(mindmap.text, /executionSummaryWithIndexedWorker\(String\(brief\.lastDispatch\)\.trim\(\), dispatchActivity\)/);
+    assert.match(mindmap.text, /var errorText = executionFailureReasonSummary\(/);
+    assert.match(mindmap.text, /var failureLocation = executionFailureLocationSummary\(/);
+    assert.match(mindmap.text, /var message = executionNextActionBase\(\);/);
+    assert.match(mindmap.text, /var rollbackTarget = selectedRollbackDomain\(\);/);
+    assert.match(mindmap.text, /context\.push\('선택 worker: ' \+ executionWorkerLabel\(selectedWorker, selectedWorkerIndex\)\);/);
+    assert.match(mindmap.text, /context\.push\('롤백 대상: ' \+ String\(rollbackTarget\.label \|\| rollbackTarget\.id \|\| '없음'\)\);/);
+    assert.match(mindmap.text, /'선택 도메인: ' \+ domainLabel/);
+    assert.match(mindmap.text, /'선택 worker: ' \+ selectedExecutionWorkerLabel\(\)/);
+    assert.match(mindmap.text, /class="modal-warning-box"/);
+    assert.match(mindmap.text, /class="modal-context-list"/);
+    assert.match(mindmap.text, /class="modal-context-row"/);
+    assert.match(mindmap.text, /class="modal-validation-state"/);
+    assert.match(mindmap.text, /modal\.querySelector\('\.modal-body'\)\.innerHTML = rollbackModalMarkup\(n\);/);
+    assert.match(mindmap.text, /body\.innerHTML = rollbackModalMarkup\(modalTarget\);/);
+    assert.match(mindmap.text, /refreshRollbackModalContext\(\);/);
+    assert.match(mindmap.text, /modal\.querySelector\('\.modal-reason'\)\.value = '';/);
+    assert.match(mindmap.text, /confirmButton\.disabled = !state\.ok;/);
+    assert.match(mindmap.text, /setExecutionStatus\('warning', '롤백 확인 필요', validation\.message\);/);
+    assert.match(mindmap.text, /showToast\('롤백 대상 다시 확인 필요'\);/);
+    assert.match(mindmap.text, /실패 위치: /);
     assert.match(mindmap.text, /dispatchSchedulerPromptNow\(\);/);
     assert.match(mindmap.text, /window\.focusExecutionWorker = focusExecutionWorker;/);
     assert.match(mindmap.text, /window\.sendExecutionWorkerNow = sendExecutionWorkerNow;/);
@@ -188,7 +234,13 @@ test('[mindmap control center browser interaction smoke] selected worker wiring 
     assert.equal(controlRuntimeAfterSend.status, 200);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.execution.last_activity.worker, 'Browser Worker Beta');
     assert.equal(controlRuntimeAfterSend.body.runtime_state.execution.last_activity.packet_id, 'WP-BROWSER-B');
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.execution.current_worker_index, 1);
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.scheduler.current_worker_index, 1);
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.scheduler.active_worker_index, 1);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.execution.last_prompt_text, 'beta prompt');
+    assert.match(controlRuntimeAfterSend.body.runtime_state.execution.current_activity.worker, /Browser Worker Beta/);
+    assert.match(controlRuntimeAfterSend.body.runtime_state.execution.operator_brief.current_execution, /running \/ Browser Worker Beta/);
+    assert.match(controlRuntimeAfterSend.body.runtime_state.execution.operator_brief.last_dispatch, /prompt \/ Browser Worker Beta/);
   } finally {
     await runtime.shutdown({ reason: 'test' });
   }
@@ -252,6 +304,16 @@ test('[mindmap control center browser interaction smoke] selected failing worker
     assert.equal(schedulerStart.body.ok, true);
     assert.equal(schedulerStart.body.workers, 2);
 
+    const sendStableWorker = await postJson(runtime.url, '/api/pty/send-now', {
+      worker_index: 0,
+    });
+    assert.equal(sendStableWorker.status, 200);
+    assert.ok(Array.isArray(sendStableWorker.body.results));
+    assert.equal(sendStableWorker.body.results.length, 1);
+    assert.equal(sendStableWorker.body.results[0].worker, 'Browser Worker Stable');
+    assert.equal(sendStableWorker.body.results[0].ok, true);
+    assert.equal(sendStableWorker.body.results[0].error, null);
+
     const sendSelectedWorker = await postJson(runtime.url, '/api/pty/send-now', {
       worker_index: 1,
     });
@@ -268,6 +330,14 @@ test('[mindmap control center browser interaction smoke] selected failing worker
     assert.equal(controlRuntimeAfterFailure.body.runtime_state.execution.last_error.packet_id, 'WP-BROWSER-BROKEN');
     assert.equal(controlRuntimeAfterFailure.body.runtime_state.execution.last_error.ok, false);
     assert.match(String(controlRuntimeAfterFailure.body.runtime_state.execution.last_error.error || ''), /알 수 없는 PTY 세션입니다: \/dev\/pts\/99999/);
+    assert.equal(controlRuntimeAfterFailure.body.runtime_state.execution.current_worker_index, 0);
+    assert.equal(controlRuntimeAfterFailure.body.runtime_state.scheduler.current_worker_index, 0);
+    assert.equal(controlRuntimeAfterFailure.body.runtime_state.scheduler.active_worker_index, 0);
+    assert.equal(controlRuntimeAfterFailure.body.runtime_state.execution.current_activity.worker, 'Browser Worker Stable');
+    assert.match(controlRuntimeAfterFailure.body.runtime_state.execution.operator_brief.current_execution, /running \/ Browser Worker Stable/);
+    assert.match(controlRuntimeAfterFailure.body.runtime_state.execution.operator_brief.last_dispatch, /prompt \/ Browser Worker Broken/);
+    assert.match(controlRuntimeAfterFailure.body.runtime_state.execution.operator_brief.blocked_at, /prompt \/ Browser Worker Broken \/ \/dev\/pts\/99999/);
+    assert.match(controlRuntimeAfterFailure.body.runtime_state.execution.operator_brief.failure_reason, /알 수 없는 PTY 세션입니다: \/dev\/pts\/99999/);
     assert.equal(controlRuntimeAfterFailure.body.runtime_state.user_controls.failure_reason_visible, true);
     assert.match(String(controlRuntimeAfterFailure.body.runtime_state.execution.next_action || ''), /실패 원인/);
   } finally {
@@ -365,6 +435,14 @@ test('[mindmap control center browser interaction smoke] enter-now worker_index 
     assert.equal(specificWorker.body.results.length, 1, 'worker_index:1 → single worker');
     assert.equal(specificWorker.body.results[0].worker, 'Enter Beta');
     assert.equal(specificWorker.body.results[0].ok, true);
+
+    const runtimeAfterSpecificWorker = await requestJson(runtime.url, '/ui/control-center-runtime');
+    assert.equal(runtimeAfterSpecificWorker.status, 200);
+    assert.equal(runtimeAfterSpecificWorker.body.runtime_state.execution.current_worker_index, 1);
+    assert.equal(runtimeAfterSpecificWorker.body.runtime_state.scheduler.current_worker_index, 1);
+    assert.equal(runtimeAfterSpecificWorker.body.runtime_state.scheduler.active_worker_index, 1);
+    assert.equal(runtimeAfterSpecificWorker.body.runtime_state.execution.current_activity.worker, 'Enter Beta');
+    assert.match(runtimeAfterSpecificWorker.body.runtime_state.execution.operator_brief.current_execution, /running \/ Enter Beta/);
 
     // worker_index out of range — should return error result
     const invalidWorker = await postJson(runtime.url, '/api/pty/enter-now', { worker_index: 99 });

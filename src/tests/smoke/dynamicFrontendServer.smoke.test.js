@@ -58,6 +58,21 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     // 활성 플래그 가시성 위젯 — .env WOS_FLAG_* 오버라이드 확인 지점
     assert.match(home.text, /live-active-flags/, 'home must have live-active-flags element');
     assert.match(home.text, /live-env-overrides/, 'home must have live-env-overrides element');
+    assert.match(home.text, /live-operator-action/, 'home must have live-operator-action element');
+    assert.match(home.text, /live-loop-status/, 'home must have live-loop-status element');
+    assert.match(home.text, /live-loop-branch/, 'home must have live-loop-branch element');
+    assert.match(home.text, /live-loop-next/, 'home must have live-loop-next element');
+    assert.match(home.text, /live-loop-primary-link/, 'home must have live-loop-primary-link element');
+    assert.match(home.text, /live-loop-secondary-link/, 'home must have live-loop-secondary-link element');
+    assert.match(home.text, /최근 Operator Loop/);
+    assert.match(home.text, /실행 콘솔 열기/);
+    assert.match(home.text, /plan board 열기/);
+    assert.match(home.text, /focus=execution-failure/);
+    assert.match(home.text, /focus=guard/);
+    assert.match(home.text, /focus=operator-summary/);
+    assert.match(home.text, /reason=/);
+    assert.match(home.text, /command=/);
+    assert.match(home.text, /source=home-loop/);
     assert.match(home.text, /\/flags/, 'home must reference /flags endpoint');
 
     const mindmap = await requestText(runtime.url, '/mindmap/index.html');
@@ -66,6 +81,23 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.match(mindmap.text, /실행 계획표/);
     assert.match(mindmap.text, /Stage dry-run/);
     assert.match(mindmap.text, /Stage execute/);
+    assert.match(mindmap.text, /topbar-branch-readiness/);
+    assert.match(mindmap.text, /topbar-commit-guard-badge/);
+    assert.match(mindmap.text, /topbar-operator-action-badge/);
+    assert.match(mindmap.text, /master-branch/);
+    assert.match(mindmap.text, /master-guard/);
+    assert.match(mindmap.text, /master-action-history/);
+    assert.match(mindmap.text, /검증 루프/);
+    assert.match(mindmap.text, /브랜치 준비도/);
+    assert.match(mindmap.text, /명령 복사/);
+    assert.match(mindmap.text, /실행 패널에 채우기/);
+    assert.match(mindmap.text, /Operator Action History/);
+    assert.match(mindmap.text, /미전송/);
+    assert.match(mindmap.text, /다시 복사/);
+    assert.match(mindmap.text, /다시 채우기/);
+    assert.match(mindmap.text, /applyControlCenterDeepLink/);
+    assert.match(mindmap.text, /deep-link-context-bar/);
+    assert.match(mindmap.text, /권장 명령 채우기/);
     assert.ok(typeof mindmap.headers.etag === 'string' && mindmap.headers.etag.length > 0);
 
     const mindmapCached = await fetch(new URL('/mindmap/index.html', runtime.url), {
@@ -103,6 +135,14 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(typeof rs.control_endpoints.send, 'string');
     assert.equal(rs.control_endpoints.flags, '/flags');
     assert.equal(rs.control_endpoints.scheduler_status, '/api/pty/scheduler/status');
+    assert.equal(
+      rs.recent_operator_action === null
+      || typeof rs.recent_operator_action === 'object',
+      true,
+    );
+    assert.ok(rs.operator_cockpit);
+    assert.equal(typeof rs.operator_cockpit.branch.recommended_branch, 'string');
+    assert.equal(typeof rs.operator_cockpit.commit_guard.next_action, 'string');
     assert.equal(typeof rs.as_of, 'string');
 
     const controlRuntime = await requestJson(runtime.url, '/ui/control-center-runtime');
@@ -110,7 +150,9 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(controlRuntime.body.ok, true);
     assert.equal(controlRuntime.body.meta.contract_version, 'ui-runtime.v1');
     assert.ok(Array.isArray(controlRuntime.body.data.plan_rows));
+    assert.ok(Array.isArray(controlRuntime.body.data.kanban_lanes));
     assert.ok(Array.isArray(controlRuntime.body.data.control_nodes));
+    assert.ok(controlRuntime.body.data.kanban_lanes.length >= 5);
     assert.equal(typeof controlRuntime.body.data.scaffold_capabilities.default_blueprint, 'string');
     assert.equal(controlRuntime.body.data.stage_capabilities.run_endpoint, '/api/planning-studio/stage-run');
     assert.ok(Array.isArray(controlRuntime.body.data.stage_capabilities.supported_stages));
@@ -118,8 +160,26 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.ok(Array.isArray(controlRuntime.body.runtime_state.feature_flags.enabled_flags));
     assert.equal(typeof controlRuntime.body.runtime_state.execution.runtime_available, 'boolean');
     assert.equal(typeof controlRuntime.body.runtime_state.execution.session_count, 'number');
+    assert.ok(
+      controlRuntime.body.runtime_state.execution.current_worker_index === null
+      || typeof controlRuntime.body.runtime_state.execution.current_worker_index === 'number',
+    );
     assert.equal(typeof controlRuntime.body.runtime_state.execution.next_action, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.auto_send_status, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.current_execution, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.last_dispatch, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.blocked_at, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.available_controls_summary, 'string');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.execution.operator_brief.available_controls));
     assert.equal(typeof controlRuntime.body.runtime_state.scheduler.running, 'boolean');
+    assert.ok(
+      controlRuntime.body.runtime_state.scheduler.active_worker_index === null
+      || typeof controlRuntime.body.runtime_state.scheduler.active_worker_index === 'number',
+    );
+    assert.ok(
+      controlRuntime.body.runtime_state.scheduler.current_worker_index === null
+      || typeof controlRuntime.body.runtime_state.scheduler.current_worker_index === 'number',
+    );
     assert.ok(Array.isArray(controlRuntime.body.runtime_state.scheduler.workers));
     assert.equal(controlRuntime.body.runtime_state.control_endpoints.send, '/api/pty/send');
     assert.equal(controlRuntime.body.runtime_state.control_endpoints.rollback_base, '/api/v1/system/rollback');
@@ -130,6 +190,22 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.rollback.enabled, 'boolean');
     assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.rollback.reason, 'string');
     assert.equal(controlRuntime.body.runtime_state.user_controls.terminal_status_visible, true);
+    assert.ok(controlRuntime.body.runtime_state.operator_cockpit);
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.git.branch, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.git.dirty, 'boolean');
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.branch.recommended_branch, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.branch.commit_subject, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.commit_guard.next_action, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.commit_guard.can_apply, 'boolean');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_cockpit.commit_guard.reasons));
+    assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.validation_profile.packet_type, 'string');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_cockpit.validation_profile.commands));
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.operator_cockpit.operator_actions));
+    assert.equal(
+      controlRuntime.body.runtime_state.recent_operator_action === null
+      || typeof controlRuntime.body.runtime_state.recent_operator_action === 'object',
+      true,
+    );
     assert.equal(typeof controlRuntime.body.runtime_state.as_of, 'string');
 
     const snapshotResponse = await fetch(new URL('/api/planning-studio/snapshot', runtime.url));
@@ -165,12 +241,43 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(ptySend.status, 200);
     assert.equal(ptySend.body.ok, true);
 
+    const operatorActionSync = await postJson(runtime.url, '/api/ui/operator-action', {
+      id: 'operator-action-smoke',
+      action: 'loaded',
+      label: '검증 명령',
+      scope: 'validation',
+      command: 'npm run commit:guard',
+      delivery_status: 'unsent',
+      delivery_message: '실제 전송 전',
+      ts: '2026-04-12T00:00:00.000Z',
+    }, {
+      'idempotency-key': 'dynamic-operator-action-idem',
+    });
+    assert.equal(operatorActionSync.status, 200);
+    assert.equal(operatorActionSync.body.ok, true);
+    assert.equal(operatorActionSync.body.data.label, '검증 명령');
+    assert.equal(operatorActionSync.body.data.command, 'npm run commit:guard');
+
+    const homeRuntimeAfterOperatorAction = await requestJson(runtime.url, '/ui/home-runtime');
+    assert.equal(homeRuntimeAfterOperatorAction.status, 200);
+    assert.ok(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_action);
+    assert.equal(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_action.label, '검증 명령');
+    assert.equal(homeRuntimeAfterOperatorAction.body.runtime_state.recent_operator_action.command, 'npm run commit:guard');
+    assert.ok(homeRuntimeAfterOperatorAction.body.runtime_state.operator_cockpit);
+    assert.equal(typeof homeRuntimeAfterOperatorAction.body.runtime_state.operator_cockpit.branch.recommended_branch, 'string');
+    assert.equal(typeof homeRuntimeAfterOperatorAction.body.runtime_state.operator_cockpit.commit_guard.next_action, 'string');
+
     const controlRuntimeAfterSend = await requestJson(runtime.url, '/ui/control-center-runtime');
     assert.equal(controlRuntimeAfterSend.status, 200);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.execution.last_prompt_text, 'Roundtrip prompt');
     assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.retry_last_prompt, true);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.control_matrix.retry_last_prompt.enabled, true);
     assert.equal(controlRuntimeAfterSend.body.runtime_state.user_controls.failure_reason_visible, false);
+    assert.match(controlRuntimeAfterSend.body.runtime_state.execution.operator_brief.last_dispatch, /prompt \/ Control Center/);
+    assert.ok(controlRuntimeAfterSend.body.runtime_state.recent_operator_action);
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.recent_operator_action.label, '검증 명령');
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.recent_operator_action.command, 'npm run commit:guard');
+    assert.equal(controlRuntimeAfterSend.body.runtime_state.recent_operator_action.delivery_status, 'unsent');
 
     const ptySendReplay = await postJson(runtime.url, '/api/pty/send', {
       pts: selectedSession.pts,
@@ -232,7 +339,10 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(schedulerRunning.status, 200);
     assert.equal(schedulerRunning.body.running, true);
     assert.equal(schedulerRunning.body.workers.length, 1);
+    assert.equal(schedulerRunning.body.active_worker_index, 0);
+    assert.equal(schedulerRunning.body.current_worker_index, 0);
     assert.equal(schedulerRunning.body.current_activity.action, 'running');
+    assert.equal(schedulerRunning.body.current_activity.worker_index, 0);
 
     const schedulerSendNow = await postJson(runtime.url, '/api/pty/send-now', {});
     assert.equal(schedulerSendNow.status, 200);
@@ -241,6 +351,13 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(schedulerSendNow.body.results[0].worker, 'Control Center Worker');
     assert.equal(schedulerSendNow.body.results[0].ok, true);
     assert.equal(schedulerSendNow.body.results[0].error, null);
+
+    const controlRuntimeAfterSendNow = await requestJson(runtime.url, '/ui/control-center-runtime');
+    assert.equal(controlRuntimeAfterSendNow.status, 200);
+    assert.equal(controlRuntimeAfterSendNow.body.runtime_state.execution.current_worker_index, 0);
+    assert.equal(controlRuntimeAfterSendNow.body.runtime_state.execution.current_activity.worker, 'Control Center Worker');
+    assert.equal(controlRuntimeAfterSendNow.body.runtime_state.execution.current_activity.worker_index, 0);
+    assert.match(controlRuntimeAfterSendNow.body.runtime_state.execution.operator_brief.current_execution, /running \/ Control Center Worker/);
 
     const schedulerSendNowInvalid = await postJson(runtime.url, '/api/pty/send-now', {
       worker_index: 99,

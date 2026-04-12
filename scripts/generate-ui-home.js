@@ -636,6 +636,7 @@ ${KANBAN_CSS}
         <div class="loop-actions">
             <a id="live-loop-primary-link" class="page-link" href="mindmap/index.html?focus=execution-failure&reason=%EC%B5%9C%EA%B7%BC%20operator%20action%20%EC%8B%A4%ED%8C%A8&command=npm%20run%20operator%3Acockpit&source=home-loop#execution-console">실행 콘솔 열기</a>
             <a id="live-loop-secondary-link" class="page-link" href="mindmap/index.html?focus=guard&reason=%EC%BB%A4%EB%B0%8B%20%EA%B0%80%EB%93%9C%20%ED%99%95%EC%9D%B8%20%ED%95%84%EC%9A%94&command=npm%20run%20commit%3Aguard&source=home-loop#plan-board">plan board 열기</a>
+            <a id="live-loop-summary-link" class="page-link" href="mindmap/index.html?focus=operator-summary&reason=operator%20%EC%83%81%ED%83%9C%20%EC%A0%84%EC%B2%B4%20%ED%99%95%EC%9D%B8&command=npm%20run%20operator%3Acockpit&source=home-loop#master-status" style="display:none">통합 상태 열기</a>
         </div>
       </div>
     </aside>

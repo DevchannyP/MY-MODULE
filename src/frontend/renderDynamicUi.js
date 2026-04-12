@@ -23,7 +23,7 @@ const MIME_TYPES = {
   '.yml': 'application/yaml; charset=utf-8',
 };
 
-const MAX_ETAG_PAYLOAD_BYTES = 256 * 1024;
+const MAX_ETAG_PAYLOAD_BYTES = 2 * 1024 * 1024; // 2MB — covers largest generated artifact (mindmap ~700KB)
 
 function getMimeType(absolutePath) {
   return MIME_TYPES[path.extname(absolutePath).toLowerCase()] || 'application/octet-stream';
