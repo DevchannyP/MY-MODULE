@@ -1002,15 +1002,17 @@ capabilities:
 
       - id: "WP-S17-003"
         goal: "StartTranscodeJobUseCase Worker Thread 분리 — CPU-bound 트랜스코딩 시뮬레이션 격리"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — workerAdapter 주입 패턴, TranscodeWorkerAdapter + NullAdapter, 3/3 tests PASS. 621/621 회귀 없음"
         tier: "domain"
         nfr: "nfr_extended.concurrency.rule_cpu"
         depends_on: ["WP-S17-002"]
         deliverables:
           - "domains/video/src/application/StartTranscodeJobUseCase.js: workerAdapter 주입 패턴"
-          - "src/shared/TranscodeWorkerAdapter.js: Worker Thread 래핑 어댑터"
-          - "domains/video/tests/application/StartTranscodeJobUseCase.workerThread.test.js"
+          - "src/shared/TranscodeWorkerAdapter.js: Worker Thread 래핑 어댑터 + NullAdapter"
+          - "domains/video/tests/application/StartTranscodeJobUseCase.workerThread.test.js: 3/3 PASS"
         success_criteria:
           - "CPU-bound transcoding이 Worker Thread로 분리 실행됨"
           - "메인 이벤트 루프 블로킹 없음 (타이밍 검증)"
-          - "기존 Stage D 617/617 회귀 없음"
+          - "기존 Stage D 621/621 회귀 없음"

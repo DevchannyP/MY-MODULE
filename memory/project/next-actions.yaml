@@ -25,26 +25,38 @@ queue_status:
 next_actions:
   - priority: 1
     id: "NEXT-001"
-    action: "main 브랜치로 PR 준비 (160 commits ahead)"
+    action: "main 브랜치로 PR 준비"
     track: "SCM-RELEASE"
-    done: false
-    blocked_by: "gh CLI 미설치 — `! sudo apt install gh -y` 후 재시도"
-    goal: "chore/core-git-governance-activation 브랜치를 main으로 PR하여 AI 하네스 v0.2 + 3도메인 완성 릴리즈."
-    success_criteria:
-      - "PR 제목/본문 Conventional Commit 스타일"
-      - "570/570 tests PASS CI 확인"
-      - "release-evidence 산출물 갱신"
+    done: true
+    completed_at: "2026-04-12"
+    result: "PR#1 생성 완료 — https://github.com/DevchannyP/MY-MODULE/pull/1 (180 commits, 555 files)"
 
   - priority: 2
     id: "NEXT-002"
-    action: "Spiral 7 — 동시성/성능 강화 WP 설계"
-    track: "SPIRAL-7"
+    action: "Spiral 17 WP 설계 및 wp-queue 등록"
+    track: "SPIRAL-17"
+    done: true
+    completed_at: "2026-04-12"
+    result: "CAP-SPIRAL-17 등록 완료 — WP-S17-001~003 pending, 2/3 ready (scheduler 확인)"
+
+  - priority: 3
+    id: "NEXT-003"
+    action: "WP-S17-001 실행 — Per-route rate-limit 강화"
+    track: "SPIRAL-17"
     done: false
-    goal: "NFR extended concurrency 요건 (async-first, Worker Thread, RateLimit 강화) 기반 신규 WP 정의."
-    trigger: "NEXT-001 완료 또는 사용자 명시 요청"
+    goal: "createServer.js에 routeRateLimitPolicy map 추가 (payment=10/min, upload=5/min). smoke 3건 PASS."
     success_criteria:
-      - "CAP-PERF capability로 wp-queue.yaml에 등록"
-      - "Stage A 진입 조건 명시"
+      - "POST /billing/payment: 10회/분 초과 시 429"
+      - "POST /video/upload: 5회/분 초과 시 429"
+      - "617/617 회귀 없음"
+
+  - priority: 4
+    id: "NEXT-004"
+    action: "WP-S17-002 실행 — GetBillingSummaryUseCase Promise.all 병렬화"
+    track: "SPIRAL-17"
+    done: false
+    goal: "invoices + payments 병렬 조회 전환. 기존 테스트 회귀 없음."
+    trigger: "NEXT-003 완료 후"
 
 queue:
   - priority: 1
