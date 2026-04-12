@@ -67,8 +67,8 @@ context_budget:
   max_new_files: 3
   max_modified_files: 6
   budget_primary_tokens: 5416
-  budget_total_tokens: 205442
+  budget_total_tokens: 211894
 template_id: planner-implementation
 planning_mode: ''
-generated_at: '2026-04-12T06:14:37.755590+00:00'
-applied_at: '2026-04-12T06:14:37.755608+00:00'
+generated_at: '2026-04-12T07:03:23.105798+00:00'
+applied_at: '2026-04-12T07:03:23.105811+00:00'

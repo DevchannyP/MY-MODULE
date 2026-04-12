@@ -710,7 +710,9 @@ capabilities:
 
       - id: "WP-S7-002"
         goal: "OutboxRepository + OutboxPoller — task-tracking 도메인 이벤트 전달 완성"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — OutboxRepository Port + InMemory/SQLite 구현체 + OutboxPoller, 20/20 테스트, 731/731 전체"
         tier: "domain"
         depends_on: ["WP-S7-001"]
         context_budget:

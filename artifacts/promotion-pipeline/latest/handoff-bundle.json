@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-12T06:14:37.709410+00:00",
+  "generated_at": "2026-04-12T07:03:23.071411+00:00",
   "goal": "plan-and-learn",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -55,11 +55,11 @@
         "estimated_tokens": 5501
       },
       "deferred": {
-        "file_count": 182,
-        "total_bytes": 583576,
-        "estimated_tokens": 194525
+        "file_count": 186,
+        "total_bytes": 602931,
+        "estimated_tokens": 200977
       },
-      "total_estimated_tokens": 205442
+      "total_estimated_tokens": 211894
     },
     "path_metrics": {
       "read_first": [
@@ -133,9 +133,9 @@
         {
           "path": "domains/",
           "exists": true,
-          "file_count": 122,
-          "total_bytes": 488545,
-          "estimated_tokens": 162848
+          "file_count": 126,
+          "total_bytes": 507900,
+          "estimated_tokens": 169300
         },
         {
           "path": "artifacts/deployment-smoke/",
@@ -195,7 +195,7 @@
         "id": "token-budget",
         "label": "토큰 예산 적합성",
         "status": "risk",
-        "detail": "primary 5416 tok / total 205442 tok"
+        "detail": "primary 5416 tok / total 211894 tok"
       },
       {
         "id": "completed-packet",
@@ -221,11 +221,11 @@
         "estimated_tokens": 5501
       },
       "deferred": {
-        "file_count": 182,
-        "total_bytes": 583576,
-        "estimated_tokens": 194525
+        "file_count": 186,
+        "total_bytes": 602931,
+        "estimated_tokens": 200977
       },
-      "total_estimated_tokens": 205442
+      "total_estimated_tokens": 211894
     },
     "required_adapters": [
       "master-ui-plugin-shell",
@@ -235,12 +235,12 @@
       "feature-flag-provider"
     ],
     "selected_adapters": [
-      "observability-otel",
-      "feature-flag-provider",
       "master-ui-plugin-shell",
       "planner-state-memory",
-      "master-ui-static-planner",
+      "observability-otel",
       "remote-mcp-connector",
+      "master-ui-static-planner",
+      "feature-flag-provider",
       "openai-responses-agent"
     ],
     "hard_constraints": [
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-12T06:14:37.709389+00:00",
+    "generated_at": "2026-04-12T07:03:23.071389+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-12 15:03:18 +0900",
+            "timestamp": "2026-04-12 16:00:54 +0900",
             "title": "git commit",
-            "detail": "feat(spiral7): spiral 7 baseline — EventBus + contract fixes + 708 tests",
+            "detail": "feat(spiral7): worker thread mindmap rebuild + 711/711 tests",
             "tag": "git"
           }
         ]
