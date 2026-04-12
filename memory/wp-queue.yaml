@@ -922,3 +922,16 @@ capabilities:
         result: "PASS — TaskController._serializeTask() version 추가"
         tier: "interface"
         depends_on: ["WP-S12-001"]
+
+  - capability: "CAP-S14"
+    label: "Spiral 14 — Outbox 듀얼 라이트 (at-least-once)"
+    spiral: 14
+    work_packets:
+      - id: "WP-S14-001"
+        goal: "CreateTaskUseCase outbox dual-write — EventBus 직접 발행 + OutboxRepository 내구성 기록"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — 4/4 통합 테스트, 서버 _sharedOutboxRepo 주입, at-least-once 보장"
+        tier: "domain"
+        depends_on: ["WP-S9-001"]
+        pattern: "microservices.io Outbox Pattern"
