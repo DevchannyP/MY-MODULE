@@ -60,26 +60,57 @@ class SQLiteTaskRepository {
    */
   async save(task) {
     const snap = task.toSnapshot ? task.toSnapshot() : task;
-    this._db.prepare(`
-      INSERT INTO tasks (id, title, assignee_id, status, due_date, description, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        title       = excluded.title,
-        assignee_id = excluded.assignee_id,
-        status      = excluded.status,
-        due_date    = excluded.due_date,
-        description = excluded.description,
-        updated_at  = excluded.updated_at
-    `).run(
-      snap.id,
-      snap.title,
-      snap.assignee_id,
-      snap.status,
-      snap.due_date ?? null,
-      snap.description ?? null,
-      snap.created_at,
-      snap.updated_at,
-    );
+    const version = typeof snap.version === 'number' ? snap.version : 1;
+    const existing = this._db.prepare('SELECT version FROM tasks WHERE id = ?').get(snap.id);
+
+    if (existing) {
+      // 낙관적 잠금: 저장된 version + 1 이어야 업데이트 허용
+      if (existing.version + 1 !== version) {
+        throw Object.assign(
+          new Error(
+            `Optimistic lock conflict for task ${snap.id}: ` +
+            `expected version ${existing.version + 1}, got ${version}`
+          ),
+          { code: 'OPTIMISTIC_LOCK_CONFLICT', expected: existing.version + 1, actual: version },
+        );
+      }
+      this._db.prepare(`
+        UPDATE tasks SET
+          title       = ?,
+          assignee_id = ?,
+          status      = ?,
+          due_date    = ?,
+          description = ?,
+          updated_at  = ?,
+          version     = ?
+        WHERE id = ?
+      `).run(
+        snap.title,
+        snap.assignee_id,
+        snap.status,
+        snap.due_date ?? null,
+        snap.description ?? null,
+        snap.updated_at,
+        version,
+        snap.id,
+      );
+    } else {
+      // 신규 insert
+      this._db.prepare(`
+        INSERT INTO tasks (id, title, assignee_id, status, due_date, description, created_at, updated_at, version)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        snap.id,
+        snap.title,
+        snap.assignee_id,
+        snap.status,
+        snap.due_date ?? null,
+        snap.description ?? null,
+        snap.created_at,
+        snap.updated_at,
+        version,
+      );
+    }
   }
 
   /**

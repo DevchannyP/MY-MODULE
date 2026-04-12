@@ -898,3 +898,15 @@ capabilities:
         result: "PASS — Task.version 필드 + 충돌 감지 8 tests PASS, 189/189 domain PASS"
         tier: "domain"
         nfr: "nfr_extended.concurrency.thread_safety"
+
+  - capability: "CAP-S12"
+    label: "Spiral 12 — 낙관적 잠금 HTTP 배선"
+    spiral: 12
+    work_packets:
+      - id: "WP-S12-001"
+        goal: "OPTIMISTIC_LOCK_CONFLICT → HTTP 409 ProblemDetails 배선"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — ProblemDetails 매핑 + smoke 2/2 PASS"
+        tier: "interface"
+        depends_on: ["WP-S11-001"]

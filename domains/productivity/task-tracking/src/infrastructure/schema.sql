@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   due_date    TEXT    NULL,                    -- ISO 8601 date or null
   description TEXT    NULL,
   created_at  TEXT    NOT NULL,               -- ISO 8601 datetime
-  updated_at  TEXT    NOT NULL                -- ISO 8601 datetime
+  updated_at  TEXT    NOT NULL,               -- ISO 8601 datetime
+  version     INTEGER NOT NULL DEFAULT 1      -- 낙관적 잠금 버전 (NFR: thread_safety)
 );
 
 -- Index for common query patterns (list by assignee, filter by status)
