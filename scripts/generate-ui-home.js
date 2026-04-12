@@ -15,6 +15,7 @@ const { BROWSER_UTILITY_RUNTIME_SOURCE } = require('../src/shared/browserUtility
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_PATH = path.join(ROOT, 'artifacts', 'index.html');
+// eslint-disable-next-line no-unused-vars -- used inside embedded <script> template (ESLint cannot track template-literal script scope)
 const HOME_ACTION_SOURCE_STORAGE_KEY = 'workflow-os.home-action-sources';
 
 function esc(value) {

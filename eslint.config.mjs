@@ -32,6 +32,7 @@ export default [
         Symbol: "readonly",
         crypto: "readonly",
         URL: "readonly",
+        URLSearchParams: "readonly",
         fetch: "readonly",
         globalThis: "readonly",
       },

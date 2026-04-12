@@ -1,7 +1,6 @@
 'use strict';
 
 const { Worker, isMainThread, parentPort, workerData } = require('node:worker_threads');
-const path = require('node:path');
 
 // ── Worker Thread 실행 코드 (같은 파일, isMainThread 분기) ──────────────────
 if (!isMainThread) {
