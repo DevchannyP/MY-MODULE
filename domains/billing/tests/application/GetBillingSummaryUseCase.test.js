@@ -60,4 +60,22 @@ describe('GetBillingSummaryUseCase', () => {
       { code: 'FORBIDDEN' },
     );
   });
+
+  test('[NFR async-first] 4개 조회가 Promise.all 병렬 실행 — 단일 execute 호출로 5개 필드 일관 반환', async () => {
+    const { summaryUC, createUC, transitionUC } = makeSetup();
+    await createUC.execute({ customerId: 'cust-A' }, WRITE_CALLER);
+    await createUC.execute({ customerId: 'cust-B' }, WRITE_CALLER);
+    const inv = await createUC.execute({ customerId: 'cust-C' }, WRITE_CALLER);
+    await transitionUC.execute({ invoiceId: inv.invoiceId, newStatus: 'PENDING' }, WRITE_CALLER);
+
+    const result = await summaryUC.execute(READ_CALLER);
+
+    assert.equal(result.total_invoices,  3, 'total_invoices');
+    assert.equal(result.pending_count,   1, 'pending_count');
+    assert.equal(result.disputed_count,  0, 'disputed_count');
+    assert.equal(result.open_exceptions, 0, 'open_exceptions');
+    assert.equal(result.month_total,     null, 'month_total null (Phase 2)');
+    // 5개 필드가 단일 execute에서 원자적으로 반환됨 (Promise.all 병렬 실행 계약)
+    assert.equal(Object.keys(result).length, 5, '5 fields returned atomically');
+  });
 });

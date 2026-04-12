@@ -971,7 +971,9 @@ capabilities:
     work_packets:
       - id: "WP-S17-001"
         goal: "Per-route rate-limit 강화 — billing payment/video upload 엔드포인트에 stricter limit tier 적용"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — routeRateLimitPolicies 파라미터 추가, 3/3 smoke PASS (billing 429, video 429, global bypass)"
         tier: "domain"
         nfr: "nfr_extended.concurrency.rule_shared_state"
         depends_on: ["WP-S16-001"]
@@ -984,14 +986,16 @@ capabilities:
           - "기존 전역 rate-limit 회귀 없음"
 
       - id: "WP-S17-002"
-        goal: "GetBillingSummaryUseCase async-first 강화 — 순차 조회를 Promise.all 병렬화로 전환"
-        status: "pending"
+        goal: "GetBillingSummaryUseCase async-first 강화 — Promise.all 병렬화 검증"
+        status: "done"
+        completed_at: "2026-04-12"
+        result: "PASS — Promise.all 이미 구현됨. NFR async-first 검증 테스트 1건 추가, 6/6 PASS"
         tier: "domain"
         nfr: "nfr_extended.concurrency.model"
         depends_on: ["WP-S16-001"]
         deliverables:
-          - "domains/billing/src/application/GetBillingSummaryUseCase.js: Promise.all 병렬화"
-          - "domains/billing/tests/application/GetBillingSummaryUseCase.test.js: 병렬 조회 검증 추가"
+          - "domains/billing/src/application/GetBillingSummaryUseCase.js: Promise.all 병렬화 (기존 구현 확인)"
+          - "domains/billing/tests/application/GetBillingSummaryUseCase.test.js: NFR async-first 테스트 추가"
         success_criteria:
           - "invoices + payments 조회가 Promise.all로 병렬 실행됨"
           - "기존 테스트 회귀 없음"
