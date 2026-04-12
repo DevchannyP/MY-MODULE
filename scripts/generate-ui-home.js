@@ -55,7 +55,7 @@ function buildNavigationSummary(nav, registry) {
   });
 }
 
-function buildHtml({ report, navSummary, currentState }) {
+function buildHtml({ report, navSummary, currentState, wpQueue }) {
   const improvements = Array.isArray(report.essential_improvements) ? report.essential_improvements : [];
   const issues = Array.isArray(report.known_issues) ? report.known_issues : [];
   const capabilities = Array.isArray(currentState?.working_capabilities) ? currentState.working_capabilities : [];
@@ -262,6 +262,49 @@ function buildHtml({ report, navSummary, currentState }) {
   .hero-side h2 {
     margin: 0 0 14px;
     font-size: 16px;
+  }
+
+  .loop-card {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(29,78,216,0.07));
+    border: 1px solid rgba(15, 118, 110, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
+  }
+
+  .loop-card h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+  }
+
+  .loop-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .loop-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .loop-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(220, 207, 186, 0.72);
+    font-size: 13px;
+  }
+
+  .loop-row strong {
+    text-align: right;
   }
 
   .side-list {
@@ -527,6 +570,7 @@ function buildHtml({ report, navSummary, currentState }) {
       flex-direction: column;
     }
   }
+${KANBAN_CSS}
 </style>
 </head>
 <body>
@@ -580,8 +624,21 @@ function buildHtml({ report, navSummary, currentState }) {
           <div class="side-item"><span class="muted">스케줄러</span><strong id="live-pty-scheduler">—</strong></div>
           <div class="side-item"><span class="muted">활성 플래그</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
           <div class="side-item"><span class="muted">ENV 오버라이드</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
+          <div class="side-item"><span class="muted">최근 operator action</span><strong id="live-operator-action">—</strong></div>
         </div>
-      </aside>
+        <div class="loop-card">
+          <h3>최근 Operator Loop</h3>
+        <div class="loop-list">
+          <div class="loop-row"><span class="muted">상태</span><strong id="live-loop-status">—</strong></div>
+          <div class="loop-row"><span class="muted">권장 브랜치</span><strong id="live-loop-branch">—</strong></div>
+          <div class="loop-row"><span class="muted">다음 가드 행동</span><strong id="live-loop-next">—</strong></div>
+        </div>
+        <div class="loop-actions">
+            <a id="live-loop-primary-link" class="page-link" href="mindmap/index.html?focus=execution-failure&reason=%EC%B5%9C%EA%B7%BC%20operator%20action%20%EC%8B%A4%ED%8C%A8&command=npm%20run%20operator%3Acockpit&source=home-loop#execution-console">실행 콘솔 열기</a>
+            <a id="live-loop-secondary-link" class="page-link" href="mindmap/index.html?focus=guard&reason=%EC%BB%A4%EB%B0%8B%20%EA%B0%80%EB%93%9C%20%ED%99%95%EC%9D%B8%20%ED%95%84%EC%9A%94&command=npm%20run%20commit%3Aguard&source=home-loop#plan-board">plan board 열기</a>
+        </div>
+      </div>
+    </aside>
     </section>
 
     <section class="stats" id="home-stat-detail">
@@ -606,6 +663,8 @@ function buildHtml({ report, navSummary, currentState }) {
         <div class="stat-note">현재 known issues 수</div>
       </article>
     </section>
+
+    ${buildKanbanSection(wpQueue)}
 
     <div class="section-head">
       <div>
@@ -784,6 +843,16 @@ async function callJson(path, { method = 'GET', body } = {}) {
     return await resp.json();
   } catch (_) { return null; }
 }
+function buildControlCenterHref(focus, targetId, meta = {}) {
+  const params = new URLSearchParams();
+  if (focus) params.set('focus', String(focus).trim());
+  if (meta.reason) params.set('reason', String(meta.reason).trim());
+  if (meta.command) params.set('command', String(meta.command).trim());
+  if (meta.label) params.set('label', String(meta.label).trim());
+  if (meta.source) params.set('source', String(meta.source).trim());
+  const query = params.toString();
+  return 'mindmap/index.html' + (query ? '?' + query : '') + (targetId ? ('#' + targetId) : '');
+}
 function updateAutosendUi(autoSend) {
   const badge = document.getElementById('live-autosend-badge');
   const stateEl = document.getElementById('live-autosend-state');
@@ -885,31 +954,432 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (activeFlagsEl) activeFlagsEl.textContent = '서버 오프라인';
     if (envOverridesEl) envOverridesEl.textContent = '—';
   }
+
+  const homeRuntime = await callJson('/ui/home-runtime', { method: 'GET' }).catch(() => null);
+  const recentOperatorActionEl = document.getElementById('live-operator-action');
+  const recentLoopStatusEl = document.getElementById('live-loop-status');
+  const recentLoopBranchEl = document.getElementById('live-loop-branch');
+  const recentLoopNextEl = document.getElementById('live-loop-next');
+  const recentLoopPrimaryLinkEl = document.getElementById('live-loop-primary-link');
+  const recentLoopSecondaryLinkEl = document.getElementById('live-loop-secondary-link');
+  if (recentOperatorActionEl) {
+    const recentAction = homeRuntime && homeRuntime.runtime_state
+      ? homeRuntime.runtime_state.recent_operator_action
+      : null;
+    if (recentAction && typeof recentAction === 'object') {
+      const deliveryLabel = recentAction.delivery_status === 'success'
+        ? '성공'
+        : recentAction.delivery_status === 'failed'
+          ? '실패'
+          : '미전송';
+      recentOperatorActionEl.textContent = deliveryLabel + ' / ' + String(recentAction.label || '명령');
+      recentOperatorActionEl.title = String(recentAction.command || '');
+    } else {
+      recentOperatorActionEl.textContent = '기록 없음';
+    }
+  }
+  const operatorCockpit = homeRuntime && homeRuntime.runtime_state
+    ? homeRuntime.runtime_state.operator_cockpit
+    : null;
+  if (recentLoopStatusEl) {
+    if (recentOperatorActionEl && homeRuntime && homeRuntime.runtime_state && homeRuntime.runtime_state.recent_operator_action) {
+      const recentAction = homeRuntime.runtime_state.recent_operator_action;
+      const deliveryLabel = recentAction.delivery_status === 'success'
+        ? '성공'
+        : recentAction.delivery_status === 'failed'
+          ? '실패'
+          : '미전송';
+      recentLoopStatusEl.textContent = deliveryLabel + ' / ' + String(recentAction.label || '명령');
+    } else {
+      recentLoopStatusEl.textContent = '기록 없음';
+    }
+  }
+  if (recentLoopBranchEl) {
+    recentLoopBranchEl.textContent = operatorCockpit && operatorCockpit.branch
+      ? String(operatorCockpit.branch.recommended_branch || operatorCockpit.branch.current_branch || '기록 없음')
+      : '기록 없음';
+  }
+  if (recentLoopNextEl) {
+    recentLoopNextEl.textContent = operatorCockpit && operatorCockpit.commit_guard
+      ? String(operatorCockpit.commit_guard.next_action || '기록 없음')
+      : '기록 없음';
+  }
+  if (recentLoopPrimaryLinkEl) {
+    const recentAction = homeRuntime && homeRuntime.runtime_state
+      ? homeRuntime.runtime_state.recent_operator_action
+      : null;
+    const failedAction = recentAction && recentAction.delivery_status === 'failed';
+    const validationCommands = operatorCockpit
+      && operatorCockpit.validation_profile
+      && Array.isArray(operatorCockpit.validation_profile.commands)
+      ? operatorCockpit.validation_profile.commands
+      : [];
+    const recommendedCommand = String(
+      failedAction
+        ? (recentAction.command || '')
+        : (validationCommands[0] || 'npm run operator:cockpit')
+    ).trim();
+    const reason = failedAction
+      ? String(recentAction.delivery_message || recentAction.label || '최근 operator action 실패').trim()
+      : String(
+        operatorCockpit && operatorCockpit.commit_guard
+          ? operatorCockpit.commit_guard.next_action || '최근 operator loop 상태 확인'
+          : '최근 operator loop 상태 확인'
+      ).trim();
+    recentLoopPrimaryLinkEl.href = failedAction
+      ? buildControlCenterHref('execution-failure', 'execution-console', {
+        reason,
+        command: recommendedCommand,
+        label: recentAction.label || '최근 operator action',
+        source: 'home-loop',
+      })
+      : buildControlCenterHref('operator-summary', 'master-status', {
+        reason,
+        command: recommendedCommand,
+        label: 'operator summary',
+        source: 'home-loop',
+      });
+    recentLoopPrimaryLinkEl.textContent = failedAction ? '실행 콘솔 열기' : '통합 상태 열기';
+  }
+  if (recentLoopSecondaryLinkEl) {
+    const guardBlocked = operatorCockpit && operatorCockpit.commit_guard
+      ? operatorCockpit.commit_guard.can_apply !== true
+      : false;
+    const validationCommands = operatorCockpit
+      && operatorCockpit.validation_profile
+      && Array.isArray(operatorCockpit.validation_profile.commands)
+      ? operatorCockpit.validation_profile.commands
+      : [];
+    const guardReason = String(
+      guardBlocked
+        ? (
+          operatorCockpit
+          && operatorCockpit.commit_guard
+          && Array.isArray(operatorCockpit.commit_guard.reasons)
+          && operatorCockpit.commit_guard.reasons[0]
+            ? operatorCockpit.commit_guard.reasons[0]
+            : (operatorCockpit && operatorCockpit.commit_guard ? operatorCockpit.commit_guard.next_action : '커밋 가드 확인 필요')
+        )
+        : '실행 패널에서 다음 operator action을 준비하세요.'
+    ).trim();
+    const guardCommand = String(
+      guardBlocked
+        ? (validationCommands[0] || 'npm run commit:guard')
+        : (
+          homeRuntime
+          && homeRuntime.runtime_state
+          && homeRuntime.runtime_state.recent_operator_action
+          && homeRuntime.runtime_state.recent_operator_action.command
+            ? homeRuntime.runtime_state.recent_operator_action.command
+            : 'npm run operator:cockpit'
+        )
+    ).trim();
+    recentLoopSecondaryLinkEl.href = guardBlocked
+      ? buildControlCenterHref('guard', 'plan-board', {
+        reason: guardReason,
+        command: guardCommand,
+        label: 'commit guard',
+        source: 'home-loop',
+      })
+      : buildControlCenterHref('execution-failure', 'execution-console', {
+        reason: guardReason,
+        command: guardCommand,
+        label: 'execution console',
+        source: 'home-loop',
+      });
+    recentLoopSecondaryLinkEl.textContent = guardBlocked ? 'plan board 열기' : '실행 패널 열기';
+  }
 });
 </script>
 </body>
 </html>`;
 }
 
+// ── Kanban lane mapping ──────────────────────────────────
+const KANBAN_LANES = [
+  { id: 'backlog',  label: 'Backlog',   statuses: ['pending', 'todo', 'ready'],             color: '#475569' },
+  { id: 'analysis', label: 'Analysis',  statuses: ['in-analysis', 'stage-a', 'stage-b'],    color: '#1d4ed8' },
+  { id: 'build',    label: 'Build',     statuses: ['in-build', 'in-progress', 'stage-d'],   color: '#b45309' },
+  { id: 'verify',   label: 'Verify',    statuses: ['in-verify', 'stage-e', 'gate'],          color: '#7e22ce' },
+  { id: 'done',     label: 'Done',      statuses: ['done', 'completed', 'pass', 'closed'],  color: '#0f766e' },
+];
+const STAGE_CYCLE = ['A', 'B', 'C', 'D', 'E'];
+
+function classifyLane(wp) {
+  const s = String(wp.status || '').toLowerCase();
+  for (const lane of KANBAN_LANES) {
+    if (lane.statuses.some((k) => s.includes(k))) return lane.id;
+  }
+  return 'backlog';
+}
+
+function buildKanbanSection(wpQueue) {
+  if (!wpQueue || !Array.isArray(wpQueue.capabilities)) return '';
+
+  // Flatten all WPs from capabilities
+  const allWps = [];
+  for (const cap of wpQueue.capabilities) {
+    for (const wp of (cap.work_packets || [])) {
+      allWps.push({ ...wp, cap_name: cap.name, cap_id: cap.id });
+    }
+  }
+
+  // Group by lane
+  const laneMap = {};
+  for (const lane of KANBAN_LANES) laneMap[lane.id] = [];
+  for (const wp of allWps) laneMap[classifyLane(wp)].push(wp);
+
+  // Stage badge helper
+  function stageBadges(wp) {
+    const current = String(wp.current_stage || wp.stage || '').toUpperCase();
+    return STAGE_CYCLE.map((s) => {
+      const active = current.includes(s);
+      return `<span class="kb-stage ${active ? 'kb-stage-on' : ''}">${s}</span>`;
+    }).join('');
+  }
+
+  // Tier badge
+  function tierBadge(wp) {
+    const tier = String(wp.tier || '').toLowerCase();
+    const map = { infra: '#475569', arch: '#1d4ed8', governance: '#7e22ce', domain: '#0f766e', meta: '#b45309' };
+    const color = map[tier] || '#475569';
+    return tier ? `<span class="kb-tier" style="background:${color}22;color:${color};border-color:${color}44;">${tier}</span>` : '';
+  }
+
+  const laneHtml = KANBAN_LANES.map((lane) => {
+    const cards = laneMap[lane.id];
+    const cardHtml = cards.length === 0
+      ? `<div class="kb-empty">없음</div>`
+      : cards.map((wp) => `
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">${esc(wp.id || '—')}</span>
+            ${tierBadge(wp)}
+          </div>
+          <div class="kb-goal">${esc(wp.goal || wp.name || '—')}</div>
+          <div class="kb-stages">${stageBadges(wp)}</div>
+        </div>`).join('');
+    return `
+      <div class="kb-lane">
+        <div class="kb-lane-head" style="border-top:3px solid ${lane.color}">
+          <span class="kb-lane-label">${lane.label}</span>
+          <span class="kb-lane-count">${cards.length}</span>
+        </div>
+        <div class="kb-cards">${cardHtml}</div>
+      </div>`;
+  }).join('');
+
+  // Spiral model: iterations derived from done caps vs total
+  const totalCaps = wpQueue.capabilities.length;
+  const doneCaps = wpQueue.capabilities.filter((c) => c.work_packets && c.work_packets.every((w) => String(w.status || '').toLowerCase().includes('done') || String(w.status || '').toLowerCase().includes('pass'))).length;
+  const iteration = doneCaps > 0 ? doneCaps : 1;
+
+  const spiralSteps = [
+    { label: '요구사항 분석', color: '#1d4ed8', stage: 'A' },
+    { label: '계약 설계', color: '#7e22ce', stage: 'B' },
+    { label: '셸 조합', color: '#b45309', stage: 'C' },
+    { label: '구현 · 테스트', color: '#0f766e', stage: 'D' },
+    { label: '적대적 검증', color: '#dc2626', stage: 'E' },
+  ];
+
+  const spiralHtml = spiralSteps.map((step, i) => `
+    <div class="spiral-step">
+      <div class="spiral-node" style="background:${step.color}22;border-color:${step.color}66;color:${step.color}">
+        <span class="spiral-stage">${step.stage}</span>
+      </div>
+      <div class="spiral-label">${step.label}</div>
+      ${i < spiralSteps.length - 1 ? '<div class="spiral-arrow">→</div>' : ''}
+    </div>`).join('');
+
+  return `
+    <div class="section-head" style="margin-top:40px">
+      <div>
+        <h2>칸반 보드 · 작업 흐름</h2>
+        <p>Work Packet 상태를 레인별로 시각화합니다. 각 카드의 A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
+      </div>
+      <div class="spiral-iteration">반복 <strong>#${iteration}</strong> / ${totalCaps} 능력</div>
+    </div>
+
+    <div class="spiral-row">${spiralHtml}</div>
+
+    <section class="kb-board" aria-label="칸반 보드">
+      ${laneHtml}
+    </section>`;
+}
+
+const KANBAN_CSS = `
+  /* ── Kanban Board ─────────────────────────── */
+  .kb-board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .kb-lane {
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.92);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .kb-lane-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px 8px;
+    background: rgba(255,255,255,0.7);
+  }
+  .kb-lane-label { font-weight: 700; font-size: 13px; }
+  .kb-lane-count {
+    background: rgba(0,0,0,0.07);
+    border-radius: 99px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .kb-cards { display: grid; gap: 8px; padding: 10px; }
+  .kb-card {
+    background: var(--surface-strong);
+    border: 1px solid rgba(220,207,186,0.75);
+    border-radius: 10px;
+    padding: 10px 11px;
+    display: grid;
+    gap: 5px;
+  }
+  .kb-card-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .kb-id {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .kb-tier {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 99px;
+    border: 1px solid;
+    text-transform: uppercase;
+  }
+  .kb-goal {
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .kb-stages {
+    display: flex;
+    gap: 3px;
+    margin-top: 3px;
+  }
+  .kb-stage {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    background: rgba(0,0,0,0.06);
+    color: var(--muted);
+  }
+  .kb-stage.kb-stage-on {
+    background: linear-gradient(135deg, #0f766e, #1d4ed8);
+    color: white;
+  }
+  .kb-empty {
+    text-align: center;
+    padding: 18px 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  /* ── Spiral Model ─────────────────────────── */
+  .spiral-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.85);
+    border-radius: var(--radius-lg);
+    margin-bottom: 14px;
+    overflow-x: auto;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .spiral-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .spiral-node {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .spiral-stage {
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .spiral-label {
+    font-size: 10px;
+    color: var(--muted);
+    max-width: 60px;
+    line-height: 1.3;
+    display: none;
+  }
+  .spiral-arrow {
+    font-size: 16px;
+    color: var(--muted);
+    margin: 0 2px;
+  }
+  .spiral-iteration {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 5px 10px;
+    border-radius: 99px;
+    background: rgba(15,118,110,0.07);
+    border: 1px solid rgba(15,118,110,0.2);
+  }
+  .spiral-iteration strong { color: var(--accent); }
+  @media (max-width: 980px) {
+    .kb-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 600px) {
+    .kb-board { grid-template-columns: 1fr; }
+    .spiral-row { gap: 2px; }
+  }
+`;
+
 function buildHomeData() {
   const report = buildReport();
   const nav = readYaml('master-shell/navigation/nav.yaml');
   const registry = readYaml('master-shell/plugin-registry/registry.yaml');
   const currentState = readYaml('memory/current-state.yaml');
+  const wpQueue = readYaml('memory/wp-queue.yaml');
   const navSummary = buildNavigationSummary(nav, registry);
-  return { report, nav, registry, currentState, navSummary };
+  return { report, nav, registry, currentState, navSummary, wpQueue };
 }
 
 function buildHomeRuntime() {
-  const { report, navSummary, currentState } = buildHomeData();
-  const html = buildHtml({ report, navSummary, currentState });
+  const { report, navSummary, currentState, wpQueue } = buildHomeData();
+  const html = buildHtml({ report, navSummary, currentState, wpQueue });
   return { html, homeData: { report, generatedAt: new Date().toISOString() } };
 }
 
 function main() {
-  const { report, navSummary, currentState } = buildHomeData();
+  const { report, navSummary, currentState, wpQueue } = buildHomeData();
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, buildHtml({ report, navSummary, currentState }), 'utf8');
+  fs.writeFileSync(OUT_PATH, buildHtml({ report, navSummary, currentState, wpQueue }), 'utf8');
   process.stdout.write('생성 완료: artifacts/index.html\n');
 }
 

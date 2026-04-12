@@ -201,6 +201,49 @@
     font-size: 16px;
   }
 
+  .loop-card {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(29,78,216,0.07));
+    border: 1px solid rgba(15, 118, 110, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45);
+  }
+
+  .loop-card h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+  }
+
+  .loop-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .loop-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .loop-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(220, 207, 186, 0.72);
+    font-size: 13px;
+  }
+
+  .loop-row strong {
+    text-align: right;
+  }
+
   .side-list {
     display: grid;
     gap: 10px;
@@ -464,6 +507,158 @@
       flex-direction: column;
     }
   }
+
+  /* ── Kanban Board ─────────────────────────── */
+  .kb-board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .kb-lane {
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.92);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .kb-lane-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px 8px;
+    background: rgba(255,255,255,0.7);
+  }
+  .kb-lane-label { font-weight: 700; font-size: 13px; }
+  .kb-lane-count {
+    background: rgba(0,0,0,0.07);
+    border-radius: 99px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .kb-cards { display: grid; gap: 8px; padding: 10px; }
+  .kb-card {
+    background: var(--surface-strong);
+    border: 1px solid rgba(220,207,186,0.75);
+    border-radius: 10px;
+    padding: 10px 11px;
+    display: grid;
+    gap: 5px;
+  }
+  .kb-card-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .kb-id {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .kb-tier {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 99px;
+    border: 1px solid;
+    text-transform: uppercase;
+  }
+  .kb-goal {
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .kb-stages {
+    display: flex;
+    gap: 3px;
+    margin-top: 3px;
+  }
+  .kb-stage {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 800;
+    background: rgba(0,0,0,0.06);
+    color: var(--muted);
+  }
+  .kb-stage.kb-stage-on {
+    background: linear-gradient(135deg, #0f766e, #1d4ed8);
+    color: white;
+  }
+  .kb-empty {
+    text-align: center;
+    padding: 18px 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  /* ── Spiral Model ─────────────────────────── */
+  .spiral-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.85);
+    border-radius: var(--radius-lg);
+    margin-bottom: 14px;
+    overflow-x: auto;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .spiral-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .spiral-node {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .spiral-stage {
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .spiral-label {
+    font-size: 10px;
+    color: var(--muted);
+    max-width: 60px;
+    line-height: 1.3;
+    display: none;
+  }
+  .spiral-arrow {
+    font-size: 16px;
+    color: var(--muted);
+    margin: 0 2px;
+  }
+  .spiral-iteration {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 5px 10px;
+    border-radius: 99px;
+    background: rgba(15,118,110,0.07);
+    border: 1px solid rgba(15,118,110,0.2);
+  }
+  .spiral-iteration strong { color: var(--accent); }
+  @media (max-width: 980px) {
+    .kb-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 600px) {
+    .kb-board { grid-template-columns: 1fr; }
+    .spiral-row { gap: 2px; }
+  }
+
 </style>
 </head>
 <body>
@@ -517,8 +712,21 @@
           <div class="side-item"><span class="muted">스케줄러</span><strong id="live-pty-scheduler">—</strong></div>
           <div class="side-item"><span class="muted">활성 플래그</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
           <div class="side-item"><span class="muted">ENV 오버라이드</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
+          <div class="side-item"><span class="muted">최근 operator action</span><strong id="live-operator-action">—</strong></div>
         </div>
-      </aside>
+        <div class="loop-card">
+          <h3>최근 Operator Loop</h3>
+        <div class="loop-list">
+          <div class="loop-row"><span class="muted">상태</span><strong id="live-loop-status">—</strong></div>
+          <div class="loop-row"><span class="muted">권장 브랜치</span><strong id="live-loop-branch">—</strong></div>
+          <div class="loop-row"><span class="muted">다음 가드 행동</span><strong id="live-loop-next">—</strong></div>
+        </div>
+        <div class="loop-actions">
+            <a id="live-loop-primary-link" class="page-link" href="mindmap/index.html?focus=execution-failure&reason=%EC%B5%9C%EA%B7%BC%20operator%20action%20%EC%8B%A4%ED%8C%A8&command=npm%20run%20operator%3Acockpit&source=home-loop#execution-console">실행 콘솔 열기</a>
+            <a id="live-loop-secondary-link" class="page-link" href="mindmap/index.html?focus=guard&reason=%EC%BB%A4%EB%B0%8B%20%EA%B0%80%EB%93%9C%20%ED%99%95%EC%9D%B8%20%ED%95%84%EC%9A%94&command=npm%20run%20commit%3Aguard&source=home-loop#plan-board">plan board 열기</a>
+        </div>
+      </div>
+    </aside>
     </section>
 
     <section class="stats" id="home-stat-detail">
@@ -542,6 +750,331 @@
         <div class="stat-value">1</div>
         <div class="stat-note">현재 known issues 수</div>
       </article>
+    </section>
+
+    
+    <div class="section-head" style="margin-top:40px">
+      <div>
+        <h2>칸반 보드 · 작업 흐름</h2>
+        <p>Work Packet 상태를 레인별로 시각화합니다. 각 카드의 A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
+      </div>
+      <div class="spiral-iteration">반복 <strong>#18</strong> / 18 능력</div>
+    </div>
+
+    <div class="spiral-row">
+    <div class="spiral-step">
+      <div class="spiral-node" style="background:#1d4ed822;border-color:#1d4ed866;color:#1d4ed8">
+        <span class="spiral-stage">A</span>
+      </div>
+      <div class="spiral-label">요구사항 분석</div>
+      <div class="spiral-arrow">→</div>
+    </div>
+    <div class="spiral-step">
+      <div class="spiral-node" style="background:#7e22ce22;border-color:#7e22ce66;color:#7e22ce">
+        <span class="spiral-stage">B</span>
+      </div>
+      <div class="spiral-label">계약 설계</div>
+      <div class="spiral-arrow">→</div>
+    </div>
+    <div class="spiral-step">
+      <div class="spiral-node" style="background:#b4530922;border-color:#b4530966;color:#b45309">
+        <span class="spiral-stage">C</span>
+      </div>
+      <div class="spiral-label">셸 조합</div>
+      <div class="spiral-arrow">→</div>
+    </div>
+    <div class="spiral-step">
+      <div class="spiral-node" style="background:#0f766e22;border-color:#0f766e66;color:#0f766e">
+        <span class="spiral-stage">D</span>
+      </div>
+      <div class="spiral-label">구현 · 테스트</div>
+      <div class="spiral-arrow">→</div>
+    </div>
+    <div class="spiral-step">
+      <div class="spiral-node" style="background:#dc262622;border-color:#dc262666;color:#dc2626">
+        <span class="spiral-stage">E</span>
+      </div>
+      <div class="spiral-label">적대적 검증</div>
+      
+    </div></div>
+
+    <section class="kb-board" aria-label="칸반 보드">
+      
+      <div class="kb-lane">
+        <div class="kb-lane-head" style="border-top:3px solid #475569">
+          <span class="kb-lane-label">Backlog</span>
+          <span class="kb-lane-count">0</span>
+        </div>
+        <div class="kb-cards"><div class="kb-empty">없음</div></div>
+      </div>
+      <div class="kb-lane">
+        <div class="kb-lane-head" style="border-top:3px solid #1d4ed8">
+          <span class="kb-lane-label">Analysis</span>
+          <span class="kb-lane-count">0</span>
+        </div>
+        <div class="kb-cards"><div class="kb-empty">없음</div></div>
+      </div>
+      <div class="kb-lane">
+        <div class="kb-lane-head" style="border-top:3px solid #b45309">
+          <span class="kb-lane-label">Build</span>
+          <span class="kb-lane-count">0</span>
+        </div>
+        <div class="kb-cards"><div class="kb-empty">없음</div></div>
+      </div>
+      <div class="kb-lane">
+        <div class="kb-lane-head" style="border-top:3px solid #7e22ce">
+          <span class="kb-lane-label">Verify</span>
+          <span class="kb-lane-count">0</span>
+        </div>
+        <div class="kb-cards"><div class="kb-empty">없음</div></div>
+      </div>
+      <div class="kb-lane">
+        <div class="kb-lane-head" style="border-top:3px solid #0f766e">
+          <span class="kb-lane-label">Done</span>
+          <span class="kb-lane-count">30</span>
+        </div>
+        <div class="kb-cards">
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-01</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">requirements schema와 validator를 실제 requirements.yaml 구조에 맞게 정렬한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-02</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">CLAUDE.md와 핵심 운영 문서를 Work Packet 사이클 모델로 정렬한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-03</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">requirements validation을 CI와 stage entry documentation에 연결한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-04</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">root memory files와 legacy memory/project files의 역할을 정리하고 bridge 규칙을 고정한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-05</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">echo-only stage scripts를 status/dry-run 가능한 실행기로 교체한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-06</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">project status runner를 추가해 stage A-E 상태를 구조화 출력한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-07</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">controller-level smoke 다음 단계인 실제 server wiring smoke 기준선을 만든다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-08</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">기존 quality gate를 실행하는 GitHub Actions workflow를 추가한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-09</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">HOW_TO_USE와 남은 legacy how-to/reference 문서를 Work Packet 운영 모델로 정렬한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-2026-03-19-10</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">video 도메인 Stage A 청사진과 리스크 프로파일을 작성한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-ARCH-001</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">DAG 스케줄러, context budget 시스템, requirements gap 검출기, session health 메트릭을 설치한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-ARCH-002</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">wp-queue.yaml CI 자동 검증 — DAG 무결성 게이트를 quality-gates.yml에 추가한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-ARCH-003</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">desired_state와 actual capabilities 간 자동 reconciliation 스크립트를 구현한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-GOV-001</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">release evidence 생성을 GitHub Actions에 통합해 KI-EVIDENCE-001을 해소한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-GOV-002</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">branch protection 정책 검증을 CI에 자동 추가한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-DOM-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">billing 도메인 계약 파일(openapi, events, capability)을 Stage A 수준으로 완성한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-DOM-002</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">cross-domain event bus 계약을 정의하고 contract drift 검증에 연결한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-ERR-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">RFC 7807 Problem Details 에러 응답 표준을 모든 컨트롤러에 적용한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-FLAG-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">OpenFeature 패턴으로 Feature Flag 런타임 평가를 서버 wiring에 추가한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-EVT-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">Transactional Outbox 패턴으로 도메인 이벤트 발행을 보장한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-OBS-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">OpenTelemetry SDK로 HTTP trace·메트릭·구조화 로그 최소 계측을 추가한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-PERSIST-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">SQLite 기반 TaskRepository 어댑터와 스키마 마이그레이션을 추가한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-META-001</span>
+            <span class="kb-tier" style="background:#b4530922;color:#b45309;border-color:#b4530944;">meta</span>
+          </div>
+          <div class="kb-goal">세션 종료 시 자동으로 gap 검출 → 신규 WP 생성 → queue 갱신하는 자기개선 루프를 구현한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-EVID-001</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-DOC-001</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">legacy operator model이 남아 있는 template와 memory/project 문서를 root protocol과 정렬한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-RUN-001</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">배포 환경 수준 smoke 체크리스트와 executable baseline을 추가해 KI-RUN-001을 축소한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-RUN-002</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">배포 환경 smoke를 실제 실행 가능한 runner와 workflow_dispatch 경로로 승격한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-DOC-002</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">root entry docs를 현재 capability/CI/runtime 상태와 일치시킨다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-RUN-003</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">deployment smoke를 environment registry와 GitHub environment binding에 연결한다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-RUN-004</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">원격 GitHub deployment environment provisioning을 policy/template/validator 기준으로 감사 가능하게 만든다</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div></div>
+      </div>
     </section>
 
     <div class="section-head">
@@ -839,6 +1372,16 @@ async function callJson(path, { method = 'GET', body } = {}) {
     return await resp.json();
   } catch (_) { return null; }
 }
+function buildControlCenterHref(focus, targetId, meta = {}) {
+  const params = new URLSearchParams();
+  if (focus) params.set('focus', String(focus).trim());
+  if (meta.reason) params.set('reason', String(meta.reason).trim());
+  if (meta.command) params.set('command', String(meta.command).trim());
+  if (meta.label) params.set('label', String(meta.label).trim());
+  if (meta.source) params.set('source', String(meta.source).trim());
+  const query = params.toString();
+  return 'mindmap/index.html' + (query ? '?' + query : '') + (targetId ? ('#' + targetId) : '');
+}
 function updateAutosendUi(autoSend) {
   const badge = document.getElementById('live-autosend-badge');
   const stateEl = document.getElementById('live-autosend-state');
@@ -939,6 +1482,141 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     if (activeFlagsEl) activeFlagsEl.textContent = '서버 오프라인';
     if (envOverridesEl) envOverridesEl.textContent = '—';
+  }
+
+  const homeRuntime = await callJson('/ui/home-runtime', { method: 'GET' }).catch(() => null);
+  const recentOperatorActionEl = document.getElementById('live-operator-action');
+  const recentLoopStatusEl = document.getElementById('live-loop-status');
+  const recentLoopBranchEl = document.getElementById('live-loop-branch');
+  const recentLoopNextEl = document.getElementById('live-loop-next');
+  const recentLoopPrimaryLinkEl = document.getElementById('live-loop-primary-link');
+  const recentLoopSecondaryLinkEl = document.getElementById('live-loop-secondary-link');
+  if (recentOperatorActionEl) {
+    const recentAction = homeRuntime && homeRuntime.runtime_state
+      ? homeRuntime.runtime_state.recent_operator_action
+      : null;
+    if (recentAction && typeof recentAction === 'object') {
+      const deliveryLabel = recentAction.delivery_status === 'success'
+        ? '성공'
+        : recentAction.delivery_status === 'failed'
+          ? '실패'
+          : '미전송';
+      recentOperatorActionEl.textContent = deliveryLabel + ' / ' + String(recentAction.label || '명령');
+      recentOperatorActionEl.title = String(recentAction.command || '');
+    } else {
+      recentOperatorActionEl.textContent = '기록 없음';
+    }
+  }
+  const operatorCockpit = homeRuntime && homeRuntime.runtime_state
+    ? homeRuntime.runtime_state.operator_cockpit
+    : null;
+  if (recentLoopStatusEl) {
+    if (recentOperatorActionEl && homeRuntime && homeRuntime.runtime_state && homeRuntime.runtime_state.recent_operator_action) {
+      const recentAction = homeRuntime.runtime_state.recent_operator_action;
+      const deliveryLabel = recentAction.delivery_status === 'success'
+        ? '성공'
+        : recentAction.delivery_status === 'failed'
+          ? '실패'
+          : '미전송';
+      recentLoopStatusEl.textContent = deliveryLabel + ' / ' + String(recentAction.label || '명령');
+    } else {
+      recentLoopStatusEl.textContent = '기록 없음';
+    }
+  }
+  if (recentLoopBranchEl) {
+    recentLoopBranchEl.textContent = operatorCockpit && operatorCockpit.branch
+      ? String(operatorCockpit.branch.recommended_branch || operatorCockpit.branch.current_branch || '기록 없음')
+      : '기록 없음';
+  }
+  if (recentLoopNextEl) {
+    recentLoopNextEl.textContent = operatorCockpit && operatorCockpit.commit_guard
+      ? String(operatorCockpit.commit_guard.next_action || '기록 없음')
+      : '기록 없음';
+  }
+  if (recentLoopPrimaryLinkEl) {
+    const recentAction = homeRuntime && homeRuntime.runtime_state
+      ? homeRuntime.runtime_state.recent_operator_action
+      : null;
+    const failedAction = recentAction && recentAction.delivery_status === 'failed';
+    const validationCommands = operatorCockpit
+      && operatorCockpit.validation_profile
+      && Array.isArray(operatorCockpit.validation_profile.commands)
+      ? operatorCockpit.validation_profile.commands
+      : [];
+    const recommendedCommand = String(
+      failedAction
+        ? (recentAction.command || '')
+        : (validationCommands[0] || 'npm run operator:cockpit')
+    ).trim();
+    const reason = failedAction
+      ? String(recentAction.delivery_message || recentAction.label || '최근 operator action 실패').trim()
+      : String(
+        operatorCockpit && operatorCockpit.commit_guard
+          ? operatorCockpit.commit_guard.next_action || '최근 operator loop 상태 확인'
+          : '최근 operator loop 상태 확인'
+      ).trim();
+    recentLoopPrimaryLinkEl.href = failedAction
+      ? buildControlCenterHref('execution-failure', 'execution-console', {
+        reason,
+        command: recommendedCommand,
+        label: recentAction.label || '최근 operator action',
+        source: 'home-loop',
+      })
+      : buildControlCenterHref('operator-summary', 'master-status', {
+        reason,
+        command: recommendedCommand,
+        label: 'operator summary',
+        source: 'home-loop',
+      });
+    recentLoopPrimaryLinkEl.textContent = failedAction ? '실행 콘솔 열기' : '통합 상태 열기';
+  }
+  if (recentLoopSecondaryLinkEl) {
+    const guardBlocked = operatorCockpit && operatorCockpit.commit_guard
+      ? operatorCockpit.commit_guard.can_apply !== true
+      : false;
+    const validationCommands = operatorCockpit
+      && operatorCockpit.validation_profile
+      && Array.isArray(operatorCockpit.validation_profile.commands)
+      ? operatorCockpit.validation_profile.commands
+      : [];
+    const guardReason = String(
+      guardBlocked
+        ? (
+          operatorCockpit
+          && operatorCockpit.commit_guard
+          && Array.isArray(operatorCockpit.commit_guard.reasons)
+          && operatorCockpit.commit_guard.reasons[0]
+            ? operatorCockpit.commit_guard.reasons[0]
+            : (operatorCockpit && operatorCockpit.commit_guard ? operatorCockpit.commit_guard.next_action : '커밋 가드 확인 필요')
+        )
+        : '실행 패널에서 다음 operator action을 준비하세요.'
+    ).trim();
+    const guardCommand = String(
+      guardBlocked
+        ? (validationCommands[0] || 'npm run commit:guard')
+        : (
+          homeRuntime
+          && homeRuntime.runtime_state
+          && homeRuntime.runtime_state.recent_operator_action
+          && homeRuntime.runtime_state.recent_operator_action.command
+            ? homeRuntime.runtime_state.recent_operator_action.command
+            : 'npm run operator:cockpit'
+        )
+    ).trim();
+    recentLoopSecondaryLinkEl.href = guardBlocked
+      ? buildControlCenterHref('guard', 'plan-board', {
+        reason: guardReason,
+        command: guardCommand,
+        label: 'commit guard',
+        source: 'home-loop',
+      })
+      : buildControlCenterHref('execution-failure', 'execution-console', {
+        reason: guardReason,
+        command: guardCommand,
+        label: 'execution console',
+        source: 'home-loop',
+      });
+    recentLoopSecondaryLinkEl.textContent = guardBlocked ? 'plan board 열기' : '실행 패널 열기';
   }
 });
 </script>

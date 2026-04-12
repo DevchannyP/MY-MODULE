@@ -628,3 +628,42 @@ capabilities:
           estimated_turns: 4
           max_new_files: 4
           max_modified_files: 10
+
+  # ──────────────────────────────────────────────
+  # CAP-HRN  Harness v0.2 Engineering  (2026-04-12)
+  # ──────────────────────────────────────────────
+  - id: "CAP-HRN"
+    name: "Harness v0.2 Engineering"
+    priority: 1
+    work_packets:
+      - id: "WP-HRN-001"
+        goal: "requirements/harness-engineering.yaml v0.2 — FR/NFR/패턴/DB/동시성 정의"
+        status: "done"
+        tier: "infra"
+        depends_on: []
+        completed_at: "2026-04-12"
+        result: "PASS — FR-001~042 + NFR Extended(concurrency/DB/OOP/patterns/modularity) 추가"
+
+      - id: "WP-HRN-002"
+        goal: "Master UI 칸반 보드 5레인 + 나선형 모델 시각화 추가"
+        status: "done"
+        tier: "meta"
+        depends_on: ["WP-HRN-001"]
+        completed_at: "2026-04-12"
+        result: "PASS — buildKanbanSection + KANBAN_CSS + spiral row 생성, 30개 WP 카드 렌더링"
+
+      - id: "WP-HRN-003"
+        goal: "docs/harness/CONTINUOUS_PROMPT.md — 연속 실행 마스터 프롬프트 생성"
+        status: "done"
+        tier: "infra"
+        depends_on: ["WP-HRN-001"]
+        completed_at: "2026-04-12"
+        result: "PASS — 세션 초기화 프로토콜 5단계 + 작업 유형별 라우팅 표 + 보고 형식 정의"
+
+      - id: "WP-HRN-004"
+        goal: "scheduler property/adversarial 테스트 수정 — rate limit + pts 없음 접미사"
+        status: "done"
+        tier: "infra"
+        depends_on: []
+        completed_at: "2026-04-12"
+        result: "PASS — HIGH_RATE_LIMIT 옵션 추가 + summarizeExecutionFailureLocation pts 없음 접미사 수정"

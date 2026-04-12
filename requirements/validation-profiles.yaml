@@ -1,0 +1,88 @@
+version: "0.1.0"
+last_updated: "2026-04-12"
+
+defaults:
+  description: "모든 packet에 공통 적용되는 최소 기준"
+  commands:
+    - "npm run validate:requirements"
+
+profiles:
+  planning:
+    description: "계획 수립, packet 정합성, context/route 판단이 핵심인 작업"
+    commands:
+      - "npm run project:status"
+      - "npm run wp:next"
+      - "npm run wp:reconcile"
+      - "npm run wp:check-fit"
+
+  policy:
+    description: "규칙, 제약, 거버넌스 기준면을 바꾸는 작업"
+    commands:
+      - "npm run validate:composition"
+      - "npm run check:advisory-policy"
+      - "npm run check:branch-protection-policy"
+
+  domain:
+    description: "도메인 로직, 계약, 저장/조회/상태 전이 회귀가 핵심인 작업"
+    commands:
+      - "npm run test:contract"
+      - "npm test"
+      - "npm run test:integration"
+      - "npm run test:e2e-smoke"
+
+  shell:
+    description: "master UI, plugin composition, frontend/server wiring이 핵심인 작업"
+    commands:
+      - "npm run validate:composition"
+      - "npm run lint"
+      - "npm run test:e2e-smoke"
+
+  executor:
+    description: "실행기, scheduler, promotion/apply 경로처럼 orchestration이 핵심인 작업"
+    commands:
+      - "npm run lint"
+      - "npm run test:e2e-smoke"
+      - "npm run wp:reconcile"
+
+  governance:
+    description: "CI, release, branch protection, deployment governance가 핵심인 작업"
+    commands:
+      - "npm run lint"
+      - "npm run validate:composition"
+      - "npm run check:branch-protection-policy"
+      - "npm run check:deployment-environment-provisioning"
+
+  arch:
+    description: "코어 구조, 상태 surface, cross-cutting contract를 바꾸는 작업"
+    commands:
+      - "npm run lint"
+      - "npm run type-check"
+      - "npm run validate:composition"
+      - "npm run test:e2e-smoke"
+
+  infra:
+    description: "개발 환경, validator, 기반 스크립트, 저장소 기반선을 바꾸는 작업"
+    commands:
+      - "npm run lint"
+      - "npm run type-check"
+      - "npm run scan:dependencies"
+
+  meta:
+    description: "문서, worklog, 운영 truthfulness, meta automation이 핵심인 작업"
+    commands:
+      - "npm run project:status"
+      - "npm run wp:reconcile"
+
+stage_overrides:
+  D:
+    add:
+      - "npm run lint"
+      - "npm run test:contract"
+  E:
+    add:
+      - "npm run test:e2e-smoke"
+
+notes:
+  - "profile commands are the minimum recommended validation bundle, not a ban on additional targeted tests"
+  - "packet.validation 필드에 더 구체적인 검증이 있으면 그것을 추가로 실행한다"
+  - "같은 명령은 중복 없이 1회만 추천한다"

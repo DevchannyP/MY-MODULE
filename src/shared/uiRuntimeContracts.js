@@ -47,6 +47,32 @@ function normalizePlanRow(row) {
   };
 }
 
+function normalizeKanbanCard(card) {
+  return {
+    id: String(card?.id || ''),
+    title: String(card?.title || ''),
+    purpose: String(card?.purpose || ''),
+    input: String(card?.input || ''),
+    output: String(card?.output || ''),
+    next_action: String(card?.next_action || card?.nextAction || ''),
+    owner: String(card?.owner || ''),
+    priority: String(card?.priority || ''),
+    status: String(card?.status || 'pending'),
+  };
+}
+
+function normalizeKanbanLane(lane) {
+  return {
+    id: String(lane?.id || ''),
+    label: String(lane?.label || ''),
+    owner: String(lane?.owner || ''),
+    status: String(lane?.status || 'pending'),
+    purpose: String(lane?.purpose || ''),
+    is_current: lane?.is_current === true,
+    cards: Array.isArray(lane?.cards) ? lane.cards.map(normalizeKanbanCard) : [],
+  };
+}
+
 function normalizeControlNode(node) {
   return {
     id: String(node?.id || ''),
@@ -70,6 +96,7 @@ function normalizeExecutionActivity(activity) {
   return {
     action: String(activity.action || ''),
     worker: String(activity.worker || ''),
+    worker_index: Number.isInteger(activity.worker_index) ? activity.worker_index : null,
     pts: String(activity.pts || ''),
     packet_id: String(activity.packet_id || ''),
     prompt_preview: String(activity.prompt_preview || ''),
@@ -77,6 +104,80 @@ function normalizeExecutionActivity(activity) {
     error: typeof activity.error === 'string' && activity.error.trim() ? activity.error : null,
     next_enter_in: typeof activity.next_enter_in === 'number' ? activity.next_enter_in : null,
     next_prompt_in: typeof activity.next_prompt_in === 'number' ? activity.next_prompt_in : null,
+  };
+}
+
+function normalizeOperatorCockpit(input) {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const currentWp = input.current_wp || {};
+  const validationProfile = input.validation_profile || input.commit_guard?.validation_profile || {};
+  const branch = input.branch || {};
+  const commitGuard = input.commit_guard || {};
+  const guard = commitGuard.guard || {};
+  const commitCandidate = commitGuard.commit_candidate || {};
+
+  return {
+    current_wp: {
+      id: String(currentWp.id || 'UNKNOWN'),
+      goal: String(currentWp.goal || 'UNKNOWN'),
+      stage: String(currentWp.stage || 'UNKNOWN'),
+      type: String(currentWp.type || 'UNKNOWN'),
+    },
+    next_wp: String(input.next_wp || 'NONE'),
+    git: {
+      branch: String(input.git?.branch || 'unknown'),
+      dirty: input.git?.dirty === true,
+      dirty_count: typeof input.git?.dirty_count === 'number' ? input.git.dirty_count : 0,
+    },
+    validation_profile: {
+      packet_type: String(validationProfile.packet_type || currentWp.type || 'UNKNOWN'),
+      stage: String(validationProfile.stage || currentWp.stage || 'UNKNOWN'),
+      commands: Array.isArray(validationProfile.commands) ? validationProfile.commands.map(String) : [],
+    },
+    branch: {
+      current_branch: String(branch.current_branch || input.git?.branch || 'unknown'),
+      recommended_branch: String(branch.recommended_branch || ''),
+      create_command: String(branch.create_command || ''),
+      commit_subject: String(branch.commit_template?.subject || commitCandidate.subject || ''),
+    },
+    commit_guard: {
+      next_action: String(commitGuard.next_action || ''),
+      protected_branch: guard.protected_branch === true,
+      has_dirty_changes: guard.has_dirty_changes === true,
+      validations_passed: guard.validations_passed === true,
+      can_apply: guard.can_apply === true,
+      reasons: Array.isArray(guard.reasons) ? guard.reasons.map(String) : [],
+      commit_subject: String(commitCandidate.subject || branch.commit_template?.subject || ''),
+    },
+    operator_actions: Array.isArray(input.operator_actions) ? input.operator_actions.map(String) : [],
+    as_of: String(input.as_of || new Date().toISOString()),
+  };
+}
+
+function normalizeRecentOperatorAction(input) {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const command = String(input.command || '').trim();
+  const label = String(input.label || '').trim();
+  if (!command || !label) {
+    return null;
+  }
+
+  return {
+    id: String(input.id || ''),
+    action: String(input.action || 'unknown'),
+    label,
+    scope: String(input.scope || ''),
+    command,
+    delivery_status: String(input.delivery_status || 'unsent'),
+    delivery_message: String(input.delivery_message || ''),
+    delivery_ts: String(input.delivery_ts || ''),
+    ts: String(input.ts || ''),
   };
 }
 
@@ -96,6 +197,32 @@ function deriveExecutionNextAction({ sessionCount, schedulerRunning, lastError, 
     return '마지막 프롬프트를 재실행하거나 자동 전송을 시작할 수 있습니다.';
   }
   return '추천 프롬프트를 불러오거나 직접 입력한 뒤 전송하세요.';
+}
+
+function summarizeExecutionActivity(activity, fallback = '없음') {
+  if (!activity || typeof activity !== 'object') {
+    return fallback;
+  }
+
+  const parts = [
+    String(activity.action || '').trim(),
+    String(activity.worker || '').trim(),
+    String(activity.pts || '').trim(),
+    String(activity.packet_id || '').trim(),
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(' / ') : fallback;
+}
+
+function summarizeExecutionFailureLocation(activity) {
+  if (!activity || !activity.error) {
+    return '없음';
+  }
+  const base = summarizeExecutionActivity(activity, '없음');
+  if (!String(activity.pts || '').trim()) {
+    return base === '없음' ? '없음' : base + ' / pts 없음';
+  }
+  return base;
 }
 
 function buildControlMatrix({
@@ -142,10 +269,57 @@ function buildControlMatrix({
   };
 }
 
+function buildEnabledControlActions(controlMatrix) {
+  const controlLabels = {
+    send_prompt: '프롬프트 전송',
+    auto_send_toggle: '자동 전송',
+    stop: '중지',
+    retry_last_prompt: '재시도',
+    rollback: '롤백',
+  };
+
+  return Object.entries(controlLabels)
+    .filter(([id]) => controlMatrix[id]?.enabled === true)
+    .map(([id, label]) => ({
+      id,
+      label,
+      reason: String(controlMatrix[id]?.reason || ''),
+    }));
+}
+
+function buildExecutionOperatorBrief({
+  schedulerRunning,
+  currentActivity,
+  lastActivity,
+  lastError,
+  nextAction,
+  controlMatrix,
+} = {}) {
+  const lastDispatchActivity = lastError || lastActivity || null;
+  const availableControls = buildEnabledControlActions(controlMatrix);
+
+  return {
+    auto_send_status: schedulerRunning === true ? '실행 중' : '중지됨',
+    current_execution: schedulerRunning === true
+      ? summarizeExecutionActivity(currentActivity, '실행 중인 worker 없음')
+      : '중지됨',
+    last_dispatch: summarizeExecutionActivity(lastDispatchActivity, '최근 전송 없음'),
+    blocked_at: summarizeExecutionFailureLocation(lastError || (lastActivity?.error ? lastActivity : null)),
+    failure_reason: String(lastError?.error || lastActivity?.error || '').trim() || '없음',
+    next_action: String(nextAction || '').trim() || '다음 행동 없음',
+    available_controls: availableControls,
+    available_controls_summary: availableControls.length > 0
+      ? availableControls.map((item) => item.label).join(', ')
+      : '즉시 가능한 제어 없음',
+  };
+}
+
 function buildControlCenterRuntimeState({
   flagStatus = {},
   bridgeState = {},
   schedulerStatus = {},
+  operatorCockpit = null,
+  recentOperatorAction = null,
 } = {}) {
   const sessions = Array.isArray(bridgeState.sessions) ? bridgeState.sessions : [];
   const enabledFlags = Array.isArray(flagStatus.enabled_flags) ? flagStatus.enabled_flags : [];
@@ -162,6 +336,20 @@ function buildControlCenterRuntimeState({
     rollbackEnabled,
     failureReasonVisible,
   });
+  const nextAction = deriveExecutionNextAction({
+    sessionCount: sessions.length,
+    schedulerRunning: schedulerStatus.running === true,
+    lastError: normalizedLastError,
+    lastPromptText,
+  });
+  const operatorBrief = buildExecutionOperatorBrief({
+    schedulerRunning: schedulerStatus.running === true,
+    currentActivity: normalizedCurrentActivity,
+    lastActivity: normalizedLastActivity,
+    lastError: normalizedLastError,
+    nextAction,
+    controlMatrix,
+  });
 
   return {
     feature_flags: {
@@ -174,6 +362,7 @@ function buildControlCenterRuntimeState({
     execution: {
       runtime_available: sessions.length > 0,
       session_count: sessions.length,
+      current_worker_index: Number.isInteger(schedulerStatus.current_worker_index) ? schedulerStatus.current_worker_index : null,
       selected_pts_hint: String(
         normalizedCurrentActivity?.pts
         || normalizedLastActivity?.pts
@@ -184,16 +373,14 @@ function buildControlCenterRuntimeState({
       current_activity: normalizedCurrentActivity,
       last_activity: normalizedLastActivity,
       last_error: normalizedLastError,
-      next_action: deriveExecutionNextAction({
-        sessionCount: sessions.length,
-        schedulerRunning: schedulerStatus.running === true,
-        lastError: normalizedLastError,
-        lastPromptText,
-      }),
+      next_action: nextAction,
+      operator_brief: operatorBrief,
     },
     scheduler: {
       running: schedulerStatus.running === true,
       started_at: schedulerStatus.started_at || null,
+      active_worker_index: Number.isInteger(schedulerStatus.active_worker_index) ? schedulerStatus.active_worker_index : null,
+      current_worker_index: Number.isInteger(schedulerStatus.current_worker_index) ? schedulerStatus.current_worker_index : null,
       worker_count: Array.isArray(schedulerStatus.workers) ? schedulerStatus.workers.length : 0,
       workers: Array.isArray(schedulerStatus.workers) ? schedulerStatus.workers : [],
       current_activity: normalizedCurrentActivity,
@@ -220,6 +407,44 @@ function buildControlCenterRuntimeState({
       failure_reason_visible: failureReasonVisible,
       control_matrix: controlMatrix,
     },
+    operator_cockpit: normalizeOperatorCockpit(operatorCockpit),
+    recent_operator_action: normalizeRecentOperatorAction(recentOperatorAction),
+    as_of: new Date().toISOString(),
+  };
+}
+
+function buildHomeRuntimeState({
+  flagStatus = {},
+  schedulerStatus = {},
+  operatorCockpit = null,
+  recentOperatorAction = null,
+} = {}) {
+  return {
+    feature_flags: {
+      enabled_flags: Array.isArray(flagStatus.enabled_flags) ? flagStatus.enabled_flags : [],
+      env_overridden_flags: Array.isArray(flagStatus.env_overridden_flags) ? flagStatus.env_overridden_flags : [],
+      env_overrides_applied: typeof flagStatus.envOverridesApplied === 'number' ? flagStatus.envOverridesApplied : 0,
+      flags_loaded: flagStatus.flagsLoaded === true,
+      flag_count: typeof flagStatus.flagCount === 'number' ? flagStatus.flagCount : 0,
+    },
+    scheduler: {
+      running: schedulerStatus.running === true,
+      worker_count: Array.isArray(schedulerStatus.workers) ? schedulerStatus.workers.length : 0,
+      started_at: schedulerStatus.started_at || schedulerStatus.startedAt || null,
+      last_activity: normalizeExecutionActivity(schedulerStatus.last_activity || schedulerStatus.lastActivity),
+    },
+    control_endpoints: {
+      send: '/api/pty/send',
+      sessions: '/api/pty/sessions',
+      scheduler_status: '/api/pty/scheduler/status',
+      scheduler_start: '/api/pty/scheduler/start',
+      scheduler_stop: '/api/pty/scheduler/stop',
+      flags: '/flags',
+      optimize_prompt: '/api/automation/optimize-prompt',
+      stage_run: '/api/planning-studio/stage-run',
+    },
+    operator_cockpit: normalizeOperatorCockpit(operatorCockpit),
+    recent_operator_action: normalizeRecentOperatorAction(recentOperatorAction),
     as_of: new Date().toISOString(),
   };
 }
@@ -312,6 +537,7 @@ function buildControlCenterRuntimeResponse(options = {}) {
         current_lane_id: String(controlCenter.statusBar?.currentLaneId || ''),
       },
       plan_rows: Array.isArray(controlCenter.planRows) ? controlCenter.planRows.map(normalizePlanRow) : [],
+      kanban_lanes: Array.isArray(controlCenter.kanbanLanes) ? controlCenter.kanbanLanes.map(normalizeKanbanLane) : [],
       control_nodes: Array.isArray(controlCenter.controlNodes) ? controlCenter.controlNodes.map(normalizeControlNode) : [],
       scaffold_capabilities: {
         preview_endpoint: '/api/planning-studio/scaffold-preview',
@@ -345,6 +571,7 @@ function buildControlCenterRuntimeResponse(options = {}) {
 }
 
 module.exports = {
+  buildHomeRuntimeState,
   buildHomeRuntimeResponse,
   buildControlCenterRuntimeResponse,
   buildControlCenterRuntimeState,
