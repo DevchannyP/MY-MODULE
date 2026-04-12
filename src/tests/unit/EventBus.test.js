@@ -147,6 +147,42 @@ describe('EventBus.listenerCount', () => {
   });
 });
 
+// ── Stats (운영 통계) ───────────────────────────────────────────────────────
+
+describe('EventBus getStats()', () => {
+  it('publish 호출마다 publishCount가 증가한다', () => {
+    const bus = EventBus.getInstance();
+    bus.publish({ type: 'a' });
+    bus.publish({ type: 'b' });
+    const stats = bus.getStats();
+    assert.equal(stats.publishCount, 2);
+  });
+
+  it('핸들러 오류 발생 시 handlerErrorCount가 증가한다', () => {
+    const bus = EventBus.getInstance();
+    bus.subscribe('bad', () => { throw new Error('fail'); });
+    bus.publish({ type: 'bad' });
+    assert.equal(bus.getStats().handlerErrorCount, 1);
+  });
+
+  it('clearForTest() 후 stats가 0으로 초기화된다', () => {
+    const bus = EventBus.getInstance();
+    bus.publish({ type: 'x' });
+    bus.clearForTest();
+    const stats = bus.getStats();
+    assert.equal(stats.publishCount, 0);
+    assert.equal(stats.handlerErrorCount, 0);
+  });
+
+  it('listenerCount를 stats에 포함한다', () => {
+    const bus = EventBus.getInstance();
+    bus.subscribe('x', () => {});
+    bus.subscribe('y', () => {});
+    const stats = bus.getStats();
+    assert.ok(stats.listenerCount >= 2);
+  });
+});
+
 // ── DLQ (Handler Error Callback) ────────────────────────────────────────────
 
 describe('EventBus handler error callback (DLQ)', () => {

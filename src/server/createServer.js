@@ -929,6 +929,14 @@ function createAppHandler({
             drain_started_at: lifecycleState.drainStartedAt,
             shutdown_reason: lifecycleState.shutdownReason,
           },
+          observability: {
+            event_bus:     _sharedEventBus.getStats(),
+            outbox_poller: {
+              running: _sharedOutboxPoller.isRunning,
+              stats:   _sharedOutboxPoller.stats,
+            },
+            dlq_size: _domainEventDlq.length,
+          },
         }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }

@@ -40,6 +40,8 @@ class EventBus {
     this._recordHistory = false;
     /** @type {((entry: { event: Record<string,unknown>, handlerName: string, error: Error }) => void) | null} */
     this._handlerErrorCb = null;
+    /** 운영 통계 */
+    this._stats = { publishCount: 0, handlerErrorCount: 0 };
   }
 
   /**
@@ -113,6 +115,7 @@ class EventBus {
     if (this._recordHistory) {
       this._publishedHistory.push(event);
     }
+    this._stats.publishCount += 1;
 
     const errors = [];
     const targets = [
@@ -133,6 +136,7 @@ class EventBus {
       for (const { handler: name, error } of errors) {
         // eslint-disable-next-line no-console
         console.warn(`[EventBus] handler "${name}" threw:`, error);
+        this._stats.handlerErrorCount += 1;
         if (this._handlerErrorCb) {
           try { this._handlerErrorCb({ event, handlerName: name, error }); } catch { /* DLQ callback 오류 격리 */ }
         }
@@ -192,6 +196,18 @@ class EventBus {
   }
 
   /**
+   * 운영 통계 스냅샷을 반환한다.
+   * @returns {{ publishCount: number, handlerErrorCount: number, listenerCount: number }}
+   */
+  getStats() {
+    return {
+      publishCount:       this._stats.publishCount,
+      handlerErrorCount:  this._stats.handlerErrorCount,
+      listenerCount:      this.listenerCount(),
+    };
+  }
+
+  /**
    * 테스트 전용: 핸들러와 히스토리를 모두 지운다 (인스턴스는 유지).
    */
   clearForTest() {
@@ -199,6 +215,7 @@ class EventBus {
     this._publishedHistory = [];
     this._recordHistory = false;
     this._handlerErrorCb = null;
+    this._stats = { publishCount: 0, handlerErrorCount: 0 };
   }
 }
 

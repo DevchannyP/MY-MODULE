@@ -57,6 +57,25 @@ test('[outbox poller wiring smoke] 서버 shutdown 후 OutboxPoller가 정지된
   assert.equal(_sharedOutboxPoller.isRunning, false, 'Poller should stop after server shutdown');
 });
 
+test('[outbox poller wiring smoke] /health 엔드포인트가 observability 데이터를 포함한다', async () => {
+  let runtime;
+  try {
+    runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+    const { port } = runtime;
+
+    const res = await request(port, 'GET', '/health');
+    assert.equal(res.status, 200, `Expected 200, got ${res.status}`);
+    const obs = res.body.observability;
+    assert.ok(obs, 'observability field should exist in health response');
+    assert.ok(typeof obs.event_bus.publishCount === 'number', 'event_bus.publishCount should be a number');
+    assert.ok(typeof obs.event_bus.listenerCount === 'number', 'event_bus.listenerCount should be a number');
+    assert.equal(obs.outbox_poller.running, true, 'outbox_poller.running should be true');
+    assert.equal(typeof obs.dlq_size, 'number', 'dlq_size should be a number');
+  } finally {
+    if (runtime) await runtime.shutdown();
+  }
+});
+
 test('[outbox poller wiring smoke] /api/v1/domain-events/dlq 엔드포인트가 응답한다', async () => {
   let runtime;
   try {
