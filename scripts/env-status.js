@@ -272,7 +272,12 @@ function main() {
     line(`  ⓘ npm run env:init  → .env 생성 후 주석 해제로 플래그 활성화`);
   } else if (activeCount === 0) {
     line(`  ⓘ .env에서 # WOS_FLAG_xxx=true 의 # 를 제거 후 서버 재시작`);
-    line(`  ⓘ env 활성화는 rollout 정책을 우회합니다 (전체 사용자 적용)`);
+    const hasPartialRolloutFlags = rows.some((r) => r.hasRollout);
+    if (hasPartialRolloutFlags) {
+      line(`  ⓘ env 활성화는 rollout 정책을 우회합니다 (전체 사용자 적용)`);
+    } else {
+      line(`  ⓘ released 단계 플래그는 주석 제거 후 즉시 전체 적용됩니다`);
+    }
   }
   line(sep);
 }
