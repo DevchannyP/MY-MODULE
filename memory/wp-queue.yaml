@@ -1016,3 +1016,52 @@ capabilities:
           - "CPU-bound transcoding이 Worker Thread로 분리 실행됨"
           - "메인 이벤트 루프 블로킹 없음 (타이밍 검증)"
           - "기존 Stage D 621/621 회귀 없음"
+
+  - id: "CAP-SPIRAL-18"
+    label: "Spiral 18 — SQLite→PostgreSQL Phase 2 어댑터 전환"
+    spiral: 18
+    doc_ref: "docs/db/migration-strategy.md#phase-2"
+    trigger: "NEXT-005 완료 후 (PR#1 main 머지)"
+    status: "pending"
+    work_packets:
+      - id: "WP-S18-001"
+        goal: "PostgresTaskRepository 어댑터 스켈레톤 — 포트 계약 구현 + 연결 없는 구조 테스트"
+        status: "pending"
+        tier: "domain"
+        depends_on: ["WP-S17-003"]
+        deliverables:
+          - "domains/task-tracking/src/infrastructure/PostgresTaskRepository.js: TaskRepositoryPort 전체 메서드 구현 (pg 클라이언트 주입)"
+          - "domains/task-tracking/tests/infrastructure/PostgresTaskRepository.contract.test.js: 포트 계약 구조 테스트 (실 DB 없이)"
+        success_criteria:
+          - "TaskRepositoryPort 인터페이스 모든 메서드 시그니처 일치"
+          - "NullPgClient 주입 시 구조 테스트 PASS"
+          - "도메인 코어/유스케이스 변경 없음"
+
+      - id: "WP-S18-002"
+        goal: "ENV 기반 어댑터 선택 — DB_TYPE=sqlite|postgres 런타임 분기 (DI wiring)"
+        status: "pending"
+        tier: "infra"
+        depends_on: ["WP-S18-001"]
+        deliverables:
+          - "src/server/createServer.js: DB_TYPE env 분기 로직 (sqlite 기본값)"
+          - ".env.example: DB_TYPE=sqlite 기본값 주석 추가"
+          - "master-shell/plugin-registry.yaml: db_adapter 선택 전략 문서화"
+        success_criteria:
+          - "DB_TYPE=sqlite → SQLiteTaskRepository (기존 동작 유지)"
+          - "DB_TYPE=postgres → PostgresTaskRepository (팩토리 주입)"
+          - "기존 smoke 테스트 144/144 회귀 없음"
+
+      - id: "WP-S18-003"
+        goal: "task-tracking PostgreSQL DDL + validate:schema 게이트 추가"
+        status: "pending"
+        tier: "infra"
+        depends_on: ["WP-S18-002"]
+        deliverables:
+          - "domains/task-tracking/src/infrastructure/migrations/001_initial_pg.sql: psql 호환 DDL (tasks + task_outbox)"
+          - "scripts/validate-schema.js: DDL 구문 정적 검증 스크립트"
+          - "package.json: validate:schema 스크립트 추가"
+        success_criteria:
+          - "psql-compatible DDL (TEXT PK 유지 — UUID 계약 준수)"
+          - "SQLite WHERE 부분 인덱스 → PostgreSQL 호환 인덱스로 전환"
+          - "validate:schema PASS"
+          - "기존 schema.sql 변경 없음 (신규 파일만 추가)"
