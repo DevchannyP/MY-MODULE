@@ -22,6 +22,7 @@ const path = require('node:path');
 
 const ROOT = process.cwd();
 const FLAGS_PATH = path.resolve(ROOT, 'master-shell/feature-flags/flags.yaml');
+const METADATA_PATH = path.resolve(ROOT, 'master-shell/feature-flags/metadata.json');
 const ENV_PATH = path.resolve(ROOT, '.env');
 const ENV_BAK_PATH = path.resolve(ROOT, '.env.bak');
 
@@ -88,6 +89,18 @@ function loadFlags() {
   return flags;
 }
 
+// ── metadata.json 읽기 (stage 정보) ──────────────────────────────────────
+/** @returns {Record<string, { stage?: string }>} */
+function loadMetadata() {
+  if (!fs.existsSync(METADATA_PATH)) return {};
+  try {
+    const parsed = JSON.parse(fs.readFileSync(METADATA_PATH, 'utf8'));
+    return (parsed && typeof parsed.flags === 'object') ? parsed.flags : {};
+  } catch (_) {
+    return {};
+  }
+}
+
 // ── 기존 .env 파싱 ────────────────────────────────────────────────────────
 /** @param {string} envPath @returns {{ lines: string[], activeKeys: Set<string>, commentedKeys: Set<string> }} */
 function parseExistingEnv(envPath) {
@@ -115,6 +128,7 @@ function buildScaffoldHeader() {
     `# npm run env:init 으로 자동 생성됨 (${date})`,
     `# 주석(#)을 제거하면 서버 재시작 시 즉시 적용됩니다.`,
     `# 참고: flags.yaml 기본값은 모두 false (안전한 기본값).`,
+    `# 현재 상태 확인: npm run env:status`,
     ``,
     `# ── 서버 설정 ───────────────────────────────────────────────────`,
     `PORT=3000`,
@@ -123,28 +137,38 @@ function buildScaffoldHeader() {
   ];
 }
 
-// ── 플래그 섹션 블록 생성 ─────────────────────────────────────────────────
-/** @param {{ section: string, key: string, envKey: string, defaultValue: boolean }[]} flags */
-function buildFlagBlocks(flags) {
+// ── 플래그 섹션 블록 생성 (stage 인식) ───────────────────────────────────
+/**
+ * @param {{ section: string, key: string, envKey: string, defaultValue: boolean }[]} flags
+ * @param {Record<string, { stage?: string }>} metadata
+ */
+function buildFlagBlocks(flags, metadata) {
   /** @type {string[]} */
   const lines = [];
-  let lastSection = '';
-  for (const { section, key, envKey, defaultValue } of flags) {
-    if (section !== lastSection) {
-      const label = section === 'global_flags' ? '전역 플래그' : '플러그인 플래그';
-      lines.push(`# ── ${label} (${section}) ─────────────────────────────────────────`);
-      lastSection = section;
+
+  // released 단계 플래그와 internal 단계 플래그를 분리
+  const released = flags.filter((f) => (metadata[f.key] || {}).stage === 'released');
+  const internal = flags.filter((f) => (metadata[f.key] || {}).stage !== 'released');
+
+  if (released.length > 0) {
+    lines.push(`# ── released 단계 플래그 — 주석 제거 후 즉시 전체 적용 가능 ──────────`);
+    for (const { envKey, defaultValue } of released) {
+      const hint = defaultValue ? ' # yaml 기본값: true' : '';
+      lines.push(`# ${envKey}=true${hint}`);
     }
-    const hint = defaultValue ? ' # yaml 기본값: true' : '';
-    lines.push(`# ${envKey}=true${hint}`);
-    // billing, video, task 그룹 구분용 공백
-    if (key.endsWith('.enabled') && !key.includes('.invoice') && !key.includes('.payment')
-        && !key.includes('.exception') && !key.includes('.upload') && !key.includes('.transcode')
-        && !key.includes('.admin')) {
-      // 루트 플러그인 플래그 다음 줄 없음 (같은 그룹 유지)
-    }
+    lines.push('');
   }
-  lines.push('');
+
+  if (internal.length > 0) {
+    lines.push(`# ── internal 단계 플래그 — 권한/검토 후 활성화 ─────────────────────`);
+    for (const { key, envKey, defaultValue } of internal) {
+      const stage = (metadata[key] || {}).stage || 'internal';
+      const hint = defaultValue ? ' # yaml 기본값: true' : ` # ${stage}`;
+      lines.push(`# ${envKey}=true${hint}`);
+    }
+    lines.push('');
+  }
+
   return lines;
 }
 
@@ -163,8 +187,9 @@ function main() {
       }
     }
 
+    const metadata = loadMetadata();
     const header = buildScaffoldHeader();
-    const flagLines = buildFlagBlocks(flags);
+    const flagLines = buildFlagBlocks(flags, metadata);
     const output = [...header, ...flagLines].join('\n');
 
     if (DRY_RUN) {
@@ -190,12 +215,14 @@ function main() {
     return;
   }
 
+  const metadata = loadMetadata();
   const appendLines = [
     '',
     `# ── env-init ${new Date().toISOString().slice(0, 10)} 추가 (누락된 플래그) ───────────────────`,
   ];
-  for (const { envKey, defaultValue } of missingKeys) {
-    const hint = defaultValue ? ' # yaml 기본값: true' : '';
+  for (const { key, envKey, defaultValue } of missingKeys) {
+    const stage = (metadata[key] || {}).stage || 'internal';
+    const hint = defaultValue ? ' # yaml 기본값: true' : ` # ${stage}`;
     appendLines.push(`# ${envKey}=true${hint}`);
   }
   appendLines.push('');
