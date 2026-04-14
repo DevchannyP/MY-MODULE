@@ -91,6 +91,47 @@ test('[env-init] preserves existing active settings on incremental add', () => {
   fs.rmSync(tmpDir, { recursive: true });
 });
 
+test('[env-init] groups flags into released/internal sections when metadata.json is present', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-init-meta-'));
+  fs.mkdirSync(path.join(tmpDir, 'master-shell/feature-flags'), { recursive: true });
+  const flagsSrc = path.resolve(ROOT, 'master-shell/feature-flags/flags.yaml');
+  const metaSrc = path.resolve(ROOT, 'master-shell/feature-flags/metadata.json');
+  fs.copyFileSync(flagsSrc, path.join(tmpDir, 'master-shell/feature-flags/flags.yaml'));
+  fs.copyFileSync(metaSrc, path.join(tmpDir, 'master-shell/feature-flags/metadata.json'));
+
+  const result = spawnSync(process.execPath, [SCRIPT], {
+    cwd: tmpDir,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, `exit code: ${result.status}\n${result.stderr}`);
+
+  const envFile = fs.readFileSync(path.join(tmpDir, '.env'), 'utf8');
+
+  // released 섹션 헤더가 있어야 함
+  assert.match(envFile, /released 단계 플래그/, 'released 섹션 헤더 존재');
+  // internal 섹션 헤더가 있어야 함
+  assert.match(envFile, /internal 단계 플래그/, 'internal 섹션 헤더 존재');
+
+  // released 플래그가 released 섹션에 포함되어야 함
+  const releasedIdx = envFile.indexOf('released 단계 플래그');
+  const internalIdx = envFile.indexOf('internal 단계 플래그');
+  assert.ok(releasedIdx < internalIdx, 'released 섹션이 internal 섹션보다 먼저 나와야 함');
+
+  const taskMgmtIdx = envFile.indexOf('WOS_FLAG_ENABLE_TASK_MANAGEMENT');
+  assert.ok(taskMgmtIdx > releasedIdx && taskMgmtIdx < internalIdx,
+    'WOS_FLAG_ENABLE_TASK_MANAGEMENT이 released 섹션에 있어야 함');
+
+  // internal 플래그가 internal 섹션에 포함되어야 함
+  const debugIdx = envFile.indexOf('WOS_FLAG_ENABLE_DEBUG_MODE');
+  assert.ok(debugIdx > internalIdx, 'WOS_FLAG_ENABLE_DEBUG_MODE이 internal 섹션에 있어야 함');
+
+  // env:status 힌트가 헤더에 있어야 함
+  assert.match(envFile, /env:status/, 'env:status 힌트가 헤더에 존재');
+
+  fs.rmSync(tmpDir, { recursive: true });
+});
+
 test('[env-init] --force rewrites .env and creates .env.bak', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-init-force-'));
   fs.mkdirSync(path.join(tmpDir, 'master-shell/feature-flags'), { recursive: true });
