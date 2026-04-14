@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-12T14:37:31.492880+00:00",
+  "generated_at_utc": "2026-04-14T12:06:11.852181+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "78cc37e7a05faf9fdb38ed03ffb454f8d0432ede",
+  "head_commit": "1bca294fe9dde0ff675638d31236208f18f0cca9",
   "build_environment": {
     "ci": "false",
-    "github_sha": "78cc37e7a05faf9fdb38ed03ffb454f8d0432ede",
+    "github_sha": "1bca294fe9dde0ff675638d31236208f18f0cca9",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -27,14 +27,13 @@
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
+      "artifacts/provenance/workflow-os-provenance.json",
       "artifacts/release-evidence/release-evidence.json",
-      "domains/video/src/application/StartTranscodeJobUseCase.js",
-      "memory/project/next-actions.yaml"
+      "package.json",
+      "src/shared/operatorActionRuntime.js",
+      "src/tests/smoke/mindmapControlCenterInteraction.smoke.test.js"
     ],
-    "untracked_paths": [
-      "domains/video/tests/application/StartTranscodeJobUseCase.workerThread.test.js",
-      "src/shared/TranscodeWorkerAdapter.js"
-    ]
+    "untracked_paths": []
   },
   "memory_sources": {
     "current_state": "memory/current-state.yaml",
@@ -63,7 +62,7 @@
     "provenance": {
       "path": "artifacts/provenance/workflow-os-provenance.json",
       "exists": true,
-      "sha256": "c1983da8ee4cd4990aa5fd7db51f2fe935cc2274b7f3f0cbac3ee3f9b027bd28"
+      "sha256": "b559d65ddc429ba7f819dad10fba4fde318720e8a587f1242a3eed13df194b9a"
     },
     "sbom": {
       "path": "artifacts/sbom/workflow-os.spdx.json",

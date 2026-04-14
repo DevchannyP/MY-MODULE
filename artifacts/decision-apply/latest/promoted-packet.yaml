@@ -1,4 +1,4 @@
-id: WP-PROMOTE-2026-04-12-OPS
+id: WP-PROMOTE-2026-04-14-OPS
 goal: 최근 audit 시그널을 기준으로 actor? 9543a440d4e4
 type: governance
 stage: D
@@ -71,5 +71,5 @@ context_budget:
   budget_total_tokens: 217146
 template_id: ops-hardening-packet
 planning_mode: ''
-generated_at: '2026-04-12T14:37:30.912475+00:00'
-applied_at: '2026-04-12T14:37:30.912490+00:00'
+generated_at: '2026-04-14T12:06:11.421456+00:00'
+applied_at: '2026-04-14T12:06:11.421475+00:00'

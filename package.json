@@ -10,7 +10,7 @@
     "test": "node --test 'domains/**/tests/**/*.test.js' 'src/tests/unit/**/*.test.js'",
     "test:contract": "python3 scripts/validate_contract_drift.py",
     "test:integration": "node --test 'domains/**/tests/application/**/*.test.js'",
-    "test:e2e-smoke": "node --test 'domains/**/tests/smoke/**/*.test.js' 'src/tests/smoke/**/*.test.js'",
+    "test:e2e-smoke": "node --test --test-force-exit 'domains/**/tests/smoke/**/*.test.js' 'src/tests/smoke/**/*.test.js'",
     "test:property": "node --test 'domains/**/tests/property/**/*.test.js'",
     "lint": "npm run lint:syntax && npm run lint:eslint",
     "lint:syntax": "node scripts/check-syntax.js",

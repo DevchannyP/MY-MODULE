@@ -214,8 +214,8 @@ test('[mindmap control center interaction smoke] worker selection is wired to im
   assert.match(html, /window\.setStageRunSignalGroupCollapsed = setStageRunSignalGroupCollapsed;/);
   assert.match(html, /window\.setStageRunHistorySort = setStageRunHistorySort;/);
   assert.match(html, /function resolveControlCenterDeepLinkContext\(\)/);
-  assert.match(html, /window\.sessionStorage\.setItem\(DEEP_LINK_CONTEXT_STORAGE_KEY/);
-  assert.match(html, /window\.sessionStorage\.getItem\(DEEP_LINK_CONTEXT_STORAGE_KEY/);
+  assert.match(html, /saveDeepLinkClientStorage\(DEEP_LINK_CONTEXT_STORAGE_KEY/);
+  assert.match(html, /loadDeepLinkClientStorage\(DEEP_LINK_CONTEXT_STORAGE_KEY/);
   assert.match(html, /idempotencyPayload: \{ worker_index: workerIndex \}/);
   assert.match(html, /idempotencyScope: 'planning-stage-run:'/);
   assert.match(html, /body: JSON\.stringify\(\{ worker_index: workerIndex \}\)/);

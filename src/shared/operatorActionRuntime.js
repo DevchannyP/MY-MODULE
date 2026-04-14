@@ -1,6 +1,9 @@
 'use strict';
 
 function normalizeRecentOperatorAction(input = {}) {
+  if (input === null || typeof input !== 'object') {
+    return null;
+  }
   const command = typeof input.command === 'string' ? input.command.trim() : '';
   const label = typeof input.label === 'string' ? input.label.trim() : '';
   if (!command || !label) {
