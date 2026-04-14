@@ -15,11 +15,11 @@
     },
     "enable_task_management": {
       "owner": "productivity-team",
-      "stage": "canary",
+      "stage": "released",
       "expires_on": "2026-12-31",
       "description": "작업 관리 플러그인 전체 노출 및 라우팅 활성화",
       "rollout": {
-        "percentage": 10,
+        "percentage": 100,
         "bucket_by": "userId"
       }
     },
@@ -31,23 +31,23 @@
     },
     "billing.enabled": {
       "owner": "platform-team",
-      "stage": "canary",
+      "stage": "released",
       "expires_on": "2026-12-31",
       "description": "정산 도메인 전체 활성화",
       "rollout": {
-        "percentage": 5,
+        "percentage": 100,
         "bucket_by": "userId"
       }
     },
     "billing.invoice.enabled": {
       "owner": "platform-team",
-      "stage": "canary",
+      "stage": "released",
       "expires_on": "2026-12-31",
       "description": "인보이스 목록/상세 UI 및 API 활성화"
     },
     "billing.payment.enabled": {
       "owner": "platform-team",
-      "stage": "canary",
+      "stage": "released",
       "expires_on": "2026-12-31",
       "description": "결제상태 추적 UI 및 API 활성화"
     },
@@ -64,17 +64,17 @@
     },
     "video.enabled": {
       "owner": "video-team",
-      "stage": "canary",
+      "stage": "released",
       "expires_on": "2026-12-31",
       "description": "비디오 도메인 전체 활성화",
       "rollout": {
-        "percentage": 5,
+        "percentage": 100,
         "bucket_by": "userId"
       }
     },
     "video.upload.enabled": {
       "owner": "video-team",
-      "stage": "canary",
+      "stage": "released",
       "expires_on": "2026-12-31",
       "description": "비디오 업로드 기능 활성화"
     },
