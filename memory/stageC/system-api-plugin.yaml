@@ -1,0 +1,78 @@
+# Stage C Memory - system-api 플러그인 등록
+# 생성일: 2026-04-15
+# 마스터 UI 조합기와 운영자는 코드보다 이 파일을 먼저 읽는다.
+
+module_id: "system-os"
+plugin_id: "system-api-plugin"
+stage_b_memory_ref: "memory/stageB/ui-shell-composition.yaml"
+
+plugin_registry_entry: "master-shell/plugin-registry/registry.yaml"
+registry_status: "inactive"
+
+navigation:
+  group: "system"
+  group_label: "System OS"
+  label: "System OS"
+  icon: "monitoring"
+  order: 0
+
+entry_point: "/"
+
+feature_flags:
+  system_api.enabled: false
+  system_api.sse_stream.enabled: false
+  system_api.flag_toggle_ui.enabled: false
+  system_api.rollback_ui.enabled: false
+flags_file: "master-shell/feature-flags/flags.yaml"
+flag_activation_mode: "runtime env override preferred"
+
+rollout:
+  strategy: "canary"
+  current_phase: "internal"
+  percentage: 0
+  activation_steps:
+    - step: 1
+      action: "system_api.enabled=true in internal environment"
+      trigger: "Stage D runtime wiring and composition smoke PASS"
+    - step: 2
+      action: "system_api.sse_stream.enabled + system_api.flag_toggle_ui.enabled selective enable"
+      trigger: "SSE/authz regression PASS"
+    - step: 3
+      action: "system_api.rollback_ui.enabled + registry status active"
+      trigger: "rollback safety and operator runbook PASS"
+
+observability:
+  dashboard_id: "system-api-dashboard"
+  alert_group_id: "system-api-alerts"
+  observability_config: "master-shell/observability/config.yaml"
+  metrics_tracked:
+    - "system health update rate"
+    - "system API p99 latency"
+    - "feature flag toggle count"
+    - "SSE reconnect failure count"
+    - "rollback trigger count"
+
+contracts:
+  ui: "contracts/ui-shell/ui-contract.yaml"
+  capability: "contracts/system-api/capability.yaml"
+  http: "contracts/system-api/openapi.yaml"
+  events: "contracts/system-api/events.schema.json"
+
+master_shell_read_order:
+  1: "memory/current-state.yaml"
+  2: "master-shell/plugin-registry/registry.yaml"
+  3: "master-shell/navigation/nav.yaml"
+  4: "master-shell/feature-flags/flags.yaml"
+  5: "contracts/ui-shell/ui-contract.yaml"
+  6: "contracts/system-api/capability.yaml"
+
+catalog_ref: "master-shell/catalog/domains.yaml"
+catalog_domain_id: "system"
+
+registered_at: "2026-04-15"
+gate_result: "PASS"
+gate_failures: []
+notes: |
+  - Stage C 범위에서 registry/nav/flags/observability/catalog 등록면을 모두 고정했다.
+  - 기본 flag는 모두 false라서 저장소 기본값 기준으로는 미노출 상태다.
+  - 다음 packet은 System API runtime wiring과 static shell surface를 Stage D에서 실제 연결한다.

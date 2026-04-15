@@ -1,0 +1,44 @@
+# Harness provider adapter — Stage D implementation readiness
+# 생성일: 2026-04-15
+
+domain_id: "harness-provider-adapter"
+stage: "D"
+status: "PASS"
+
+quality_bundle:
+  runtime_wiring:
+    command: "node --test src/tests/smoke/dynamicFrontendServer.smoke.test.js"
+    result: "PASS"
+    coverage_note: "optimize-prompt 응답이 prompt + provider + harness_runtime를 함께 노출한다."
+  observability_smoke:
+    command: "node --test src/tests/smoke/controlCenterObservability.smoke.test.js"
+    result: "PASS"
+    coverage_note: "gen_ai metrics와 control-center prompt recommendation counter가 함께 증가한다."
+  adapter_unit:
+    command: "node --test src/tests/unit/harnessProviderAdapter.test.js"
+    result: "PASS"
+    coverage_note: "timeout fallback과 schema mismatch non-fallback 규칙을 검증한다."
+  contract_gate:
+    command: "npm run validate:harness-contract"
+    result: "PASS"
+    coverage_note: "provider adapter contract/memory/ADR 기준선과 구현 surface 정합성을 유지한다."
+  routing_gate:
+    command: "npm run check:harness-routing"
+    result: "PASS"
+    coverage_note: "runtime route snapshot baseline 회귀가 없다."
+  lint:
+    command: "npm run lint"
+    result: "PASS"
+    coverage_note: "server/provider/test 변경이 lint 기준을 깨지 않는다."
+
+implementation_surface:
+  runtime_entrypoint: "src/server/createServer.js:/api/automation/optimize-prompt"
+  provider_port: "src/infrastructure/ai/HarnessProviderAdapter.js"
+  default_provider: "src/infrastructure/ai/NullHarnessProvider.js"
+  live_provider_skeleton: "src/infrastructure/ai/OpenAIResponsesProvider.js"
+  response_contract: "prompt(required) + provider(optional extension) + harness_runtime(optional extension)"
+
+notes: |
+  - optimize-prompt는 더 이상 route-local string builder만 호출하지 않고 HarnessRuntimeRouter snapshot을 provider adapter에 전달한다.
+  - 로컬 기본 경로는 null provider이므로 API key 없이도 구조화 응답과 telemetry/eval evidence를 남긴다.
+  - Stage E는 auth/rate-limit/service-unavailable/rollback safety를 적대 검증으로 추가 폐쇄한다.

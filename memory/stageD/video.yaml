@@ -1,0 +1,38 @@
+# Video 도메인 — Stage D 검증 기준선
+# 생성일: 2026-04-14
+
+domain_id: "video"
+stage: "D"
+status: "PASS"
+
+quality_bundle:
+  domain_tests:
+    command: "node --test domains/video/tests/domain/*.test.js domains/video/tests/application/*.test.js domains/video/tests/interface/*.test.js domains/video/tests/property/*.test.js domains/video/tests/adversarial/*.test.js"
+    result: "PASS"
+    coverage_note: "domain/application/interface/property/adversarial 15개 서브테스트 통과"
+  runtime_wiring_smoke:
+    command: "node --test src/tests/smoke/billingVideoEventWiring.smoke.test.js"
+    result: "PASS"
+    coverage_note: "POST /videos 이벤트 publish wiring 확인"
+  protection_smoke:
+    command: "node --test src/tests/smoke/perRouteRateLimit.smoke.test.js"
+    result: "PASS"
+    coverage_note: "video route stricter limit tier 적용 확인"
+
+composition_readiness:
+  plugin_registry: "PASS"
+  navigation: "PASS"
+  feature_flags_declared: "PASS"
+  observability_profile: "PASS"
+  event_registry_binding: "PASS"
+
+contracts_verified:
+  - "domains/video/contract/openapi.yaml"
+  - "domains/video/contract/capability.yaml"
+  - "domains/video/contract/ui-contract.yaml"
+  - "domains/video/contract/events.schema.json"
+  - "contracts/events/registry.yaml"
+
+notes: |
+  - VideoController, use case, repository, worker-thread 경로가 모두 테스트된다.
+  - Stage D는 구현/조합/검증 surface 기준으로 충족된다.

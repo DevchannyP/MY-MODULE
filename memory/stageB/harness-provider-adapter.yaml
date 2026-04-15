@@ -1,0 +1,118 @@
+# Stage B Memory - harness-provider-adapter composition
+# 생성일: 2026-04-15
+# 입력: requirements/harness-engineering.yaml, contracts/harness/provider-adapter.yaml,
+#       src/infrastructure/HarnessRuntimeRouter.js, src/infrastructure/telemetry.js
+# 목적: live provider adapter 연결 전략과 rollback/observability/eval 경계를 조합 수준에서 고정한다.
+
+module_key: harness-provider-adapter
+version: "1.0.0"
+stage: B
+status: composed
+gate_result: PASS
+
+composition_strategy: router-first-provider-port
+rationale: |
+  HarnessRuntimeRouter는 이미 mode/flag/release metadata를 계산하는 truth surface다.
+  실제 provider 연결도 이 snapshot을 그대로 소비해야 bootstrap/cockpit/health/readyz와 실행 경로가 어긋나지 않는다.
+  따라서 provider별 SDK 호출은 별도 adapter로 격리하고, router와 output schema는 바꾸지 않는다.
+
+components:
+  - id: harness-runtime-router
+    path: src/infrastructure/HarnessRuntimeRouter.js
+    responsibility: "mode, route_id, selected_model_tier, prompt_version, rollout_stage를 계산한다."
+    status: "existing"
+
+  - id: harness-provider-port
+    path: src/infrastructure/ai/HarnessProviderAdapter.js
+    responsibility: "route snapshot + intake packet을 provider invocation request로 정규화한다."
+    status: "planned"
+    interface:
+      - "invoke({ route, intakePacket, telemetryContext, abortSignal }) -> structured harness output"
+
+  - id: null-harness-provider
+    path: src/infrastructure/ai/NullHarnessProvider.js
+    responsibility: "샌드박스/secret 부재/live rollout off 상황에서 deterministic fallback을 제공한다."
+    status: "planned"
+
+  - id: openai-responses-provider
+    path: src/infrastructure/ai/OpenAIResponsesProvider.js
+    responsibility: "OpenAI Responses 계열 호출을 provider port 구현체로 캡슐화한다."
+    status: "planned"
+
+  - id: harness-provider-telemetry-bridge
+    path: src/infrastructure/telemetry.js
+    responsibility: "provider_id, model, fallback_applied, retry_count를 span/log/metric에 남긴다."
+    status: "existing-extension-point"
+
+  - id: harness-eval-ledger
+    path: artifacts/evals/harness/latest/harness-eval-report.json
+    responsibility: "provider execution 결과를 replay 가능한 artifact로 남긴다."
+    status: "existing-extension-point"
+
+data_flow:
+  interactive:
+    - "intake packet 구성"
+    - "HarnessRuntimeRouter route snapshot 계산"
+    - "HarnessProviderPort invoke"
+    - "output.schema 검증"
+    - "telemetry + eval ledger 기록"
+  fallback:
+    - "provider timeout/rate limit/budget breach 감지"
+    - "fallback chain 계산"
+    - "대체 tier/provider 재시도 또는 null provider 전환"
+    - "fallback_applied 필드를 telemetry/eval에 기록"
+
+cache_and_batch_policy:
+  prompt_caching:
+    flag: "harness_prompt_caching_enabled"
+    applies_to_tiers: ["frontier", "standard"]
+    note: "응답 본문이 아니라 provider request prefix와 usage metadata를 기준으로 관측한다."
+  batch_eval:
+    flag: "harness_batch_eval_enabled"
+    allowed_modes: ["Research", "Policy"]
+    note: "interactive path와 같은 output schema를 사용하되 응답 SLA는 분리한다."
+
+runtime_binding:
+  source_of_truth: "contracts/harness/provider-adapter.yaml"
+  bootstrap_surfaces:
+    - "scripts/session_bootstrap.js"
+    - "scripts/operator_cockpit.js"
+    - "src/server/createServer.js /health /readyz"
+  provider_runtime_surfaces:
+    - "future control runtime invoke path"
+    - "future eval runner live-provider path"
+
+rollback_strategy:
+  control_point: "release evidence rollout metadata + future live-provider flag"
+  rollback_action:
+    - "selected provider route를 이전 prompt/provider 조합으로 복귀"
+    - "null-harness-provider를 강제 fallback으로 승격"
+    - "fallback reason과 rollback target을 audit/release evidence에 기록"
+
+observability_plan:
+  spans:
+    - "harness.provider.route"
+    - "harness.provider.invoke"
+    - "harness.provider.fallback"
+  metrics:
+    - "gen_ai_client_input_tokens"
+    - "gen_ai_client_output_tokens"
+    - "gen_ai_client_cache_read_input_tokens"
+  required_log_fields:
+    - "provider_id"
+    - "model"
+    - "route_id"
+    - "prompt_version"
+    - "retry_count"
+    - "fallback_applied"
+
+adversarial_focus:
+  - "provider secret 미설정 상태에서도 structured failure 또는 null fallback으로 종료되는가"
+  - "schema mismatch가 응답 본문 contract drift로 숨지 않는가"
+  - "batch-only path가 interactive request를 먹지 않는가"
+  - "rollback 후 bootstrap/cockpit/health surface가 같은 route metadata를 보이는가"
+
+outputs:
+  adr_ref: "docs/adr/0013-harness-provider-adapter-strategy.md"
+  contract_ref: "contracts/harness/provider-adapter.yaml"
+  next_unlock: "WP-HARNESS-VNEXT-014에서 실제 provider port와 null/live adapter wiring을 구현한다."

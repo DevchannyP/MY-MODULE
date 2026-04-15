@@ -1,0 +1,40 @@
+# Stage E Memory - system-api 플러그인 adversarial validation
+# 생성일: 2026-04-15
+
+module_id: "system-os"
+plugin_id: "system-api-plugin"
+stage: "E"
+status: "PASS"
+
+adversarial_checks:
+  - command: "node --test src/tests/unit/systemApiController.test.js"
+    result: "PASS"
+    purpose: "system.admin 없는 flag toggle / rollback 호출이 structured 403으로 차단되는지 확인한다."
+  - command: "node --test src/tests/smoke/systemApiAdversarial.smoke.test.js"
+    result: "PASS"
+    purpose: "unauthorized admin action, SSE disconnect 후 reconnect, trace header continuity를 검증한다."
+  - command: "node --test src/tests/smoke/systemApiRuntime.smoke.test.js"
+    result: "PASS"
+    purpose: "root gate off-path 404와 sub-feature disabled 503 failure surface가 유지되는지 확인한다."
+  - command: "npm run validate:composition"
+    result: "PASS"
+    purpose: "adversarial validation 추가 후에도 plugin ownership/composition 정합성이 유지되는지 확인한다."
+
+rollback_surface:
+  safe_target: "WP-UI-003"
+  strategy: "revert Stage E validation artifacts only"
+  triggers:
+    - "system.admin 없이 flag toggle 또는 rollback이 성공할 때"
+    - "system_api.sse_stream.enabled=true 상태에서 disconnect 후 재연결이 200/event-stream으로 복구되지 않을 때"
+    - "disabled/forbidden failure가 RFC7807 유사 구조(code/status/title)를 잃을 때"
+
+release_readiness:
+  authz_regression: "PASS"
+  sse_reconnect_baseline: "PASS"
+  feature_disabled_surface: "PASS"
+  rollback_evidence: "PASS"
+
+notes: |
+  - Stage D wiring 이후 남아 있던 핵심 리스크는 권한 회귀와 SSE 운영 실패면이었다.
+  - unauthorized admin actions는 controller/unit와 HTTP smoke 양쪽에서 403으로 고정했다.
+  - SSE는 클라이언트 disconnect 후 request/correlation header를 유지한 새 연결이 다시 200 event-stream으로 수립되는 baseline을 만들었다.
