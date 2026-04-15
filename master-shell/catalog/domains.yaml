@@ -4,6 +4,21 @@ version: "0.3.0"
 last_updated: "2026-03-25"
 
 domains:
+  - id: "system"
+    name: "System OS"
+    description: "Workflow OS 운영 포털 — 헬스 모니터링, 피처 플래그, 감사 로그, 품질 게이트, 라이프사이클, 롤백 콘솔"
+    bounded_contexts:
+      - id: "system-api"
+        name: "System API"
+        description: "System OS가 Master UI에 노출하는 REST + SSE API. INV-SYS-001~005 authz 불변조건 유지."
+        stage_a_memory: "memory/stageA/system.yaml"
+        stage_b_memory: "memory/stageB/ui-shell-composition.yaml"
+    plugins:
+      - "system-api-plugin"
+    status: "inactive"
+    registered_at: "2026-04-15"
+    note: "Stage C 등록 완료. Stage D/E PASS 후 active 전환 예정."
+
   - id: "productivity"
     name: "생산성 관리"
     description: "담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역"

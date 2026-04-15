@@ -1,6 +1,6 @@
 {
   "name": "my-module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Workflow OS - requirements 기반 초격리 모듈 저장소",
   "main": "src/index.js",
   "packageManager": "npm@10.9.4",
@@ -55,6 +55,7 @@
     "release:evidence": "python3 scripts/generate_release_evidence.py",
     "catalog": "node scripts/generate-catalog-site.js",
     "ui:home": "node scripts/generate-ui-home.js",
+    "ui:system-os": "node scripts/build-system-os-pages.js",
     "ui:build": "node scripts/build-static-ui.js",
     "project:status": "node scripts/project_status.js",
     "stage:a": "node scripts/run_stage.js A --dry-run",

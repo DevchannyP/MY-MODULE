@@ -214,6 +214,11 @@ function findSystemRoute(pathname) {
 // ── Controller ────────────────────────────────────────────────────────────────
 
 class SystemApiController {
+  /** @param {{ flagProvider?: object|null }} opts */
+  constructor({ flagProvider = null } = {}) {
+    this.flagProvider = flagProvider;
+  }
+
   /**
    * Handle a standard (non-SSE) HTTP request.
    *
@@ -395,21 +400,48 @@ class SystemApiController {
   // ── GET /api/v1/system/flags ──────────────────────────────────────────────
 
   _listFlags() {
+    const now = new Date().toISOString();
+
+    // WP-HARNESS-VNEXT-011: flagProvider.getFullFlagDetails() takes precedence over file read.
+    // This allows tests and runtime routers to inject live flag metadata without
+    // touching the flags.yaml on disk.
+    if (this.flagProvider && typeof this.flagProvider.getFullFlagDetails === 'function') {
+      const details = this.flagProvider.getFullFlagDetails();
+      if (Array.isArray(details) && details.length > 0) {
+        const flags = details.map(d => ({
+          id:              d.flag || d.id || '',
+          value:           Boolean(d.enabled),
+          enabled:         Boolean(d.enabled),
+          group:           d.group || 'plugin_flags',
+          description:     d.description || '',
+          last_changed_at: now,
+          rollout_percentage: d.enabled ? 100 : 0,
+          depends_on:      Array.isArray(d.depends_on) ? d.depends_on : [],
+          env_overridden:  Boolean(d.env_overridden),
+          source:          d.source || 'flags.yaml',
+        }));
+        return { status: 200, body: { flags } };
+      }
+    }
+
+    // Fallback: read from flags.yaml on disk
     let rawFlags = [];
     try {
       const text = fs.readFileSync(FLAGS_PATH, 'utf8');
       rawFlags = parseFlagsYaml(text);
     } catch (_) { /* file missing */ }
 
-    const now = new Date().toISOString();
     const flags = rawFlags.map(f => ({
       id:                  f.id,
       value:               f.value,
+      enabled:             Boolean(f.value),
       group:               f.group,
       description:         '',
       last_changed_at:     now,
       rollout_percentage:  f.value ? 100 : 0,
       depends_on:          [],
+      env_overridden:      false,
+      source:              'flags.yaml',
     }));
 
     return {

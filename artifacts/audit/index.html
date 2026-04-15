@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>감사 로그 — Workflow OS</title>
+<link rel="stylesheet" href="/shared/shell.css">
+
+<script src="/shared/shell.js"></script>
+</head>
+<body>
+<header class="wf-shell-header" data-component="nav-header">
+  <div class="wf-shell-header__brand">
+    <a href="/" class="wf-shell-header__logo">Workflow OS</a>
+  </div>
+  <nav class="wf-shell-header__nav" role="navigation" aria-label="주 메뉴">
+      <a href="/" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">대시보드</a>
+      <a href="/catalog" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">카탈로그</a>
+      <a href="/flags" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">피처 플래그</a>
+      <a href="/audit" class="wf-nav-link wf-nav-link--active wf-nav-link--disabled" aria-disabled="true" tabindex="-1">감사 로그</a>
+      <a href="/quality" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">품질 게이트</a>
+      <a href="/lifecycle" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">라이프사이클</a>
+      <a href="/rollback" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">롤백 콘솔</a>
+      <a href="/tasks" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">작업 관리</a>
+      <a href="/billing" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산관리 홈</a>
+      <a href="/billing/invoices" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">인보이스 목록</a>
+      <a href="/billing/payments" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">결제상태 추적</a>
+      <a href="/billing/exceptions" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산 예외처리</a>
+      <a href="/videos" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">비디오 관리</a>
+  </nav>
+  <div class="wf-shell-header__status">
+    <span class="wf-sse-indicator wf-sse-indicator--offline"
+          data-sse-indicator
+          title="System OS 실시간 연결 상태"
+          aria-label="실시간 연결 끊김">●</span>
+  </div>
+</header>
+<span data-sse-connect="/api/v1/system/events" hidden aria-hidden="true"></span>
+<main class="wf-page" id="main-content">
+
+  <div class="wf-status-bar">
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">전체 항목</span>
+      <span class="wf-status-item__value">5</span>
+    </div>
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">표시</span>
+      <span class="wf-status-item__value">5</span>
+    </div>
+  </div>
+
+  <!-- 필터 바 -->
+  <div class="wf-section">
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
+      <input id="audit-search" type="search" placeholder="액션 검색..."
+             style="padding:.35rem .75rem;background:var(--wf-color-surface);border:1px solid var(--wf-color-border);color:var(--wf-color-text);border-radius:var(--wf-radius);font-size:.875rem;min-width:180px;"
+             oninput="filterAudit()">
+      <select id="audit-result-filter" onchange="filterAudit()"
+              style="padding:.35rem .75rem;background:var(--wf-color-surface);border:1px solid var(--wf-color-border);color:var(--wf-color-text);border-radius:var(--wf-radius);font-size:.875rem;">
+        <option value="">결과 전체</option>
+        <option value="PASS">PASS</option>
+        <option value="FAIL">FAIL</option>
+        <option value="PARTIAL">PARTIAL</option>
+      </select>
+      <button class="wf-btn wf-btn--ghost wf-btn--sm" onclick="exportAudit('csv')">CSV 내보내기</button>
+      <button class="wf-btn wf-btn--ghost wf-btn--sm" onclick="exportAudit('jsonl')">JSONL 내보내기</button>
+    </div>
+  </div>
+
+  <!-- 타임라인 -->
+  <div class="wf-section">
+    <div class="wf-section__title">감사 로그 (최신순)</div>
+    <div class="wf-timeline" id="audit-timeline" data-quality-timeline>
+      
+    <div class="wf-timeline-row" data-entry-seq="5">
+      <span class="wf-timeline-row__time" title="2026-04-05T09:53:50.492Z"> 53분 50초</span>
+      <span class="wf-timeline-row__domain">
+        <span class="wf-badge wf-badge--stage">—</span>
+        —
+      </span>
+      <span class="wf-timeline-row__action">WP-MINDMAP/all</span>
+      <span class="wf-badge wf-badge--pass">PASS</span>
+    </div>
+    <div class="wf-timeline-row" data-entry-seq="4">
+      <span class="wf-timeline-row__time" title="2026-03-25T11:37:10.201Z"> 37분 10초</span>
+      <span class="wf-timeline-row__domain">
+        <span class="wf-badge wf-badge--stage">—</span>
+        —
+      </span>
+      <span class="wf-timeline-row__action">C/core</span>
+      <span class="wf-badge wf-badge--pass">PASS</span>
+    </div>
+    <div class="wf-timeline-row" data-entry-seq="3">
+      <span class="wf-timeline-row__time" title="2026-03-25T11:28:00.434Z">시 28분 0초</span>
+      <span class="wf-timeline-row__domain">
+        <span class="wf-badge wf-badge--stage">—</span>
+        —
+      </span>
+      <span class="wf-timeline-row__action">C/core</span>
+      <span class="wf-badge wf-badge--pass">PASS</span>
+    </div>
+    <div class="wf-timeline-row" data-entry-seq="2">
+      <span class="wf-timeline-row__time" title="2026-03-21T01:50:20.302Z"> 50분 20초</span>
+      <span class="wf-timeline-row__domain">
+        <span class="wf-badge wf-badge--stage">—</span>
+        —
+      </span>
+      <span class="wf-timeline-row__action">fix/billing-payment-usecase</span>
+      <span class="wf-badge wf-badge--pass">PASS</span>
+    </div>
+    <div class="wf-timeline-row" data-entry-seq="1">
+      <span class="wf-timeline-row__time" title="2026-03-20T11:03:24.242Z">시 3분 24초</span>
+      <span class="wf-timeline-row__domain">
+        <span class="wf-badge wf-badge--stage">—</span>
+        —
+      </span>
+      <span class="wf-timeline-row__action">Phase3</span>
+      <span class="wf-badge wf-badge--pass">PASS</span>
+    </div>
+    </div>
+  </div>
+
+  <script>
+  function filterAudit() {
+    var q   = document.getElementById('audit-search').value.toLowerCase();
+    var res = document.getElementById('audit-result-filter').value;
+    document.querySelectorAll('#audit-timeline .wf-timeline-row').forEach(function(row) {
+      var action = (row.querySelector('.wf-timeline-row__action') || {}).textContent || '';
+      var result = (row.querySelector('.wf-badge') || {}).textContent || '';
+      var show = (!q || action.toLowerCase().includes(q)) && (!res || result.trim() === res);
+      row.style.display = show ? '' : 'none';
+    });
+  }
+
+  function exportAudit(format) {
+    fetch('/api/v1/system/audit?limit=200')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if (!data) { WfShell.toast('내보내기 실패', 'fail'); return; }
+        var content, mime, ext;
+        if (format === 'csv') {
+          var header = 'seq,timestamp,domain,stage,action,result,hash';
+          var lines  = data.entries.map(function(e){
+            return [e.seq, e.timestamp, e.domain, e.stage, '"' + (e.action||'').replace(/"/g,'""') + '"', e.result, e.hash].join(',');
+          });
+          content = [header].concat(lines).join('\n');
+          mime = 'text/csv'; ext = 'csv';
+        } else {
+          content = data.entries.map(function(e){ return JSON.stringify(e); }).join('\n');
+          mime = 'application/x-ndjson'; ext = 'jsonl';
+        }
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+        a.download = 'audit-log.' + ext;
+        a.click();
+        WfShell.toast('내보내기 완료', 'pass');
+      });
+  }
+
+  // SSE: 신규 항목이 오면 타임라인 선두에 추가 (shell.js의 system.quality-gate.updated 핸들러가 담당)
+  </script>
+</main>
+</body>
+</html>

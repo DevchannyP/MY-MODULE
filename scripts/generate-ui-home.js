@@ -12,6 +12,9 @@ const { buildOperatorCockpitSummary } = require('./operator_cockpit');
 const { OPERATOR_ACTION_CLIENT_RUNTIME_SOURCE } = require('../src/shared/operatorActionClientRuntimeSource');
 const { DEEP_LINK_CLIENT_RUNTIME_SOURCE } = require('../src/shared/deepLinkClientRuntimeSource');
 const { BROWSER_UTILITY_RUNTIME_SOURCE } = require('../src/shared/browserUtilityRuntimeSource');
+// WP-UI-006: System OS Live Data 통합 (Stage D)
+const { generateShellScript } = require('./lib/ui-shell');
+const { SystemApiClient } = require('./lib/system-api-client');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_PATH = path.join(ROOT, 'artifacts', 'index.html');
@@ -271,7 +274,8 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
     </section>`;
 }
 
-function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit }) {
+function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit,
+                     sysHealth = null, sysFlags = null, sysCatalog = null, sysQg = null }) {
   const improvements = Array.isArray(report.essential_improvements) ? report.essential_improvements : [];
   const issues = Array.isArray(report.known_issues) ? report.known_issues : [];
   const capabilities = Array.isArray(currentState?.working_capabilities) ? currentState.working_capabilities : [];
@@ -788,9 +792,12 @@ function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, boo
   }
 ${KANBAN_CSS}
 </style>
+${generateShellScript()}
 </head>
 <body>
   <a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
+  <span data-sse-connect="/api/v1/system/events" hidden aria-hidden="true"></span>
+${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
   <div class="shell">
     <header class="topbar">
       <div class="brand">
@@ -808,6 +815,10 @@ ${KANBAN_CSS}
         <a class="chip-link" href="master-planner/index.html">마스터 플래너</a>
         <a class="chip-link" href="catalog-site/index.html">도메인 카탈로그</a>
         <a class="chip-link" href="study-guide/index.html">학습 가이드</a>
+        <a class="chip-link" href="flags/index.html">피처 플래그</a>
+        <a class="chip-link" href="audit/index.html">감사 로그</a>
+        <a class="chip-link" href="quality/index.html">품질 게이트</a>
+        <a class="chip-link" href="lifecycle/index.html">라이프사이클</a>
       </div>
       </nav>
     </header>
@@ -2118,24 +2129,116 @@ function buildHomeData() {
   const bootstrap = buildBootstrapSummary();
   const operatorCockpit = buildOperatorCockpitSummary();
   const navSummary = buildNavigationSummary(nav, registry);
-  return { report, nav, registry, currentState, navSummary, wpQueue, nextActions, bootstrap, operatorCockpit };
+
+  // WP-UI-006: System OS 초기 스냅샷 (file mode — 빌드 타임 동기 읽기)
+  const sysClient = new SystemApiClient({ mode: 'file' });
+  const sysHealth  = sysClient._readHealthFile();
+  const sysFlags   = sysClient._readFlagsFile();
+  const sysCatalog = sysClient._readCatalogFile();
+  const sysQg      = sysClient._readQualityGateFile();
+
+  return { report, nav, registry, currentState, navSummary, wpQueue, nextActions, bootstrap, operatorCockpit,
+           sysHealth, sysFlags, sysCatalog, sysQg };
 }
 
 function buildHomeRuntime() {
-  const { report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit } = buildHomeData();
-  const html = buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit });
-  return { html, homeData: { report, generatedAt: new Date().toISOString() } };
+  const data = buildHomeData();
+  const html = buildHtml(data);
+  return { html, homeData: { report: data.report, generatedAt: new Date().toISOString() } };
 }
 
 function main() {
-  const { report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit } = buildHomeData();
+  const data = buildHomeData();
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit }), 'utf8');
+  fs.writeFileSync(OUT_PATH, buildHtml(data), 'utf8');
   process.stdout.write('생성 완료: artifacts/index.html\n');
 }
 
 if (require.main === module) {
   main();
+}
+
+// ── WP-UI-006: System OS 라이브 상태 섹션 ─────────────────────────────────────
+function buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg) {
+  const health = sysHealth  || { overall_score: 0, rating: 'UNKNOWN', domains: [] };
+  const flags  = sysFlags   || { flags: [], total: 0 };
+  // sysCatalog reserved for WP-UI-007 — domain count available via health.domains
+  void sysCatalog;
+  const qg     = sysQg     || { overall: 'UNKNOWN', last_run_at: null, gates: [] };
+
+  const activeFlags = flags.flags.filter(f => f.enabled).length;
+  const passGates   = qg.gates.filter(g => g.result === 'PASS').length;
+  const totalGates  = qg.gates.length;
+  const lastGateAt  = qg.last_run_at
+    ? new Date(qg.last_run_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour12: false })
+    : '알 수 없음';
+  const scoreColor  = health.overall_score >= 90 ? '#22c55e' : health.overall_score >= 70 ? '#f59e0b' : '#ef4444';
+  const ratingBg    = { ELITE:'rgba(34,197,94,0.15)', HIGH:'rgba(99,102,241,0.15)', MEDIUM:'rgba(245,158,11,0.15)',
+    LOW:'rgba(239,68,68,0.12)', CRITICAL:'rgba(239,68,68,0.2)', UNKNOWN:'rgba(100,116,139,0.1)' }[health.rating] || 'rgba(100,116,139,0.1)';
+  const ratingColor = { ELITE:'#22c55e', HIGH:'#6366f1', MEDIUM:'#f59e0b', LOW:'#ef4444',
+    CRITICAL:'#ef4444', UNKNOWN:'#64748b' }[health.rating] || '#64748b';
+
+  const domainCards = health.domains.map(d => {
+    const scoreW   = Math.max(0, Math.min(100, d.health_score || 0));
+    const barColor = scoreW >= 90 ? '#22c55e' : scoreW >= 70 ? '#f59e0b' : '#ef4444';
+    const trendIcon = { UP:'↑', DOWN:'↓', STABLE:'→' }[d.trend] || '→';
+    const trendColor = d.trend === 'UP' ? '#22c55e' : d.trend === 'DOWN' ? '#ef4444' : '#64748b';
+    return `<div class="wfos-domain-card" data-domain-id="${esc(d.id)}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-weight:600;font-size:.85rem;">${esc(d.name || d.id)}</span>
+        <span style="font-size:.7rem;padding:2px 7px;border-radius:999px;background:rgba(99,102,241,0.12);color:#6366f1;">${esc(d.stage || 'E')}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span data-health-score style="font-size:1.4rem;font-weight:700;font-family:monospace;color:${barColor};">${scoreW}</span>
+        <span style="color:${trendColor};font-size:1rem;">${trendIcon}</span>
+      </div>
+      <div style="background:#334155;border-radius:999px;height:4px;overflow:hidden;">
+        <div style="width:${scoreW}%;height:100%;background:${barColor};border-radius:999px;transition:width .4s ease;"></div>
+      </div>
+    </div>`;
+  }).join('') || '<span style="color:#64748b;font-size:.85rem;">도메인 데이터 없음</span>';
+
+  const gateDots = qg.gates.map(g => {
+    const c = g.result === 'PASS' ? '#22c55e' : g.result === 'FAIL' ? '#ef4444' : '#64748b';
+    return `<span title="${esc(g.name)} — ${esc(g.result)}" style="color:${c};font-size:.65rem;cursor:default;">●</span>`;
+  }).join(' ');
+
+  return `<section id="wfos-live-section" aria-label="System OS 실시간 상태"
+  style="background:#1e293b;border-bottom:1px solid #334155;padding:.75rem 1.5rem;">
+  <style>
+    #wfos-live-section * { box-sizing: border-box; }
+    .wfos-status-bar { display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.75rem; }
+    .wfos-stat { display:flex;flex-direction:column;gap:2px; }
+    .wfos-stat__label { font-size:.65rem;color:#64748b;text-transform:uppercase;letter-spacing:.06em;font-family:sans-serif; }
+    .wfos-stat__value { font-size:1.1rem;font-weight:700;font-family:monospace;color:#f1f5f9; }
+    .wfos-domain-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.5rem;margin-bottom:.5rem; }
+    .wfos-domain-card { background:#0f172a;border:1px solid #334155;border-radius:8px;padding:.6rem .75rem; }
+    .wfos-footer { display:flex;align-items:center;gap:1rem;flex-wrap:wrap;font-size:.75rem;color:#64748b; }
+  </style>
+  <div class="wfos-status-bar">
+    <div class="wfos-stat"><span class="wfos-stat__label">전체 헬스</span><span class="wfos-stat__value" style="color:${scoreColor};">${health.overall_score}</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">등급</span><span class="wfos-stat__value" style="font-size:.85rem;padding:2px 8px;border-radius:999px;background:${ratingBg};color:${ratingColor};">${esc(health.rating)}</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">도메인</span><span class="wfos-stat__value">${health.domains.length}</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">활성 플래그</span><span class="wfos-stat__value">${activeFlags} / ${flags.total}</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">품질 게이트</span><span class="wfos-stat__value" style="color:${passGates===totalGates&&totalGates>0?'#22c55e':'#ef4444'};">${passGates}/${totalGates} PASS</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">마지막 게이트</span><span class="wfos-stat__value" style="font-size:.8rem;">${esc(lastGateAt)}</span></div>
+    <div style="flex:1;"></div>
+    <div style="display:flex;align-items:center;gap:.4rem;">
+      <span class="wf-sse-indicator wf-sse-indicator--offline" data-sse-indicator title="실시간 연결 상태">●</span>
+      <span style="font-size:.72rem;color:#64748b;">실시간</span>
+    </div>
+  </div>
+  <div class="wfos-domain-grid" id="wfos-domain-grid">${domainCards}</div>
+  <div class="wfos-footer">
+    <span>게이트: ${gateDots || '<span style="color:#64748b;">없음</span>'}</span>
+    <span style="color:#334155;">|</span>
+    <a href="flags/index.html" style="color:#6366f1;text-decoration:none;">피처 플래그</a>
+    <a href="audit/index.html" style="color:#6366f1;text-decoration:none;">감사 로그</a>
+    <a href="quality/index.html" style="color:#6366f1;text-decoration:none;">품질 게이트</a>
+    <a href="lifecycle/index.html" style="color:#6366f1;text-decoration:none;">라이프사이클</a>
+    <a href="rollback/index.html" style="color:#ef4444;text-decoration:none;">롤백 콘솔</a>
+  </div>
+</section>`;
 }
 
 module.exports = { buildHomeRuntime };

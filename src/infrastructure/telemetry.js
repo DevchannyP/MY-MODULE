@@ -241,6 +241,58 @@ const metrics = {
     description: 'Control center bridge operation duration',
     unit: 'ms',
   }),
+  // WP-HARNESS-VNEXT-006: GenAI / LLM 클라이언트 메트릭 (OTel GenAI 시맨틱 컨벤션)
+  genAiClientOperationDurationMs: meter.createHistogram('gen_ai_client_operation_duration_ms', {
+    description: 'GenAI client operation duration (latency)',
+    unit: 'ms',
+  }),
+  genAiClientInputTokens: meter.createCounter('gen_ai_client_input_tokens', {
+    description: 'GenAI client input tokens consumed',
+  }),
+  genAiClientOutputTokens: meter.createCounter('gen_ai_client_output_tokens', {
+    description: 'GenAI client output tokens generated',
+  }),
+  genAiClientCacheReadInputTokens: meter.createCounter('gen_ai_client_cache_read_input_tokens', {
+    description: 'GenAI client prompt-cache-read tokens',
+  }),
 };
 
-module.exports = { tracer, meter, logger, metrics, Span, Counter, Histogram };
+// ── Harness telemetry context ─────────────────────────────────────────────────
+// WP-HARNESS-VNEXT-006: prompt_version, mode, evidence_status 등 하네스 메타를
+// 모든 OTel span에 자동 첨부하기 위한 모듈 레벨 컨텍스트 저장소.
+
+const _harnessTelemetryDefaults = {
+  prompt_version:  'unknown',
+  mode:            'unknown',
+  risk_level:      'unknown',
+  evidence_status: 'unknown',
+  model:           'unknown',
+  reasoning_effort:'unknown',
+  eval_run_id:     'unknown',
+};
+
+// eslint-disable-next-line prefer-const -- reassigned by setHarnessTelemetryContext
+let _harnessTelemetryContext = { ..._harnessTelemetryDefaults };
+
+/**
+ * Return a snapshot of the current harness telemetry context.
+ * @returns {{ prompt_version: string, mode: string, risk_level: string, evidence_status: string, model: string, reasoning_effort: string, eval_run_id: string }}
+ */
+function getHarnessTelemetryContext() {
+  return { ..._harnessTelemetryContext };
+}
+
+/**
+ * Merge partial harness metadata into the module-level context.
+ * Unknown keys in the partial object are ignored.
+ * @param {Partial<typeof _harnessTelemetryDefaults>} partial
+ */
+function setHarnessTelemetryContext(partial) {
+  if (!partial || typeof partial !== 'object') return;
+  const allowed = new Set(Object.keys(_harnessTelemetryDefaults));
+  for (const [k, v] of Object.entries(partial)) {
+    if (allowed.has(k)) _harnessTelemetryContext[k] = String(v ?? 'unknown');
+  }
+}
+
+module.exports = { tracer, meter, logger, metrics, Span, Counter, Histogram, getHarnessTelemetryContext, setHarnessTelemetryContext };

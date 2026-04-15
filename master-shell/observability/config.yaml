@@ -3,6 +3,25 @@ version: "0.2.0"
 last_updated: "2026-03-20"
 
 dashboards:
+  - id: "system-api-dashboard"
+    name: "System OS 대시보드"
+    description: "System API 헬스, 플래그 조작, SSE 이벤트, 롤백 요청 모니터링"
+    url: "dashboard://workflow-os/system-api-overview"
+    plugin_id: "system-api-plugin"
+    metrics:
+      - name: "System API 응답시간 p99"
+        type: "duration"
+        source: "/api/v1/system/* 엔드포인트"
+      - name: "플래그 토글 수"
+        type: "count"
+        source: "PATCH /api/v1/system/flags/:id"
+      - name: "SSE 재연결 실패 수"
+        type: "error"
+        source: "system events reconnect failure"
+      - name: "롤백 트리거 수"
+        type: "count"
+        source: "POST /api/v1/system/rollback/:domain"
+
   - id: "task-management-dashboard"
     name: "작업 관리 대시보드"
     description: "작업 생성·완료율, 상태 전이 빈도, API 응답시간(RED 지표) 모니터링"
@@ -70,6 +89,21 @@ dashboards:
         source: "startTranscodeJob 409 응답"
 
 alert_groups:
+  - id: "system-api-alerts"
+    name: "System OS 알림"
+    plugin_id: "system-api-plugin"
+    channel: "alert://workflow-os/system-api"
+    rules:
+      - name: "System API 오류율 초과"
+        condition: "error_rate > 1% (5분 평균)"
+        severity: "warning"
+      - name: "authz 회귀 발생"
+        condition: "system.admin authz regression (403/401 급증)"
+        severity: "critical"
+      - name: "SSE 연결 실패 급증"
+        condition: "sse_reconnect_failure burst > 10/min"
+        severity: "warning"
+
   - id: "task-management-alerts"
     name: "작업 관리 알림"
     plugin_id: "task-management-plugin"

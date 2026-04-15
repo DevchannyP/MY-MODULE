@@ -100,6 +100,60 @@
           "video:admin"
         ]
       }
+    },
+    "system_api.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "System OS UI API 전체 활성화"
+    },
+    "system_api.sse_stream.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "System OS SSE 실시간 스트림 활성화"
+    },
+    "system_api.flag_toggle_ui.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "피처 플래그 UI 토글 활성화 (system.admin 전용)",
+      "allow": {
+        "permissions_any": ["system.admin"]
+      }
+    },
+    "system_api.rollback_ui.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "롤백 콘솔 UI 활성화 (system.admin 전용)",
+      "allow": {
+        "permissions_any": ["system.admin"]
+      }
+    },
+    "harness_routing_frontier_research": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 frontier research 라우팅 모드"
+    },
+    "harness_routing_mini_build": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 mini/build 라우팅 모드"
+    },
+    "harness_prompt_caching_enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 프롬프트 캐싱 활성화"
+    },
+    "harness_batch_eval_enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 배치 eval 활성화"
     }
   }
 }

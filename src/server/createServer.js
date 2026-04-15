@@ -15,6 +15,8 @@ const { ListTasksUseCase } = require('../../domains/productivity/task-tracking/s
 const { TransitionTaskStatusUseCase } = require('../../domains/productivity/task-tracking/src/application/TransitionTaskStatusUseCase');
 const { ReassignTaskUseCase } = require('../../domains/productivity/task-tracking/src/application/ReassignTaskUseCase');
 const { InMemoryTaskRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/InMemoryTaskRepository');
+const { SQLiteTaskRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/SQLiteTaskRepository');
+const { PostgresTaskRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/PostgresTaskRepository');
 
 const { BillingController } = require('../../domains/billing/src/interface/BillingController');
 const { VideoController } = require('../../domains/video/src/interface/VideoController');
@@ -44,6 +46,77 @@ const {
   normalizeRecentOperatorAction,
   mergeRecentOperatorActions,
 } = require('../shared/operatorActionRuntime');
+
+// ── DB_TYPE routing (WP-S18-002) ─────────────────────────────────────────────
+
+function createUnconfiguredPostgresClient({
+  connectionString = '',
+  host = '',
+  port = '',
+  database = '',
+} = {}) {
+  return {
+    async query() {
+      throw Object.assign(
+        new Error(
+          'DB_TYPE=postgres 이지만 PostgreSQL client가 주입되지 않았습니다. ' +
+          '실제 연결/Pool wiring은 후속 packet에서 구성해야 합니다.'
+        ),
+        {
+          code: 'POSTGRES_CLIENT_NOT_CONFIGURED',
+          connection_string_present: Boolean(connectionString),
+          host_present: Boolean(host),
+          port_present: Boolean(port),
+          database_present: Boolean(database),
+        },
+      );
+    },
+  };
+}
+
+/**
+ * Select a TaskRepository adapter based on DB_TYPE environment variable.
+ *
+ * DB_TYPE=sqlite  (default) → SQLiteTaskRepository
+ * DB_TYPE=postgres          → PostgresTaskRepository (client must be injected)
+ * DB_TYPE=inmemory          → InMemoryTaskRepository
+ *
+ * @param {{ dbType?: string, sqliteDbPath?: string, postgresClient?: object, postgresSchema?: string, postgresTable?: string }} opts
+ */
+function resolveTaskRepository({
+  dbType = process.env.DB_TYPE || 'sqlite',
+  sqliteDbPath = process.env.TASK_SQLITE_DB_PATH || ':memory:',
+  postgresClient = null,
+  postgresSchema = process.env.POSTGRES_SCHEMA || 'public',
+  postgresTable = process.env.POSTGRES_TASK_TABLE || 'tasks',
+} = {}) {
+  const normalizedDbType = String(dbType || 'sqlite').trim().toLowerCase();
+
+  if (normalizedDbType === 'sqlite') {
+    return SQLiteTaskRepository.create(sqliteDbPath);
+  }
+
+  if (normalizedDbType === 'postgres') {
+    return new PostgresTaskRepository({
+      client: postgresClient || createUnconfiguredPostgresClient({
+        connectionString: process.env.POSTGRES_URL || '',
+        host: process.env.POSTGRES_HOST || '',
+        port: process.env.POSTGRES_PORT || '',
+        database: process.env.POSTGRES_DB || '',
+      }),
+      schema: postgresSchema,
+      table: postgresTable,
+    });
+  }
+
+  if (normalizedDbType === 'inmemory') {
+    return new InMemoryTaskRepository();
+  }
+
+  throw new Error(`Unsupported DB_TYPE: ${dbType}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function createTaskController(
   taskRepository = new InMemoryTaskRepository(),
@@ -1165,6 +1238,66 @@ function createAppHandler({
         return;
       }
 
+      // ── System OS API (/api/v1/system/*) — WP-UI-004 / WP-S18 ──────────────
+      if (hasMountedPrefix(url.pathname, '/api/v1/system')) {
+        const { SystemApiController, findSystemRoute, broadcastSseEvent } = require('../infrastructure/SystemApiController');
+
+        const sysEnabled = evaluateFlag(resolvedFlags, 'system_api.enabled', false, {
+          userId: caller.userId, targetingKey: caller.userId, permissions: caller.permissions,
+          route: url.pathname, method,
+        });
+        if (!sysEnabled.value) {
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          sendResponse(req, res, 404, fromError(
+            Object.assign(new Error('system-api 기능이 비활성화 상태입니다.'), { code: 'NOT_FOUND' }),
+            { path: url.pathname },
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+          return;
+        }
+
+        // SSE endpoint
+        if (method === 'GET' && url.pathname === '/api/v1/system/events') {
+          const sseEnabled = evaluateFlag(resolvedFlags, 'system_api.sse_stream.enabled', false, {
+            userId: caller.userId, targetingKey: caller.userId, permissions: caller.permissions,
+            route: url.pathname, method,
+          });
+          if (!sseEnabled.value) {
+            if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+            sendResponse(req, res, 503, {
+              type: 'about:blank', title: 'System SSE stream disabled', status: 503,
+              detail: 'system_api.sse_stream.enabled=false',
+            }, mergeHeaders(responseBaseHeaders, responseHeaders));
+            return;
+          }
+          const controller = new SystemApiController({ flagProvider: resolvedFlags });
+          controller.handleSse(req, res, requestId, responseBaseHeaders);
+          // Emit a welcome event so clients detect the connection
+          setTimeout(() => { try { broadcastSseEvent('system.health.updated', { domain: 'system', score: 100 }); } catch (_e) { /* SSE client may have disconnected */ } }, 100);
+          return;
+        }
+
+        const { path: canonicalPath, params } = findSystemRoute(url.pathname);
+        const controller = new SystemApiController({ flagProvider: resolvedFlags });
+        const response = controller.handle({
+          method,
+          path: canonicalPath,
+          params,
+          query: Object.fromEntries(url.searchParams.entries()),
+          body,
+          caller,
+        });
+
+        if (idempotencyScope) {
+          if (response.status >= 200 && response.status < 300) {
+            idempotencyStore.complete(idempotencyScope, { status: response.status, body: response.body });
+          } else {
+            idempotencyStore.abort(idempotencyScope);
+          }
+        }
+        sendResponse(req, res, response.status, response.body, mergeHeaders(responseBaseHeaders, responseHeaders));
+        return;
+      }
+
       // ── Planning Studio — domain scaffold preview / create ────────────────
       if (
         method === 'POST' &&
@@ -2037,6 +2170,7 @@ module.exports = {
   createServer,
   startServer,
   createAllEnabledFlags,
+  resolveTaskRepository,
   _domainEventRingBuffer,
   _domainEventDlq,
   _sharedOutboxPoller,

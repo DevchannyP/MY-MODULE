@@ -5,6 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { readYaml } = require('./run_stage');
+// WP-UI-007: Shell SSE 통합
+const { generateShellScript } = require('./lib/ui-shell');
 
 const output = path.join(__dirname, '..', 'artifacts', 'catalog-site', 'index.html');
 
@@ -435,8 +437,10 @@ const html = `<!DOCTYPE html>
     }
   }
 </style>
+${generateShellScript()}
 </head>
 <body>
+  <span data-sse-connect="/api/v1/system/events" hidden aria-hidden="true"></span>
   <div class="shell">
     <header class="topbar">
       <div>
@@ -447,6 +451,10 @@ const html = `<!DOCTYPE html>
         <a href="../index.html">홈</a>
         <a href="../master-planner/index.html">플래너</a>
         <a href="../study-guide/index.html">학습 가이드</a>
+        <a href="../flags/index.html">피처 플래그</a>
+        <a href="../audit/index.html">감사 로그</a>
+        <a href="../quality/index.html">품질 게이트</a>
+        <a href="../lifecycle/index.html">라이프사이클</a>
       </div>
     </header>
 

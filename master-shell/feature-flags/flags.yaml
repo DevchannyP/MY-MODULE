@@ -8,8 +8,18 @@ last_updated: "2026-04-14"
 global_flags:
   enable_experimental_features: false
   enable_debug_mode: false
+  harness_routing_frontier_research: false
+  harness_routing_mini_build: false
+  harness_prompt_caching_enabled: false
+  harness_batch_eval_enabled: false
 
 plugin_flags:
+  # system-api 플러그인 — 기본값 false (Stage D/E PASS 후 활성화)
+  system_api.enabled: false
+  system_api.sse_stream.enabled: false
+  system_api.flag_toggle_ui.enabled: false
+  system_api.rollback_ui.enabled: false
+
   # task-management 플러그인 — 기본값 false, 런타임 활성화는 env 오버라이드 사용
   enable_task_management: false
   enable_bulk_assign: false

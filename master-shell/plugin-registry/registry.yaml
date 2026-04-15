@@ -6,6 +6,48 @@ version: "0.3.0"
 last_updated: "2026-03-25"
 
 plugins:
+  - id: "system-api-plugin"
+    name: "System OS"
+    module_id: "system-os"
+    entry_point: "/"
+    navigation:
+      group: "system"
+      label: "System OS"
+      icon: "monitoring"
+      order: 0
+    ui_contract: "contracts/ui-shell/ui-contract.yaml"
+    capability_contract: "contracts/system-api/capability.yaml"
+    feature_flag: "system_api.enabled"
+    architecture_profile: "master-os-shell"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+    observability:
+      dashboard: "master-shell/observability/config.yaml#system-api-dashboard"
+      alert_group: "system-api-alerts"
+    rollout:
+      strategy: "canary"
+      current_phase: "internal"
+      percentage: 5
+      full_rollout_condition: "B_review PASS + 7일 error_rate < 0.1% 유지 후 100%"
+      rollout_history:
+        - phase: "internal"
+          percentage: 5
+          date: "2026-04-16"
+          trigger: "WP-UI-018 B_review CONDITIONAL_PASS"
+          gates_passed: [unit_tests, contract_drift, authz_regression, Stage_E_11/11]
+    rollback:
+      strategy: "disable_flag"
+      flag: "system_api.enabled"
+    status: "inactive"
+    registered_at: "2026-04-15"
+    owner: "platform-team"
+    stage_b_memory_ref: "memory/stageB/ui-shell-composition.yaml"
+    notes: |
+      Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.
+
   - id: "task-management-plugin"
     name: "작업 관리"                 # 도메인 언어. 기술 용어 금지.
     module_id: "task-management"

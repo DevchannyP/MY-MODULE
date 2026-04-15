@@ -113,6 +113,7 @@ adapter_profiles:
       - "openai-responses-agent"
       - "remote-mcp-connector"
       - "observability-otel"
+      - "http-problem-details"
 
   - id: "workflow-domain-module"
     name: "워크플로우 도메인 모듈"

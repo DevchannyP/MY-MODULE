@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>롤백 콘솔 — Workflow OS</title>
+<link rel="stylesheet" href="/shared/shell.css">
+<meta name="robots" content="noindex">
+<script src="/shared/shell.js"></script>
+</head>
+<body>
+<header class="wf-shell-header" data-component="nav-header">
+  <div class="wf-shell-header__brand">
+    <a href="/" class="wf-shell-header__logo">Workflow OS</a>
+  </div>
+  <nav class="wf-shell-header__nav" role="navigation" aria-label="주 메뉴">
+      <a href="/" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">대시보드</a>
+      <a href="/catalog" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">카탈로그</a>
+      <a href="/flags" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">피처 플래그</a>
+      <a href="/audit" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">감사 로그</a>
+      <a href="/quality" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">품질 게이트</a>
+      <a href="/lifecycle" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">라이프사이클</a>
+      <a href="/rollback" class="wf-nav-link wf-nav-link--active wf-nav-link--disabled" aria-disabled="true" tabindex="-1">롤백 콘솔</a>
+      <a href="/tasks" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">작업 관리</a>
+      <a href="/billing" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산관리 홈</a>
+      <a href="/billing/invoices" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">인보이스 목록</a>
+      <a href="/billing/payments" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">결제상태 추적</a>
+      <a href="/billing/exceptions" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산 예외처리</a>
+      <a href="/videos" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">비디오 관리</a>
+  </nav>
+  <div class="wf-shell-header__status">
+    <span class="wf-sse-indicator wf-sse-indicator--offline"
+          data-sse-indicator
+          title="System OS 실시간 연결 상태"
+          aria-label="실시간 연결 끊김">●</span>
+  </div>
+</header>
+<span data-sse-connect="/api/v1/system/events" hidden aria-hidden="true"></span>
+<main class="wf-page" id="main-content">
+
+  <div class="wf-card" style="border-color:var(--wf-color-fail);margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:flex-start;gap:.75rem;">
+      <span style="font-size:1.5rem;">⚠</span>
+      <div>
+        <div class="wf-card__title" style="color:var(--wf-color-fail);">system.admin 전용 — 롤백 콘솔</div>
+        <div class="wf-card__meta">
+          이 페이지에서 실행되는 모든 작업은 감사 로그에 기록됩니다.
+          롤백을 실행하면 해당 도메인의 플래그가 비활성화되고 롤백 플레이북이 실행됩니다.
+          <code style="font-family:var(--wf-font-mono);font-size:.8rem;">system_api.rollback_ui.enabled</code> 플래그가 활성화된 경우에만 작동합니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rollback-disabled-notice" class="wf-badge wf-badge--warn" style="display:none;margin-bottom:1rem;padding:.5rem 1rem;">
+    system_api.rollback_ui.enabled = false — 롤백 UI 비활성 상태
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-section__title">도메인 롤백</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;">
+    <div class="wf-card" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div class="wf-card__title">System OS</div>
+        <div class="wf-card__meta">id: system-api-plugin</div>
+      </div>
+      <button class="wf-btn wf-btn--danger"
+              data-disable-without-permission="system.admin"
+              onclick="handleRollback('system-api-plugin','System OS')"
+              aria-label="System OS 롤백">롤백</button>
+    </div>
+    <div class="wf-card" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div class="wf-card__title">작업 관리</div>
+        <div class="wf-card__meta">id: task-management-plugin</div>
+      </div>
+      <button class="wf-btn wf-btn--danger"
+              data-disable-without-permission="system.admin"
+              onclick="handleRollback('task-management-plugin','작업 관리')"
+              aria-label="작업 관리 롤백">롤백</button>
+    </div>
+    <div class="wf-card" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div class="wf-card__title">정산관리</div>
+        <div class="wf-card__meta">id: billing-plugin</div>
+      </div>
+      <button class="wf-btn wf-btn--danger"
+              data-disable-without-permission="system.admin"
+              onclick="handleRollback('billing-plugin','정산관리')"
+              aria-label="정산관리 롤백">롤백</button>
+    </div>
+    <div class="wf-card" style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div class="wf-card__title">비디오 관리</div>
+        <div class="wf-card__meta">id: video-plugin</div>
+      </div>
+      <button class="wf-btn wf-btn--danger"
+              data-disable-without-permission="system.admin"
+              onclick="handleRollback('video-plugin','비디오 관리')"
+              aria-label="비디오 관리 롤백">롤백</button>
+    </div></div>
+  </div>
+
+  <script>
+  // INV-SYS-005: rollback_ui.enabled=false 시 롤백 버튼 비활성화
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/v1/system/flags')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+        var rollbackEnabled = data.flags.some(function(f){
+          return f.id === 'system_api.rollback_ui.enabled' && f.enabled;
+        });
+        if (!rollbackEnabled) {
+          document.getElementById('rollback-disabled-notice').style.display = '';
+          document.querySelectorAll('.wf-btn--danger').forEach(function(btn){
+            btn.disabled = true;
+            btn.setAttribute('aria-disabled','true');
+            btn.title = 'system_api.rollback_ui.enabled=false';
+          });
+        }
+      })
+      .catch(function(){});
+  });
+
+  function handleRollback(domainId, domainName) {
+    WfShell.confirm({
+      title: domainName + ' 롤백',
+      body: '이 작업은 되돌릴 수 없습니다. 도메인 플래그가 비활성화되고 롤백 플레이북이 실행됩니다.',
+      confirmText: 'ROLLBACK ' + domainId,
+      dangerLabel: '롤백 실행',
+    }).then(function(confirmed) {
+      if (!confirmed) return;
+      fetch('/api/v1/system/rollback/' + encodeURIComponent(domainId), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-system-role': 'system.admin' },
+        body: JSON.stringify({ confirmation: 'ROLLBACK ' + domainId, reason: 'UI rollback' }),
+      })
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(data){ WfShell.toast('롤백 시작: ' + domainName + ' (' + (data.rollback_id||'') + ')', 'warn'); })
+      .catch(function(e){ WfShell.toast('롤백 실패: ' + e, 'fail'); });
+    });
+  }
+  </script>
+</main>
+</body>
+</html>
