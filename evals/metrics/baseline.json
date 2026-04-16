@@ -1,0 +1,71 @@
+{
+  "as_of_utc": "2026-04-14T13:17:50.784Z",
+  "repository": "my-module",
+  "baseline_id": "harness-phase0-baseline-2026-04-14",
+  "prompt_version": "phase0-baseline-candidate",
+  "source_commands": [
+    "npm run project:status",
+    "npm run session:bootstrap -- --json"
+  ],
+  "observed_state": {
+    "current_wp": "WP-RUN-004",
+    "current_wp_type": "governance",
+    "current_wp_stage": "E",
+    "requirements_stage": "D",
+    "current_lane_hint": "verify",
+    "estimated_context_tokens": 6203,
+    "validation_command_count": 9
+  },
+  "golden_set": {
+    "path": "evals/golden/harness-core.jsonl",
+    "case_count": 10
+  },
+  "measured_metrics": {
+    "estimated_context_tokens": {
+      "value": 6203,
+      "unit": "tokens",
+      "source": "project:status current_wp_context_budget.estimated_tokens"
+    },
+    "validation_command_count": {
+      "value": 9,
+      "unit": "commands",
+      "source": "session:bootstrap validation_profile.commands length"
+    }
+  },
+  "pending_metrics": {
+    "schema_violation_rate": {
+      "value": null,
+      "unit": "ratio",
+      "status": "pending_eval_runner"
+    },
+    "false_pass_count": {
+      "value": null,
+      "unit": "count",
+      "status": "pending_truthfulness_gate"
+    },
+    "average_input_tokens": {
+      "value": null,
+      "unit": "tokens",
+      "status": "pending_telemetry_extension"
+    },
+    "average_output_tokens": {
+      "value": null,
+      "unit": "tokens",
+      "status": "pending_telemetry_extension"
+    },
+    "p95_latency_ms": {
+      "value": null,
+      "unit": "ms",
+      "status": "pending_runtime_capture"
+    },
+    "retry_rate": {
+      "value": null,
+      "unit": "ratio",
+      "status": "pending_eval_runner"
+    }
+  },
+  "notes": [
+    "Phase 0 baseline is intentionally partial. Only directly observed repository metrics are populated.",
+    "The remaining metrics become measurable after eval runner, truthfulness gate, and telemetry extensions land."
+  ]
+}

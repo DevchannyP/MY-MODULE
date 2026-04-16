@@ -1,0 +1,60 @@
+wp_id: "WP-HARNESS-VNEXT-013"
+goal: "실 provider adapter 연결을 위한 contract/composition baseline을 고정한다."
+completed: true
+completed_at: "2026-04-15"
+tier: "arch"
+result: "PASS"
+
+context: |
+  HarnessRuntimeRouter는 이미 route snapshot을 계산하지만, 실제 외부 provider adapter가 없어
+  KI-HARNESS-001이 남아 있었다. 다음 단계 구현 전에 provider selection, fallback, budget,
+  observability, eval logging 규칙을 저장소 계약으로 먼저 고정할 필요가 있었다.
+
+root_cause: |
+  live provider wiring 경계가 문서/계약 없이 비어 있어 어떤 입력을 provider adapter가 받아야 하는지,
+  어떤 오류 모델과 rollback 경로를 따라야 하는지, 어떤 telemetry/eval 필드를 남겨야 하는지가
+  실행 surface마다 암묵적으로 흩어질 위험이 있었다.
+
+fix_applied: |
+  contracts/harness/provider-adapter.yaml에 provider adapter 계약을 추가해 routing/fallback/budget/failure/
+  observability/eval logging 기준을 선언했다. 또한 Stage A/B memory와 ADR을 추가해
+  KI-HARNESS-001 해소의 설계 baseline을 root memory에 고정했고,
+  validate-harness-contract와 새 smoke test가 이 계약 파일의 존재와 핵심 섹션을 검증하도록 연결했다.
+
+files_created:
+  - "contracts/harness/provider-adapter.yaml"
+  - "memory/stageA/harness-provider-adapter.yaml"
+  - "memory/stageB/harness-provider-adapter.yaml"
+  - "docs/adr/0013-harness-provider-adapter-strategy.md"
+  - "src/tests/smoke/harnessContract.smoke.test.js"
+  - "worklog/2026-04-15_WP-HARNESS-VNEXT-013.yaml"
+
+files_modified:
+  - "requirements/harness-engineering.yaml"
+  - "docs/reference/ai-harness-data-dictionary.md"
+  - "scripts/validate-harness-contract.js"
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/next-actions.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  validate_harness_contract: "PASS"
+  harness_contract_smoke: "PASS"
+  wp_validate: "PASS"
+  project_status: "PASS"
+  session_bootstrap: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-013-D1"
+    decision: "provider selection truth surface를 HarnessRuntimeRouter snapshot 하나로 고정한다"
+    rationale: "bootstrap/cockpit/health/readyz와 실제 provider 실행 경로가 분기되면 운영자가 잘못된 route를 믿게 되기 때문이다."
+  - id: "HARNESS-VNEXT-013-D2"
+    decision: "응답 본문 contract는 유지하고 provider metadata는 telemetry/eval/release evidence에 남긴다"
+    rationale: "기존 harness output schema와 truthfulness validator를 깨지 않으면서 provider observability를 확장할 수 있다."
+
+risks:
+  - id: "HARNESS-VNEXT-013-R1"
+    risk: "실제 live provider 구현은 아직 없으므로 contract drift를 완전히 막으려면 후속 wiring packet이 필요하다."
+    mitigation: "WP-HARNESS-VNEXT-014에서 provider port/null provider/live adapter skeleton과 smoke를 이어서 구현한다."

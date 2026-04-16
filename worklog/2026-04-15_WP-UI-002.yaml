@@ -1,0 +1,59 @@
+wp_id: "WP-UI-002"
+goal: "system-api-plugin을 master shell registry/nav/flags/observability에 Stage C로 등록한다."
+completed: true
+completed_at: "2026-04-15"
+tier: "arch"
+result: "PASS"
+
+context: |
+  System API와 ui-shell 계약, Stage B 조합 메모리, ADR은 이미 있었지만
+  master-shell registry/nav/flags/observability/catalog에는 아직 system-api-plugin이 존재하지 않았다.
+  이 상태에서는 Phase 1 UI 통합 자산이 계약만 있고 조합 등록면은 비어 있는 상태였다.
+
+root_cause: |
+  System OS는 계약과 조합 전략은 갖췄지만 Stage C 등록면이 빠져 있어
+  validate:composition 기준으로도 독립 플러그인으로 인식되지 않았고,
+  후속 runtime/static 구현 packet이 어떤 소유권 경계를 따라야 하는지도 고정돼 있지 않았다.
+
+fix_applied: |
+  master-shell/plugin-registry, navigation, feature-flags, feature-flag metadata,
+  observability config, observability slo-policy, catalog에 system-api-plugin registration을 추가했다.
+  또한 memory/stageC/system-api-plugin.yaml을 만들어 Stage C registration evidence와 rollout/activation 경계를 고정했다.
+  신규 system_api.* 플래그는 모두 기본 false로 선언했다.
+
+files_created:
+  - "memory/stageC/system-api-plugin.yaml"
+  - "worklog/2026-04-15_WP-UI-002.yaml"
+
+files_modified:
+  - "master-shell/plugin-registry/registry.yaml"
+  - "master-shell/navigation/nav.yaml"
+  - "master-shell/feature-flags/flags.yaml"
+  - "master-shell/feature-flags/metadata.json"
+  - "master-shell/observability/config.yaml"
+  - "master-shell/observability/slo-policy.json"
+  - "master-shell/catalog/domains.yaml"
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/next-actions.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  validate_composition: "PASS"
+  wp_validate: "PASS"
+  lint: "PASS"
+  project_status: "PASS"
+  session_bootstrap: "PASS"
+
+decisions:
+  - id: "UI-002-D1"
+    decision: "system-api-plugin은 contracts/ui-shell/ui-contract.yaml과 contracts/system-api/capability.yaml만 참조하는 contract-driven plugin으로 등록한다"
+    rationale: "Stage C에서 구현 세부가 아닌 계약/조합 경계를 고정해야 후속 runtime wiring이 최소 변경으로 이어진다."
+  - id: "UI-002-D2"
+    decision: "system_api.* 플래그는 모두 기본 false로 유지한다"
+    rationale: "System OS 통합은 고위험 UI/운영 surface라서 Stage D/E 검증 전에는 저장소 기본값으로 노출하지 않는 편이 안전하다."
+
+risks:
+  - id: "UI-002-R1"
+    risk: "등록면만 생겼고 runtime/static shell 구현은 아직 packet으로 남아 있다."
+    mitigation: "WP-UI-003에서 runtime surface와 static shell 경로를 Stage D로 실제 연결한다."

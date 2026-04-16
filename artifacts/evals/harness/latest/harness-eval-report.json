@@ -1,0 +1,87 @@
+{
+  "eval_run_id": "86cdec9f-576b-4cec-99f6-659e291894b3",
+  "generated_at_utc": "2026-04-15T15:48:49.857Z",
+  "repository": "my-module",
+  "suite": "harness-core-offline",
+  "baseline_id": "harness-phase0-baseline-2026-04-14",
+  "prompt_version": "phase0-baseline-candidate",
+  "status": "PASS",
+  "summary": {
+    "golden_case_count": 10,
+    "baseline_case_count": 10,
+    "case_count_delta": 0,
+    "modes": {
+      "Research": 2,
+      "Build": 2,
+      "Debug": 2,
+      "Operate": 2,
+      "Policy": 2
+    },
+    "packet_types": {
+      "arch": 3,
+      "governance": 3,
+      "meta": 2,
+      "shell": 1,
+      "executor": 1
+    },
+    "case_files": 4
+  },
+  "checks": {
+    "golden_set_parsed": true,
+    "baseline_loaded": true,
+    "required_case_floor_met": true,
+    "required_modes_present": true,
+    "validation_failures": []
+  },
+  "case_files": [
+    {
+      "path": "evals/cases/build.jsonl",
+      "count": 2,
+      "modes": [
+        "Build"
+      ],
+      "ids": [
+        "build-001",
+        "build-002"
+      ]
+    },
+    {
+      "path": "evals/cases/debug.jsonl",
+      "count": 2,
+      "modes": [
+        "Debug"
+      ],
+      "ids": [
+        "debug-001",
+        "debug-002"
+      ]
+    },
+    {
+      "path": "evals/cases/policy.jsonl",
+      "count": 2,
+      "modes": [
+        "Policy"
+      ],
+      "ids": [
+        "policy-001",
+        "policy-002"
+      ]
+    },
+    {
+      "path": "evals/cases/research.jsonl",
+      "count": 2,
+      "modes": [
+        "Research"
+      ],
+      "ids": [
+        "research-001",
+        "research-002"
+      ]
+    }
+  ],
+  "next_steps": [
+    "모델 호출 기반 grader를 추가한다",
+    "baseline 대비 schema_violation_rate와 retry_rate를 측정한다",
+    "safety/red-team case file을 별도 추가한다"
+  ]
+}

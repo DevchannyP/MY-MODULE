@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/contracts/harness/output.schema.json",
+  "title": "Workflow OS Harness Output Schema",
+  "description": "Baseline output contract candidate for Harness vNext Phase 0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verification_status",
+    "evidence_status",
+    "tests_run",
+    "tests_planned",
+    "rollback_plan",
+    "summary",
+    "analysis",
+    "change_points",
+    "verification",
+    "risks",
+    "next_action"
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "analysisList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "minItems": 1
+    }
+  },
+  "properties": {
+    "prompt_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "PARTIAL_PASS",
+        "FAIL",
+        "PLANNED",
+        "NOT_RUN"
+      ]
+    },
+    "evidence_status": {
+      "type": "string",
+      "enum": [
+        "observed",
+        "mixed",
+        "planned",
+        "not_observed"
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "Research",
+        "Build",
+        "Debug",
+        "Operate",
+        "Policy"
+      ]
+    },
+    "packet_type": {
+      "type": "string",
+      "minLength": 2
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "tests_run": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "PARTIAL_PASS",
+              "FAIL"
+            ]
+          },
+          "evidence": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "tests_planned": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "expected_result"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "expected_result": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "rollback_plan": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 8
+    },
+    "analysis": {
+      "$ref": "#/$defs/analysisList"
+    },
+    "change_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "target",
+          "intent"
+        ],
+        "properties": {
+          "target": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "intent": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "verification": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "PARTIAL_PASS",
+              "FAIL",
+              "PLANNED",
+              "NOT_RUN"
+            ]
+          },
+          "note": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "level",
+          "description"
+        ],
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ]
+          },
+          "description": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "mitigation": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "next_action": {
+      "$ref": "#/$defs/nonEmptyString"
+    }
+  }
+}

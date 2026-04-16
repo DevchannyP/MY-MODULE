@@ -1,0 +1,54 @@
+wp_id: "WP-HARNESS-VNEXT-008"
+goal: "Harness vNext Phase 6 cost/latency routing 정책과 feature flag baseline을 추가한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PASS"
+
+context: |
+  Phase 5까지는 보안과 eval이 올라왔지만, mode별로 비용/지연 경로를 분기하는
+  catalog/recipe/feature flag 기준은 저장소 안에 고정되지 않았다.
+
+root_cause: |
+  context routing profile과 AI runtime recipe는 존재하지만
+  하네스 전용 routing policy와 캐시/배치/mini/frontier 경로를 위한 별도 기준이 없었다.
+
+fix_applied: |
+  context-routing-profiles와 ai-runtime-recipes에 harness 전용 mode routing 정책을 추가하고,
+  frontier/mini/prompt caching/batch eval 경로를 제어하는 feature flag baseline을 등록했다.
+  또한 validate_harness_routing.py를 추가해 routing profile, runtime recipe,
+  feature flags, metadata, .env.example 간 정합성을 검증하도록 했다.
+
+files_created:
+  - "scripts/validate_harness_routing.py"
+  - "src/tests/smoke/harnessRouting.smoke.test.js"
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-008.yaml"
+
+files_modified:
+  - "master-shell/catalog/context-routing-profiles.yaml"
+  - "master-shell/catalog/ai-runtime-recipes.yaml"
+  - "master-shell/feature-flags/flags.yaml"
+  - "master-shell/feature-flags/metadata.json"
+  - ".env.example"
+  - "package.json"
+  - "requirements/validation-profiles.yaml"
+
+validation:
+  validate_harness_routing: "PASS"
+  validate_feature_flags: "PASS"
+  harness_routing_smoke: "PASS"
+  session_bootstrap_json: "PASS — validation bundle defaults에 check:harness-routing 포함 확인"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-008-D1"
+    decision: "Phase 6은 실제 모델 호출 라우터 대신 catalog/recipe/flag 기준면부터 고정한다"
+    rationale: "현재 저장소에는 모델 호출 추상화가 아직 분리되지 않았으므로, 먼저 운영 정책과 rollout 토글을 저장소 truth surface에 넣는 편이 안전하다."
+  - id: "HARNESS-VNEXT-008-D2"
+    decision: "routing 관련 플래그는 global_flags에 둔다"
+    rationale: "이 플래그들은 특정 도메인 플러그인이 아니라 하네스 전체 실행 전략을 제어하므로 plugin_flags보다 global_flags가 적합하다."
+
+risks:
+  - id: "HARNESS-VNEXT-008-R1"
+    risk: "실제 런타임이 아직 이 routing flag들을 읽어 모델 경로를 바꾸지는 않는다."
+    mitigation: "다음 단계에서 bootstrap/operator/eval runner 또는 model adapter가 flag와 recipe를 소비하도록 연결한다."

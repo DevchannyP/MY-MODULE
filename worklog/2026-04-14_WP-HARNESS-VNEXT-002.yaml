@@ -1,0 +1,53 @@
+wp_id: "WP-HARNESS-VNEXT-002"
+goal: "Harness vNext Phase 0 기준선 산출물과 계약 파일을 추가한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PASS"
+
+context: |
+  Harness vNext 계획 문서는 이미 존재하지만, 실제 Phase 0 산출물인 입력/출력 계약 스키마,
+  golden set, baseline metrics 파일은 아직 저장소에 없었다.
+  또한 packet 체인 번호가 planning packet과 baseline packet 사이에서 어긋나 있었다.
+
+root_cause: |
+  vNext 계획은 문서 수준에서만 존재했고, 계약/평가/기준선 파일이 없어
+  후속 mode router 및 eval plane 구현이 시작될 고정 기준면이 비어 있었다.
+
+fix_applied: |
+  contracts/harness에 intake/output schema를 추가하고,
+  evals/golden과 evals/metrics에 초기 golden set과 baseline metrics를 추가했다.
+  또한 data dictionary와 vNext 실행 계획 문서를 새 기준면에 맞게 정렬했다.
+
+files_created:
+  - "contracts/harness/intake.schema.json"
+  - "contracts/harness/output.schema.json"
+  - "evals/golden/harness-core.jsonl"
+  - "evals/metrics/baseline.json"
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-002.yaml"
+
+files_modified:
+  - "docs/explanation/harness-vnext-execution-plan.md"
+  - "docs/reference/ai-harness-data-dictionary.md"
+
+validation:
+  project_status: "PASS"
+  session_bootstrap_json: "PASS"
+  docs_review: "PASS — phase sequence, canonical file links, phase 0 artifacts 반영"
+  golden_set_review: "PASS — 10개 초기 케이스로 mode/packet_type 축 분산"
+
+decisions:
+  - id: "HARNESS-VNEXT-002-D1"
+    decision: "Phase 0에서는 runtime code path를 건드리지 않고 계약/평가/기준선 파일만 추가한다"
+    rationale: "현재 진행 중인 governance verify 흐름과 충돌하지 않으면서 후속 packet이 시작할 고정 surface를 먼저 만드는 편이 안전하다."
+  - id: "HARNESS-VNEXT-002-D2"
+    decision: "output schema는 current harness section contract를 반영하되, 향후 strict truthfulness 필드는 Phase 2에서 강제한다"
+    rationale: "지금 단계에서 바로 strict validator를 붙이면 current runtime output과 충돌할 수 있으므로, 먼저 baseline schema를 만들고 후속 packet에서 enforcement를 추가한다."
+
+risks:
+  - id: "HARNESS-VNEXT-002-R1"
+    risk: "eval runner가 아직 없으므로 baseline metrics의 일부는 null 상태다."
+    mitigation: "WP-HARNESS-VNEXT-005에서 eval runner와 metric capture를 붙인다."
+  - id: "HARNESS-VNEXT-002-R2"
+    risk: "새 계약 스키마가 아직 validate:* 명령에 연결되지 않아 drift가 생길 수 있다."
+    mitigation: "다음 packet에서 requirements/validator/bootstrap surface에 schema_ref를 연결한다."

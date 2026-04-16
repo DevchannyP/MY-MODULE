@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-14T12:06:11.285556+00:00",
+  "generated_at": "2026-04-15T15:48:50.620017+00:00",
   "goal": "stateful-ops",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -46,8 +46,8 @@
     "budget": {
       "primary": {
         "file_count": 6,
-        "total_bytes": 16674,
-        "estimated_tokens": 5559
+        "total_bytes": 17930,
+        "estimated_tokens": 5978
       },
       "secondary": {
         "file_count": 3,
@@ -55,11 +55,11 @@
         "estimated_tokens": 934
       },
       "deferred": {
-        "file_count": 189,
-        "total_bytes": 631958,
-        "estimated_tokens": 210653
+        "file_count": 192,
+        "total_bytes": 645269,
+        "estimated_tokens": 215090
       },
-      "total_estimated_tokens": 217146
+      "total_estimated_tokens": 222002
     },
     "path_metrics": {
       "read_first": [
@@ -81,8 +81,8 @@
           "path": "master-shell/observability/config.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 4761,
-          "estimated_tokens": 1587
+          "total_bytes": 6017,
+          "estimated_tokens": 2006
         },
         {
           "path": "master-shell/operations/rollback-playbook.yaml",
@@ -133,9 +133,9 @@
         {
           "path": "domains/",
           "exists": true,
-          "file_count": 132,
-          "total_bytes": 541591,
-          "estimated_tokens": 180530
+          "file_count": 135,
+          "total_bytes": 554561,
+          "estimated_tokens": 184854
         },
         {
           "path": "worklog/reports/",
@@ -148,8 +148,8 @@
           "path": "artifacts/catalog-site/index.html",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 21539,
-          "estimated_tokens": 7180
+          "total_bytes": 21880,
+          "estimated_tokens": 7293
         }
       ]
     }
@@ -195,7 +195,7 @@
         "id": "token-budget",
         "label": "토큰 예산 적합성",
         "status": "risk",
-        "detail": "primary 5559 tok / total 217146 tok"
+        "detail": "primary 5978 tok / total 222002 tok"
       },
       {
         "id": "completed-packet",
@@ -212,8 +212,8 @@
     "bundle_budget": {
       "primary": {
         "file_count": 6,
-        "total_bytes": 16674,
-        "estimated_tokens": 5559
+        "total_bytes": 17930,
+        "estimated_tokens": 5978
       },
       "secondary": {
         "file_count": 3,
@@ -221,11 +221,11 @@
         "estimated_tokens": 934
       },
       "deferred": {
-        "file_count": 189,
-        "total_bytes": 631958,
-        "estimated_tokens": 210653
+        "file_count": 192,
+        "total_bytes": 645269,
+        "estimated_tokens": 215090
       },
-      "total_estimated_tokens": 217146
+      "total_estimated_tokens": 222002
     },
     "required_adapters": [
       "master-ui-plugin-shell",
@@ -236,12 +236,12 @@
       "repository-sqlite"
     ],
     "selected_adapters": [
+      "master-ui-plugin-shell",
+      "observability-otel",
+      "repository-inmemory",
       "http-problem-details",
       "repository-sqlite",
-      "repository-inmemory",
-      "feature-flag-provider",
-      "observability-otel",
-      "master-ui-plugin-shell"
+      "feature-flag-provider"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-14T12:06:11.285532+00:00",
+    "generated_at": "2026-04-15T15:48:50.619998+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-13 00:11:15 +0900",
+            "timestamp": "2026-04-14 22:05:41 +0900",
             "title": "git commit",
-            "detail": "fix(ci): exclude smoke tests from npm test — prevent CI hang",
+            "detail": "chore(artifacts): sync master-planner after spiral18 WP registration",
             "tag": "git"
           }
         ]

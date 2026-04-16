@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-14T12:06:11.252470+00:00",
+  "generated_at": "2026-04-15T15:48:50.588903+00:00",
   "goal": "stateful-ops",
   "profile_id": "stateful-ops-routing",
   "current_wp": {
@@ -59,9 +59,9 @@
         "path": "master-shell/observability/config.yaml",
         "tier": "primary",
         "exists": true,
-        "bytes": 4761,
-        "estimated_tokens": 1587,
-        "sha256": "197853cbe6a1239ee8f77b129910a12e75693d8859f1b9028ab85ea34bfc13dd"
+        "bytes": 6017,
+        "estimated_tokens": 2006,
+        "sha256": "a7ded01249d8ba61c0d89bf866a2510745b0827ee494b03ec09a9737328b98d4"
       },
       {
         "requested_path": "master-shell/operations/rollback-playbook.yaml",
@@ -124,8 +124,8 @@
   "summary": {
     "primary": {
       "file_count": 6,
-      "total_bytes": 16674,
-      "estimated_tokens": 5559
+      "total_bytes": 17930,
+      "estimated_tokens": 5978
     },
     "secondary": {
       "file_count": 3,
@@ -134,8 +134,8 @@
     },
     "total": {
       "file_count": 9,
-      "total_bytes": 19477,
-      "estimated_tokens": 6493
+      "total_bytes": 20733,
+      "estimated_tokens": 6912
     }
   },
   "commands": {

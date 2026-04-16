@@ -1,0 +1,61 @@
+wp_id: "WP-HARNESS-VNEXT-011"
+goal: "harness routing flag와 release metadata를 실제 runtime/model adapter 소비 경로에 연결한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PASS"
+
+context: |
+  Phase 6~9까지는 routing policy, feature flag, release evidence가 저장소 기준면에만 존재했다.
+  하지만 실제 런타임 surface에서는 어떤 routing 경로가 선택되는지, 어떤 prompt_version과 rollout_stage가 적용되는지 계산해 보여주는 소비 경로가 없었다.
+
+root_cause: |
+  harness routing 정보는 catalog와 artifact에는 있었지만 bootstrap, operator cockpit, health/readyz 같은 실제 운영 surface가 이를 읽지 않았다.
+  그래서 운영자는 어떤 mode가 어떤 모델 tier와 release metadata를 쓰는지 런타임에서 확인할 수 없었다.
+
+fix_applied: |
+  HarnessRuntimeRouter를 추가해 mode, feature flag, release evidence를 조합한 runtime route snapshot을 계산하도록 했다.
+  이 resolver는 prompt_version, rollout_stage, rollback_target, selected_model_tier, reasoning_effort,
+  prompt_caching_enabled, batch_eval_enabled를 함께 반환한다.
+  또한 session_bootstrap과 operator_cockpit이 이 runtime route를 직접 노출하도록 연결했고,
+  서버의 /readyz와 /health 응답에도 harness_runtime 필드를 추가해 운영 surface에서 같은 snapshot을 볼 수 있게 했다.
+
+files_created:
+  - "src/infrastructure/HarnessRuntimeRouter.js"
+  - "src/tests/unit/harnessRuntimeRouter.test.js"
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-011.yaml"
+
+files_modified:
+  - "scripts/session_bootstrap.js"
+  - "scripts/operator_cockpit.js"
+  - "src/server/createServer.js"
+  - "src/tests/smoke/sessionBootstrap.smoke.test.js"
+  - "src/tests/smoke/operatorCockpit.smoke.test.js"
+  - "src/tests/smoke/dynamicFrontendServer.smoke.test.js"
+  - "src/tests/smoke/controlCenterObservability.smoke.test.js"
+  - "src/tests/smoke/serverWiring.smoke.test.js"
+  - "src/tests/smoke/outboxPollerWiring.smoke.test.js"
+
+validation:
+  harness_runtime_router_unit: "PASS"
+  session_bootstrap_smoke: "PASS"
+  operator_cockpit_smoke: "PASS"
+  dynamic_frontend_server_smoke: "PASS"
+  control_center_observability_smoke: "PASS"
+  server_wiring_smoke: "PASS"
+  outbox_poller_wiring_smoke: "PASS"
+  test_e2e_smoke: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-011-D1"
+    decision: "실제 원격 모델 호출 어댑터가 없더라도 route selection snapshot부터 런타임 소비 경로로 연결한다"
+    rationale: "이 저장소의 현재 단계에서는 model tier 자체보다 운영자가 어떤 routing 결정을 보고 검증할 수 있는지가 더 중요하다."
+  - id: "HARNESS-VNEXT-011-D2"
+    decision: "FeatureFlagProvider 자체를 확장하지 않고 별도 HarnessRuntimeRouter를 둔다"
+    rationale: "플래그 로더는 플래그 truth surface만 책임지고, mode/release evidence 조합 로직은 별도 resolver에 두는 편이 결합도가 낮다."
+
+risks:
+  - id: "HARNESS-VNEXT-011-R1"
+    risk: "현재 runtime route는 선택 snapshot을 노출할 뿐 실제 외부 LLM provider 호출을 직접 수행하지는 않는다."
+    mitigation: "향후 model adapter가 추가되면 same resolver를 호출하도록 연결해 선택 정책과 호출 경로가 분리되지 않게 유지한다."

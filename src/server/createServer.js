@@ -27,6 +27,9 @@ const { InMemoryIdempotencyStore } = require('../shared/IdempotencyStore');
 const { InMemoryRateLimiter } = require('../shared/RateLimiter');
 const { getFeatureFlags } = require('../infrastructure/FeatureFlagProvider');
 const { tracer, metrics, logger } = require('../infrastructure/telemetry');
+// WP-LLM-001 (KI-HARNESS-001 해소): Router → Provider 실제 연결
+const { resolveHarnessRuntimeRoute } = require('../infrastructure/HarnessRuntimeRouter');
+const { HarnessProviderAdapter } = require('../infrastructure/ai/HarnessProviderAdapter');
 const { InMemoryInvoiceRepository } = require('../../domains/billing/src/infrastructure/InMemoryInvoiceRepository');
 const { InMemoryPaymentRepository } = require('../../domains/billing/src/infrastructure/InMemoryPaymentRepository');
 const { InMemoryBillingExceptionRepository } = require('../../domains/billing/src/infrastructure/InMemoryBillingExceptionRepository');
@@ -898,7 +901,12 @@ function createAppHandler({
   lifecycleState = createLifecycleState(),
   flags = null,  // null → 파일 기반 provider 사용 (프로덕션 기본값)
   runtimeRoot = path.resolve(__dirname, '../..'),
+  harnessProviderAdapter = null,  // null → 기본 HarnessProviderAdapter(NullProvider) 사용
 } = {}) {
+  // WP-LLM-001: 주입된 adapter 또는 기본 adapter(NullHarnessProvider 폴백)
+  const resolvedHarnessAdapter = harnessProviderAdapter instanceof HarnessProviderAdapter
+    ? harnessProviderAdapter
+    : new HarnessProviderAdapter();
   const nodePtyBridge = createNodePtyBridge(runtimeRoot);
   const uiOperatorState = {
     recentOperatorAction: null,
@@ -1651,11 +1659,76 @@ function createAppHandler({
           'control_center.prompt.source': 'planning-studio-snapshot',
           'control_center.snapshot.ok': snapshotResult.status === 0,
         });
+        // WP-LLM-001: include routing metadata alongside the static prompt
+        const routeSnapshot = resolveHarnessRuntimeRoute({ mode: 'Build', flagsProvider: resolvedFlags });
         sendResponse(req, res, 200, {
           prompt: buildControlBridgePrompt(snapshotData),
+          routing: {
+            mode:                routeSnapshot.mode,
+            route_id:            routeSnapshot.route_id,
+            selected_model_tier: routeSnapshot.selected_model_tier,
+            prompt_version:      routeSnapshot.prompt_version,
+          },
         }, mergeHeaders(responseBaseHeaders, responseHeaders));
         return;
       }
+
+      // ── Harness — prompt recommendation (LLM provider 연결) ─────────────────
+      // WP-LLM-001 (KI-HARNESS-001 해소): Router → Provider 실제 연결
+      // POST /api/harness/prompt-recommendation
+      // Body: { mode?, intakePacket?, basePrompt?, correlationId? }
+      if (method === 'POST' && url.pathname === '/api/harness/prompt-recommendation') {
+        const harnessObservation = recordControlCenterOperation({
+          parentSpan: span,
+          operation: 'harness.prompt_recommendation',
+          route: url.pathname,
+          method,
+          correlationId,
+          requestId,
+        });
+
+        const requestedMode = typeof body.mode === 'string' ? body.mode.trim() : 'Build';
+        const intakePacket = body.intakePacket && typeof body.intakePacket === 'object'
+          ? body.intakePacket
+          : { goal: String(body.basePrompt || ''), context: [], constraints: [], done_when: [] };
+        const basePrompt = String(body.basePrompt || intakePacket.goal || '');
+
+        // 1. Router: compute route from flags + mode
+        const route = resolveHarnessRuntimeRoute({ mode: requestedMode, flagsProvider: resolvedFlags });
+
+        try {
+          // 2. Provider: invoke actual LLM or NullProvider fallback
+          const result = await resolvedHarnessAdapter.generatePromptRecommendation({
+            route,
+            intakePacket,
+            basePrompt,
+            correlationId,
+            requestId,
+          });
+
+          metrics.controlCenterPromptRecommendationsTotal.add(1, { route: url.pathname, method });
+          harnessObservation.succeed({
+            'harness.mode':            requestedMode,
+            'harness.route_id':        route.route_id,
+            'harness.provider_id':     String(result.provider?.provider_id || 'unknown'),
+            'harness.fallback_applied':String(result.provider?.fallback_applied || false),
+          });
+
+          if (idempotencyScope) {
+            idempotencyStore.complete(idempotencyScope, { status: 200, body: result });
+          }
+          sendResponse(req, res, 200, result, mergeHeaders(responseBaseHeaders, responseHeaders));
+        } catch (harnessErr) {
+          harnessObservation.fail(harnessErr, { 'harness.mode': requestedMode });
+          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
+          sendResponse(req, res, 500, fromError(
+            Object.assign(harnessErr, { code: harnessErr.code || 'HARNESS_PROVIDER_ERROR' }),
+            { path: url.pathname },
+          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
+        }
+        return;
+      }
+
 
       if (method === 'GET' && url.pathname === '/api/pty/sessions') {
         const observation = recordControlCenterOperation({

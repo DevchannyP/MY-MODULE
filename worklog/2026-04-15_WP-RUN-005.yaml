@@ -1,0 +1,62 @@
+wp_id: "WP-RUN-005"
+goal: "배포 environment 실 URL health/ingress verification 자동화 baseline을 추가한다."
+completed: true
+completed_at: "2026-04-15"
+tier: "governance"
+result: "PASS"
+
+context: |
+  기존 deployment smoke는 실제 배포 URL을 대상으로 health/task/billing/video 경로를 검증했지만,
+  그 target이 registry가 기대한 ingress host/TLS 조건을 만족하는지와
+  ingress가 correlation header를 보존하는지는 수동 운영 확인 영역으로 남아 있었다.
+
+root_cause: |
+  resolver는 DEPLOYMENT_BASE_URL만 해석했고 runner는 path-level health smoke에 집중해
+  "실제로 올바른 public target을 치고 있는가"를 artifact로 판정하지 못했다.
+  이 때문에 KI-RUN-001의 검증 자동화 축이 구조적으로 덜 닫혀 있었다.
+
+fix_applied: |
+  deployment environment registry와 provisioning policy에 ingress host/TLS 계약 변수를 추가했다.
+  resolve_deployment_target.py는 expected ingress host와 require_https를 함께 해석하고,
+  deployment-smoke workflow는 이를 runner 인자로 전달한다.
+  run_deployment_smoke.js는 target-url/ingress-health 단계를 추가해 hostname/TLS/correlation-header continuity를 artifact로 기록한다.
+
+files_created:
+  - "memory/stageD/deployment-real-target-verification.yaml"
+  - "worklog/2026-04-15_WP-RUN-005.yaml"
+
+files_modified:
+  - ".github/workflows/deployment-smoke.yml"
+  - "master-shell/operations/deployment-environments.yaml"
+  - "master-shell/operations/deployment-environment-provisioning.yaml"
+  - "scripts/resolve_deployment_target.py"
+  - "scripts/run_deployment_smoke.js"
+  - "scripts/validate_deployment_smoke_binding.py"
+  - "src/tests/smoke/runDeploymentSmoke.test.js"
+  - "docs/how-to/run-stage-e.md"
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/next-actions.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  run_deployment_smoke_test: "PASS"
+  validate_deployment_smoke_binding: "PASS"
+  validate_deployment_environment_provisioning: "PASS"
+  lint: "PASS"
+  wp_validate: "PASS"
+  project_status: "PASS"
+  session_bootstrap: "PASS"
+
+decisions:
+  - id: "RUN-005-D1"
+    decision: "real target verification은 registry contract와 runner artifact 양쪽에 동시에 기록한다"
+    rationale: "GitHub environment var 해석과 실제 smoke 결과가 같은 truth surface를 공유해야 drift를 줄일 수 있기 때문이다."
+  - id: "RUN-005-D2"
+    decision: "ingress verification은 별도 네트워크 도구가 아니라 health 요청의 host/origin/header continuity 검사로 시작한다"
+    rationale: "현재 저장소의 executable smoke 경로를 재사용하면서도 reverse proxy/ingress misroute를 조기에 잡을 수 있기 때문이다."
+
+risks:
+  - id: "RUN-005-R1"
+    risk: "TLS mismatch나 ingress host mismatch 실패면의 적대 검증 evidence는 아직 없다."
+    mitigation: "WP-RUN-006에서 failure-path smoke와 release evidence/rollback linkage를 Stage E로 닫는다."

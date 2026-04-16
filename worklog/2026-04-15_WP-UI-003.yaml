@@ -1,0 +1,63 @@
+wp_id: "WP-UI-003"
+goal: "System OS runtime surface와 static shell 경로를 Stage D로 연결한다."
+completed: true
+completed_at: "2026-04-15"
+tier: "arch"
+result: "PASS"
+
+context: |
+  WP-UI-002로 system-api-plugin registration은 끝났지만,
+  실제 HTTP runtime에는 /api/v1/system/* wiring이 없었고 static shell source도
+  system_api.*를 true 쪽으로 해석하는 기본값이 남아 있었다.
+  이 상태에서는 등록면과 구현면이 분리돼 Phase 1 UI 통합을 Stage D로 볼 수 없었다.
+
+root_cause: |
+  SystemApiController는 존재했지만 createServer가 이를 mount하지 않아 plugin ownership이 실제 runtime에 반영되지 않았다.
+  또한 controller 내부 flag list/toggle/rollback는 raw flags.yaml에 의존했고,
+  static shell source는 Stage C default-false rollout 정책과 어긋나는 fallback 값을 사용하고 있었다.
+
+fix_applied: |
+  createServer에 /api/v1/system/* routing을 추가해 system_api.enabled root gate와
+  system_api.sse_stream.enabled sub-feature gate를 실제 HTTP surface에 연결했다.
+  SystemApiController는 runtime flag provider를 우선 사용하도록 확장했고,
+  catalog 응답은 system-api-plugin의 routes/contracts/adapter profile을 Stage C 기준면과 일치시키도록 정리했다.
+  generate-mindmap.js의 system_api.* 기본값도 false로 고정해 static shell source를 safe default에 맞췄다.
+
+files_created:
+  - "memory/stageD/system-api-plugin.yaml"
+  - "src/tests/smoke/systemApiRuntime.smoke.test.js"
+  - "worklog/2026-04-15_WP-UI-003.yaml"
+
+files_modified:
+  - "src/server/createServer.js"
+  - "src/infrastructure/SystemApiController.js"
+  - "scripts/generate-mindmap.js"
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/next-actions.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  system_api_runtime_smoke: "PASS"
+  dynamic_frontend_server_smoke: "PASS"
+  validate_composition: "PASS"
+  wp_validate: "PASS"
+  project_status: "PASS"
+  session_bootstrap: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "UI-003-D1"
+    decision: "System OS HTTP surface는 root gate off 상태에서 404 비노출을 유지한다"
+    rationale: "Stage C의 기본 false rollout과 운영 안전 기본값을 구현면에서도 그대로 유지해야 한다."
+  - id: "UI-003-D2"
+    decision: "SystemApiController의 list/toggle/rollback gating은 runtime flag provider truth를 우선 사용한다"
+    rationale: "env override와 runtime evaluation이 raw YAML보다 상위 truth surface이기 때문이다."
+  - id: "UI-003-D3"
+    decision: "system domain catalog는 /api/v1/system/* 내부 route 목록이 아니라 plugin/UI ownership route를 노출한다"
+    rationale: "master-shell catalog는 operator가 plugin surface를 이해하는 조합면이라 runtime controller path보다 shell ownership 경로가 더 중요하다."
+
+risks:
+  - id: "UI-003-R1"
+    risk: "SSE reconnect, authz regression, rollback UI gating은 아직 Stage E adversarial evidence가 없다."
+    mitigation: "WP-UI-004에서 SSE/authz/rollback failure mode를 적대 검증과 rollback 기준으로 닫는다."

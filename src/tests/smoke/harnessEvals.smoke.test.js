@@ -1,0 +1,27 @@
+'use strict';
+
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const ROOT = path.resolve(__dirname, '..', '..', '..');
+const REPORT_PATH = path.join(ROOT, 'artifacts', 'evals', 'harness', 'latest', 'harness-eval-report.json');
+const SCRIPT_PATH = path.join(ROOT, 'scripts', 'run-harness-evals.js');
+
+test('[harness evals smoke] offline harness eval runner emits a report artifact', () => {
+  const result = spawnSync(process.execPath, [SCRIPT_PATH], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  const report = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf8'));
+  assert.equal(report.status, 'PASS');
+  assert.equal(report.summary.golden_case_count, 10);
+  assert.ok(report.summary.case_files >= 4);
+  assert.ok(Array.isArray(report.case_files));
+  assert.ok(fs.existsSync(REPORT_PATH));
+});

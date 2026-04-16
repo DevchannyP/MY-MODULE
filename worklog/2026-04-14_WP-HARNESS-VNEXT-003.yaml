@@ -1,0 +1,55 @@
+wp_id: "WP-HARNESS-VNEXT-003"
+goal: "Harness vNext Phase 1 mode router를 하네스 계약과 operator surface에 도입한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PASS"
+
+context: |
+  Phase 0에서 intake/output schema와 golden baseline은 추가됐지만,
+  실제 runtime surface에는 아직 mode router 메타가 없었다.
+  따라서 bootstrap과 operator cockpit은 packet_type만 보여주고,
+  현재 작업이 Research/Build/Debug/Operate/Policy 중 어떤 실행 전략인지 드러나지 않았다.
+
+root_cause: |
+  requirements/harness-engineering.yaml에 mode_router 정의가 없고,
+  scripts/session_bootstrap.js 및 scripts/operator_cockpit.js가 mode/risk/evidence/output contract를
+  계산하거나 노출하지 않았다.
+
+fix_applied: |
+  harness contract에 mode_router와 deliverable metadata 필드를 추가하고,
+  CONTINUOUS_PROMPT 문서에 mode 분기 규칙을 반영했다.
+  또한 session bootstrap과 operator cockpit이 mode, risk_level, evidence_status,
+  output_contract를 JSON과 human-readable surface 모두에 노출하도록 확장했다.
+
+files_created:
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-003.yaml"
+
+files_modified:
+  - "requirements/harness-engineering.yaml"
+  - "docs/harness/CONTINUOUS_PROMPT.md"
+  - "scripts/session_bootstrap.js"
+  - "scripts/operator_cockpit.js"
+
+validation:
+  validate_requirements: "PASS"
+  project_status: "PASS"
+  session_bootstrap_json: "PASS — mode/risk_level/evidence_status/output_contract 노출 확인"
+  operator_cockpit_json: "PASS — harness_mode/risk_level/evidence_status/output_contract 노출 확인"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-003-D1"
+    decision: "mode는 packet_type을 대체하지 않고 별도 축으로 유지한다"
+    rationale: "packet_type은 저장소 작업 분류이고, mode는 LLM 실행 전략이므로 둘을 합치면 queue/validator/branch 규칙과 하네스 정책이 뒤섞인다."
+  - id: "HARNESS-VNEXT-003-D2"
+    decision: "mode 추론은 현재 goal과 packet_type 기반의 경량 휴리스틱으로 시작한다"
+    rationale: "Phase 1의 목적은 surface 노출과 라우팅 계약 도입이므로, 복잡한 classifier를 먼저 넣기보다 deterministic heuristic이 더 안전하다."
+
+risks:
+  - id: "HARNESS-VNEXT-003-R1"
+    risk: "일부 목표 문구에서는 휴리스틱 mode 추론이 기대와 다를 수 있다."
+    mitigation: "후속 packet에서 current-wp 명시 mode override를 추가하고 eval golden set으로 오분류를 측정한다."
+  - id: "HARNESS-VNEXT-003-R2"
+    risk: "현재 HARNESS_PLAN 경로는 기존 upgrade plan을 계속 가리킨다."
+    mitigation: "후속 packet에서 bootstrap recommended reads에 vNext plan 우선순위를 재조정한다."

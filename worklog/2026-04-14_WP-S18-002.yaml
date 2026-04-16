@@ -1,0 +1,52 @@
+wp_id: "WP-S18-002"
+goal: "ENV 기반 어댑터 선택 — DB_TYPE=sqlite|postgres 런타임 분기 (DI wiring)"
+completed: true
+completed_at: "2026-04-14"
+tier: "infra"
+result: "PASS"
+
+context: |
+  WP-S18-001에서 PostgresTaskRepository skeleton을 추가했지만, 서버 런타임은 여전히 InMemoryTaskRepository를 고정 사용하고 있었다.
+  Spiral 18의 다음 단계는 DB_TYPE 환경 변수로 sqlite/postgres 어댑터를 분기할 최소 DI wiring을 넣는 것이다.
+
+root_cause: |
+  src/server/createServer.js는 task controller 기본 생성 시 InMemoryTaskRepository를 직접 new 하고 있어
+  adapter 교체가 런타임 설정으로 제어되지 않았다. .env.example과 plugin registry note에도 이 전략이 드러나지 않았다.
+
+fix_applied: |
+  createServer에 resolveTaskRepository helper를 추가해 DB_TYPE=sqlite|postgres|inmemory 분기를 도입했다.
+  기본값은 sqlite 이며 TASK_SQLITE_DB_PATH=:memory: 로 현재 로컬/테스트 동작을 유지한다.
+  postgres 선택 시 PostgresTaskRepository skeleton으로 분기하고, 실제 client가 없으면 명시적 POSTGRES_CLIENT_NOT_CONFIGURED 오류를 던지는 placeholder client를 사용한다.
+  .env.example과 task-management plugin registry note도 이 adapter 선택 전략에 맞게 갱신했다.
+
+files_created:
+  - "src/tests/unit/taskRepositoryRouting.test.js"
+  - "worklog/2026-04-14_WP-S18-002.yaml"
+
+files_modified:
+  - "src/server/createServer.js"
+  - ".env.example"
+  - "master-shell/plugin-registry/registry.yaml"
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/next-actions.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  task_repository_routing_unit: "PASS"
+  server_wiring_smoke: "PASS"
+  wp_validate: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "WP-S18-002-D1"
+    decision: "sqlite를 기본 DB_TYPE으로 채택하되 경로는 :memory: 기본값으로 둔다"
+    rationale: "기존 로컬/테스트 흐름을 깨지 않으면서도 runtime adapter selection을 실제 SQLite 경로로 옮길 수 있다."
+  - id: "WP-S18-002-D2"
+    decision: "postgres는 skeleton adapter까지만 연결하고 실제 client/pool은 placeholder로 둔다"
+    rationale: "이번 packet 범위는 분기와 DI wiring이며, live PostgreSQL 연결과 DDL은 후속 packet의 책임이다."
+
+risks:
+  - id: "WP-S18-002-R1"
+    risk: "DB_TYPE=postgres 상태에서 실제 client를 주입하지 않으면 task API 호출은 runtime 오류가 난다."
+    mitigation: "오류 코드를 POSTGRES_CLIENT_NOT_CONFIGURED로 명시했고, WP-S18-003에서 DDL/연결 검증을 이어간다."

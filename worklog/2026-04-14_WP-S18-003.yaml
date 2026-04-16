@@ -1,0 +1,51 @@
+wp_id: "WP-S18-003"
+goal: "task-tracking PostgreSQL DDL + validate:schema 게이트 추가"
+completed: true
+completed_at: "2026-04-14"
+tier: "infra"
+result: "PASS"
+
+context: |
+  WP-S18-001과 WP-S18-002로 PostgreSQL adapter skeleton과 DB_TYPE routing은 만들어졌지만,
+  실제 PostgreSQL DDL 파일과 schema gate가 없어서 migration path가 문서 수준에 머물러 있었다.
+
+root_cause: |
+  task-tracking 인프라는 SQLite schema.sql만 존재했고, PostgreSQL용 DDL 및 이를 막는 정적 검증 게이트가 비어 있었다.
+  따라서 adapter는 존재해도 어떤 스키마를 전제로 하는지 저장소 차원에서 고정되지 않았다.
+
+fix_applied: |
+  psql 호환 DDL 파일 001_initial_pg.sql을 추가해 tasks + task_outbox 구조를 명시했다.
+  validate-schema.js를 추가해 PostgreSQL DDL의 필수 구조와 SQLite 비호환 토큰 부재를 정적 검증하도록 했고,
+  package.json에 validate:schema 게이트를 연결했다.
+  migration strategy 문서에도 새 검증 명령을 반영했다.
+
+files_created:
+  - "domains/productivity/task-tracking/src/infrastructure/migrations/001_initial_pg.sql"
+  - "scripts/validate-schema.js"
+  - "worklog/2026-04-14_WP-S18-003.yaml"
+
+files_modified:
+  - "package.json"
+  - "docs/db/migration-strategy.md"
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/wp-queue.yaml"
+  - "memory/next-actions.yaml"
+
+validation:
+  validate_schema: "PASS"
+  wp_validate: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "WP-S18-003-D1"
+    decision: "PostgreSQL DDL에서도 TEXT PK와 task/task_outbox 테이블명을 유지한다"
+    rationale: "기존 TaskRepository/Outbox wiring과 문서상의 계약을 흔들지 않고 adapter 교체만 가능하게 유지하기 위해서다."
+  - id: "WP-S18-003-D2"
+    decision: "schema gate는 실제 DB 접속이 아닌 정적 검증으로 시작한다"
+    rationale: "현재 packet 목표는 저장소 baseline 고정이며, live PostgreSQL apply 테스트는 후속 확장 packet에서 다루는 편이 맞다."
+
+risks:
+  - id: "WP-S18-003-R1"
+    risk: "validate:schema는 정적 구조 검증이므로 실제 PostgreSQL apply/runtime behavior를 완전히 보증하지는 않는다."
+    mitigation: "후속 packet에서 실 PostgreSQL client/pool 및 migration apply 경로를 추가해 실행 검증을 보완한다."

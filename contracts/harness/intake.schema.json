@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/contracts/harness/intake.schema.json",
+  "title": "Workflow OS Harness Intake Packet Schema",
+  "description": "Baseline input contract for Harness vNext Phase 0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "goal",
+    "context",
+    "constraints",
+    "done_when",
+    "work_mode",
+    "verification"
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "minItems": 1
+    }
+  },
+  "properties": {
+    "goal": {
+      "type": "string",
+      "minLength": 8
+    },
+    "context": {
+      "$ref": "#/$defs/stringList"
+    },
+    "constraints": {
+      "$ref": "#/$defs/stringList"
+    },
+    "done_when": {
+      "$ref": "#/$defs/stringList"
+    },
+    "work_mode": {
+      "$ref": "#/$defs/stringList"
+    },
+    "verification": {
+      "$ref": "#/$defs/stringList"
+    },
+    "packet_type": {
+      "type": "string",
+      "minLength": 2
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "Research",
+        "Build",
+        "Debug",
+        "Operate",
+        "Policy"
+      ]
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "data_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trust_level",
+        "sources"
+      ],
+      "properties": {
+        "trust_level": {
+          "type": "string",
+          "enum": [
+            "trusted",
+            "mixed",
+            "untrusted",
+            "unknown"
+          ]
+        },
+        "sources": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format"
+      ],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": [
+            "markdown",
+            "json",
+            "yaml",
+            "mixed"
+          ]
+        },
+        "schema_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
