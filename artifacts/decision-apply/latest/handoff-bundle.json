@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-15T15:48:50.620017+00:00",
+  "generated_at": "2026-04-16T11:28:33.487196+00:00",
   "goal": "stateful-ops",
   "current_packet": {
     "id": "WP-RUN-004",
@@ -236,12 +236,12 @@
       "repository-sqlite"
     ],
     "selected_adapters": [
-      "master-ui-plugin-shell",
-      "observability-otel",
       "repository-inmemory",
+      "master-ui-plugin-shell",
       "http-problem-details",
-      "repository-sqlite",
-      "feature-flag-provider"
+      "feature-flag-provider",
+      "observability-otel",
+      "repository-sqlite"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-15T15:48:50.619998+00:00",
+    "generated_at": "2026-04-16T11:28:33.487173+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "E",
@@ -345,9 +345,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-14 22:05:41 +0900",
+            "timestamp": "2026-04-16 20:24:29 +0900",
             "title": "git commit",
-            "detail": "chore(artifacts): sync master-planner after spiral18 WP registration",
+            "detail": "chore(artifacts): sync master-planner after queue-sync",
             "tag": "git"
           }
         ]

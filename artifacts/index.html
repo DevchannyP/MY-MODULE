@@ -939,7 +939,7 @@
     <div class="wfos-stat"><span class="wfos-stat__label">도메인</span><span class="wfos-stat__value">3</span></div>
     <div class="wfos-stat"><span class="wfos-stat__label">활성 플래그</span><span class="wfos-stat__value">0 / 20</span></div>
     <div class="wfos-stat"><span class="wfos-stat__label">품질 게이트</span><span class="wfos-stat__value" style="color:#22c55e;">8/8 PASS</span></div>
-    <div class="wfos-stat"><span class="wfos-stat__label">마지막 게이트</span><span class="wfos-stat__value" style="font-size:.8rem;">2026. 4. 16. 0시 48분 53초</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">마지막 게이트</span><span class="wfos-stat__value" style="font-size:.8rem;">2026. 4. 16. 20시 28분 36초</span></div>
     <div style="flex:1;"></div>
     <div style="display:flex;align-items:center;gap:.4rem;">
       <span class="wf-sse-indicator wf-sse-indicator--offline" data-sse-indicator title="실시간 연결 상태">●</span>
@@ -1038,7 +1038,7 @@
         <div class="side-list">
           <div class="side-item"><span class="muted">요구사항 Stage</span><strong>D</strong></div>
           <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">WP-RUN-004</strong></div>
-          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>WP-S18-001</strong></div>
+          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>WP-RUN-006</strong></div>
           <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>clean</strong></div>
           <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
           <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
@@ -1102,24 +1102,24 @@
           <span class="flow-kicker">Current Lane</span>
           <span class="tag tone-green">Verify</span>
         </div>
-        <h3>WP-VIDEO-001</h3>
-        <p>video 도메인 Stage A~E 전체 구현 — contract 생성, 플러그인 등록, 단위/적대적 테스트</p>
+        <h3>WP-RUN-006</h3>
+        <p>배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage</p>
         <div class="flow-meta">
           <span>stage E</span>
-          <span>status in_progress</span>
+          <span>status ready</span>
         </div>
       </article>
 
       <article class="flow-card">
         <div class="flow-card-head">
           <span class="flow-kicker">Next Action</span>
-          <span class="tag tone-amber">WP-S18-001</span>
+          <span class="tag tone-amber">WP-RUN-006</span>
         </div>
         <h3>다음 한 단계</h3>
-        <p>WP-VIDEO-001 · video 도메인 Stage A~E 전체 구현 — contract 생성, 플러그인 등록, 단위/적대적 테스트</p>
+        <p>WP-RUN-006 · 배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage</p>
         <div class="flow-meta">
-          <span>branch chore/core-git-governance-activation...origin/chore/core-git-governance-activation</span>
-          <span>dirty 99건</span>
+          <span>branch chore/core-git-governance-activation...origin/chore/core-git-governance-activation [ahead 5]</span>
+          <span>dirty 18건</span>
         </div>
       </article>
 
@@ -1237,7 +1237,7 @@
         <h2>칸반 보드 · 작업 흐름</h2>
         <p>Work Packet 상태를 레인별로 시각화합니다. 각 카드의 A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
       </div>
-      <div class="spiral-iteration">반복 <strong>#30</strong> / 31 능력</div>
+      <div class="spiral-iteration">반복 <strong>#34</strong> / 35 능력</div>
     </div>
 
     <div class="spiral-row">
@@ -1282,31 +1282,15 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #475569">
           <span class="kb-lane-label">Backlog</span>
-          <span class="kb-lane-count">3</span>
+          <span class="kb-lane-count">1</span>
         </div>
         <div class="kb-cards">
         <div class="kb-card">
           <div class="kb-card-head">
-            <span class="kb-id">WP-S18-001</span>
-            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+            <span class="kb-id">WP-RUN-006</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
           </div>
-          <div class="kb-goal">PostgresTaskRepository 어댑터 스켈레톤 — 포트 계약 구현 + 연결 없는 구조 테스트</div>
-          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
-        </div>
-        <div class="kb-card">
-          <div class="kb-card-head">
-            <span class="kb-id">WP-S18-002</span>
-            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
-          </div>
-          <div class="kb-goal">ENV 기반 어댑터 선택 — DB_TYPE=sqlite|postgres 런타임 분기 (DI wiring)</div>
-          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
-        </div>
-        <div class="kb-card">
-          <div class="kb-card-head">
-            <span class="kb-id">WP-S18-003</span>
-            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
-          </div>
-          <div class="kb-goal">task-tracking PostgreSQL DDL + validate:schema 게이트 추가</div>
+          <div class="kb-goal">배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage</div>
           <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
         </div></div>
       </div>
@@ -1334,7 +1318,7 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #0f766e">
           <span class="kb-lane-label">Done</span>
-          <span class="kb-lane-count">57</span>
+          <span class="kb-lane-count">80</span>
         </div>
         <div class="kb-cards">
         <div class="kb-card">
@@ -1791,6 +1775,190 @@
             <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
           </div>
           <div class="kb-goal">StartTranscodeJobUseCase Worker Thread 분리 — CPU-bound 트랜스코딩 시뮬레이션 격리</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S18-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">PostgresTaskRepository 어댑터 스켈레톤 — 포트 계약 구현 + 연결 없는 구조 테스트</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S18-002</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">ENV 기반 어댑터 선택 — DB_TYPE=sqlite|postgres 런타임 분기 (DI wiring)</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S18-003</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">task-tracking PostgreSQL DDL + validate:schema 게이트 추가</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-001</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">Harness vNext 실행 계획 문서화</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-002</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">Harness intake/output JSON Schema 계약 고정</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-003</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">HarnessProviderAdapter 계약 + NullHarnessProvider 구현</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-004</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">HarnessRuntimeRouter mode→model tier 라우팅 구현</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-005</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">Eval plane baseline — 케이스/골든/메트릭 파일 구조</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-006</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">Harness ADR-0013 — provider adapter 전략 결정</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-007</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">validate-harness-contract.js 스크립트 추가</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-008</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">validate_harness_routing.py 라우팅 검증 스크립트</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-009</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">OWASP trust boundary / security policy 기준선</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-010</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">validate_harness_security.py 보안 검증 스크립트</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-011</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">Harness eval runner (run-harness-evals.js) 추가</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-012</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">next_wp truth surface — next-actions 우선 규칙 정렬</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-013</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">createServer.js LLM provider 실제 연결 (WP-LLM-001)</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-014</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">Harness observability + release evidence smoke</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HARNESS-VNEXT-015</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">provider failure modes Stage E 적대 검증</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-VIDEO-001</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">video 도메인 Stage C plugin registration + Stage D/E memory closure</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-UI-002</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">system-api-plugin Stage C — master shell registry/nav/flags/observability 등록</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-UI-003</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">SystemApiController runtime wiring — SSE/toggle/rollback 엔드포인트 + smoke</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-UI-004</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">System OS SSE/authz/rollback Stage E 적대 검증</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-RUN-005</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">배포 environment 실 URL health/ingress verification 자동화 baseline</div>
           <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
         </div></div>
       </div>
