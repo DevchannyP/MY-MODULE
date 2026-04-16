@@ -1,10 +1,20 @@
-as_of: "2026-03-20"
+as_of: "2026-04-16"
 session_mode: "work-packet-cycle"
 current_wp_queue: "memory/wp-queue.yaml"
 last_completed_wp:
-  id: "WP-RUN-004"
-  completed_at: "2026-03-20"
+  id: "WP-S19-002"
+  completed_at: "2026-04-16"
   result: "PASS"
+queue_summary:
+  total: 83
+  done: 83
+  ready: 0
+  blocked: 0
+branch: "chore/core-git-governance-activation"
+branch_commits_ahead_main: 213
+pr_status: "pending — gh auth required"
+tests: "673/673 PASS"
+lint: "PASS"
 
 working_capabilities:
   - id: "requirements-validation"

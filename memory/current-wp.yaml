@@ -1,48 +1,26 @@
-id: "WP-RUN-004"
-goal: "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다."
+id: "SPIRAL-19-COMPLETE"
+goal: "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done."
 type: "governance"
-stage: "E"
+stage: "complete"
 status: "completed"
+completed_at: "2026-04-16"
 scope_in:
-  - ".github/workflows/quality-gates.yml"
-  - "master-shell/operations/"
-  - "scripts/"
-  - "artifacts/deployment-smoke/"
-  - "docs/how-to/run-stage-d.md"
-  - "docs/how-to/run-stage-e.md"
-  - "docs/reference/quality-gates.md"
-  - "README.md"
-  - "memory/current-state.yaml"
-  - "memory/checkpoint.yaml"
+  - "src/server/createServer.js"
+  - "src/tests/smoke/harnessLiveProvider.smoke.test.js"
+  - "memory/stageD/harness-live-provider.yaml"
+  - "docs/how-to/local-server-startup.md"
+  - ".env"
   - "memory/wp-queue.yaml"
   - "memory/next-actions.yaml"
-  - "worklog/"
 scope_out:
   - "domains/"
-  - "src/server/"
-constraints:
-  - "do not claim live remote GitHub environment provisioning is fully verified in-repo"
-  - "treat remote environment audit evidence as operator-collected even after the repo policy/template exists"
-  - "leave root memory as the canonical status surface"
-done_when:
-  - "a repo-local provisioning policy exists for every declared deployment environment"
-  - "CI validates registry/provisioning-policy/template drift"
-  - "operators can generate a truthful audit template for remote GitHub environment evidence without inventing live data in git"
-fail_if:
-  - "the packet pretends remote environment vars/protection rules are proven without operator-collected evidence"
-  - "the policy drifts from the deployment environment registry"
-rollback: "Remove the provisioning policy/template validator and fall back to undocumented operator knowledge if the audit contract proves unusable."
-subtasks:
-  - "Define a repo-local provisioning policy for each deployment environment"
-  - "Generate an operator audit template from the registry/policy pair"
-  - "Validate policy/template coherence in repo CI"
-  - "Update runtime docs and root memory"
-validation:
-  - "npm run generate:deployment-environment-audit-template"
-  - "python3 scripts/validate_deployment_environment_provisioning.py"
-  - "npm run check:deployment-environment-provisioning"
-  - "npm run wp:reconcile"
-evidence:
-  - "worklog/2026-03-20_WP-RUN-004.yaml"
-  - "artifacts/deployment-smoke/"
-next_unlock: "The next runtime packet should focus on collecting or validating live remote audit evidence against this policy, not on missing repo-local governance."
+last_completed_wp: "WP-S19-002"
+last_completed_at: "2026-04-16"
+queue_state:
+  total: 83
+  done: 83
+  ready: 0
+  blocked: 0
+next_unlock: "gh auth login → PR 생성 → CI PASS → main 머지. 또는 Spiral 20 신규 WP 정의."
+branch: "chore/core-git-governance-activation"
+branch_status: "pushed — 213 commits ahead of main"
