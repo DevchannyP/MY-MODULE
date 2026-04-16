@@ -1222,3 +1222,39 @@ capabilities:
         depends_on: ["WP-RUN-005"]
         completed_at: "2026-04-16"
         result: "PASS — --require-https TLS gate + 3종 adversarial smoke (unreachable/tls-fail/tls-pass). memory/stageE/deployment-ingress.yaml"
+
+  # ──────────────────────────────────────────────
+  # CAP-SPIRAL-19  Spiral 19 — Harness Live Provider 연결
+  # ──────────────────────────────────────────────
+  - id: "CAP-SPIRAL-19"
+    label: "Spiral 19 — Harness live provider 연결 + .env 운영 완성"
+    spiral: 19
+    status: "pending"
+    work_packets:
+      - id: "WP-S19-001"
+        goal: "OpenAI live provider 연결 검증 — OPENAI_API_KEY 주입 시 실제 LLM 추천 반환"
+        status: "done"
+        completed_at: "2026-04-16"
+        result: "PASS — startServer harnessProviderAdapter wiring fix + 3/3 smoke tests"
+        tier: "infra"
+        depends_on: ["WP-HARNESS-VNEXT-015"]
+        deliverables:
+          - "src/tests/smoke/harnessLiveProvider.smoke.test.js: OPENAI_API_KEY 주입 시 provider_id=openai-responses 검증"
+          - "memory/stageD/harness-live-provider.yaml: live provider 구조 테스트 evidence"
+        success_criteria:
+          - "OPENAI_API_KEY 주입 시 provider_id=openai-responses 반환"
+          - "키 없으면 NullProvider fallback 유지 (기존 회귀 없음)"
+          - "harness provider adapter unit tests PASS"
+        note: "실제 API 호출은 CI에서 skipped — local 검증 전용"
+
+      - id: "WP-S19-002"
+        goal: "npm start 로컬 서버 기동 + .env 운영 가이드 확정"
+        status: "pending"
+        tier: "governance"
+        depends_on: ["WP-S19-001"]
+        deliverables:
+          - "docs/how-to/local-server-startup.md: npm start + .env 플래그 제어 가이드"
+          - ".env: OPENAI_API_KEY live 연결 검증 기록"
+        success_criteria:
+          - "npm start 기동 후 /health /tasks /api/v1/system/flags 200 응답"
+          - "가이드 문서 존재"
