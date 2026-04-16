@@ -1021,47 +1021,212 @@ capabilities:
     label: "Spiral 18 — SQLite→PostgreSQL Phase 2 어댑터 전환"
     spiral: 18
     doc_ref: "docs/db/migration-strategy.md#phase-2"
-    trigger: "NEXT-005 완료 후 (PR#1 main 머지)"
-    status: "pending"
+    status: "done"
     work_packets:
       - id: "WP-S18-001"
         goal: "PostgresTaskRepository 어댑터 스켈레톤 — 포트 계약 구현 + 연결 없는 구조 테스트"
-        status: "pending"
+        status: "done"
         tier: "domain"
         depends_on: ["WP-S17-003"]
-        deliverables:
-          - "domains/task-tracking/src/infrastructure/PostgresTaskRepository.js: TaskRepositoryPort 전체 메서드 구현 (pg 클라이언트 주입)"
-          - "domains/task-tracking/tests/infrastructure/PostgresTaskRepository.contract.test.js: 포트 계약 구조 테스트 (실 DB 없이)"
-        success_criteria:
-          - "TaskRepositoryPort 인터페이스 모든 메서드 시그니처 일치"
-          - "NullPgClient 주입 시 구조 테스트 PASS"
-          - "도메인 코어/유스케이스 변경 없음"
+        completed_at: "2026-04-14"
+        result: "PASS — client.query 주입형 스켈레톤 + FakePgClient 계약 테스트. 실 DB 연결 없이 포트 구조 검증"
 
       - id: "WP-S18-002"
         goal: "ENV 기반 어댑터 선택 — DB_TYPE=sqlite|postgres 런타임 분기 (DI wiring)"
-        status: "pending"
+        status: "done"
         tier: "infra"
         depends_on: ["WP-S18-001"]
-        deliverables:
-          - "src/server/createServer.js: DB_TYPE env 분기 로직 (sqlite 기본값)"
-          - ".env.example: DB_TYPE=sqlite 기본값 주석 추가"
-          - "master-shell/plugin-registry.yaml: db_adapter 선택 전략 문서화"
-        success_criteria:
-          - "DB_TYPE=sqlite → SQLiteTaskRepository (기존 동작 유지)"
-          - "DB_TYPE=postgres → PostgresTaskRepository (팩토리 주입)"
-          - "기존 smoke 테스트 144/144 회귀 없음"
+        completed_at: "2026-04-14"
+        result: "PASS — DB_TYPE env 분기, sqlite 기본값 유지, task repository routing smoke PASS"
 
       - id: "WP-S18-003"
         goal: "task-tracking PostgreSQL DDL + validate:schema 게이트 추가"
-        status: "pending"
+        status: "done"
         tier: "infra"
         depends_on: ["WP-S18-002"]
+        completed_at: "2026-04-14"
+        result: "PASS — 001_initial_pg.sql DDL 추가, validate:schema PASS, 기존 schema.sql 변경 없음"
+
+  # ──────────────────────────────────────────────
+  # CAP-HARNESS-VNEXT  Harness vNext (2026-04-14~15)
+  # ──────────────────────────────────────────────
+  - id: "CAP-HARNESS-VNEXT"
+    label: "Harness vNext — Mode Router / Provider Adapter / Eval / Security"
+    status: "done"
+    work_packets:
+      - id: "WP-HARNESS-VNEXT-001"
+        goal: "Harness vNext 실행 계획 문서화"
+        status: "done"
+        tier: "arch"
+        completed_at: "2026-04-14"
+        result: "PASS — docs/explanation/harness-vnext-execution-plan.md (Phase 0~7)"
+
+      - id: "WP-HARNESS-VNEXT-002"
+        goal: "Harness intake/output JSON Schema 계약 고정"
+        status: "done"
+        tier: "arch"
+        completed_at: "2026-04-14"
+        result: "PASS — contracts/harness/intake.schema.json + output.schema.json"
+
+      - id: "WP-HARNESS-VNEXT-003"
+        goal: "HarnessProviderAdapter 계약 + NullHarnessProvider 구현"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — HarnessProviderAdapter.js + NullHarnessProvider fallback"
+
+      - id: "WP-HARNESS-VNEXT-004"
+        goal: "HarnessRuntimeRouter mode→model tier 라우팅 구현"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — resolveHarnessRuntimeRoute, Build/Debug/Research/Policy 4-mode 분기"
+
+      - id: "WP-HARNESS-VNEXT-005"
+        goal: "Eval plane baseline — 케이스/골든/메트릭 파일 구조"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — evals/cases/*.jsonl + evals/golden/ + evals/metrics/baseline.json"
+
+      - id: "WP-HARNESS-VNEXT-006"
+        goal: "Harness ADR-0013 — provider adapter 전략 결정"
+        status: "done"
+        tier: "arch"
+        completed_at: "2026-04-14"
+        result: "PASS — docs/adr/0013-harness-provider-adapter-strategy.md"
+
+      - id: "WP-HARNESS-VNEXT-007"
+        goal: "validate-harness-contract.js 스크립트 추가"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — scripts/validate-harness-contract.js, contract smoke PASS"
+
+      - id: "WP-HARNESS-VNEXT-008"
+        goal: "validate_harness_routing.py 라우팅 검증 스크립트"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — scripts/validate_harness_routing.py, routing smoke PASS"
+
+      - id: "WP-HARNESS-VNEXT-009"
+        goal: "OWASP trust boundary / security policy 기준선"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — security/policies/trust-boundary.yaml + security/redteam/owasp-core.yaml"
+
+      - id: "WP-HARNESS-VNEXT-010"
+        goal: "validate_harness_security.py 보안 검증 스크립트"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — scripts/validate_harness_security.py, security smoke PASS"
+
+      - id: "WP-HARNESS-VNEXT-011"
+        goal: "Harness eval runner (run-harness-evals.js) 추가"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-14"
+        result: "PASS — scripts/run-harness-evals.js, eval smoke PASS"
+
+      - id: "WP-HARNESS-VNEXT-012"
+        goal: "next_wp truth surface — next-actions 우선 규칙 정렬"
+        status: "done"
+        tier: "arch"
+        completed_at: "2026-04-14"
+        result: "PASS — project_status.js extractNextWp operator selection 우선 로직"
+
+      - id: "WP-HARNESS-VNEXT-013"
+        goal: "createServer.js LLM provider 실제 연결 (WP-LLM-001)"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-15"
+        result: "PASS — POST /api/harness/prompt-recommendation 라우트 + provider wiring"
+
+      - id: "WP-HARNESS-VNEXT-014"
+        goal: "Harness observability + release evidence smoke"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-15"
+        result: "PASS — harnessReleaseEvidence + harnessRouting smoke PASS"
+
+      - id: "WP-HARNESS-VNEXT-015"
+        goal: "provider failure modes Stage E 적대 검증"
+        status: "done"
+        tier: "arch"
+        completed_at: "2026-04-15"
+        result: "PASS — schema mismatch 500, auth failure safe fallback, provider outage 503 고정"
+
+  # ──────────────────────────────────────────────
+  # CAP-VIDEO-CLOSURE  Video 도메인 Stage C/D/E 증적 (2026-04-14)
+  # ──────────────────────────────────────────────
+  - id: "CAP-VIDEO-CLOSURE"
+    label: "Video 도메인 Stage C~E root memory 증적 closure"
+    status: "done"
+    work_packets:
+      - id: "WP-VIDEO-001"
+        goal: "video 도메인 Stage C plugin registration + Stage D/E memory closure"
+        status: "done"
+        tier: "domain"
+        completed_at: "2026-04-14"
+        result: "PASS — memory/stageC/video-plugin.yaml + stageD/video.yaml + stageE/video.yaml 추가"
+
+  # ──────────────────────────────────────────────
+  # CAP-UI-PHASE1  System OS Phase 1 UI 통합 (2026-04-15)
+  # ──────────────────────────────────────────────
+  - id: "CAP-UI-PHASE1"
+    label: "System OS Phase 1 UI 통합 — Stage C~E"
+    status: "done"
+    work_packets:
+      - id: "WP-UI-002"
+        goal: "system-api-plugin Stage C — master shell registry/nav/flags/observability 등록"
+        status: "done"
+        tier: "arch"
+        completed_at: "2026-04-15"
+        result: "PASS — plugin-registry, navigation, feature-flags, catalog 등록 + validate:composition PASS"
+
+      - id: "WP-UI-003"
+        goal: "SystemApiController runtime wiring — SSE/toggle/rollback 엔드포인트 + smoke"
+        status: "done"
+        tier: "infra"
+        completed_at: "2026-04-15"
+        result: "PASS — POST/GET system-api 라우트 wiring + runtime smoke PASS"
+
+      - id: "WP-UI-004"
+        goal: "System OS SSE/authz/rollback Stage E 적대 검증"
+        status: "done"
+        tier: "arch"
+        completed_at: "2026-04-15"
+        result: "PASS — system.admin 403 회귀 + SSE reconnect + memory/stageE/system-api-plugin.yaml"
+
+  # ──────────────────────────────────────────────
+  # CAP-RUN-EXT  Deployment environment verification (2026-04-15)
+  # ──────────────────────────────────────────────
+  - id: "CAP-RUN-EXT"
+    label: "Deployment environment real target verification"
+    status: "done"
+    work_packets:
+      - id: "WP-RUN-005"
+        goal: "배포 environment 실 URL health/ingress verification 자동화 baseline"
+        status: "done"
+        tier: "governance"
+        completed_at: "2026-04-15"
+        result: "PASS — ingress host/TLS/correlation-header 검증 + resolve_deployment_target.py 확장"
+
+      - id: "WP-RUN-006"
+        goal: "배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage"
+        status: "pending"
+        tier: "governance"
+        depends_on: ["WP-RUN-005"]
         deliverables:
-          - "domains/task-tracking/src/infrastructure/migrations/001_initial_pg.sql: psql 호환 DDL (tasks + task_outbox)"
-          - "scripts/validate-schema.js: DDL 구문 정적 검증 스크립트"
-          - "package.json: validate:schema 스크립트 추가"
+          - "src/tests/smoke/deploymentIngressFailure.smoke.test.js: TLS mismatch/hostname mismatch failure-path smoke"
+          - "scripts/run_deployment_smoke.js: failure-path 케이스 추가"
+          - "memory/stageE/deployment-ingress.yaml: Stage E adversarial evidence"
+          - "artifacts/release-evidence/release-evidence.json: ingress failure rollback linkage 갱신"
         success_criteria:
-          - "psql-compatible DDL (TEXT PK 유지 — UUID 계약 준수)"
-          - "SQLite WHERE 부분 인덱스 → PostgreSQL 호환 인덱스로 전환"
-          - "validate:schema PASS"
-          - "기존 schema.sql 변경 없음 (신규 파일만 추가)"
+          - "TLS mismatch → structured error artifact 기록"
+          - "hostname mismatch → rollback trigger 조건 포함"
+          - "Stage E memory에 adversarial evidence 기록"
+          - "기존 deployment smoke 회귀 없음"
