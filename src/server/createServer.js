@@ -2167,6 +2167,7 @@ function startServer({
   rateLimitPolicy = undefined,
   maxRequestBodyBytes = undefined,
   requestBodyReadTimeoutMs = undefined,
+  harnessProviderAdapter = undefined,
 } = {}) {
   const lifecycleState = createLifecycleState();
   const server = createServer({
@@ -2177,6 +2178,7 @@ function startServer({
     rateLimitPolicy,
     maxRequestBodyBytes,
     requestBodyReadTimeoutMs,
+    harnessProviderAdapter,
     lifecycleState,
   });
   const sockets = new Set();

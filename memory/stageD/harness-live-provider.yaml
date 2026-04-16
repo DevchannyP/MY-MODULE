@@ -1,0 +1,36 @@
+domain: "harness-live-provider"
+wp_id: "WP-S19-001"
+stage: "D"
+completed_at: "2026-04-16"
+
+quality_bundle:
+  unit_tests: "PASS (3/3 — harnessLiveProvider.smoke.test.js)"
+  lint: "PASS"
+  regression: "PASS (673/673 — no regression)"
+
+structural_fix:
+  file: "src/server/createServer.js"
+  change: "startServer() now forwards harnessProviderAdapter to createServer()/createAppHandler()"
+  rationale: "harnessProviderAdapter was silently ignored in all startServer-based tests"
+
+provider_chain_coverage:
+  - scenario: "HARNESS_PROVIDER=openai + valid key"
+    expected_chain: "[openai-responses, null-harness-provider]"
+    first_provider: "openai-responses"
+    fallback_applied: false
+
+  - scenario: "HARNESS_PROVIDER=openai + no key"
+    expected_chain: "[openai-responses, null-harness-provider]"
+    first_provider: "null-harness-provider (fallback)"
+    fallback_applied: true
+
+  - scenario: "no HARNESS_PROVIDER"
+    expected_chain: "[null-harness-provider]"
+    first_provider: "null-harness-provider"
+    fallback_applied: false
+
+env_activation:
+  key: "HARNESS_PROVIDER=openai"
+  secret: "OPENAI_API_KEY=sk-..."
+  endpoint: "POST /api/harness/prompt-recommendation"
+  placeholder_added_to: ".env"
