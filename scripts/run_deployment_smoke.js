@@ -27,6 +27,7 @@ function usage() {
     '  --flag-off-path <path>          Optional path expected to return 404 when a feature is disabled',
     '  --flag-off-permissions <csv>    Default: task:read',
     '  --require-flag-off              Fail if --flag-off-path is not provided',
+    '  --require-https                 Fail if base URL is not HTTPS (ingress TLS gate)',
     '  --live-path <path>              Default: /livez',
     '  --startup-path <path>           Default: /startupz',
     '  --ready-path <path>             Default: /readyz',
@@ -74,6 +75,10 @@ function parseArgs(argv) {
     }
     if (current === '--require-flag-off') {
       options.requireFlagOff = true;
+      continue;
+    }
+    if (current === '--require-https') {
+      options.requireHttps = true;
       continue;
     }
     if (!current.startsWith('--')) {
@@ -428,6 +433,7 @@ async function run(options) {
       video_read_permissions: parseCsv(options.videoReadPermissions),
       flag_off_permissions: parseCsv(options.flagOffPermissions),
       require_flag_off: options.requireFlagOff,
+      require_https: options.requireHttps ?? false,
       timeout_ms: options.timeoutMs,
       user_id: options.userId,
       reviewers_approved: options.reviewersApproved,
@@ -464,6 +470,24 @@ async function run(options) {
         },
       };
     });
+
+    // ingress-https validation (WP-RUN-006)
+    if (options.requireHttps) {
+      await runStep(report, {
+        id: 'ingress-https',
+        name: 'Ingress target uses HTTPS (TLS required)',
+      }, async () => {
+        const targetUrl = new URL(options.baseUrl);
+        if (targetUrl.protocol !== 'https:') {
+          throw new SmokeAssertionError('Ingress TLS validation failed: target is not HTTPS', {
+            protocol: targetUrl.protocol,
+            base_url: options.baseUrl,
+            rollback_trigger: true,
+          });
+        }
+        return { protocol: targetUrl.protocol, tls_required: true };
+      });
+    }
 
     await runStep(report, {
       id: 'livez',

@@ -1,0 +1,36 @@
+domain: "deployment-ingress"
+wp_id: "WP-RUN-006"
+stage: "E"
+completed_at: "2026-04-16"
+
+adversarial_vectors:
+  - id: "AV-INGRESS-001"
+    name: "Unreachable target"
+    description: "Smoke runner invoked against a port that refuses connection"
+    expected: "overall_status=FAIL, failure.message set, artifact written"
+    result: "PASS"
+
+  - id: "AV-INGRESS-002"
+    name: "HTTP target with --require-https"
+    description: "TLS gate fails when base URL uses http:// and --require-https is set"
+    expected: "ingress-https step FAIL, detail.rollback_trigger=true"
+    result: "PASS"
+
+  - id: "AV-INGRESS-003"
+    name: "HTTPS target with --require-https (regression)"
+    description: "TLS gate passes when base URL uses https:// even if network is unreachable"
+    expected: "ingress-https step PASS"
+    result: "PASS"
+
+rollback_triggers:
+  - condition: "ingress-https step FAIL (rollback_trigger: true)"
+    action: "Halt deployment pipeline. Verify ingress TLS termination config before retrying."
+  - condition: "overall_status FAIL on unreachable target"
+    action: "Check deployment environment health. Do not promote. Run wp:health and review rollback playbook."
+
+release_readiness:
+  gate: "PASS"
+  failure_path_covered: true
+  rollback_linkage: true
+  tls_gate_active: true
+  known_gaps: []
