@@ -1249,7 +1249,9 @@ capabilities:
 
       - id: "WP-S19-002"
         goal: "npm start 로컬 서버 기동 + .env 운영 가이드 확정"
-        status: "pending"
+        status: "done"
+        completed_at: "2026-04-16"
+        result: "PASS — docs/how-to/local-server-startup.md 생성. 7/7 endpoints PASS"
         tier: "governance"
         depends_on: ["WP-S19-001"]
         deliverables:

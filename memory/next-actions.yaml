@@ -1,9 +1,4 @@
 as_of: "2026-04-16"
 selection_policy: "define a new work packet from the highest-ROI uncovered need when the queue is empty"
-next_wp: "WP-S19-002"
-queue:
-  - id: "WP-S19-002"
-    goal: "npm start 로컬 서버 기동 + .env 운영 가이드 확정"
-    status: "ready"
-    tier: "governance"
-    depends_on: ["WP-S19-001"]
+next_wp: null
+queue: []
