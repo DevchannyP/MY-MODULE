@@ -1,10 +1,4 @@
 as_of: "2026-04-16"
 selection_policy: "define a new work packet from the highest-ROI uncovered need when the queue is empty"
-next_wp: "WP-RUN-006"
-queue:
-  - id: "WP-RUN-006"
-    goal: "배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage"
-    status: "ready"
-    tier: "governance"
-    depends_on: ["WP-RUN-005"]
-    note: "WP-RUN-005-R1 mitigation — TLS mismatch/ingress host mismatch failure-path adversarial evidence"
+next_wp: null
+queue: []

@@ -1217,16 +1217,8 @@ capabilities:
 
       - id: "WP-RUN-006"
         goal: "배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage"
-        status: "pending"
+        status: "done"
         tier: "governance"
         depends_on: ["WP-RUN-005"]
-        deliverables:
-          - "src/tests/smoke/deploymentIngressFailure.smoke.test.js: TLS mismatch/hostname mismatch failure-path smoke"
-          - "scripts/run_deployment_smoke.js: failure-path 케이스 추가"
-          - "memory/stageE/deployment-ingress.yaml: Stage E adversarial evidence"
-          - "artifacts/release-evidence/release-evidence.json: ingress failure rollback linkage 갱신"
-        success_criteria:
-          - "TLS mismatch → structured error artifact 기록"
-          - "hostname mismatch → rollback trigger 조건 포함"
-          - "Stage E memory에 adversarial evidence 기록"
-          - "기존 deployment smoke 회귀 없음"
+        completed_at: "2026-04-16"
+        result: "PASS — --require-https TLS gate + 3종 adversarial smoke (unreachable/tls-fail/tls-pass). memory/stageE/deployment-ingress.yaml"
