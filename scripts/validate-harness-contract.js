@@ -166,6 +166,10 @@ function validateProviderAdapterYaml(providerDoc) {
   requireArrayOfStrings(providerDoc?.validation_rules, 'provider-adapter.validation_rules');
 }
 
+const VALID_MODES = new Set(['Research', 'Build', 'Debug', 'Operate', 'Policy']);
+const VALID_ZONE_RULES = new Set(['single-zone-preferred', 'global-scan-allowed']);
+const VALID_PACKET_TYPES = new Set(['arch', 'governance', 'meta', 'shell', 'executor']);
+
 function validateGoldenSet(intakeSchema) {
   const content = fs.readFileSync(GOLDEN_SET_PATH, 'utf8')
     .split('\n')
@@ -186,15 +190,33 @@ function validateGoldenSet(intakeSchema) {
       fail(`harness contract validation FAIL: golden set line ${index + 1} is not valid JSON`);
     }
 
+    const lineLabel = `golden set line ${index + 1}`;
+
     if (!record.input || typeof record.input !== 'object') {
-      fail(`harness contract validation FAIL: golden set line ${index + 1} missing input object`);
+      fail(`harness contract validation FAIL: ${lineLabel} missing input object`);
     }
 
     requiredInputFields.forEach((field) => {
       if (!(field in record.input)) {
-        fail(`harness contract validation FAIL: golden set line ${index + 1} missing input.${field}`);
+        fail(`harness contract validation FAIL: ${lineLabel} missing input.${field}`);
       }
     });
+
+    if (!VALID_MODES.has(record.mode)) {
+      fail(`harness contract validation FAIL: ${lineLabel} invalid or missing mode: ${record.mode}`);
+    }
+
+    if (!VALID_PACKET_TYPES.has(record.packet_type)) {
+      fail(`harness contract validation FAIL: ${lineLabel} invalid or missing packet_type: ${record.packet_type}`);
+    }
+
+    if (record.expect?.zone_rule !== undefined && !VALID_ZONE_RULES.has(record.expect.zone_rule)) {
+      fail(`harness contract validation FAIL: ${lineLabel} invalid zone_rule: ${record.expect.zone_rule}`);
+    }
+
+    if (typeof record.expect?.false_pass_forbidden !== 'boolean') {
+      fail(`harness contract validation FAIL: ${lineLabel} missing or non-boolean expect.false_pass_forbidden`);
+    }
   });
 }
 
