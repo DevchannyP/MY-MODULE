@@ -96,6 +96,39 @@ curl http://localhost:3000/readyz    # Readiness
 
 ```bash
 # .env에 추가
-DB_TYPE=sqlite     # 기본값 (파일 기반, 즉시 동작)
-DB_TYPE=postgres   # PostgresTaskRepository 사용 (연결 설정 별도 필요)
+DB_TYPE=sqlite     # 기본값 — SQLiteTaskRepository (즉시 동작)
+DB_TYPE=inmemory   # InMemoryTaskRepository — 재시작 시 전체 초기화 (테스트 전용)
+DB_TYPE=postgres   # PostgresTaskRepository — 연결 설정 별도 필요
 ```
+
+### SQLite 영속화
+
+기본값 `TASK_SQLITE_DB_PATH=:memory:` → 재시작마다 task 데이터 초기화.
+
+파일 경로로 변경하면 영속성이 생깁니다:
+
+```bash
+# .env에 추가
+TASK_SQLITE_DB_PATH=./data/tasks.db
+```
+
+### PostgreSQL 연결
+
+```bash
+# .env에 추가
+DB_TYPE=postgres
+POSTGRES_URL=postgresql://user:pass@localhost:5432/my_module
+# 또는 개별 항목으로:
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=my_module
+POSTGRES_SCHEMA=public       # (선택) 기본값: public
+POSTGRES_TASK_TABLE=tasks    # (선택) 기본값: tasks
+```
+
+스키마 초기화:
+```bash
+psql $POSTGRES_URL < domains/productivity/task-tracking/src/infrastructure/migrations/001_initial_pg.sql
+```
+
+전환 전제 조건: `docs/db/migration-strategy.md` Phase 2 참조.
