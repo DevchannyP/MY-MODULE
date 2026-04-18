@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-18T05:38:56.709915+00:00",
+  "generated_at": "2026-04-18T06:21:00.598633+00:00",
   "goal": "plan-and-learn",
   "current_packet": {
     "id": "SPIRAL-19-COMPLETE",
@@ -234,14 +234,14 @@
       "feature-flag-provider"
     ],
     "selected_adapters": [
-      "master-ui-plugin-shell",
-      "openai-responses-agent",
+      "http-problem-details",
       "master-ui-static-planner",
-      "feature-flag-provider",
+      "master-ui-plugin-shell",
+      "planner-state-memory",
+      "openai-responses-agent",
       "remote-mcp-connector",
       "observability-otel",
-      "http-problem-details",
-      "planner-state-memory"
+      "feature-flag-provider"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-18T05:38:56.709891+00:00",
+    "generated_at": "2026-04-18T06:21:00.598610+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "complete",
@@ -341,9 +341,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-16 21:53:34 +0900",
+            "timestamp": "2026-04-18 15:18:27 +0900",
             "title": "git commit",
-            "detail": "chore(artifacts): sync after memory update",
+            "detail": "chore(artifacts): sync harness eval + master-planner after harness:check",
             "tag": "git"
           }
         ]

@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-18T05:38:55.245616+00:00",
+  "generated_at_utc": "2026-04-18T06:20:59.112506+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "7a664d856821620e7f6d776a12383e33f508927f",
+  "head_commit": "24751bf5f7e48921b8dea21a3e0a05275d3d6b00",
   "build_environment": {
     "ci": "false",
-    "github_sha": "7a664d856821620e7f6d776a12383e33f508927f",
+    "github_sha": "24751bf5f7e48921b8dea21a3e0a05275d3d6b00",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -15,40 +15,22 @@
     "available": true,
     "is_clean": false,
     "modified_paths": [
-      ".env.example",
       "artifacts/decision-apply/latest/benchmark-pack.json",
       "artifacts/decision-apply/latest/context-lock.json",
       "artifacts/decision-apply/latest/decision-apply-report.json",
       "artifacts/decision-apply/latest/handoff-bundle.json",
       "artifacts/decision-apply/latest/promoted-packet.yaml",
       "artifacts/evals/harness/latest/harness-eval-report.json",
-      "artifacts/index.html",
       "artifacts/master-planner/index.html",
       "artifacts/mindmap/index.html",
       "artifacts/promotion-pipeline/latest/benchmark-pack.json",
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
-      "artifacts/promotion-pipeline/latest/pipeline-report.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "artifacts/release-evidence/release-evidence.json",
-      "master-shell/catalog/ai-runtime-recipes.yaml",
-      "master-shell/catalog/context-routing-profiles.yaml",
-      "master-shell/operations/rollback-playbook.yaml",
-      "master-shell/plugin-registry/registry.yaml",
-      "memory/project/vscode-cli-automation.yaml",
-      "requirements/harness-engineering.yaml",
-      "scripts/generate_release_evidence.py",
-      "scripts/validate_harness_routing.py",
-      "src/infrastructure/ai/HarnessProviderAdapter.js",
-      "src/infrastructure/ai/OpenAIResponsesProvider.js",
-      "src/tests/smoke/harnessProviderFailure.smoke.test.js",
-      "src/tests/smoke/projectStatus.smoke.test.js",
-      "src/tests/smoke/systemApiAdversarial.smoke.test.js",
-      "src/tests/smoke/systemApiRuntime.smoke.test.js"
+      "artifacts/provenance/workflow-os-provenance.json",
+      "artifacts/release-evidence/release-evidence.json"
     ],
-    "untracked_paths": [
-      "src/tests/unit/openAiResponsesProvider.test.js"
-    ]
+    "untracked_paths": []
   },
   "memory_sources": {
     "current_state": "memory/current-state.yaml",
@@ -77,7 +59,7 @@
     "provenance": {
       "path": "artifacts/provenance/workflow-os-provenance.json",
       "exists": true,
-      "sha256": "ca3cec214f2985a9a178c18f31bcac8b96415f57e762afc42023d430bfa2697e"
+      "sha256": "bab80d8013043fdae0f2161f9c4d2f98ed20f73a25335eb25ed6894fb97a8e81"
     },
     "sbom": {
       "path": "artifacts/sbom/workflow-os.spdx.json",
