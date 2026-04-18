@@ -120,6 +120,26 @@ function parseExistingEnv(envPath) {
   return { lines, activeKeys, commentedKeys };
 }
 
+// ── AI Harness 섹션 생성 ──────────────────────────────────────────────────
+/**
+ * HARNESS_PROVIDER / OPENAI_API_KEY / OPENAI_BASE_URL 은 WOS_FLAG_* 플래그가 아니므로
+ * flags.yaml에 선언되지 않는다. env-init이 명시적으로 생성해야 force 재생성 후에도 보존된다.
+ */
+const HARNESS_VARS = ['HARNESS_PROVIDER', 'OPENAI_API_KEY', 'OPENAI_BASE_URL'];
+
+function buildHarnessSection() {
+  return [
+    `# ── AI Harness — live provider 연결 (선택) ──────────────────────────────────`,
+    `# 키 없으면 NullProvider fallback — 모든 기능 정상 동작 (추천만 null 반환).`,
+    `# 활성화 순서: 1) HARNESS_PROVIDER 주석 해제  2) OPENAI_API_KEY 실제 키 입력  3) npm run harness:check`,
+    `#`,
+    `# HARNESS_PROVIDER=openai         # "openai" 설정 시 OpenAI Responses API 사용`,
+    `# OPENAI_API_KEY=sk-...           # OpenAI API 키 (필수 — 없으면 NullProvider fallback)`,
+    `# OPENAI_BASE_URL=https://api.openai.com/v1  # (선택) 커스텀 엔드포인트`,
+    ``,
+  ];
+}
+
 // ── 스캐폴드 헤더 생성 ────────────────────────────────────────────────────
 function buildScaffoldHeader() {
   const date = new Date().toISOString().slice(0, 10);
@@ -190,7 +210,8 @@ function main() {
     const metadata = loadMetadata();
     const header = buildScaffoldHeader();
     const flagLines = buildFlagBlocks(flags, metadata);
-    const output = [...header, ...flagLines].join('\n');
+    const harnessLines = buildHarnessSection();
+    const output = [...header, ...flagLines, ...harnessLines].join('\n');
 
     if (DRY_RUN) {
       process.stdout.write('[env-init] --dry-run 출력 미리보기:\n\n');
@@ -200,6 +221,7 @@ function main() {
       fs.writeFileSync(ENV_PATH, output, 'utf8');
       process.stdout.write(`[env-init] .env 생성 완료 (${flags.length}개 플래그 주석 처리됨)\n`);
       process.stdout.write(`[env-init] 활성화: 주석(#)을 제거하고 npm start 재실행\n`);
+      process.stdout.write(`[env-init] AI Harness: OPENAI_API_KEY 입력 후 npm run harness:check 로 검증\n`);
     }
     return;
   }
@@ -210,32 +232,49 @@ function main() {
     (f) => !existing.activeKeys.has(f.envKey) && !existing.commentedKeys.has(f.envKey)
   );
 
-  if (missingKeys.length === 0) {
+  // harness 섹션 누락 여부 확인 (WOS_FLAG_* 가 아닌 비-플래그 변수)
+  const harnessAbsent = HARNESS_VARS.every(
+    (v) => !existing.activeKeys.has(v) && !existing.commentedKeys.has(v)
+  );
+
+  if (missingKeys.length === 0 && !harnessAbsent) {
     process.stdout.write(`[env-init] .env에 누락된 플래그가 없습니다 (${flags.length}/${flags.length} 플래그 포함됨)\n`);
     return;
   }
 
   const metadata = loadMetadata();
-  const appendLines = [
-    '',
-    `# ── env-init ${new Date().toISOString().slice(0, 10)} 추가 (누락된 플래그) ───────────────────`,
-  ];
-  for (const { key, envKey, defaultValue } of missingKeys) {
-    const stage = (metadata[key] || {}).stage || 'internal';
-    const hint = defaultValue ? ' # yaml 기본값: true' : ` # ${stage}`;
-    appendLines.push(`# ${envKey}=true${hint}`);
+  const appendLines = [];
+
+  if (missingKeys.length > 0) {
+    appendLines.push('');
+    appendLines.push(`# ── env-init ${new Date().toISOString().slice(0, 10)} 추가 (누락된 플래그) ───────────────────`);
+    for (const { key, envKey, defaultValue } of missingKeys) {
+      const stage = (metadata[key] || {}).stage || 'internal';
+      const hint = defaultValue ? ' # yaml 기본값: true' : ` # ${stage}`;
+      appendLines.push(`# ${envKey}=true${hint}`);
+    }
+    appendLines.push('');
   }
-  appendLines.push('');
+
+  if (harnessAbsent) {
+    appendLines.push(...buildHarnessSection());
+  }
 
   if (DRY_RUN) {
-    process.stdout.write(`[env-init] --dry-run: 추가될 ${missingKeys.length}개 플래그:\n`);
+    const count = missingKeys.length + (harnessAbsent ? HARNESS_VARS.length : 0);
+    process.stdout.write(`[env-init] --dry-run: 추가될 ${count}개 항목 (플래그 ${missingKeys.length}개 + harness ${harnessAbsent ? HARNESS_VARS.length : 0}개):\n`);
     process.stdout.write(appendLines.join('\n') + '\n');
   } else {
     const currentContent = fs.readFileSync(ENV_PATH, 'utf8');
     fs.writeFileSync(ENV_PATH, currentContent + appendLines.join('\n'), 'utf8');
-    process.stdout.write(`[env-init] .env에 ${missingKeys.length}개 누락 플래그 추가 완료\n`);
-    for (const { key, envKey } of missingKeys) {
-      process.stdout.write(`  + ${envKey}  (${key})\n`);
+    if (missingKeys.length > 0) {
+      process.stdout.write(`[env-init] .env에 ${missingKeys.length}개 누락 플래그 추가 완료\n`);
+      for (const { key, envKey } of missingKeys) {
+        process.stdout.write(`  + ${envKey}  (${key})\n`);
+      }
+    }
+    if (harnessAbsent) {
+      process.stdout.write(`[env-init] AI Harness 섹션 추가됨 — OPENAI_API_KEY 입력 후 npm run harness:check\n`);
     }
   }
 
