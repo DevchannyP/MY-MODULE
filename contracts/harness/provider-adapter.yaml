@@ -1,5 +1,5 @@
-version: "0.1.0"
-last_updated: "2026-04-15"
+version: "0.1.1"
+last_updated: "2026-04-18"
 
 contract_id: "harness-provider-adapter"
 name: "Harness Provider Adapter Contract"
@@ -170,21 +170,25 @@ observability:
     - "harness.provider.invoke"
     - "harness.provider.fallback"
   metrics:
+    # gen_ai_client_operation_duration_ms: HarnessProviderAdapter.recordProviderMetrics()에서 histogram으로 기록
+    - "gen_ai_client_operation_duration_ms"
     - "gen_ai_client_input_tokens"
     - "gen_ai_client_output_tokens"
     - "gen_ai_client_cache_read_input_tokens"
   log_fields:
+    # logProviderSuccess() 실제 출력 필드와 동기화 (2026-04-18)
+    - "correlation_id"
+    - "request_id"
     - "provider_id"
     - "model"
     - "route_id"
     - "reasoning_effort"
     - "prompt_version"
-    - "rollout_stage"
-    - "eval_run_id"
     - "retry_count"
     - "fallback_applied"
     - "latency_ms"
-    - "timeout_ms"
+    - "input_tokens"
+    - "output_tokens"
 
 eval_logging:
   artifact_path: "artifacts/evals/harness/latest/harness-eval-report.json"
@@ -199,10 +203,13 @@ eval_logging:
     - "latency_ms"
 
 validation_rules:
-  - "npm run validate:harness-contract"
-  - "npm run check:harness-routing"
+  # 실제 실행 가능한 명령어만 등록 (2026-04-18 기준)
   - "node --test src/tests/unit/harnessRuntimeRouter.test.js"
-  - "node --test src/tests/smoke/harnessContract.smoke.test.js"
+  - "node --test src/tests/unit/harnessProviderAdapter.test.js"
+  - "node --test src/tests/unit/openAiResponsesProvider.test.js"
+  - "node --test src/tests/smoke/harnessProviderFailure.smoke.test.js"
+  - "python3 scripts/validate_harness_routing.py"
+  - "npm run harness:check -- --json"
 
 budget:
   ceiling_strategy: "tier-based token ceiling + timeout ceiling"
