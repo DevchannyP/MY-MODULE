@@ -208,6 +208,8 @@ paths:
           headers:
             Idempotency-Replayed:
               $ref: "#/components/headers/IdempotencyReplayed"
+            X-Stage-Run-Report-Saved:
+              $ref: "#/components/headers/StageRunReportSaved"
           content:
             application/json:
               schema:
@@ -459,6 +461,11 @@ components:
       schema:
         type: string
         enum: ["true"]
+    StageRunReportSaved:
+      description: "stage 실행 보고서가 planning studio memory에 저장됐는지 여부. 'true'=저장 성공, 'false'=저장 실패"
+      schema:
+        type: string
+        enum: ["true", "false"]
 
   schemas:
     ProblemDetails:
@@ -757,6 +764,29 @@ components:
         secondary_action: { type: string }
       additionalProperties: true
 
+    StageRunRuntimeObservability:
+      type: object
+      required: [report_saved, save_exit_code, correlation_id, request_id]
+      properties:
+        report_saved:
+          type: boolean
+          description: "stage 실행 보고서가 planning studio memory에 성공적으로 저장됐는지 여부"
+        save_exit_code:
+          type: integer
+          description: "보고서 저장 프로세스 종료 코드 (0=성공, 0 외=실패)"
+        save_error:
+          oneOf:
+            - type: string
+            - type: "null"
+          description: "보고서 저장 실패 시 오류 메시지. 성공 시 null"
+        correlation_id:
+          type: string
+          description: "분산 추적용 correlation ID — 같은 작업 흐름의 요청을 묶는다"
+        request_id:
+          type: string
+          description: "이 stage 실행 요청의 고유 request ID"
+      additionalProperties: false
+
     StageRunReport:
       type: object
       required: [requested_stage, execution_mode, status, run_now, requirements_stage, recommended_commands]
@@ -800,6 +830,8 @@ components:
         failed_command_count: { type: integer }
         operator_guidance:
           $ref: "#/components/schemas/StageOperatorGuidance"
+        runtime_observability:
+          $ref: "#/components/schemas/StageRunRuntimeObservability"
         command_results:
           type: array
           items: { $ref: "#/components/schemas/StageCommandResult" }
