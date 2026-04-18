@@ -237,6 +237,12 @@ const metrics = {
   ptySchedulerStopTotal: meter.createCounter('pty_scheduler_stop_total', {
     description: 'PTY scheduler stop operations',
   }),
+  stageRunReportSavedTotal: meter.createCounter('stage_run_report_saved_total', {
+    description: 'Stage run reports successfully persisted to planning studio memory',
+  }),
+  stageRunReportSaveFailuresTotal: meter.createCounter('stage_run_report_save_failures_total', {
+    description: 'Stage run report persistence failures',
+  }),
   controlCenterOperationDurationMs: meter.createHistogram('control_center_operation_duration_ms', {
     description: 'Control center bridge operation duration',
     unit: 'ms',

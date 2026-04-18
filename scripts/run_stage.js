@@ -178,6 +178,126 @@ function runStageCommand(command, runtimeRoot = ROOT) {
   };
 }
 
+function findFailingCommandResult(report) {
+  if (!Array.isArray(report?.command_results)) {
+    return null;
+  }
+  return report.command_results.find((item) => item && item.ok === false) || null;
+}
+
+function deriveStageRunNextAction(report, failingCommandResult = null) {
+  if (!report) {
+    return 'Stage를 고른 뒤 dry-run으로 현재 경로를 먼저 확인하세요.';
+  }
+  if (report.status === 'blocked' && Array.isArray(report.unmet_prerequisites) && report.unmet_prerequisites.length > 0) {
+    return `선행 Stage ${report.unmet_prerequisites.join(', ')}를 먼저 PASS 상태로 만든 뒤 다시 실행하세요.`;
+  }
+  if (report.status === 'out-of-route') {
+    return 'requirements stage 경로와 현재 packet 단계를 확인한 뒤 다시 dry-run 하세요.';
+  }
+  if (report.execution_mode === 'execute' && report.status === 'fail') {
+    return failingCommandResult?.command
+      ? '실패 명령을 수정한 뒤 마지막 stage 재실행을 누르세요.'
+      : '실패 원인을 해소한 뒤 마지막 stage 재실행을 누르세요.';
+  }
+  if (report.execution_mode === 'execute' && report.status === 'pass') {
+    return '품질 게이트 결과를 확인하고 다음 Stage 또는 운영 증거 생성으로 이동하세요.';
+  }
+  if (report.status === 'ready') {
+    return 'dry-run 결과를 검토한 뒤 execute 실행 여부를 결정하세요.';
+  }
+  return '현재 결과를 검토하고 필요한 Stage를 다시 실행하세요.';
+}
+
+function buildStageOperatorGuidance(report) {
+  const moduleId = String(report?.requested_module || '').trim();
+  const moduleLabel = moduleId || '전체';
+  const failingCommandResult = findFailingCommandResult(report);
+  const failedCommand = String(report?.failed_command || failingCommandResult?.command || '').trim();
+  const failedDetail = String(
+    report?.failed_detail
+    || failingCommandResult?.stderr
+    || failingCommandResult?.stdout
+    || ''
+  ).trim();
+
+  let currentState = 'stage 결과 대기';
+  let failureLocation = '없음';
+  let failureReason = '없음';
+  const retryable = true;
+  let retryableReason = '같은 Stage를 다시 실행할 수 있습니다.';
+  let primaryAction = 'dry-run';
+  let secondaryAction = 'review-docs';
+
+  if (report?.status === 'blocked') {
+    currentState = '선행 Stage 미충족으로 현재 Stage가 차단되었습니다.';
+    failureLocation = `Stage ${report.requested_stage} / module ${moduleLabel} / prerequisites`;
+    failureReason = Array.isArray(report.unmet_prerequisites) && report.unmet_prerequisites.length > 0
+      ? `선행 조건 미충족: ${report.unmet_prerequisites.join(', ')}`
+      : '선행 조건 미충족';
+    retryableReason = '선행 Stage를 PASS로 만든 뒤 같은 Stage를 다시 실행하세요.';
+    primaryAction = 'fix-prerequisites';
+  } else if (report?.status === 'out-of-route') {
+    currentState = '현재 요구사항 stage 경로 밖이라 execute를 진행할 수 없습니다.';
+    failureLocation = `Stage ${report.requested_stage} / module ${moduleLabel} / requirements stage`;
+    failureReason = `요청 Stage와 requirements stage(${report.requirements_stage || 'UNKNOWN'})가 일치하지 않습니다.`;
+    retryableReason = 'requirements stage 경로를 맞춘 뒤 dry-run으로 다시 확인하세요.';
+    primaryAction = 'fix-route';
+  } else if (report?.execution_mode === 'execute' && report?.status === 'fail') {
+    currentState = 'execute 중 첫 실패 명령에서 중단되었습니다.';
+    failureLocation = failedCommand
+      ? `Stage ${report.requested_stage} / module ${moduleLabel} / ${failedCommand}`
+      : `Stage ${report.requested_stage} / module ${moduleLabel}`;
+    failureReason = failedDetail || '실패 원인 기록 없음';
+    retryableReason = failedCommand
+      ? '실패 명령을 수정한 뒤 같은 Stage를 다시 실행하세요.'
+      : '실패 원인을 정리한 뒤 같은 Stage를 다시 실행하세요.';
+    primaryAction = 'fix-command';
+  } else if (report?.execution_mode === 'execute' && report?.status === 'pass') {
+    currentState = 'execute 완료 및 품질 게이트 PASS입니다.';
+    retryableReason = '필요하면 같은 Stage를 다시 실행할 수 있습니다.';
+    primaryAction = 'advance-stage';
+    secondaryAction = 'generate-evidence';
+  } else if (report?.status === 'ready') {
+    currentState = 'dry-run 준비 완료 상태입니다.';
+    retryableReason = 'dry-run 또는 execute를 선택해 이어서 진행할 수 있습니다.';
+    primaryAction = 'execute';
+  }
+
+  return {
+    current_state: currentState,
+    failure_location: failureLocation,
+    failure_reason: failureReason,
+    next_action: deriveStageRunNextAction(report, failingCommandResult),
+    retryable,
+    retryable_reason: retryableReason,
+    primary_action: primaryAction,
+    secondary_action: secondaryAction,
+  };
+}
+
+function decorateStageReport(report) {
+  const failingCommandResult = findFailingCommandResult(report);
+  const failedCommand = String(report?.failed_command || failingCommandResult?.command || '').trim();
+  const failedDetail = String(
+    report?.failed_detail
+    || failingCommandResult?.stderr
+    || failingCommandResult?.stdout
+    || ''
+  ).trim();
+
+  return {
+    ...report,
+    failed_command: failedCommand,
+    failed_detail: failedDetail,
+    operator_guidance: buildStageOperatorGuidance({
+      ...report,
+      failed_command: failedCommand,
+      failed_detail: failedDetail,
+    }),
+  };
+}
+
 function executeStage(report, metadata, runtimeRoot = ROOT, runner = runStageCommand) {
   const commandResults = [];
   for (const command of metadata.commands) {
@@ -224,15 +344,16 @@ function runStage(stage, {
   const baseReport = evaluateStage(stage, requirements, rootState, currentWp, legacyStageStates);
   const report = {
     ...baseReport,
+    requested_module: moduleId || '',
     requirements_file: requirementsPath,
     runtime_root: path.relative(ROOT, runtimeRoot) || '.',
   };
 
   if (dryRun || report.status !== 'ready') {
-    return report;
+    return decorateStageReport(report);
   }
 
-  return executeStage(report, metadata, runtimeRoot, runner);
+  return decorateStageReport(executeStage(report, metadata, runtimeRoot, runner));
 }
 
 function main() {

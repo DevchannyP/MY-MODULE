@@ -29,6 +29,8 @@ test('[control center observability smoke] node bridge emits control-center metr
     schedulerReads: metrics.ptySchedulerStatusReadTotal.value,
     schedulerStarts: metrics.ptySchedulerStartTotal.value,
     schedulerStops: metrics.ptySchedulerStopTotal.value,
+    stageRunSaved: metrics.stageRunReportSavedTotal.value,
+    stageRunSaveFailures: metrics.stageRunReportSaveFailuresTotal.value,
   };
 
   try {
@@ -103,6 +105,15 @@ test('[control center observability smoke] node bridge emits control-center metr
     assert.equal(stopped.status, 200);
     assert.equal(stopped.body.ok, true);
 
+    const stageRun = await requestJson(runtime.url, '/api/planning-studio/stage-run', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-permissions': 'system.admin' },
+      body: JSON.stringify({ stage: 'D', module: 'task-management' }),
+    });
+    assert.equal(stageRun.status, 200);
+    assert.equal(stageRun.body.ok, true);
+    assert.equal(stageRun.body.data.runtime_observability.report_saved, true);
+
     assert.equal(metrics.controlCenterPromptRecommendationsTotal.value - baseline.promptRecommendations, 1);
     assert.equal(metrics.ptyBridgeSessionsReadTotal.value - baseline.sessionsRead, 1);
     assert.equal(metrics.ptyBridgeSendTotal.value - baseline.sends, 1);
@@ -110,6 +121,8 @@ test('[control center observability smoke] node bridge emits control-center metr
     assert.equal(metrics.ptySchedulerStatusReadTotal.value - baseline.schedulerReads, 2);
     assert.equal(metrics.ptySchedulerStartTotal.value - baseline.schedulerStarts, 1);
     assert.equal(metrics.ptySchedulerStopTotal.value - baseline.schedulerStops, 1);
+    assert.equal(metrics.stageRunReportSavedTotal.value - baseline.stageRunSaved, 1);
+    assert.equal(metrics.stageRunReportSaveFailuresTotal.value - baseline.stageRunSaveFailures, 0);
   } finally {
     await runtime.shutdown({ reason: 'test' });
   }

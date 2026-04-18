@@ -65,12 +65,28 @@ test('[stage run smoke] POST /api/planning-studio/stage-run returns dry-run repo
     assert.ok(first.json.data.summary.length > 0);
     assert.ok(Array.isArray(first.json.data.recommended_commands));
     assert.ok(first.json.data.recommended_commands.length >= 4);
+    assert.equal(typeof first.json.data.failed_command, 'string');
+    assert.equal(typeof first.json.data.failed_detail, 'string');
+    assert.ok(first.json.data.operator_guidance);
+    assert.equal(typeof first.json.data.operator_guidance.current_state, 'string');
+    assert.equal(typeof first.json.data.operator_guidance.failure_location, 'string');
+    assert.equal(typeof first.json.data.operator_guidance.failure_reason, 'string');
+    assert.equal(typeof first.json.data.operator_guidance.next_action, 'string');
+    assert.equal(typeof first.json.data.operator_guidance.retryable, 'boolean');
+    assert.equal(typeof first.json.data.operator_guidance.retryable_reason, 'string');
+    assert.equal(first.headers['x-stage-run-report-saved'], 'true');
+    assert.ok(first.json.data.runtime_observability);
+    assert.equal(first.json.data.runtime_observability.report_saved, true);
+    assert.equal(typeof first.json.data.runtime_observability.request_id, 'string');
+    assert.equal(typeof first.json.data.runtime_observability.correlation_id, 'string');
+    assert.equal(first.json.data.runtime_observability.save_error, null);
 
     const second = await jsonPost(handle.port, '/api/planning-studio/stage-run', requestBody, {
       'idempotency-key': idemKey,
     });
     assert.equal(second.status, 200);
     assert.equal(second.headers['idempotency-replayed'], 'true');
+    assert.equal(second.headers['x-stage-run-report-saved'], 'true');
     assert.deepEqual(second.json, first.json);
 
     const snapshotResponse = await new Promise((resolve, reject) => {
@@ -101,10 +117,15 @@ test('[stage run smoke] POST /api/planning-studio/stage-run returns dry-run repo
     assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.summary, 'string');
     assert.ok(snapshotResponse.json.data.stage_run_last_report.summary.length > 0, 'summary must be non-empty after save');
     assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.recorded_at, 'string');
+    assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.operator_guidance.current_state, 'string');
+    assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.operator_guidance.next_action, 'string');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.runtime_observability.report_saved, true);
     assert.ok(Array.isArray(snapshotResponse.json.data.stage_run_recent_reports));
     assert.ok(snapshotResponse.json.data.stage_run_recent_reports.length >= 1);
     assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].requested_stage, 'D');
     assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].requested_module, 'task-management');
+    assert.equal(typeof snapshotResponse.json.data.stage_run_recent_reports[0].operator_guidance.failure_reason, 'string');
+    assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].runtime_observability.report_saved, true);
     assert.equal(
       snapshotResponse.json.data.stage_run_recent_reports[0].recorded_at,
       snapshotResponse.json.data.stage_run_last_report.recorded_at,
@@ -135,6 +156,11 @@ test('[stage run smoke] runStage execute mode returns PASS and FAIL reports from
   assert.equal(passReport.status, 'pass');
   assert.equal(passReport.failed_command_count, 0);
   assert.equal(passReport.executed_command_count, passReport.recommended_commands.length);
+  assert.equal(passReport.failed_command, '');
+  assert.equal(passReport.failed_detail, '');
+  assert.equal(passReport.operator_guidance.current_state, 'execute 완료 및 품질 게이트 PASS입니다.');
+  assert.equal(passReport.operator_guidance.failure_reason, '없음');
+  assert.equal(passReport.operator_guidance.primary_action, 'advance-stage');
 
   let seenCount = 0;
   const failReport = runStage('D', {
@@ -169,6 +195,12 @@ test('[stage run smoke] runStage execute mode returns PASS and FAIL reports from
   assert.equal(failReport.failed_command_count, 1);
   assert.equal(failReport.executed_command_count, 2);
   assert.equal(failReport.command_results[1].stderr, 'lint failed');
+  assert.equal(failReport.failed_command, 'npm run lint');
+  assert.equal(failReport.failed_detail, 'lint failed');
+  assert.match(failReport.operator_guidance.failure_location, /npm run lint/);
+  assert.equal(failReport.operator_guidance.failure_reason, 'lint failed');
+  assert.equal(failReport.operator_guidance.primary_action, 'fix-command');
+  assert.equal(failReport.operator_guidance.retryable, true);
 });
 
 test('[stage run smoke] POST /api/planning-studio/stage-run returns RFC 7807 400 on invalid stage name', async (t) => {

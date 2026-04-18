@@ -20,6 +20,8 @@ export default [
         clearTimeout: "readonly",
         setInterval: "readonly",
         clearInterval: "readonly",
+        setImmediate: "readonly",
+        clearImmediate: "readonly",
         Promise: "readonly",
         Error: "readonly",
         Map: "readonly",

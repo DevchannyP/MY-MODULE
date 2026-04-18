@@ -735,6 +735,28 @@ components:
         stderr: { type: string }
       additionalProperties: true
 
+    StagePrerequisiteState:
+      type: object
+      required: [stage, state]
+      properties:
+        stage: { type: string }
+        state: { type: string }
+      additionalProperties: true
+
+    StageOperatorGuidance:
+      type: object
+      required: [current_state, failure_location, failure_reason, next_action, retryable, retryable_reason, primary_action, secondary_action]
+      properties:
+        current_state: { type: string }
+        failure_location: { type: string }
+        failure_reason: { type: string }
+        next_action: { type: string }
+        retryable: { type: boolean }
+        retryable_reason: { type: string }
+        primary_action: { type: string }
+        secondary_action: { type: string }
+      additionalProperties: true
+
     StageRunReport:
       type: object
       required: [requested_stage, execution_mode, status, run_now, requirements_stage, recommended_commands]
@@ -752,7 +774,7 @@ components:
         prerequisites:
           type: array
           description: "이 stage 실행 전에 확인해야 할 전체 선행 조건 목록"
-          items: { type: string }
+          items: { $ref: "#/components/schemas/StagePrerequisiteState" }
         unmet_prerequisites:
           type: array
           items: { type: string }
@@ -765,14 +787,19 @@ components:
           type: array
           items: { type: string }
         current_wp: { type: string }
+        requested_module: { type: string }
         requirements_file: { type: string }
         runtime_root: { type: string }
+        failed_command: { type: string }
+        failed_detail: { type: string }
         quality_gate_result:
           oneOf:
             - type: string
             - type: "null"
         executed_command_count: { type: integer }
         failed_command_count: { type: integer }
+        operator_guidance:
+          $ref: "#/components/schemas/StageOperatorGuidance"
         command_results:
           type: array
           items: { $ref: "#/components/schemas/StageCommandResult" }

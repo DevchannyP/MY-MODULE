@@ -110,6 +110,8 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.match(mindmap.text, /미전송/);
     assert.match(mindmap.text, /다시 복사/);
     assert.match(mindmap.text, /다시 채우기/);
+    assert.match(mindmap.text, /제어 가이드/);
+    assert.match(mindmap.text, /롤백 준비/);
     assert.match(mindmap.text, /applyControlCenterDeepLink/);
     assert.match(mindmap.text, /deep-link-context-bar/);
     assert.match(mindmap.text, /권장 명령 채우기/);
@@ -185,6 +187,10 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
       || typeof controlRuntime.body.runtime_state.execution.current_worker_index === 'number',
     );
     assert.equal(typeof controlRuntime.body.runtime_state.execution.next_action, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.guidance.control_summary, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.guidance.failure_summary, 'string');
+    assert.equal(typeof controlRuntime.body.runtime_state.execution.guidance.rollback_status, 'string');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.execution.guidance.controls));
     assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.auto_send_status, 'string');
     assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.current_execution, 'string');
     assert.equal(typeof controlRuntime.body.runtime_state.execution.operator_brief.last_dispatch, 'string');

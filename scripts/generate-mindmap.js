@@ -2019,6 +2019,7 @@ const S = {
     currentActivity: null,
     lastActivity: null,
     lastError: null,
+    guidance: null,
     operatorBrief: null,
     operatorCockpit: null,
     operatorActionHistory: [],
@@ -3447,6 +3448,10 @@ function normalizeExecutionControlMatrix(controlMatrix) {
 }
 
 function executionControlSummary() {
+  var guidance = S.execution.guidance || {};
+  if (String(guidance.controlSummary || '').trim()) {
+    return String(guidance.controlSummary).trim();
+  }
   var matrix = normalizeExecutionControlMatrix(S.execution.controlMatrix);
   return [
     '프롬프트 전송: ' + (matrix.send_prompt.enabled ? '가능' : '대기') + ' / ' + matrix.send_prompt.reason,
@@ -3455,6 +3460,29 @@ function executionControlSummary() {
     '재시도: ' + (matrix.retry_last_prompt.enabled ? '가능' : '대기') + ' / ' + matrix.retry_last_prompt.reason,
     '롤백: ' + (matrix.rollback.enabled ? '가능' : '대기') + ' / ' + matrix.rollback.reason,
   ].join('\n');
+}
+
+function executionFailureRecoverySummary() {
+  var guidance = S.execution.guidance || {};
+  var failureSummary = String(guidance.failureSummary || '').trim();
+  var nextAction = String(guidance.nextAction || executionNextAction() || '').trim() || '다음 행동 없음';
+  if (failureSummary && failureSummary !== '실패 없음') {
+    return failureSummary + '\n다음: ' + nextAction;
+  }
+  return '실패 없음\n다음: ' + nextAction;
+}
+
+function executionRollbackReadinessSummary() {
+  var guidance = S.execution.guidance || {};
+  var target = selectedRollbackDomain();
+  var base = String(guidance.rollbackStatus || '').trim();
+  if (!S.rollbackEnabled) {
+    return base || '롤백: 대기 / system_api.rollback_ui.enabled=false 상태입니다.';
+  }
+  if (!target) {
+    return '롤백 대상 선택 필요 / 도메인을 먼저 선택하세요.';
+  }
+  return (base || '롤백: 가능 / 롤백 준비 완료') + '\n선택 대상: ' + String(target.label || target.id || '없음');
 }
 
 function normalizeStageRunReport(report) {
@@ -3466,6 +3494,27 @@ function normalizeStageRunReport(report) {
   var failingCommand = commandResults.find(function(item) { return item && item.ok === false; }) || null;
   var unmetPrerequisites = Array.isArray(report.unmet_prerequisites) ? report.unmet_prerequisites : [];
   var recommendedCommands = Array.isArray(report.recommended_commands) ? report.recommended_commands : [];
+  var operatorGuidance = report.operator_guidance && typeof report.operator_guidance === 'object'
+    ? {
+      current_state: String(report.operator_guidance.current_state || '').trim(),
+      failure_location: String(report.operator_guidance.failure_location || '').trim(),
+      failure_reason: String(report.operator_guidance.failure_reason || '').trim(),
+      next_action: String(report.operator_guidance.next_action || '').trim(),
+      retryable: report.operator_guidance.retryable === true,
+      retryable_reason: String(report.operator_guidance.retryable_reason || '').trim(),
+      primary_action: String(report.operator_guidance.primary_action || '').trim(),
+      secondary_action: String(report.operator_guidance.secondary_action || '').trim(),
+    }
+    : null;
+  var runtimeObservability = report.runtime_observability && typeof report.runtime_observability === 'object'
+    ? {
+      report_saved: report.runtime_observability.report_saved === true,
+      save_exit_code: Number.isInteger(report.runtime_observability.save_exit_code) ? report.runtime_observability.save_exit_code : 0,
+      save_error: String(report.runtime_observability.save_error || '').trim(),
+      correlation_id: String(report.runtime_observability.correlation_id || '').trim(),
+      request_id: String(report.runtime_observability.request_id || '').trim(),
+    }
+    : null;
 
   return {
     requested_stage: String(report.requested_stage || ''),
@@ -3477,12 +3526,14 @@ function normalizeStageRunReport(report) {
     docs_ref: String(report.docs_ref || ''),
     unmet_prerequisites: unmetPrerequisites,
     recommended_commands: recommendedCommands,
-    failed_command: failingCommand ? String(failingCommand.command || '') : '',
-    failed_detail: failingCommand ? String(failingCommand.stderr || failingCommand.stdout || '') : '',
+    failed_command: String(report.failed_command || (failingCommand ? String(failingCommand.command || '') : '')).trim(),
+    failed_detail: String(report.failed_detail || (failingCommand ? String(failingCommand.stderr || failingCommand.stdout || '') : '')).trim(),
     executed_command_count: Number(report.executed_command_count || 0),
     failed_command_count: Number(report.failed_command_count || 0),
     requirements_stage: String(report.requirements_stage || ''),
     recorded_at: String(report.recorded_at || ''),
+    operator_guidance: operatorGuidance,
+    runtime_observability: runtimeObservability,
   };
 }
 
@@ -3529,6 +3580,9 @@ function deriveStageRunNextAction(report) {
   if (!report) {
     return 'Stage를 고른 뒤 dry-run으로 현재 경로를 먼저 확인하세요.';
   }
+  if (report.operator_guidance && String(report.operator_guidance.next_action || '').trim()) {
+    return String(report.operator_guidance.next_action || '').trim();
+  }
   if (report.status === 'blocked' && report.unmet_prerequisites.length > 0) {
     return '선행 Stage ' + report.unmet_prerequisites.join(', ') + '를 먼저 PASS 상태로 만든 뒤 다시 실행하세요.';
   }
@@ -3565,6 +3619,9 @@ function stageRunFailureLocation(report) {
   if (!report) {
     return '없음';
   }
+  if (report.operator_guidance && String(report.operator_guidance.failure_location || '').trim()) {
+    return String(report.operator_guidance.failure_location || '').trim();
+  }
   var stage = String(report.requested_stage || '-');
   var moduleId = String(report.requested_module || '').trim() || '전체';
   return 'Stage ' + stage + ' / module ' + moduleId;
@@ -3573,6 +3630,9 @@ function stageRunFailureLocation(report) {
 function stageRunFailureReason(report) {
   if (!report) {
     return '없음';
+  }
+  if (report.operator_guidance && String(report.operator_guidance.failure_reason || '').trim()) {
+    return String(report.operator_guidance.failure_reason || '').trim();
   }
   if (String(report.failed_detail || '').trim()) {
     return String(report.failed_detail || '').trim();
@@ -3587,6 +3647,156 @@ function stageRunFailureReason(report) {
     return '요구사항 stage 경로 불일치';
   }
   return '원인 기록 없음';
+}
+
+function stageRunCurrentState(report) {
+  if (!report) {
+    return '최근 stage 실행 없음';
+  }
+  if (report.operator_guidance && String(report.operator_guidance.current_state || '').trim()) {
+    return String(report.operator_guidance.current_state || '').trim();
+  }
+  if (report.execution_mode === 'execute' && report.status === 'pass') {
+    return 'execute 완료 및 품질 게이트 PASS';
+  }
+  if (report.execution_mode === 'execute' && report.status === 'fail') {
+    return 'execute 중 실패 명령에서 중단';
+  }
+  if (report.status === 'blocked') {
+    return '선행 조건 미충족으로 현재 Stage 차단';
+  }
+  if (report.status === 'out-of-route') {
+    return '현재 requirements stage 경로 밖';
+  }
+  return 'dry-run 준비 완료';
+}
+
+function stageRunRetryableSummary(report) {
+  if (!report) {
+    return '가능 / Stage를 고른 뒤 dry-run부터 시작하세요.';
+  }
+  var guidance = report.operator_guidance || null;
+  if (guidance) {
+    return (guidance.retryable ? '가능' : '불가') + ' / ' + String(guidance.retryable_reason || '사유 없음').trim();
+  }
+  return '가능 / 현재 결과를 검토한 뒤 같은 Stage를 다시 실행할 수 있습니다.';
+}
+
+function stageRunEvidenceStatus(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability) {
+    return '확인 필요 / 저장 관측 정보 없음';
+  }
+  return runtimeObservability.report_saved
+    ? '저장 완료 / 운영 증거 기록됨'
+    : '저장 실패 / 응답은 수신됐지만 기록 저장이 실패했습니다.';
+}
+
+function stageRunEvidenceError(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability) {
+    return 'runtime_observability 없음';
+  }
+  var saveError = String(runtimeObservability.save_error || '').trim();
+  if (saveError) {
+    return saveError;
+  }
+  if (runtimeObservability.report_saved) {
+    return '없음';
+  }
+  return '저장 오류 기록 없음';
+}
+
+function stageRunRequestId(report) {
+  if (!report || !report.runtime_observability) {
+    return '없음';
+  }
+  var requestId = String(report.runtime_observability.request_id || '').trim();
+  return requestId || '없음';
+}
+
+function stageRunCorrelationId(report) {
+  if (!report || !report.runtime_observability) {
+    return '없음';
+  }
+  var correlationId = String(report.runtime_observability.correlation_id || '').trim();
+  return correlationId || '없음';
+}
+
+function stageRunTraceQuery(report) {
+  if (!report) {
+    return 'stage_run trace unavailable';
+  }
+  var parts = ['stage_run'];
+  var requestId = stageRunRequestId(report);
+  var correlationId = stageRunCorrelationId(report);
+  if (requestId !== '없음') {
+    parts.push('request_id=' + requestId);
+  }
+  if (correlationId !== '없음') {
+    parts.push('correlation_id=' + correlationId);
+  }
+  parts.push('requested_stage=' + String(report.requested_stage || '-'));
+  parts.push('requested_module=' + String(report.requested_module || 'all'));
+  return parts.join(' ');
+}
+
+function copyStageRunTraceQuery(historyIndex) {
+  var report = null;
+  if (Number.isInteger(historyIndex) && historyIndex >= 0) {
+    var history = normalizeStageRunHistory(S.stageRun.history);
+    report = history[historyIndex] || null;
+  }
+  if (!report) {
+    report = normalizeStageRunReport(S.stageRun.lastReport);
+  }
+  if (!report) {
+    showToast('복사할 stage 실행 추적값이 없습니다.');
+    return;
+  }
+  var query = stageRunTraceQuery(report);
+  copyTextToClipboard(query)
+    .then(function() {
+      setExecutionStatus('idle', '로그 확인 문장 복사 완료', query);
+      showToast('stage 실행 추적값 복사 완료');
+    })
+    .catch(function() {
+      showToast('stage 실행 추적값 복사 실패');
+    });
+}
+
+function loadStageRunTracePrompt(historyIndex) {
+  var report = null;
+  if (Number.isInteger(historyIndex) && historyIndex >= 0) {
+    var history = normalizeStageRunHistory(S.stageRun.history);
+    report = history[historyIndex] || null;
+  }
+  if (!report) {
+    report = normalizeStageRunReport(S.stageRun.lastReport);
+  }
+  if (!report) {
+    showToast('채울 stage 실행 추적값이 없습니다.');
+    return false;
+  }
+  var query = stageRunTraceQuery(report);
+  S.execution.promptText = query;
+  setExecutionStatus('idle', '로그 확인 문장 준비 완료', query + ' 전송 전에 세션을 확인하세요.');
+  renderExecutionConsole();
+  showToast('stage 실행 추적값 실행 패널 반영 완료');
+  return true;
+}
+
+function sendStageRunTracePrompt(historyIndex) {
+  if (!loadStageRunTracePrompt(historyIndex)) {
+    return;
+  }
+  sendPromptNow();
 }
 
 function stageRunFailureBadgeMarkup(report, historyIndex) {
@@ -3939,6 +4149,14 @@ function renderStageRunWorkbench() {
   var unmetLabel = report && report.unmet_prerequisites.length > 0 ? report.unmet_prerequisites.join(', ') : '없음';
   var commandsLabel = report && report.recommended_commands.length > 0 ? report.recommended_commands.join('\n') : '없음';
   var nextActionLabel = deriveStageRunNextAction(report);
+  var currentStateLabel = stageRunCurrentState(report);
+  var retryableLabel = stageRunRetryableSummary(report);
+  var failureLocationLabel = stageRunFailureLocation(report);
+  var failureReasonLabel = stageRunFailureReason(report);
+  var traceSendDisabled = !S.execution.controls.sendPrompt;
+  var traceSendSummary = traceSendDisabled
+    ? '대기 / 연결된 PTY 세션이 없어 즉시 전송할 수 없습니다.'
+    : '가능 / 현재 선택된 PTY 세션으로 즉시 전송할 수 있습니다.';
   var moduleLabel = report && report.requested_module ? report.requested_module : (String(S.stageRun.selectedModule || '').trim() || '전체');
   var recordedAtLabel = report && report.recorded_at ? report.recorded_at : '없음';
   var historyFilterMarkup = '<div class="execution-actions">' +
@@ -4023,6 +4241,11 @@ function renderStageRunWorkbench() {
       '</div>' +
       '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(stageRunFailureLocation(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(stageRunFailureReason(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>운영 증거</span><strong>' + escHtml(stageRunEvidenceStatus(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>저장 오류</span><strong>' + escHtml(stageRunEvidenceError(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>요청 ID</span><strong>' + escHtml(stageRunRequestId(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>상관 ID</span><strong>' + escHtml(stageRunCorrelationId(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>로그 확인</span><strong>' + escHtml(stageRunTraceQuery(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>가능한 다음 행동</span><strong>' + escHtml(deriveStageRunNextAction(focusReport)) + '</strong></div>' +
       '<div class="execution-history-meta">' + escHtml(focusMeta) + '</div>' +
       (matchedSignalSummary ? '<div class="execution-history-actions">' +
@@ -4030,6 +4253,9 @@ function renderStageRunWorkbench() {
         '<button type="button" class="execution-button secondary" onclick="stepStageRunFailureMatch(' + "'next'" + ')">다음 매칭</button>' +
       '</div>' : '') +
       '<div class="execution-history-actions">' +
+        '<button type="button" class="execution-button secondary" onclick="loadStageRunTracePrompt(' + failureFocusEntry.index + ')">실행 패널에 채우기</button>' +
+        '<button type="button" class="execution-button primary" onclick="sendStageRunTracePrompt(' + failureFocusEntry.index + ')"' + htmlDisabled(traceSendDisabled) + '>즉시 전송</button>' +
+        '<button type="button" class="execution-button secondary" onclick="copyStageRunTraceQuery(' + failureFocusEntry.index + ')">로그 추적 복사</button>' +
         '<button type="button" class="execution-button secondary" onclick="reuseStageRunHistory(' + failureFocusEntry.index + ')">첫 실패 불러오기</button>' +
         '<button type="button" class="execution-button secondary" onclick="rerunStageHistory(' + failureFocusEntry.index + ', false)">첫 실패 dry-run</button>' +
         '<button type="button" class="execution-button warn" onclick="rerunStageHistory(' + failureFocusEntry.index + ', true)">첫 실패 execute</button>' +
@@ -4051,6 +4277,9 @@ function renderStageRunWorkbench() {
         'module: ' + (item.requested_module || '전체'),
         '기록 시각: ' + (item.recorded_at || '없음'),
         '실패 명령: ' + (item.failed_command || '없음'),
+        '운영 증거: ' + stageRunEvidenceStatus(item),
+        '요청 ID: ' + stageRunRequestId(item),
+        '상관 ID: ' + stageRunCorrelationId(item),
         '다음 행동: ' + itemNextAction,
       ].join('\n');
       return '<div id="execution-history-item-' + entry.index + '" class="execution-history-item is-' + escHtml(itemTone) + (isHighlightedEntry ? ' is-highlighted' : '') + '">' +
@@ -4062,6 +4291,9 @@ function renderStageRunWorkbench() {
         '<strong>' + escHtml(itemSummary) + '</strong>' +
         '<div class="execution-history-meta">' + escHtml(itemMeta) + '</div>' +
         '<div class="execution-history-actions">' +
+          '<button type="button" class="execution-button secondary" onclick="loadStageRunTracePrompt(' + entry.index + ')">실행 패널에 채우기</button>' +
+          '<button type="button" class="execution-button primary" onclick="sendStageRunTracePrompt(' + entry.index + ')"' + htmlDisabled(traceSendDisabled) + '>즉시 전송</button>' +
+          '<button type="button" class="execution-button secondary" onclick="copyStageRunTraceQuery(' + entry.index + ')">로그 추적 복사</button>' +
           '<button type="button" class="execution-button secondary" onclick="reuseStageRunHistory(' + entry.index + ')">이 기록 불러오기</button>' +
           '<button type="button" class="execution-button secondary" onclick="rerunStageHistory(' + entry.index + ', false)">dry-run 재실행</button>' +
           '<button type="button" class="execution-button warn" onclick="rerunStageHistory(' + entry.index + ', true)">execute 재실행</button>' +
@@ -4085,10 +4317,25 @@ function renderStageRunWorkbench() {
         '<div class="execution-row"><span>기록 module</span><strong>' + escHtml(moduleLabel) + '</strong></div>' +
         '<div class="execution-row"><span>기록 시각</span><strong>' + escHtml(recordedAtLabel) + '</strong></div>' +
         '<div class="execution-row"><span>품질 게이트</span><strong>' + escHtml(report ? (report.quality_gate_result || '미실행') : '미실행') + '</strong></div>' +
+        '<div class="execution-row"><span>현재 상태</span><strong>' + escHtml(currentStateLabel) + '</strong></div>' +
         '<div class="execution-row"><span>선행 조건 미충족</span><strong>' + escHtml(unmetLabel) + '</strong></div>' +
         '<div class="execution-row"><span>실패 명령</span><strong>' + escHtml(failedCommandLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(failureLocationLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(failureReasonLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>운영 증거</span><strong>' + escHtml(stageRunEvidenceStatus(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>저장 오류</span><strong>' + escHtml(stageRunEvidenceError(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>요청 ID</span><strong>' + escHtml(stageRunRequestId(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>상관 ID</span><strong>' + escHtml(stageRunCorrelationId(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>로그 확인</span><strong>' + escHtml(stageRunTraceQuery(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>즉시 전송 가드</span><strong>' + escHtml(traceSendSummary) + '</strong></div>' +
+        '<div class="execution-actions">' +
+          '<button type="button" class="execution-button secondary" onclick="loadStageRunTracePrompt()">실행 패널에 채우기</button>' +
+          '<button type="button" class="execution-button primary" onclick="sendStageRunTracePrompt()"' + htmlDisabled(traceSendDisabled) + '>즉시 전송</button>' +
+          '<button type="button" class="execution-button secondary" onclick="copyStageRunTraceQuery()">로그 추적 복사</button>' +
+        '</div>' +
         '<div class="execution-row"><span>권장 명령</span><strong>' + escHtml(commandsLabel) + '</strong></div>' +
         '<div class="execution-row"><span>다음 행동</span><strong>' + escHtml(nextActionLabel) + '</strong></div>' +
+        '<div class="execution-row"><span>재실행</span><strong>' + escHtml(retryableLabel) + '</strong></div>' +
         '<div class="execution-row"><span>최근 이력</span>' + historyMarkup + '</div>' +
         '<div class="execution-row"><span>참조 문서</span><strong>' + escHtml(report ? (report.docs_ref || '없음') : '없음') + '</strong></div>' +
         '<div class="execution-row"><span>상세</span><strong>' + escHtml(report ? (report.failed_detail || report.summary || '상세 없음') : (S.stageRun.statusDetail || '상세 없음')) + '</strong></div>' +
@@ -4258,6 +4505,22 @@ function applyControlCenterRuntimeState(runtimePayload) {
   S.execution.currentActivity = execution.current_activity || scheduler.current_activity || null;
   S.execution.lastActivity = execution.last_activity || scheduler.last_activity || null;
   S.execution.lastError = execution.last_error || null;
+  S.execution.guidance = execution.guidance && typeof execution.guidance === 'object' ? {
+    controlSummary: String(execution.guidance.control_summary || '').trim(),
+    failureSummary: String(execution.guidance.failure_summary || '').trim(),
+    rollbackStatus: String(execution.guidance.rollback_status || '').trim(),
+    nextAction: String(execution.guidance.next_action || '').trim(),
+    controls: Array.isArray(execution.guidance.controls) ? execution.guidance.controls.map(function(item) {
+      return {
+        id: String(item && item.id || '').trim(),
+        label: String(item && item.label || '').trim(),
+        enabled: item && item.enabled === true,
+        reason: String(item && item.reason || '').trim(),
+      };
+    }).filter(function(item) {
+      return item.id && item.label;
+    }) : [],
+  } : null;
   S.execution.operatorBrief = execution.operator_brief ? {
     autoSendStatus: String(execution.operator_brief.auto_send_status || '').trim(),
     currentExecution: String(execution.operator_brief.current_execution || '').trim(),
@@ -4508,6 +4771,9 @@ function renderExecutionConsole() {
   var operatorHistoryMarkup = renderOperatorActionHistory();
   var operatorChainMarkup = renderOperatorChainCards();
   var operatorSourceSummary = operatorActionSourceSummary(S.execution.operatorActionHistory);
+  var controlGuidanceSummary = executionControlSummary();
+  var failureRecoverySummary = executionFailureRecoverySummary();
+  var rollbackReadinessSummary = executionRollbackReadinessSummary();
 
   container.innerHTML = '<div class="sidebar-console">' +
     '<div class="execution-summary is-' + escHtml(summaryTone) + '">' +
@@ -4528,7 +4794,10 @@ function renderExecutionConsole() {
       '<div class="execution-row"><span>마지막 프롬프트</span><strong>' + escHtml(lastPrompt) + '</strong></div>' +
       '<div class="execution-row"><span>실패 위치</span><strong>' + escHtml(failureLocation) + '</strong></div>' +
       '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(errorText) + '</strong></div>' +
+      '<div class="execution-row"><span>실패 대응</span><strong>' + escHtml(failureRecoverySummary) + '</strong></div>' +
       '<div class="execution-row"><span>즉시 가능 제어</span><strong>' + escHtml(executionAvailableControlsSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>제어 가이드</span><strong>' + escHtml(controlGuidanceSummary) + '</strong></div>' +
+      '<div class="execution-row"><span>롤백 준비</span><strong>' + escHtml(rollbackReadinessSummary) + '</strong></div>' +
       '<div class="execution-row"><span>지금 할 일</span><strong>' + escHtml(executionNextAction()) + '</strong></div>' +
       '<div class="execution-row"><span>Operator Cockpit</span><strong>' + escHtml(executionOperatorCockpitStatus()) + '</strong></div>' +
       '<div class="execution-row"><span>권장 브랜치</span><strong>' + escHtml(executionOperatorCockpitBranchSummary()) + '</strong></div>' +
@@ -4878,6 +5147,7 @@ function hydrateExecutionRuntime() {
       S.execution.currentActivity = null;
       S.execution.lastActivity = null;
       S.execution.lastError = null;
+      S.execution.guidance = null;
       S.execution.operatorBrief = null;
       S.execution.operatorCockpit = null;
       S.execution.nextActionHint = '';
@@ -6811,6 +7081,9 @@ window.setStageRunHistoryFilter = setStageRunHistoryFilter;
 window.setStageRunSignalHistoryView = setStageRunSignalHistoryView;
 window.setStageRunSignalGroupCollapsed = setStageRunSignalGroupCollapsed;
 window.setStageRunHistorySort = setStageRunHistorySort;
+window.copyStageRunTraceQuery = copyStageRunTraceQuery;
+window.loadStageRunTracePrompt = loadStageRunTracePrompt;
+window.sendStageRunTracePrompt = sendStageRunTracePrompt;
 window.loadRecommendedPrompt = loadRecommendedPrompt;
 window.copyOperatorCommand = copyOperatorCommand;
 window.loadOperatorCommandPrompt = loadOperatorCommandPrompt;

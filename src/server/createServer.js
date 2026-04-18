@@ -485,6 +485,30 @@ function sendResponse(req, res, status, body, extraHeaders = {}) {
   sendJson(res, status, body, headers);
 }
 
+function stageRunReplayHeaders(pathname, responseBody) {
+  if (pathname !== '/api/planning-studio/stage-run') {
+    return {};
+  }
+
+  const reportSaved = responseBody
+    && typeof responseBody === 'object'
+    && responseBody.data
+    && typeof responseBody.data === 'object'
+    && responseBody.data.runtime_observability
+    && typeof responseBody.data.runtime_observability === 'object'
+    && typeof responseBody.data.runtime_observability.report_saved === 'boolean'
+    ? responseBody.data.runtime_observability.report_saved
+    : null;
+
+  if (typeof reportSaved !== 'boolean') {
+    return {};
+  }
+
+  return {
+    'x-stage-run-report-saved': String(reportSaved),
+  };
+}
+
 /** FeatureFlagProvider stub — 모든 플래그 활성화 (테스트/smoke 전용) */
 function createAllEnabledFlags() {
   return {
@@ -885,6 +909,26 @@ function recordControlCenterOperation({
   };
 }
 
+function buildStageRunRuntimeObservability({
+  correlationId,
+  requestId,
+  reportSaved,
+  saveExitCode = 0,
+  saveError = null,
+} = {}) {
+  const normalizedSaveError = typeof saveError === 'string' && saveError.trim()
+    ? saveError.trim()
+    : null;
+
+  return {
+    report_saved: reportSaved === true,
+    save_exit_code: Number.isInteger(saveExitCode) ? saveExitCode : 0,
+    save_error: normalizedSaveError,
+    correlation_id: String(correlationId || ''),
+    request_id: String(requestId || ''),
+  };
+}
+
 function createAppHandler({
   taskController = createTaskController(new InMemoryTaskRepository(), _sharedDomainEventPublisher, _sharedOutboxRepo),
   billingController = createBillingController(),
@@ -1093,6 +1137,7 @@ function createAppHandler({
         if (claim.outcome === 'replay' && claim.response) {
           sendResponse(req, res, claim.response.status, claim.response.body, mergeHeaders(responseBaseHeaders, {
             'idempotency-replayed': 'true',
+            ...stageRunReplayHeaders(url.pathname, claim.response.body),
             ...responseHeaders,
           }));
           return;
@@ -1591,33 +1636,73 @@ function createAppHandler({
           return;
         }
 
-        stageRunObservation.succeed({
-          'stage_run.stage': requestedStage,
-          'stage_run.module': requestedModule || 'all',
-          'stage_run.mode': executeStage ? 'execute' : 'dry-run',
-          'stage_run.status': stageReport.status || 'unknown',
-        });
+        const saveStageRunPayload = {
+          ...stageReport,
+          runtime_observability: buildStageRunRuntimeObservability({
+            correlationId,
+            requestId,
+            reportSaved: true,
+            saveExitCode: 0,
+            saveError: null,
+          }),
+        };
         const saveStageRunResult = spawnSync('python3', [
           path.resolve(__dirname, '../../scripts/planning_studio_api.py'),
           'save-stage-run',
         ], {
           cwd: runtimeRoot,
           encoding: 'utf8',
-          input: JSON.stringify({
-            ...stageReport,
-            requested_module: requestedModule || '',
-          }),
+          input: JSON.stringify(saveStageRunPayload),
         });
-        if (saveStageRunResult.status !== 0 || saveStageRunResult.error) {
+        const saveFailed = saveStageRunResult.status !== 0 || Boolean(saveStageRunResult.error);
+        const saveErrorMessage = saveFailed
+          ? ((saveStageRunResult.stderr || '').trim() || (saveStageRunResult.error ? String(saveStageRunResult.error.message) : 'save-stage-run failed'))
+          : null;
+        const stageRunResponseData = saveFailed
+          ? {
+            ...stageReport,
+            runtime_observability: buildStageRunRuntimeObservability({
+              correlationId,
+              requestId,
+              reportSaved: false,
+              saveExitCode: typeof saveStageRunResult.status === 'number' ? saveStageRunResult.status : 1,
+              saveError: saveErrorMessage,
+            }),
+          }
+          : saveStageRunPayload;
+
+        stageRunObservation.succeed({
+          'stage_run.stage': requestedStage,
+          'stage_run.module': requestedModule || 'all',
+          'stage_run.mode': executeStage ? 'execute' : 'dry-run',
+          'stage_run.status': stageReport.status || 'unknown',
+          'stage_run.report_saved': !saveFailed,
+        });
+        if (saveFailed) {
+          metrics.stageRunReportSaveFailuresTotal.add(1, {
+            route: url.pathname,
+            method,
+            stage: requestedStage,
+            module: requestedModule || 'all',
+            mode: executeStage ? 'execute' : 'dry-run',
+          });
           logger.warn('stage_run.save_failed', {
             correlation_id: correlationId,
             request_id: requestId,
             stage: requestedStage,
+            module: requestedModule || '',
             exit_code: saveStageRunResult.status,
             stderr: (saveStageRunResult.stderr || '').trim().slice(0, 200),
             error: saveStageRunResult.error ? String(saveStageRunResult.error.message) : null,
           });
         } else {
+          metrics.stageRunReportSavedTotal.add(1, {
+            route: url.pathname,
+            method,
+            stage: requestedStage,
+            module: requestedModule || 'all',
+            mode: executeStage ? 'execute' : 'dry-run',
+          });
           logger.info('stage_run.save_ok', {
             correlation_id: correlationId,
             request_id: requestId,
@@ -1627,12 +1712,15 @@ function createAppHandler({
         }
         const stageRunResponseBody = {
           ok: true,
-          data: stageReport,
+          data: stageRunResponseData,
         };
         if (idempotencyScope) {
           idempotencyStore.complete(idempotencyScope, { status: 200, body: stageRunResponseBody });
         }
-        sendResponse(req, res, 200, stageRunResponseBody, mergeHeaders(responseBaseHeaders, responseHeaders));
+        sendResponse(req, res, 200, stageRunResponseBody, mergeHeaders(responseBaseHeaders, {
+          ...responseHeaders,
+          'x-stage-run-report-saved': String(!saveFailed),
+        }));
         return;
       }
 

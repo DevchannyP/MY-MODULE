@@ -287,6 +287,41 @@ function buildEnabledControlActions(controlMatrix) {
     }));
 }
 
+function buildExecutionGuidance({
+  controlMatrix,
+  lastError,
+  lastActivity,
+  nextAction,
+} = {}) {
+  const controlLabels = {
+    send_prompt: '프롬프트 전송',
+    auto_send_toggle: '자동 전송',
+    stop: '중지',
+    retry_last_prompt: '재시도',
+    rollback: '롤백',
+  };
+  const controls = Object.entries(controlLabels).map(([id, label]) => ({
+    id,
+    label,
+    enabled: controlMatrix?.[id]?.enabled === true,
+    reason: String(controlMatrix?.[id]?.reason || ''),
+  }));
+  const failureActivity = lastError || (lastActivity?.error ? lastActivity : null);
+  const failureSummary = failureActivity?.error
+    ? `${summarizeExecutionFailureLocation(failureActivity)} / ${String(failureActivity.error || '').trim()}`
+    : '실패 없음';
+
+  return {
+    controls,
+    control_summary: controls
+      .map((item) => `${item.label}: ${item.enabled ? '가능' : '대기'} / ${item.reason || '사유 없음'}`)
+      .join('\n'),
+    failure_summary: failureSummary,
+    rollback_status: `롤백: ${controlMatrix?.rollback?.enabled === true ? '가능' : '대기'} / ${String(controlMatrix?.rollback?.reason || '사유 없음')}`,
+    next_action: String(nextAction || '').trim() || '다음 행동 없음',
+  };
+}
+
 function buildExecutionOperatorBrief({
   schedulerRunning,
   currentActivity,
@@ -343,6 +378,12 @@ function buildControlCenterRuntimeState({
     lastError: normalizedLastError,
     lastPromptText,
   });
+  const guidance = buildExecutionGuidance({
+    controlMatrix,
+    lastError: normalizedLastError,
+    lastActivity: normalizedLastActivity,
+    nextAction,
+  });
   const operatorBrief = buildExecutionOperatorBrief({
     schedulerRunning: schedulerStatus.running === true,
     currentActivity: normalizedCurrentActivity,
@@ -375,6 +416,7 @@ function buildControlCenterRuntimeState({
       last_activity: normalizedLastActivity,
       last_error: normalizedLastError,
       next_action: nextAction,
+      guidance,
       operator_brief: operatorBrief,
     },
     scheduler: {
