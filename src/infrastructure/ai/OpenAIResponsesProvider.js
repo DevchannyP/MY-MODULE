@@ -26,14 +26,44 @@ function resolveTimeoutMs(route = {}, explicitTimeoutMs = null) {
   return 30_000;
 }
 
-function buildOpenAiInput({ route = {}, intakePacket = {}, basePrompt = '' } = {}) {
-  const instruction = [
-    'You optimize Workflow OS control-center prompts.',
-    'Preserve operational intent, constraints, validation steps, and rollback awareness.',
-    'Return only the optimized prompt text.',
-  ].join(' ');
+function isCompactValueEmpty(value) {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  if (typeof value === 'string') {
+    return value.length === 0;
+  }
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+  if (typeof value === 'object') {
+    return Object.keys(value).length === 0;
+  }
+  return false;
+}
 
-  const payload = {
+function compactPayloadValue(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => compactPayloadValue(item))
+      .filter((item) => !isCompactValueEmpty(item));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value).reduce((accumulator, [key, entryValue]) => {
+      const compactValue = compactPayloadValue(entryValue);
+      if (!isCompactValueEmpty(compactValue)) {
+        accumulator[key] = compactValue;
+      }
+      return accumulator;
+    }, {});
+  }
+
+  return value;
+}
+
+function buildPromptPayload({ route = {}, intakePacket = {}, basePrompt = '' } = {}) {
+  return compactPayloadValue({
     goal: String(intakePacket.goal || ''),
     context: Array.isArray(intakePacket.context) ? intakePacket.context : [],
     constraints: Array.isArray(intakePacket.constraints) ? intakePacket.constraints : [],
@@ -48,11 +78,21 @@ function buildOpenAiInput({ route = {}, intakePacket = {}, basePrompt = '' } = {
       reasoning_effort: String(route.reasoning_effort || ''),
       prompt_version: String(route.prompt_version || ''),
     },
-  };
+  });
+}
+
+function buildOpenAiInput({ route = {}, intakePacket = {}, basePrompt = '' } = {}) {
+  const instruction = [
+    'You optimize Workflow OS control-center prompts.',
+    'Preserve operational intent, constraints, validation steps, and rollback awareness.',
+    'Return only the optimized prompt text.',
+  ].join(' ');
+
+  const payload = buildPromptPayload({ route, intakePacket, basePrompt });
 
   return [
     { role: 'system', content: [{ type: 'input_text', text: instruction }] },
-    { role: 'user', content: [{ type: 'input_text', text: JSON.stringify(payload, null, 2) }] },
+    { role: 'user', content: [{ type: 'input_text', text: JSON.stringify(payload) }] },
   ];
 }
 
@@ -250,5 +290,6 @@ class OpenAIResponsesProvider {
 module.exports = {
   OpenAIResponsesProvider,
   buildOpenAiInput,
+  buildPromptPayload,
   extractOutputText,
 };

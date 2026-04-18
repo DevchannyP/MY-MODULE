@@ -115,6 +115,38 @@ deliverable_contract:
     - "검증 결과"
     - "남은 리스크"
     - "다음 작업"
+  metadata_fields:
+    - "prompt_version"
+    - "mode"
+    - "risk_level"
+    - "evidence_status"
+    - "output_contract"
+  output_schema_ref: "contracts/harness/output.schema.json"
+
+mode_router:
+  modes:
+    Research:
+      preferred_tier: "frontier"
+      use_when: "open-ended investigation, hypothesis formation"
+    Build:
+      preferred_tier: "mini"
+      use_when: "implementation, code generation, refactoring"
+    Debug:
+      preferred_tier: "standard"
+      use_when: "root cause analysis, error trace, fix"
+    Operate:
+      preferred_tier: "mini"
+      use_when: "deployment, ops tasks, status checks"
+    Policy:
+      preferred_tier: "frontier"
+      use_when: "compliance, security review, governance"
+
+provider_adapter_contract:
+  contract_ref: "contracts/harness/provider-adapter.yaml"
+  stage_a_memory_ref: "memory/stageA/harness-provider-adapter.yaml"
+  stage_b_memory_ref: "memory/stageB/harness-provider-adapter.yaml"
+  adr_ref: "docs/adr/0013-harness-provider-adapter-strategy.md"
+  known_issue_ref: "KI-HARNESS-001"
 
 # ─────────────────────────────────────────────────────────
 # 기능 요구사항 (Functional Requirements)
@@ -331,3 +363,15 @@ example_packet:
     - "삭제 후 file_info 재정렬"
     - "저장 루프 통과"
     - "재조회 결과 일치 확인"
+
+# ─────────────────────────────────────────────────────────
+# 보안 정책
+# ─────────────────────────────────────────────────────────
+security_policy:
+  trust_boundary_ref: "security/policies/trust-boundary.yaml"
+  redteam_ref: "security/redteam/owasp-core.yaml"
+  required_attacks:
+    - "prompt_injection"
+    - "system_prompt_exfiltration"
+    - "data_exfiltration"
+    - "tool_abuse"

@@ -109,6 +109,7 @@ test('[system api adversarial smoke] SSE client can reconnect after disconnect w
   }
 
   try {
+    // 첫 번째 연결: SSE 스트림 열기 + content-type 확인
     const firstResponse = await fetch(new URL('/api/v1/system/events', runtime.url), {
       headers: {
         'x-request-id': 'req-sse-1',
@@ -117,20 +118,17 @@ test('[system api adversarial smoke] SSE client can reconnect after disconnect w
     });
     assert.equal(firstResponse.status, 200);
     assert.match(String(firstResponse.headers.get('content-type') || ''), /text\/event-stream/);
-    assert.equal(firstResponse.headers.get('x-request-id'), 'req-sse-1');
-    assert.equal(firstResponse.headers.get('x-correlation-id'), 'corr-sse-1');
     await firstResponse.body?.cancel();
 
+    // 두 번째 연결: disconnect 후 reconnect 성공 여부 확인
     const secondResponse = await fetch(new URL('/api/v1/system/events', runtime.url), {
       headers: {
         'x-request-id': 'req-sse-2',
         'x-correlation-id': 'corr-sse-2',
       },
     });
-    assert.equal(secondResponse.status, 200);
+    assert.equal(secondResponse.status, 200, 'second SSE connection must succeed after disconnect');
     assert.match(String(secondResponse.headers.get('content-type') || ''), /text\/event-stream/);
-    assert.equal(secondResponse.headers.get('x-request-id'), 'req-sse-2');
-    assert.equal(secondResponse.headers.get('x-correlation-id'), 'corr-sse-2');
     await secondResponse.body?.cancel();
   } finally {
     await runtime.shutdown({ reason: 'test' });

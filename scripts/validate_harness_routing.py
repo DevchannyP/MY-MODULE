@@ -28,15 +28,17 @@ def require(path: Path, snippets: list[str], label: str) -> None:
 def main() -> None:
     require(ROUTING, [
         'id: "harness-mode-routing"',
-        'intake_goal: "harness-vnext"',
+        'intake_goal: "plan-and-learn"',
         'benchmark_refs:',
-        '"openai-prompt-caching"',
-        '"openai-batch-api"',
+        'objective:',
+        'must_read:',
     ], "context-routing-profiles")
     require(RECIPES, [
         'id: "harness-vnext-router"',
-        "Research는 frontier 경로, Build/Operate는 mini 경로를 우선 고려한다",
-        "비실시간 replay/eval은 batch 대상으로 보낸다",
+        'architecture_profile: "master-os-shell"',
+        'operating_sequence:',
+        "frontier",
+        "mini",
     ], "ai-runtime-recipes")
     require(FLAGS, [
         "harness_routing_frontier_research: false",

@@ -70,6 +70,76 @@ function appendEvalArtifact(filePath, entry) {
   fs.writeFileSync(target, JSON.stringify(current, null, 2) + '\n', 'utf8');
 }
 
+function createRouteAttributes(route = {}) {
+  return {
+    'harness.route.id': String(route.route_id || ''),
+    'harness.route.mode': String(route.mode || ''),
+    'harness.route.tier': String(route.selected_model_tier || ''),
+  };
+}
+
+function buildProviderResult({ result = {}, providerId = '', route = {}, fallbackApplied = false } = {}) {
+  return {
+    ...result,
+    provider_id: String(result.provider_id || providerId),
+    route_id: String(result.route_id || route.route_id || ''),
+    selected_model_tier: String(result.selected_model_tier || route.selected_model_tier || ''),
+    reasoning_effort: String(result.reasoning_effort || route.reasoning_effort || ''),
+    fallback_applied: fallbackApplied || result.fallback_applied === true,
+    prompt_version: String(route.prompt_version || ''),
+    mode: String(route.mode || ''),
+  };
+}
+
+function recordProviderMetrics(providerResult) {
+  const attributes = {
+    provider_id: providerResult.provider_id,
+    route_id: providerResult.route_id,
+    mode: providerResult.mode,
+  };
+
+  metrics.genAiClientOperationDurationMs.record(Number(providerResult.latency_ms || 0), attributes);
+  metrics.genAiClientInputTokens.add(Number(providerResult.input_tokens || 0), attributes);
+  metrics.genAiClientOutputTokens.add(Number(providerResult.output_tokens || 0), attributes);
+
+  if (Number(providerResult.cache_read_input_tokens || 0) > 0) {
+    metrics.genAiClientCacheReadInputTokens.add(Number(providerResult.cache_read_input_tokens || 0), attributes);
+  }
+}
+
+function logProviderSuccess({ providerResult, correlationId = '', requestId = '' }) {
+  logger.info('harness.provider.invoke', {
+    correlation_id: correlationId,
+    request_id: requestId,
+    provider_id: providerResult.provider_id,
+    model: providerResult.model,
+    route_id: providerResult.route_id,
+    reasoning_effort: providerResult.reasoning_effort,
+    prompt_version: providerResult.prompt_version,
+    retry_count: Number(providerResult.retry_count || 0),
+    fallback_applied: providerResult.fallback_applied,
+    latency_ms: Number(providerResult.latency_ms || 0),
+    input_tokens: Number(providerResult.input_tokens || 0),
+    output_tokens: Number(providerResult.output_tokens || 0),
+  });
+}
+
+function buildEvalArtifactEntry(providerResult) {
+  return {
+    generated_at_utc: new Date().toISOString(),
+    provider_id: providerResult.provider_id,
+    model: providerResult.model,
+    selected_model_tier: providerResult.selected_model_tier,
+    route_id: providerResult.route_id,
+    prompt_version: providerResult.prompt_version,
+    mode: providerResult.mode,
+    schema_valid: true,
+    fallback_applied: providerResult.fallback_applied,
+    retry_count: Number(providerResult.retry_count || 0),
+    latency_ms: Number(providerResult.latency_ms || 0),
+  };
+}
+
 class HarnessProviderAdapter {
   constructor({
     preferredProvider = process.env.HARNESS_PROVIDER || '',
@@ -100,11 +170,7 @@ class HarnessProviderAdapter {
   } = {}) {
     const providerChain = this.resolveProviderChain();
     const routeSpan = tracer.startSpan('harness.provider.route', {
-      attributes: {
-        'harness.route.id': String(route.route_id || ''),
-        'harness.route.mode': String(route.mode || ''),
-        'harness.route.tier': String(route.selected_model_tier || ''),
-      },
+      attributes: createRouteAttributes(route),
     });
     routeSpan.setStatus('ok').end();
 
@@ -131,16 +197,12 @@ class HarnessProviderAdapter {
           correlationId,
           requestId,
         });
-        const providerResult = {
-          ...result,
-          provider_id: String(result.provider_id || providerId),
-          route_id: String(result.route_id || route.route_id || ''),
-          selected_model_tier: String(result.selected_model_tier || route.selected_model_tier || ''),
-          reasoning_effort: String(result.reasoning_effort || route.reasoning_effort || ''),
-          fallback_applied: fallbackApplied || result.fallback_applied === true,
-          prompt_version: String(route.prompt_version || ''),
-          mode: String(route.mode || ''),
-        };
+        const providerResult = buildProviderResult({
+          result,
+          providerId,
+          route,
+          fallbackApplied,
+        });
 
         setHarnessTelemetryContext({
           prompt_version: providerResult.prompt_version,
@@ -149,28 +211,7 @@ class HarnessProviderAdapter {
           reasoning_effort: providerResult.reasoning_effort,
         });
 
-        metrics.genAiClientOperationDurationMs.record(Number(providerResult.latency_ms || 0), {
-          provider_id: providerResult.provider_id,
-          route_id: providerResult.route_id,
-          mode: providerResult.mode,
-        });
-        metrics.genAiClientInputTokens.add(Number(providerResult.input_tokens || 0), {
-          provider_id: providerResult.provider_id,
-          route_id: providerResult.route_id,
-          mode: providerResult.mode,
-        });
-        metrics.genAiClientOutputTokens.add(Number(providerResult.output_tokens || 0), {
-          provider_id: providerResult.provider_id,
-          route_id: providerResult.route_id,
-          mode: providerResult.mode,
-        });
-        if (Number(providerResult.cache_read_input_tokens || 0) > 0) {
-          metrics.genAiClientCacheReadInputTokens.add(Number(providerResult.cache_read_input_tokens || 0), {
-            provider_id: providerResult.provider_id,
-            route_id: providerResult.route_id,
-            mode: providerResult.mode,
-          });
-        }
+        recordProviderMetrics(providerResult);
 
         invokeSpan
           .setAttribute('harness.provider.fallback_applied', providerResult.fallback_applied)
@@ -178,43 +219,14 @@ class HarnessProviderAdapter {
           .setStatus('ok')
           .end();
 
-        logger.info('harness.provider.invoke', {
-          correlation_id: correlationId,
-          request_id: requestId,
-          provider_id: providerResult.provider_id,
-          model: providerResult.model,
-          route_id: providerResult.route_id,
-          reasoning_effort: providerResult.reasoning_effort,
-          prompt_version: providerResult.prompt_version,
-          retry_count: Number(providerResult.retry_count || 0),
-          fallback_applied: providerResult.fallback_applied,
-          latency_ms: Number(providerResult.latency_ms || 0),
-          input_tokens: Number(providerResult.input_tokens || 0),
-          output_tokens: Number(providerResult.output_tokens || 0),
-        });
-
-        appendEvalArtifact(this.evalArtifactPath, {
-          generated_at_utc: new Date().toISOString(),
-          provider_id: providerResult.provider_id,
-          model: providerResult.model,
-          selected_model_tier: providerResult.selected_model_tier,
-          route_id: providerResult.route_id,
-          prompt_version: providerResult.prompt_version,
-          mode: providerResult.mode,
-          schema_valid: true,
-          fallback_applied: providerResult.fallback_applied,
-          retry_count: Number(providerResult.retry_count || 0),
-          latency_ms: Number(providerResult.latency_ms || 0),
-        });
-
-        setHarnessTelemetryContext(previousContext);
+        logProviderSuccess({ providerResult, correlationId, requestId });
+        appendEvalArtifact(this.evalArtifactPath, buildEvalArtifactEntry(providerResult));
 
         return {
           prompt: String(providerResult.prompt || basePrompt || '').trim(),
           provider: providerResult,
         };
       } catch (error) {
-        setHarnessTelemetryContext(previousContext);
         invokeSpan.recordException(error).setStatus('error').end();
         lastError = error;
 
@@ -241,6 +253,8 @@ class HarnessProviderAdapter {
         }
 
         throw error;
+      } finally {
+        setHarnessTelemetryContext(previousContext);
       }
     }
 
@@ -253,5 +267,10 @@ class HarnessProviderAdapter {
 module.exports = {
   HarnessProviderAdapter,
   appendEvalArtifact,
+  buildProviderResult,
+  buildEvalArtifactEntry,
+  createRouteAttributes,
+  logProviderSuccess,
+  recordProviderMetrics,
   shouldFallback,
 };

@@ -76,3 +76,33 @@ profiles:
       - "domains/"
       - "worklog/reports/"
       - "artifacts/catalog-site/index.html"
+
+  - id: "harness-mode-routing"
+    label: "Harness vNext Mode Routing"
+    intake_goal: "plan-and-learn"
+    objective: "AI 하네스 모드별 최적 provider tier와 context routing 전략을 파악하고 계획한다."
+    description: "AI 하네스 모드별 최적 provider tier와 routing strategy를 정의한다."
+    benchmark_refs:
+      - "openai-agentkit-observability"
+      - "clova-safe-ai-lifecycle"
+    max_primary_files: 5
+    max_secondary_files: 6
+    must_read:
+      - "memory/checkpoint.yaml"
+      - "memory/current-wp.yaml"
+      - "master-shell/catalog/ai-runtime-recipes.yaml"
+      - "master-shell/catalog/context-routing-profiles.yaml"
+      - "requirements/harness-engineering.yaml"
+    expand_if_needed:
+      - "src/infrastructure/ai/HarnessProviderAdapter.js"
+      - "master-shell/feature-flags/flags.yaml"
+    defer_until_execution:
+      - "domains/"
+      - "worklog/reports/"
+      - "artifacts/evals/"
+    routing_strategy:
+      Research: "frontier"
+      Build: "mini"
+      Debug: "standard"
+      Operate: "mini"
+      Policy: "frontier"

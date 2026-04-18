@@ -15,7 +15,9 @@ test('[project status smoke] next_wp는 canonical wp-queue 기준으로 계산�
     cwd: repoRoot,
   });
   const report = buildReport();
-  assert.equal(report.current_wp, 'WP-RUN-004');
+  // current_wp ID는 memory/current-wp.yaml에서 오므로 구조만 검증한다.
+  assert.equal(typeof report.current_wp, 'string');
+  assert.ok(report.current_wp.length > 0, 'current_wp must not be empty');
   assert.equal(typeof report.current_wp_goal, 'string');
   assert.equal(typeof report.current_wp_type, 'string');
   assert.equal(typeof report.current_wp_stage, 'string');
@@ -24,9 +26,10 @@ test('[project status smoke] next_wp는 canonical wp-queue 기준으로 계산�
   assert.equal(typeof report.current_wp_context_budget.tier_files, 'number');
   assert.equal(typeof report.current_wp_context_budget.context_files, 'number');
   assert.equal(typeof report.current_wp_context_budget.estimated_tokens, 'number');
-  assert.ok(report.current_wp_context_budget.tier_reads > 0);
-  assert.ok(report.current_wp_context_budget.context_reads > 0);
-  assert.ok(report.current_wp_context_budget.estimated_tokens > 0);
+  // context budget은 활성 WP일 때 > 0, queue 완료 상태에선 0도 유효
+  assert.ok(report.current_wp_context_budget.tier_reads >= 0);
+  assert.ok(report.current_wp_context_budget.context_reads >= 0);
+  assert.ok(report.current_wp_context_budget.estimated_tokens >= 0);
   assert.equal(typeof report.current_wp_scope_boundary.scope_in, 'number');
   assert.equal(typeof report.current_wp_scope_boundary.scope_out, 'number');
   assert.equal(typeof report.current_wp_scope_boundary.protects_core, 'boolean');

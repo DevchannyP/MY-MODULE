@@ -106,3 +106,29 @@ recipes:
       - "stateful-workflow-service"
     learning_track_refs:
       - "runtime-operations"
+
+  - id: "harness-vnext-router"
+    name: "Harness vNext Router Recipe"
+    objective: "AI 하네스의 모드별 provider tier와 routing 전략을 결정하는 레시피"
+    best_for:
+      - "AI 하네스 provider 선택"
+      - "Research/Build/Debug/Operate 모드 라우팅"
+      - "비실시간 replay/eval batch 처리"
+    architecture_profile: "master-os-shell"
+    adapters:
+      - "openai-responses-agent"
+      - "feature-flag-provider"
+      - "observability-otel"
+    tool_stack:
+      - "function-calling"
+      - "web-search"
+    operating_sequence:
+      - "HARNESS_PROVIDER 환경 변수와 feature flag로 provider tier를 결정한다"
+      - "Research/Policy는 frontier, Build/Operate는 mini, Debug는 standard 경로로 라우팅한다"
+      - "provider 실패 시 null-harness-provider로 자동 폴백하고 eval artifact를 기록한다"
+    guardrails:
+      - "provider 키 없이 운영 환경을 열지 않는다"
+      - "폴백 발생 시 반드시 eval artifact에 기록한다"
+    evidence_outputs:
+      - "eval artifact (harness-eval-report.json)"
+      - "provider invocation telemetry"

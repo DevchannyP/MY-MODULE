@@ -41,6 +41,10 @@ plugins:
     rollback:
       strategy: "disable_flag"
       flag: "system_api.enabled"
+      trigger_conditions:
+        - "system_api 엔드포인트 error_rate > 1%"
+        - "system.admin 권한 우회 감지"
+        - "SSE 연결 무한 누적"
     status: "inactive"
     registered_at: "2026-04-15"
     owner: "platform-team"

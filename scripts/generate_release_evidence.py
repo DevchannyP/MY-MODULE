@@ -228,6 +228,14 @@ def main() -> None:
         "quality_gate_inputs": extract_quality_gate_inputs(current_state),
         "release_artifacts": collect_artifact_evidence(current_state),
         "next_action": extract_next_action(next_actions),
+        "harness_release": {
+            "prompt_version": "0.2.0",
+            "output_schema_ref": "contracts/harness/output.schema.json",
+            "provider_contract_ref": "contracts/harness/provider-adapter.yaml",
+            "rollout_stage": "internal",
+            "rollback_target": "null-harness-provider",
+            "rollback_strategy": "set HARNESS_PROVIDER= in .env and restart server",
+        },
     }
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
