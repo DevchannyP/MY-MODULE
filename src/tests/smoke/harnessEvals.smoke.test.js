@@ -21,7 +21,9 @@ test('[harness evals smoke] offline harness eval runner emits a report artifact'
   const report = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf8'));
   assert.equal(report.status, 'PASS');
   assert.equal(report.summary.golden_case_count, 10);
-  assert.ok(report.summary.case_files >= 4);
+  assert.ok(report.summary.case_files >= 5, `expected at least 5 case files, got ${report.summary.case_files}`);
   assert.ok(Array.isArray(report.case_files));
   assert.ok(fs.existsSync(REPORT_PATH));
+  assert.deepEqual(report.checks.validation_failures, [], 'golden set should have no validation failures');
+  assert.equal(report.checks.required_modes_present, true, 'all 5 modes (Research/Build/Debug/Operate/Policy) must be present');
 });

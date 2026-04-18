@@ -112,7 +112,7 @@ function buildReport() {
       golden_set_parsed: true,
       baseline_loaded: true,
       required_case_floor_met: golden.length >= 10,
-      required_modes_present: ['Research', 'Build', 'Debug', 'Policy'].every((mode) => Object.prototype.hasOwnProperty.call(modeCoverage, mode)),
+      required_modes_present: ['Research', 'Build', 'Debug', 'Operate', 'Policy'].every((mode) => Object.prototype.hasOwnProperty.call(modeCoverage, mode)),
       validation_failures: validationFailures,
     },
     case_files: caseFiles,
