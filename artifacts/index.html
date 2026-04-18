@@ -939,7 +939,7 @@
     <div class="wfos-stat"><span class="wfos-stat__label">도메인</span><span class="wfos-stat__value">3</span></div>
     <div class="wfos-stat"><span class="wfos-stat__label">활성 플래그</span><span class="wfos-stat__value">0 / 20</span></div>
     <div class="wfos-stat"><span class="wfos-stat__label">품질 게이트</span><span class="wfos-stat__value" style="color:#22c55e;">8/8 PASS</span></div>
-    <div class="wfos-stat"><span class="wfos-stat__label">마지막 게이트</span><span class="wfos-stat__value" style="font-size:.8rem;">2026. 4. 16. 20시 28분 36초</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">마지막 게이트</span><span class="wfos-stat__value" style="font-size:.8rem;">2026. 4. 18. 14시 38분 57초</span></div>
     <div style="flex:1;"></div>
     <div style="display:flex;align-items:center;gap:.4rem;">
       <span class="wf-sse-indicator wf-sse-indicator--offline" data-sse-indicator title="실시간 연결 상태">●</span>
@@ -1037,8 +1037,8 @@
         <h2>지금 상태</h2>
         <div class="side-list">
           <div class="side-item"><span class="muted">요구사항 Stage</span><strong>D</strong></div>
-          <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">WP-RUN-004</strong></div>
-          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>WP-RUN-006</strong></div>
+          <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">SPIRAL-19-COMPLETE</strong></div>
+          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>NONE</strong></div>
           <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>clean</strong></div>
           <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
           <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
@@ -1077,7 +1077,7 @@
       </article>
       <article class="stat-card">
         <div class="stat-label">잠금 토큰</div>
-        <div class="stat-value">10917</div>
+        <div class="stat-value">10431</div>
         <div class="stat-note">프로모션 파이프라인 context lock 기준</div>
       </article>
       <article class="stat-card">
@@ -1100,26 +1100,26 @@
       <article class="flow-card flow-card-primary">
         <div class="flow-card-head">
           <span class="flow-kicker">Current Lane</span>
-          <span class="tag tone-green">Verify</span>
+          <span class="tag tone-green">Done</span>
         </div>
-        <h3>WP-RUN-006</h3>
-        <p>배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage</p>
+        <h3>SPIRAL-19-COMPLETE</h3>
+        <p>Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.</p>
         <div class="flow-meta">
-          <span>stage E</span>
-          <span>status ready</span>
+          <span>stage complete</span>
+          <span>status completed</span>
         </div>
       </article>
 
       <article class="flow-card">
         <div class="flow-card-head">
           <span class="flow-kicker">Next Action</span>
-          <span class="tag tone-amber">WP-RUN-006</span>
+          <span class="tag tone-amber">NONE</span>
         </div>
         <h3>다음 한 단계</h3>
-        <p>WP-RUN-006 · 배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage</p>
+        <p>NONE</p>
         <div class="flow-meta">
-          <span>branch chore/core-git-governance-activation...origin/chore/core-git-governance-activation [ahead 5]</span>
-          <span>dirty 18건</span>
+          <span>branch chore/core-git-governance-activation...origin/chore/core-git-governance-activation</span>
+          <span>dirty 31건</span>
         </div>
       </article>
 
@@ -1129,7 +1129,7 @@
           <span class="tag tone-green">PASS</span>
         </div>
         <h3>검증 루프</h3>
-        <p>9개 명령이 현재 packet 프로파일에 연결돼 있습니다.</p>
+        <p>5개 명령이 현재 packet 프로파일에 연결돼 있습니다.</p>
         <div class="flow-code-list">
           <code>npm run validate:requirements</code><code>npm run lint</code><code>npm run validate:composition</code>
         </div>
@@ -1138,7 +1138,7 @@
       <article class="flow-card">
         <div class="flow-card-head">
           <span class="flow-kicker">Read First</span>
-          <span class="tag tone-slate">E</span>
+          <span class="tag tone-slate">complete</span>
         </div>
         <h3>세션 복구</h3>
         <p>채팅 대신 고정 파일을 먼저 읽고 차이만 처리합니다.</p>
@@ -1186,17 +1186,17 @@
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-bootstrap" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-bootstrap">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=WP-RUN-004+%2F+lane+verify&amp;command=npm+run+session%3Abootstrap&amp;label=Session+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
+        <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=SPIRAL-19-COMPLETE+%2F+lane+done&amp;command=npm+run+session%3Abootstrap&amp;label=Session+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
       </div>
-      <div class="flow-chain-item" data-chain-id="branch" data-chain-scope="chain:branch" data-chain-command="git checkout -b chore/core-github-deployment-environment-provisioni">
+      <div class="flow-chain-item" data-chain-id="branch" data-chain-scope="chain:branch" data-chain-command="git checkout -b chore/core-spiral-19-live-provider-chain-env-queue-">
         <span class="flow-chain-label">Branch Bootstrap</span>
         <span class="tag tone-green">ready</span>
-        <code>git checkout -b chore/core-github-deployment-environment-provisioni</code>
+        <code>git checkout -b chore/core-spiral-19-live-provider-chain-env-queue-</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-branch" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-branch">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=%EA%B6%8C%EC%9E%A5+%EB%B8%8C%EB%9E%9C%EC%B9%98+chore%2Fcore-github-deployment-environment-provisioni&amp;command=git+checkout+-b+chore%2Fcore-github-deployment-environment-provisioni&amp;label=Branch+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
+        <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=%EA%B6%8C%EC%9E%A5+%EB%B8%8C%EB%9E%9C%EC%B9%98+chore%2Fcore-spiral-19-live-provider-chain-env-queue-&amp;command=git+checkout+-b+chore%2Fcore-spiral-19-live-provider-chain-env-queue-&amp;label=Branch+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
       </div>
       <div class="flow-chain-item" data-chain-id="verify" data-chain-scope="chain:verify" data-chain-command="npm run validate:requirements">
         <span class="flow-chain-label">Validation Profile</span>
@@ -1206,7 +1206,7 @@
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-verify" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-verify">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=guard&amp;reason=9%EA%B0%9C+%EA%B2%80%EC%A6%9D+%EB%AA%85%EB%A0%B9+%2F+governance&amp;command=npm+run+validate%3Arequirements&amp;label=Validation+Profile&amp;source=home-chain#plan-board">control center에서 이어서 보기</a>
+        <a class="flow-chain-link" href="mindmap/index.html?focus=guard&amp;reason=5%EA%B0%9C+%EA%B2%80%EC%A6%9D+%EB%AA%85%EB%A0%B9+%2F+governance&amp;command=npm+run+validate%3Arequirements&amp;label=Validation+Profile&amp;source=home-chain#plan-board">control center에서 이어서 보기</a>
       </div>
       <div class="flow-chain-item is-active" data-chain-id="commit-guard" data-chain-scope="chain:commit-guard" data-chain-command="npm run commit:guard:verify">
         <span class="flow-chain-label">Commit Guard</span>
@@ -1237,7 +1237,7 @@
         <h2>칸반 보드 · 작업 흐름</h2>
         <p>Work Packet 상태를 레인별로 시각화합니다. 각 카드의 A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
       </div>
-      <div class="spiral-iteration">반복 <strong>#34</strong> / 35 능력</div>
+      <div class="spiral-iteration">반복 <strong>#36</strong> / 36 능력</div>
     </div>
 
     <div class="spiral-row">
@@ -1282,17 +1282,9 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #475569">
           <span class="kb-lane-label">Backlog</span>
-          <span class="kb-lane-count">1</span>
+          <span class="kb-lane-count">0</span>
         </div>
-        <div class="kb-cards">
-        <div class="kb-card">
-          <div class="kb-card-head">
-            <span class="kb-id">WP-RUN-006</span>
-            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
-          </div>
-          <div class="kb-goal">배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage</div>
-          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
-        </div></div>
+        <div class="kb-cards"><div class="kb-empty">없음</div></div>
       </div>
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #1d4ed8">
@@ -1318,7 +1310,7 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #0f766e">
           <span class="kb-lane-label">Done</span>
-          <span class="kb-lane-count">80</span>
+          <span class="kb-lane-count">83</span>
         </div>
         <div class="kb-cards">
         <div class="kb-card">
@@ -1959,6 +1951,30 @@
             <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
           </div>
           <div class="kb-goal">배포 environment 실 URL health/ingress verification 자동화 baseline</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-RUN-006</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S19-001</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">OpenAI live provider 연결 검증 — OPENAI_API_KEY 주입 시 실제 LLM 추천 반환</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-S19-002</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">npm start 로컬 서버 기동 + .env 운영 가이드 확정</div>
           <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
         </div></div>
       </div>

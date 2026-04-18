@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-16T11:28:34.108003+00:00",
+  "generated_at_utc": "2026-04-18T05:38:55.245616+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "3b7dc7c303ca5113c5d73bebb4fcdd856126d5c5",
+  "head_commit": "7a664d856821620e7f6d776a12383e33f508927f",
   "build_environment": {
     "ci": "false",
-    "github_sha": "3b7dc7c303ca5113c5d73bebb4fcdd856126d5c5",
+    "github_sha": "7a664d856821620e7f6d776a12383e33f508927f",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -15,6 +15,7 @@
     "available": true,
     "is_clean": false,
     "modified_paths": [
+      ".env.example",
       "artifacts/decision-apply/latest/benchmark-pack.json",
       "artifacts/decision-apply/latest/context-lock.json",
       "artifacts/decision-apply/latest/decision-apply-report.json",
@@ -27,14 +28,26 @@
       "artifacts/promotion-pipeline/latest/benchmark-pack.json",
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
+      "artifacts/promotion-pipeline/latest/pipeline-report.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "artifacts/provenance/workflow-os-provenance.json",
       "artifacts/release-evidence/release-evidence.json",
-      "scripts/run_deployment_smoke.js"
+      "master-shell/catalog/ai-runtime-recipes.yaml",
+      "master-shell/catalog/context-routing-profiles.yaml",
+      "master-shell/operations/rollback-playbook.yaml",
+      "master-shell/plugin-registry/registry.yaml",
+      "memory/project/vscode-cli-automation.yaml",
+      "requirements/harness-engineering.yaml",
+      "scripts/generate_release_evidence.py",
+      "scripts/validate_harness_routing.py",
+      "src/infrastructure/ai/HarnessProviderAdapter.js",
+      "src/infrastructure/ai/OpenAIResponsesProvider.js",
+      "src/tests/smoke/harnessProviderFailure.smoke.test.js",
+      "src/tests/smoke/projectStatus.smoke.test.js",
+      "src/tests/smoke/systemApiAdversarial.smoke.test.js",
+      "src/tests/smoke/systemApiRuntime.smoke.test.js"
     ],
     "untracked_paths": [
-      "memory/stageE/deployment-ingress.yaml",
-      "src/tests/smoke/deploymentIngressFailure.smoke.test.js"
+      "src/tests/unit/openAiResponsesProvider.test.js"
     ]
   },
   "memory_sources": {
@@ -44,8 +57,8 @@
   "last_completed_stage": "WORK_PACKET_MODE",
   "last_completed_unit": {
     "mode": "work_packet",
-    "id": "WP-RUN-004",
-    "completed_at": "2026-03-20",
+    "id": "WP-S19-002",
+    "completed_at": "2026-04-16",
     "result": "PASS"
   },
   "quality_gate_result": "PASS",
@@ -74,8 +87,16 @@
   },
   "next_action": {
     "priority": "NONE",
-    "id": "WP-RUN-006",
-    "track": "WORK_PACKET",
-    "action": "배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage"
+    "id": "NONE",
+    "track": "NONE",
+    "action": "NONE"
+  },
+  "harness_release": {
+    "prompt_version": "0.2.0",
+    "output_schema_ref": "contracts/harness/output.schema.json",
+    "provider_contract_ref": "contracts/harness/provider-adapter.yaml",
+    "rollout_stage": "internal",
+    "rollback_target": "null-harness-provider",
+    "rollback_strategy": "set HARNESS_PROVIDER= in .env and restart server"
   }
 }

@@ -1,17 +1,16 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-16T11:28:35.547668+00:00",
+  "generated_at": "2026-04-18T05:38:56.680609+00:00",
   "goal": "plan-and-learn",
   "profile_id": "plan-and-learn-routing",
   "current_wp": {
-    "id": "WP-RUN-004",
-    "goal": "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.",
+    "id": "SPIRAL-19-COMPLETE",
+    "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
     "type": "governance",
-    "stage": "E"
+    "stage": "complete"
   },
   "protected_core": [
-    "domains/",
-    "src/server/"
+    "domains/"
   ],
   "core_guardrails": [],
   "requested_paths": {
@@ -50,9 +49,9 @@
         "path": "memory/current-wp.yaml",
         "tier": "primary",
         "exists": true,
-        "bytes": 2274,
-        "estimated_tokens": 758,
-        "sha256": "3e4285bcabbe9c3f80f542b97fc5919df425afaaca85f80f208f76f099c798ac"
+        "bytes": 816,
+        "estimated_tokens": 272,
+        "sha256": "b2309d8a8dfc8961cec1d7bff88c1b83135a6d62790e4d8a382ebf7a6115fdec"
       },
       {
         "requested_path": "requirements/requirements.yaml",
@@ -124,8 +123,8 @@
   "summary": {
     "primary": {
       "file_count": 5,
-      "total_bytes": 16248,
-      "estimated_tokens": 5416
+      "total_bytes": 14790,
+      "estimated_tokens": 4930
     },
     "secondary": {
       "file_count": 4,
@@ -134,8 +133,8 @@
     },
     "total": {
       "file_count": 9,
-      "total_bytes": 32749,
-      "estimated_tokens": 10917
+      "total_bytes": 31291,
+      "estimated_tokens": 10431
     }
   },
   "commands": {

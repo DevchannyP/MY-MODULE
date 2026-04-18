@@ -1,12 +1,12 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-16T11:28:35.577455+00:00",
+  "generated_at": "2026-04-18T05:38:56.709915+00:00",
   "goal": "plan-and-learn",
   "current_packet": {
-    "id": "WP-RUN-004",
-    "goal": "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.",
+    "id": "SPIRAL-19-COMPLETE",
+    "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
     "type": "governance",
-    "stage": "E",
+    "stage": "complete",
     "status": "completed"
   },
   "context_bundle": {
@@ -15,10 +15,10 @@
     "profile_id": "plan-and-learn-routing",
     "profile_objective": "기획, 학습, planner editing에 필요한 최소 문맥만 우선 읽는다.",
     "current_wp": {
-      "id": "WP-RUN-004",
-      "goal": "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.",
+      "id": "SPIRAL-19-COMPLETE",
+      "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
       "type": "governance",
-      "stage": "E"
+      "stage": "complete"
     },
     "read_first": [
       "memory/checkpoint.yaml",
@@ -39,15 +39,14 @@
       "worklog/reports/"
     ],
     "protected_core": [
-      "domains/",
-      "src/server/"
+      "domains/"
     ],
     "core_guardrails": [],
     "budget": {
       "primary": {
         "file_count": 5,
-        "total_bytes": 16248,
-        "estimated_tokens": 5416
+        "total_bytes": 14790,
+        "estimated_tokens": 4930
       },
       "secondary": {
         "file_count": 4,
@@ -59,7 +58,7 @@
         "total_bytes": 649592,
         "estimated_tokens": 216531
       },
-      "total_estimated_tokens": 227448
+      "total_estimated_tokens": 226962
     },
     "path_metrics": {
       "read_first": [
@@ -74,8 +73,8 @@
           "path": "memory/current-wp.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 2274,
-          "estimated_tokens": 758
+          "total_bytes": 816,
+          "estimated_tokens": 272
         },
         {
           "path": "requirements/requirements.yaml",
@@ -160,10 +159,10 @@
     "profile_id": "master-os-shell",
     "routing_profile_id": "plan-and-learn-routing",
     "current_wp": {
-      "id": "WP-RUN-004",
-      "goal": "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다.",
+      "id": "SPIRAL-19-COMPLETE",
+      "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
       "type": "governance",
-      "stage": "E",
+      "stage": "complete",
       "status": "completed"
     },
     "checks": [
@@ -188,14 +187,14 @@
       {
         "id": "constraint-coverage",
         "label": "제약/실패조건 커버리지",
-        "status": "pass",
-        "detail": "constraints와 fail_if가 모두 있습니다."
+        "status": "warn",
+        "detail": "constraints와 fail_if를 함께 유지하는 편이 좋습니다."
       },
       {
         "id": "token-budget",
         "label": "토큰 예산 적합성",
         "status": "risk",
-        "detail": "primary 5416 tok / total 227448 tok"
+        "detail": "primary 4930 tok / total 226962 tok"
       },
       {
         "id": "completed-packet",
@@ -205,15 +204,15 @@
       }
     ],
     "counts": {
-      "pass": 4,
-      "warn": 1,
+      "pass": 3,
+      "warn": 2,
       "risk": 1
     },
     "bundle_budget": {
       "primary": {
         "file_count": 5,
-        "total_bytes": 16248,
-        "estimated_tokens": 5416
+        "total_bytes": 14790,
+        "estimated_tokens": 4930
       },
       "secondary": {
         "file_count": 4,
@@ -225,7 +224,7 @@
         "total_bytes": 649592,
         "estimated_tokens": 216531
       },
-      "total_estimated_tokens": 227448
+      "total_estimated_tokens": 226962
     },
     "required_adapters": [
       "master-ui-plugin-shell",
@@ -235,14 +234,14 @@
       "feature-flag-provider"
     ],
     "selected_adapters": [
-      "http-problem-details",
+      "master-ui-plugin-shell",
       "openai-responses-agent",
+      "master-ui-static-planner",
+      "feature-flag-provider",
       "remote-mcp-connector",
       "observability-otel",
-      "planner-state-memory",
-      "master-ui-plugin-shell",
-      "master-ui-static-planner",
-      "feature-flag-provider"
+      "http-problem-details",
+      "planner-state-memory"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -255,10 +254,10 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-16T11:28:35.577432+00:00",
+    "generated_at": "2026-04-18T05:38:56.709891+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
-    "stage": "E",
+    "stage": "complete",
     "focus_tracks": [
       "런타임 운영 학습",
       "마스터 OS 기초",
@@ -277,11 +276,7 @@
       "worklog/reports/",
       "artifacts/master-planner/index.html"
     ],
-    "validation": [
-      "npm run generate:deployment-environment-audit-template",
-      "python3 scripts/validate_deployment_environment_provisioning.py",
-      "npm run check:deployment-environment-provisioning"
-    ],
+    "validation": [],
     "matched_lenses": [
       {
         "id": "audit-trace-lens",
@@ -346,9 +341,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-16 20:24:29 +0900",
+            "timestamp": "2026-04-16 21:53:34 +0900",
             "title": "git commit",
-            "detail": "chore(artifacts): sync master-planner after queue-sync",
+            "detail": "chore(artifacts): sync after memory update",
             "tag": "git"
           }
         ]

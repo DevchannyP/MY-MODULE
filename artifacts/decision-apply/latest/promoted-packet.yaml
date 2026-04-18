@@ -1,4 +1,4 @@
-id: WP-PROMOTE-2026-04-16-OPS
+id: WP-PROMOTE-2026-04-18-OPS
 goal: 최근 audit 시그널을 기준으로 actor? 9543a440d4e4
 type: governance
 stage: D
@@ -15,7 +15,6 @@ scope_in:
 - artifacts/deployment-smoke/target-resolution.json
 scope_out:
 - domains/
-- src/server/
 - system OS core
 - unrelated domains
 constraints:
@@ -28,13 +27,9 @@ done_when:
 - npm run check:observability 통과
 - npm run smoke:deployment 통과
 fail_if:
-- the packet pretends remote environment vars/protection rules are proven without
-  operator-collected evidence
-- the policy drifts from the deployment environment registry
 - scope_out이 비어 코어 보호 범위가 흐려진다
 - primary 또는 locked context token budget이 허용치를 초과한다
-rollback: Remove the provisioning policy/template validator and fall back to undocumented
-  operator knowledge if the audit contract proves unusable.
+rollback: 승격 packet을 폐기하고 직전 current-wp 기준으로 되돌린다.
 subtasks:
 - context lock으로 exact read manifest를 고정한다
 - fit report를 다시 확인하고 risk 0 상태를 유지한다
@@ -43,13 +38,8 @@ validation:
 - npm run check:observability
 - npm run smoke:deployment
 - npm run test:e2e-smoke
-- npm run generate:deployment-environment-audit-template
-- python3 scripts/validate_deployment_environment_provisioning.py
-- npm run check:deployment-environment-provisioning
 - python3 scripts/check_planning_fit.py --goal stateful-ops --json
-evidence:
-- worklog/2026-03-20_WP-RUN-004.yaml
-- artifacts/deployment-smoke/
+evidence: []
 next_unlock: 승격 packet 완료 후 다음 adapter/module/runtime 확장 packet으로 넘긴다.
 contracts: {}
 context_budget:
@@ -67,9 +57,9 @@ context_budget:
   estimated_turns: 3
   max_new_files: 2
   max_modified_files: 6
-  budget_primary_tokens: 5978
-  budget_total_tokens: 222002
+  budget_primary_tokens: 6080
+  budget_total_tokens: 222104
 template_id: ops-hardening-packet
 planning_mode: ''
-generated_at: '2026-04-16T11:28:33.610006+00:00'
-applied_at: '2026-04-16T11:28:33.610023+00:00'
+generated_at: '2026-04-18T05:38:54.768179+00:00'
+applied_at: '2026-04-18T05:38:54.768197+00:00'

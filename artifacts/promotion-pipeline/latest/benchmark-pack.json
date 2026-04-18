@@ -1,11 +1,11 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-16T11:28:35.577533+00:00",
+  "generated_at": "2026-04-18T05:38:56.709992+00:00",
   "goal": "plan-and-learn",
   "current_wp": {
-    "id": "WP-RUN-004",
+    "id": "SPIRAL-19-COMPLETE",
     "type": "governance",
-    "stage": "E",
+    "stage": "complete",
     "status": "completed"
   },
   "benchmark_review": {
