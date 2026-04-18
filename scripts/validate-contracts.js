@@ -12,6 +12,7 @@ const { collectDomainEntries } = require('./lib/domain-discovery');
 
 const requiredContracts = ['openapi.yaml', 'events.schema.json', 'ui-contract.yaml', 'capability.yaml'];
 const domainsDir = path.join(__dirname, '..', 'domains');
+const contractsDir = path.join(__dirname, '..', 'contracts');
 const outputFile = path.join(__dirname, '..', 'worklog', 'contract-matrix.md');
 
 if (!fs.existsSync(domainsDir)) {
@@ -19,27 +20,97 @@ if (!fs.existsSync(domainsDir)) {
   process.exit(0);
 }
 
+// ── Domain contracts ─────────────────────────────────────────────────────────
 const domainEntries = collectDomainEntries(domainsDir);
 let failCount = 0;
 const rows = [];
 
 for (const entry of domainEntries) {
-  const statuses = requiredContracts.map((file) => entry.contractsDir && fs.existsSync(path.join(entry.contractsDir, file)) ? '✅' : '❌');
+  const statuses = requiredContracts.map((file) =>
+    entry.contractsDir && fs.existsSync(path.join(entry.contractsDir, file)) ? '✅' : '❌'
+  );
   const allPass = statuses.every((status) => status === '✅');
-  if (!allPass) {
-    failCount++;
-  }
+  if (!allPass) failCount++;
   rows.push({ domain: entry.id, statuses, allPass });
 }
 
-const header = `# 계약 호환성 매트릭스\n> 자동 생성: ${new Date().toISOString().split('T')[0]}\n\n| Domain | OpenAPI | Events | UI | Capability | Status |\n|--------|---------|--------|----|------------|--------|\n`;
-const body = rows.map((row) => `| ${row.domain} | ${row.statuses[0]} | ${row.statuses[1]} | ${row.statuses[2]} | ${row.statuses[3]} | ${row.allPass ? 'PASS' : 'FAIL'} |`).join('\n');
+// ── Shell-level contracts (contracts/ top-level namespaces) ──────────────────
+// drift_validated: whether validate_contract_drift.py explicitly covers this contract
+const shellContracts = [
+  {
+    name: 'ui-shell',
+    files: ['openapi.yaml'],
+    drift_validated: true,
+    note: 'StageRunRuntimeObservability + X-Stage-Run-Report-Saved',
+  },
+  {
+    name: 'harness',
+    files: ['intake.schema.json', 'output.schema.json', 'provider-adapter.yaml'],
+    drift_validated: true,
+    note: 'intake schema validated against golden eval records',
+  },
+  {
+    name: 'system-api',
+    files: ['openapi.yaml', 'capability.yaml', 'events.schema.json'],
+    drift_validated: false,
+    note: 'drift validator not yet extended to system-api',
+  },
+  {
+    name: 'events',
+    files: ['registry.yaml'],
+    drift_validated: true,
+    note: 'all domain events registered and pointer-verified',
+  },
+];
+
+const shellRows = shellContracts.map((contract) => {
+  const dir = path.join(contractsDir, contract.name);
+  const fileStatuses = contract.files.map((f) => fs.existsSync(path.join(dir, f)) ? '✅' : '❌');
+  const allFilesPresent = fileStatuses.every((s) => s === '✅');
+  return { ...contract, allFilesPresent };
+});
+
+// ── Generate markdown ────────────────────────────────────────────────────────
+const today = new Date().toISOString().split('T')[0];
+
+const domainSection = [
+  '## 도메인 계약',
+  '',
+  '| Domain | OpenAPI | Events | UI | Capability | Status |',
+  '|--------|---------|--------|----|------------|--------|',
+  ...rows.map((row) =>
+    `| ${row.domain} | ${row.statuses[0]} | ${row.statuses[1]} | ${row.statuses[2]} | ${row.statuses[3]} | ${row.allPass ? 'PASS' : 'FAIL'} |`
+  ),
+].join('\n');
+
+const shellSection = [
+  '## Shell 계약 (contracts/)',
+  '',
+  '| Contract | Files | Drift Validated | Note |',
+  '|----------|-------|-----------------|------|',
+  ...shellRows.map((row) =>
+    `| ${row.name} | ${row.allFilesPresent ? '✅' : '❌'} | ${row.drift_validated ? '✅' : '❌'} | ${row.note} |`
+  ),
+].join('\n');
+
+const output = [
+  `# 계약 호환성 매트릭스`,
+  `> 자동 생성: ${today}`,
+  '',
+  domainSection,
+  '',
+  shellSection,
+  '',
+].join('\n');
 
 fs.mkdirSync(path.dirname(outputFile), { recursive: true });
-fs.writeFileSync(outputFile, `${header}${body}\n`, 'utf-8');
+fs.writeFileSync(outputFile, output, 'utf-8');
 
 process.stdout.write(`\n계약 호환성 매트릭스: ${outputFile}\n`);
 rows.forEach((row) => process.stdout.write(`  [${row.allPass ? '✅' : '❌'}] ${row.domain}\n`));
+shellRows.forEach((row) =>
+  process.stdout.write(`  [${row.allFilesPresent ? '✅' : '❌'}] contracts/${row.name} (drift: ${row.drift_validated ? '✅' : '❌'})\n`)
+);
 process.stdout.write(`\n총 ${domainEntries.length}개 도메인 | FAIL: ${failCount}개\n`);
 if (failCount > 0) {
   process.exit(1);
