@@ -332,12 +332,60 @@ def validate_event_registry(errors: list[str]) -> None:
         errors.append(f"events-registry: video registry coverage missing {missing_video}")
 
 
+def validate_ui_shell_contract(errors: list[str]) -> None:
+    """Validate contracts/ui-shell/openapi.yaml structural consistency."""
+    openapi = load_yaml("contracts/ui-shell/openapi.yaml")
+    schemas = openapi.get("components", {}).get("schemas", {})
+    headers = openapi.get("components", {}).get("headers", {})
+
+    required_schemas = [
+        "StageRunRequest",
+        "StageRunReport",
+        "StageRunEnvelope",
+        "StageRunRuntimeObservability",
+        "StageOperatorGuidance",
+        "StageCommandResult",
+    ]
+    for name in required_schemas:
+        if name not in schemas:
+            errors.append(f"ui-shell: schema {name} missing from components/schemas")
+
+    obs = schemas.get("StageRunRuntimeObservability", {})
+    obs_required = set(obs.get("required", []))
+    for field in ("report_saved", "save_exit_code", "correlation_id", "request_id"):
+        if field not in obs_required:
+            errors.append(f"ui-shell: StageRunRuntimeObservability.required missing {field}")
+        if field not in obs.get("properties", {}):
+            errors.append(f"ui-shell: StageRunRuntimeObservability.properties missing {field}")
+    if "save_error" not in obs.get("properties", {}):
+        errors.append("ui-shell: StageRunRuntimeObservability.properties missing save_error")
+
+    report = schemas.get("StageRunReport", {})
+    report_props = set(report.get("properties", {}).keys())
+    for field in ("runtime_observability", "operator_guidance"):
+        if field not in report_props:
+            errors.append(f"ui-shell: StageRunReport.properties missing {field}")
+
+    if "StageRunReportSaved" not in headers:
+        errors.append("ui-shell: components/headers missing StageRunReportSaved")
+
+    stage_run_post = (
+        openapi.get("paths", {})
+        .get("/planning-studio/stage-run", {})
+        .get("post", {})
+    )
+    resp_headers = stage_run_post.get("responses", {}).get("200", {}).get("headers", {})
+    if "X-Stage-Run-Report-Saved" not in resp_headers:
+        errors.append("ui-shell: /planning-studio/stage-run POST 200 missing X-Stage-Run-Report-Saved header")
+
+
 def main() -> int:
     errors: list[str] = []
     validate_task_management(errors)
     validate_billing(errors)
     validate_video(errors)
     validate_event_registry(errors)
+    validate_ui_shell_contract(errors)
 
     if errors:
         for error in errors:
