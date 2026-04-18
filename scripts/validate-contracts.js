@@ -52,8 +52,8 @@ const shellContracts = [
   {
     name: 'system-api',
     files: ['openapi.yaml', 'capability.yaml', 'events.schema.json'],
-    drift_validated: false,
-    note: 'drift validator not yet extended to system-api',
+    drift_validated: true,
+    note: 'capability↔openapi ops + events_emitted coverage verified',
   },
   {
     name: 'events',

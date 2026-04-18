@@ -15,5 +15,5 @@
 |----------|-------|-----------------|------|
 | ui-shell | ✅ | ✅ | StageRunRuntimeObservability + X-Stage-Run-Report-Saved |
 | harness | ✅ | ✅ | intake schema validated against golden eval records |
-| system-api | ✅ | ❌ | drift validator not yet extended to system-api |
+| system-api | ✅ | ✅ | capability↔openapi ops + events_emitted coverage verified |
 | events | ✅ | ✅ | all domain events registered and pointer-verified |

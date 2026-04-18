@@ -435,6 +435,43 @@ def validate_harness_contracts(errors: list[str]) -> None:
                 errors.append(f"harness-contracts: golden record {record_id} expect.required_sections references unknown output property: {section}")
 
 
+def validate_system_api_contract(errors: list[str]) -> None:
+    """Validate contracts/system-api/ internal consistency."""
+    capability = load_yaml("contracts/system-api/capability.yaml")
+    openapi_spec = load_yaml("contracts/system-api/openapi.yaml")
+    events_schema = load_json("contracts/system-api/events.schema.json")
+
+    # Collect all http_operations declared in capabilities
+    capability_ops: set[str] = set()
+    for cap in capability.get("capabilities", []):
+        for op in cap.get("http_operations", []):
+            capability_ops.add(op)
+
+    # Collect operationIds from openapi
+    openapi_ops = set(operation_map(openapi_spec).keys())
+
+    # Bidirectional check
+    missing_in_openapi = sorted(capability_ops - openapi_ops)
+    if missing_in_openapi:
+        errors.append(
+            f"system-api: capability http_operations not in openapi: {missing_in_openapi}"
+        )
+
+    extra_in_openapi = sorted(openapi_ops - capability_ops)
+    if extra_in_openapi:
+        errors.append(
+            f"system-api: openapi operationIds not declared in any capability: {extra_in_openapi}"
+        )
+
+    # events_emitted vs events.schema.json definitions
+    event_definitions = set(events_schema.get("definitions", {}).keys())
+    for event_id in capability.get("events_emitted", []):
+        if event_id not in event_definitions:
+            errors.append(
+                f"system-api: events_emitted {event_id!r} not in events.schema.json definitions"
+            )
+
+
 def main() -> int:
     errors: list[str] = []
     validate_task_management(errors)
@@ -443,6 +480,7 @@ def main() -> int:
     validate_event_registry(errors)
     validate_ui_shell_contract(errors)
     validate_harness_contracts(errors)
+    validate_system_api_contract(errors)
 
     if errors:
         for error in errors:
