@@ -103,13 +103,15 @@ function loadMetadata() {
  */
 function parseEnv(envPath) {
   if (!fs.existsSync(envPath)) {
-    return { exists: false, activeKeys: new Set(), commentedKeys: new Set(), activeNonFlag: [] };
+    return { exists: false, activeKeys: new Set(), commentedKeys: new Set(), activeNonFlag: [], commentedNonFlag: [] };
   }
   const lines = fs.readFileSync(envPath, 'utf8').split('\n');
   const activeKeys = new Set();
   const commentedKeys = new Set();
   /** @type {{ key: string, value: string }[]} */
   const activeNonFlag = [];
+  /** @type {{ key: string, value: string }[]} */
+  const commentedNonFlag = [];
 
   for (const line of lines) {
     const activeLine = line.match(/^([A-Z_0-9]+)=(.*)$/);
@@ -122,13 +124,18 @@ function parseEnv(envPath) {
       }
       continue;
     }
-    const commentedLine = line.match(/^#\s*([A-Z_0-9]+)=/);
+    const commentedLine = line.match(/^#\s*([A-Z_0-9]+)=(.*)/);
     if (commentedLine) {
-      commentedKeys.add(commentedLine[1]);
+      const [, key, value] = commentedLine;
+      if (key.startsWith('WOS_FLAG_')) {
+        commentedKeys.add(key);
+      } else {
+        commentedNonFlag.push({ key, value: value.trim() });
+      }
     }
   }
 
-  return { exists: true, activeKeys, commentedKeys, activeNonFlag };
+  return { exists: true, activeKeys, commentedKeys, activeNonFlag, commentedNonFlag };
 }
 
 // ── 출력 헬퍼 ─────────────────────────────────────────────────────────────
@@ -190,12 +197,59 @@ function main() {
   const activeCount = rows.filter((r) => r.active).length;
   const warnings = rows.filter((r) => r.rolloutWarn || r.stale);
 
+  // ── AI Harness 프로바이더 섹션 (JSON + 텍스트 공통 분석) ─────────────────
+  const HARNESS_KEYS = ['HARNESS_PROVIDER', 'OPENAI_API_KEY', 'OPENAI_BASE_URL', 'ANTHROPIC_API_KEY'];
+  const SENSITIVE_KEYS = new Set(['OPENAI_API_KEY', 'ANTHROPIC_API_KEY']);
+
+  /** @param {string} key @returns {{ active: boolean, commented: boolean, displayValue: string }} */
+  function resolveHarnessVar(key) {
+    const activeEntry = env.activeNonFlag.find((e) => e.key === key);
+    if (activeEntry) {
+      const raw = activeEntry.value.trim();
+      const displayValue = SENSITIVE_KEYS.has(key)
+        ? (raw ? `설정됨 (${raw.length}자)` : '비어있음 — 미설정')
+        : (raw || '(빈 값)');
+      return { active: Boolean(raw), commented: false, displayValue };
+    }
+    const commentedEntry = env.commentedNonFlag.find((e) => e.key === key);
+    if (commentedEntry) {
+      return { active: false, commented: true, displayValue: '주석 처리됨' };
+    }
+    return { active: false, commented: false, displayValue: '미설정' };
+  }
+
+  const harnessProvider = resolveHarnessVar('HARNESS_PROVIDER');
+  const openaiKey = resolveHarnessVar('OPENAI_API_KEY');
+  const openaiBase = resolveHarnessVar('OPENAI_BASE_URL');
+  const anthropicKey = resolveHarnessVar('ANTHROPIC_API_KEY');
+
+  const providerActiveValue = harnessProvider.active
+    ? env.activeNonFlag.find((e) => e.key === 'HARNESS_PROVIDER')?.value.trim() || ''
+    : '';
+  const keyConfigured = openaiKey.active;
+  const effectiveProvider = (providerActiveValue === 'openai' || providerActiveValue === 'openai-responses') && keyConfigured
+    ? 'openai-responses'
+    : 'null-harness-provider';
+  const fallbackReason = effectiveProvider === 'null-harness-provider'
+    ? (providerActiveValue === 'openai' && !keyConfigured ? 'OPENAI_API_KEY 미설정' : 'HARNESS_PROVIDER 미설정')
+    : null;
+
+  const harnessStatus = {
+    effective_provider: effectiveProvider,
+    fallback_reason: fallbackReason,
+    harness_provider: { active: harnessProvider.active, commented: harnessProvider.commented, value: providerActiveValue || null },
+    openai_key_configured: keyConfigured,
+    openai_base_url_active: openaiBase.active,
+    anthropic_key_configured: anthropicKey.active,
+  };
+
   if (JSON_MODE) {
     process.stdout.write(JSON.stringify({
       as_of: todayStr,
       env_exists: env.exists,
       env_path: ENV_PATH,
-      server_settings: env.activeNonFlag,
+      server_settings: env.activeNonFlag.filter((e) => !HARNESS_KEYS.includes(e.key)),
+      harness: harnessStatus,
       flags: rows.map(({ key, state, source, effectiveValue, rollout, stale, expiresOn, owner, stage }) => ({
         key, state, source, effective_value: effectiveValue,
         rollout_pct: rollout,
@@ -222,6 +276,31 @@ function main() {
     line(`  서버 설정 : ${serverVars}`);
   }
   line();
+  // ── AI Harness 프로바이더 텍스트 섹션 (공통 harnessStatus 사용) ─────────
+  const effectiveProviderLabel = harnessStatus.effective_provider === 'openai-responses'
+    ? '● openai-responses (live LLM)'
+    : harnessStatus.fallback_reason === 'OPENAI_API_KEY 미설정'
+      ? '⚠ openai 지정됐으나 OPENAI_API_KEY 미설정 → null-harness-provider (fallback)'
+      : '○ null-harness-provider (fallback — 추천은 null 반환, 기능 정상)';
+
+  line(`  ┌─ AI 하네스 프로바이더 ─────────────────────────────────────────────┐`);
+  line(`  │  활성 프로바이더 : ${effectiveProviderLabel}`);
+  line(`  │  HARNESS_PROVIDER : ${harnessProvider.active ? `● ${providerActiveValue}` : harnessProvider.commented ? '○ 주석 처리됨 (활성화: # 제거 후 서버 재시작)' : '○ 미설정 (기본: null-harness-provider)'}`);
+  line(`  │  OPENAI_API_KEY   : ${openaiKey.active ? `● ${openaiKey.displayValue}` : openaiKey.commented ? '○ 주석 처리됨 (활성화: # 제거 후 키 입력)' : '○ 미설정'}`);
+  if (openaiBase.active) {
+    line(`  │  OPENAI_BASE_URL  : ● ${env.activeNonFlag.find((e) => e.key === 'OPENAI_BASE_URL')?.value.trim()}`);
+  }
+  if (anthropicKey.active || anthropicKey.commented) {
+    line(`  │  ANTHROPIC_API_KEY: ${anthropicKey.active ? `● ${anthropicKey.displayValue}` : '○ 주석 처리됨 (예약 — 미구현)'}`);
+  }
+  line(`  │`);
+  line(`  │  라이브 연결 방법:`);
+  line(`  │    1. .env에서 HARNESS_PROVIDER=openai 주석 해제`);
+  line(`  │    2. OPENAI_API_KEY=sk-... 입력`);
+  line(`  │    3. 서버 재시작 → POST /api/harness/prompt-recommendation 으로 검증`);
+  line(`  └────────────────────────────────────────────────────────────────────┘`);
+  line();
+
   line(`  ${pad('플래그', COL_FLAG)} ${pad('상태', COL_STATE)} ${pad('소스', COL_SOURCE)} 단계      비고`);
   line(`  ${'─'.repeat(COL_FLAG)} ${'─'.repeat(COL_STATE)} ${'─'.repeat(COL_SOURCE)} ${'─'.repeat(8)} ${'─'.repeat(20)}`);
 
