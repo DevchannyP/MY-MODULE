@@ -26,4 +26,6 @@ test('[harness evals smoke] offline harness eval runner emits a report artifact'
   assert.ok(fs.existsSync(REPORT_PATH));
   assert.deepEqual(report.checks.validation_failures, [], 'golden set should have no validation failures');
   assert.equal(report.checks.required_modes_present, true, 'all 5 modes (Research/Build/Debug/Operate/Policy) must be present');
+  assert.equal(report.checks.required_packet_types_present, true, 'all 5 packet types (arch/governance/meta/shell/executor) must be present');
+  assert.deepEqual(report.checks.packet_type_coverage.missing, [], 'no packet type should be missing');
 });

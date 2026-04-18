@@ -47,22 +47,41 @@ function summarizePacketTypes(records) {
   }, {});
 }
 
+const VALID_ZONE_RULES = new Set(['single-zone-preferred', 'global-scan-allowed']);
+const REQUIRED_PACKET_TYPES = ['arch', 'governance', 'meta', 'shell', 'executor'];
+
 function validateGoldenRecords(records) {
   const failures = [];
 
   records.forEach((record) => {
-    if (!record.id) failures.push('missing id');
-    if (!record.mode) failures.push(`${record.id || 'unknown'} missing mode`);
-    if (!record.packet_type) failures.push(`${record.id || 'unknown'} missing packet_type`);
-    if (!record.input || typeof record.input !== 'object') failures.push(`${record.id || 'unknown'} missing input`);
-    if (!record.expect || typeof record.expect !== 'object') failures.push(`${record.id || 'unknown'} missing expect`);
+    const id = record.id || 'unknown';
 
-    if (record.expect && !Array.isArray(record.expect.required_sections)) {
-      failures.push(`${record.id || 'unknown'} missing expect.required_sections`);
+    if (!record.id) failures.push('missing id');
+    if (!record.mode) failures.push(`${id} missing mode`);
+    if (!record.packet_type) failures.push(`${id} missing packet_type`);
+    if (!record.input || typeof record.input !== 'object') failures.push(`${id} missing input`);
+    if (!record.expect || typeof record.expect !== 'object') failures.push(`${id} missing expect`);
+
+    if (record.expect) {
+      if (!Array.isArray(record.expect.required_sections)) {
+        failures.push(`${id} missing expect.required_sections`);
+      }
+      if (record.expect.zone_rule !== undefined && !VALID_ZONE_RULES.has(record.expect.zone_rule)) {
+        failures.push(`${id} invalid zone_rule: ${record.expect.zone_rule}`);
+      }
+      if (typeof record.expect.false_pass_forbidden !== 'boolean') {
+        failures.push(`${id} missing expect.false_pass_forbidden`);
+      }
     }
   });
 
   return failures;
+}
+
+function checkPacketTypeCoverage(records) {
+  const present = new Set(records.map((r) => r.packet_type).filter(Boolean));
+  const missing = REQUIRED_PACKET_TYPES.filter((pt) => !present.has(pt));
+  return { present: Array.from(present).sort(), missing };
 }
 
 function loadCaseFiles() {
@@ -91,6 +110,7 @@ function buildReport() {
   const validationFailures = validateGoldenRecords(golden);
   const modeCoverage = summarizeModes(golden);
   const packetTypeCoverage = summarizePacketTypes(golden);
+  const packetTypeCoverageCheck = checkPacketTypeCoverage(golden);
   const caseFiles = loadCaseFiles();
   const report = {
     eval_run_id: crypto.randomUUID(),
@@ -99,7 +119,7 @@ function buildReport() {
     suite: 'harness-core-offline',
     baseline_id: String(baseline.baseline_id || 'unknown'),
     prompt_version: String(baseline.prompt_version || 'unknown'),
-    status: validationFailures.length === 0 ? 'PASS' : 'FAIL',
+    status: validationFailures.length === 0 && packetTypeCoverageCheck.missing.length === 0 ? 'PASS' : 'FAIL',
     summary: {
       golden_case_count: golden.length,
       baseline_case_count: Number(baseline?.golden_set?.case_count || 0),
@@ -113,6 +133,8 @@ function buildReport() {
       baseline_loaded: true,
       required_case_floor_met: golden.length >= 10,
       required_modes_present: ['Research', 'Build', 'Debug', 'Operate', 'Policy'].every((mode) => Object.prototype.hasOwnProperty.call(modeCoverage, mode)),
+      required_packet_types_present: packetTypeCoverageCheck.missing.length === 0,
+      packet_type_coverage: packetTypeCoverageCheck,
       validation_failures: validationFailures,
     },
     case_files: caseFiles,

@@ -1,6 +1,6 @@
 {
-  "eval_run_id": "2e5fe051-eb32-43d1-9e37-2f5899945f57",
-  "generated_at_utc": "2026-04-18T06:55:17.918Z",
+  "eval_run_id": "4f57fc21-781b-44f6-ae40-9046c7a2a001",
+  "generated_at_utc": "2026-04-18T10:56:02.254Z",
   "repository": "my-module",
   "suite": "harness-core-offline",
   "baseline_id": "harness-phase0-baseline-2026-04-14",
@@ -24,13 +24,24 @@
       "shell": 1,
       "executor": 1
     },
-    "case_files": 4
+    "case_files": 5
   },
   "checks": {
     "golden_set_parsed": true,
     "baseline_loaded": true,
     "required_case_floor_met": true,
     "required_modes_present": true,
+    "required_packet_types_present": true,
+    "packet_type_coverage": {
+      "present": [
+        "arch",
+        "executor",
+        "governance",
+        "meta",
+        "shell"
+      ],
+      "missing": []
+    },
     "validation_failures": []
   },
   "case_files": [
@@ -54,6 +65,17 @@
       "ids": [
         "debug-001",
         "debug-002"
+      ]
+    },
+    {
+      "path": "evals/cases/operate.jsonl",
+      "count": 2,
+      "modes": [
+        "Operate"
+      ],
+      "ids": [
+        "operate-001",
+        "operate-002"
       ]
     },
     {
@@ -83,33 +105,5 @@
     "모델 호출 기반 grader를 추가한다",
     "baseline 대비 schema_violation_rate와 retry_rate를 측정한다",
     "safety/red-team case file을 별도 추가한다"
-  ],
-  "provider_invocations": [
-    {
-      "generated_at_utc": "2026-04-18T07:09:08.600Z",
-      "provider_id": "null-harness-provider",
-      "model": "null-mini",
-      "selected_model_tier": "mini",
-      "route_id": "mini-build",
-      "prompt_version": "0.2.0",
-      "mode": "Build",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "retry_count": 0,
-      "latency_ms": 0
-    }
-  ],
-  "last_provider_invocation": {
-    "generated_at_utc": "2026-04-18T07:09:08.600Z",
-    "provider_id": "null-harness-provider",
-    "model": "null-mini",
-    "selected_model_tier": "mini",
-    "route_id": "mini-build",
-    "prompt_version": "0.2.0",
-    "mode": "Build",
-    "schema_valid": true,
-    "fallback_applied": false,
-    "retry_count": 0,
-    "latency_ms": 0
-  }
+  ]
 }
