@@ -9,6 +9,7 @@ import re
 import sys
 
 import yaml
+import jsonschema
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -379,6 +380,61 @@ def validate_ui_shell_contract(errors: list[str]) -> None:
         errors.append("ui-shell: /planning-studio/stage-run POST 200 missing X-Stage-Run-Report-Saved header")
 
 
+def validate_harness_contracts(errors: list[str]) -> None:
+    """Validate contracts/harness/intake.schema.json against golden eval cases."""
+    intake_schema = load_json("contracts/harness/intake.schema.json")
+    output_schema = load_json("contracts/harness/output.schema.json")
+    golden_path = REPO_ROOT / "evals" / "golden" / "harness-core.jsonl"
+
+    if not golden_path.exists():
+        errors.append("harness-contracts: evals/golden/harness-core.jsonl not found")
+        return
+
+    # Verify required top-level schema fields
+    for field in ("$schema", "type", "required", "properties"):
+        if field not in intake_schema:
+            errors.append(f"harness-contracts: intake.schema.json missing top-level field: {field}")
+
+    required_intake_fields = {"goal", "context", "constraints", "done_when", "work_mode", "verification"}
+    actual_required = set(intake_schema.get("required", []))
+    missing_required = required_intake_fields - actual_required
+    if missing_required:
+        errors.append(f"harness-contracts: intake.schema.json required missing: {sorted(missing_required)}")
+
+    # Validate each golden record's input field against the intake schema
+    validator = jsonschema.Draft202012Validator(intake_schema)
+    with golden_path.open("r", encoding="utf-8") as fh:
+        lines = [line.strip() for line in fh if line.strip()]
+
+    for line in lines:
+        record = json.loads(line)
+        record_id = record.get("id", "unknown")
+        input_data = record.get("input")
+        if not isinstance(input_data, dict):
+            errors.append(f"harness-contracts: golden record {record_id} has non-object input")
+            continue
+        schema_errors = sorted(validator.iter_errors(input_data), key=lambda e: e.path)
+        for err in schema_errors:
+            path = "/".join(str(p) for p in err.absolute_path) or "(root)"
+            errors.append(f"harness-contracts: golden record {record_id} input schema violation at {path}: {err.message}")
+
+    # Verify output schema has the canonical section names used in golden expect
+    output_properties = set(output_schema.get("properties", {}).keys())
+    canonical_sections = {"summary", "analysis", "change_points", "verification", "risks", "next_action"}
+    missing_sections = canonical_sections - output_properties
+    if missing_sections:
+        errors.append(f"harness-contracts: output.schema.json properties missing canonical sections: {sorted(missing_sections)}")
+
+    # Verify golden expect.required_sections reference valid output schema properties
+    for line in lines:
+        record = json.loads(line)
+        record_id = record.get("id", "unknown")
+        required_sections = record.get("expect", {}).get("required_sections", [])
+        for section in required_sections:
+            if section not in output_properties:
+                errors.append(f"harness-contracts: golden record {record_id} expect.required_sections references unknown output property: {section}")
+
+
 def main() -> int:
     errors: list[str] = []
     validate_task_management(errors)
@@ -386,6 +442,7 @@ def main() -> int:
     validate_video(errors)
     validate_event_registry(errors)
     validate_ui_shell_contract(errors)
+    validate_harness_contracts(errors)
 
     if errors:
         for error in errors:
