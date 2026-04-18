@@ -297,7 +297,7 @@ function main() {
   line(`  │  라이브 연결 방법:`);
   line(`  │    1. .env에서 HARNESS_PROVIDER=openai 주석 해제`);
   line(`  │    2. OPENAI_API_KEY=sk-... 입력`);
-  line(`  │    3. 서버 재시작 → POST /api/harness/prompt-recommendation 으로 검증`);
+  line(`  │    3. npm run harness:check  → E2E 검증 (서버 자동 기동/종료)`);
   line(`  └────────────────────────────────────────────────────────────────────┘`);
   line();
 
