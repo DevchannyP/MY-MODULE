@@ -1,12 +1,12 @@
 {
   "schema_version": "3",
-  "generated_at_utc": "2026-04-18T06:20:59.112506+00:00",
+  "generated_at_utc": "2026-04-18T06:55:19.358209+00:00",
   "repository": "my-module",
   "branch": "chore/core-git-governance-activation",
-  "head_commit": "24751bf5f7e48921b8dea21a3e0a05275d3d6b00",
+  "head_commit": "37266b9fc3e123e23938eff3d0b452c994297f57",
   "build_environment": {
     "ci": "false",
-    "github_sha": "24751bf5f7e48921b8dea21a3e0a05275d3d6b00",
+    "github_sha": "37266b9fc3e123e23938eff3d0b452c994297f57",
     "github_ref": "local",
     "github_run_id": "local",
     "github_workflow": "local"
@@ -27,8 +27,8 @@
       "artifacts/promotion-pipeline/latest/context-lock.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json",
       "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
-      "artifacts/provenance/workflow-os-provenance.json",
-      "artifacts/release-evidence/release-evidence.json"
+      "artifacts/release-evidence/release-evidence.json",
+      "scripts/env-init.js"
     ],
     "untracked_paths": []
   },

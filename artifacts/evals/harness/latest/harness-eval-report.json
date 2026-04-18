@@ -1,6 +1,6 @@
 {
-  "eval_run_id": "1b171ad4-ca0f-459e-9c8e-588f0e5d7314",
-  "generated_at_utc": "2026-04-18T06:20:57.691Z",
+  "eval_run_id": "2e5fe051-eb32-43d1-9e37-2f5899945f57",
+  "generated_at_utc": "2026-04-18T06:55:17.918Z",
   "repository": "my-module",
   "suite": "harness-core-offline",
   "baseline_id": "harness-phase0-baseline-2026-04-14",
@@ -83,33 +83,5 @@
     "모델 호출 기반 grader를 추가한다",
     "baseline 대비 schema_violation_rate와 retry_rate를 측정한다",
     "safety/red-team case file을 별도 추가한다"
-  ],
-  "provider_invocations": [
-    {
-      "generated_at_utc": "2026-04-18T06:21:25.398Z",
-      "provider_id": "null-harness-provider",
-      "model": "null-mini",
-      "selected_model_tier": "mini",
-      "route_id": "mini-build",
-      "prompt_version": "0.2.0",
-      "mode": "Build",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "retry_count": 0,
-      "latency_ms": 0
-    }
-  ],
-  "last_provider_invocation": {
-    "generated_at_utc": "2026-04-18T06:21:25.398Z",
-    "provider_id": "null-harness-provider",
-    "model": "null-mini",
-    "selected_model_tier": "mini",
-    "route_id": "mini-build",
-    "prompt_version": "0.2.0",
-    "mode": "Build",
-    "schema_valid": true,
-    "fallback_applied": false,
-    "retry_count": 0,
-    "latency_ms": 0
-  }
+  ]
 }

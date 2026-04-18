@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "recorded_at": "2026-04-18T06:20:58.638902+00:00",
+  "recorded_at": "2026-04-18T06:55:18.859715+00:00",
   "goal": "stateful-ops",
   "decision_gate": "blocked",
   "ready_to_apply": false,

@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-18T06:21:00.598633+00:00",
+  "generated_at": "2026-04-18T06:55:20.901238+00:00",
   "goal": "plan-and-learn",
   "current_packet": {
     "id": "SPIRAL-19-COMPLETE",
@@ -234,14 +234,14 @@
       "feature-flag-provider"
     ],
     "selected_adapters": [
+      "feature-flag-provider",
+      "planner-state-memory",
+      "master-ui-plugin-shell",
       "http-problem-details",
       "master-ui-static-planner",
-      "master-ui-plugin-shell",
-      "planner-state-memory",
-      "openai-responses-agent",
       "remote-mcp-connector",
       "observability-otel",
-      "feature-flag-provider"
+      "openai-responses-agent"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -254,7 +254,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-18T06:21:00.598610+00:00",
+    "generated_at": "2026-04-18T06:55:20.901209+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "complete",
@@ -341,9 +341,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-18 15:18:27 +0900",
+            "timestamp": "2026-04-18 15:43:30 +0900",
             "title": "git commit",
-            "detail": "chore(artifacts): sync harness eval + master-planner after harness:check",
+            "detail": "test(harness-runtime-router): expand unit coverage 2→19 tests",
             "tag": "git"
           }
         ]

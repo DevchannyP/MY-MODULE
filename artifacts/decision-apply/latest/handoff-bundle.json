@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-18T06:20:58.507993+00:00",
+  "generated_at": "2026-04-18T06:55:18.742310+00:00",
   "goal": "stateful-ops",
   "current_packet": {
     "id": "SPIRAL-19-COMPLETE",
@@ -235,12 +235,12 @@
       "repository-sqlite"
     ],
     "selected_adapters": [
-      "observability-otel",
       "feature-flag-provider",
       "repository-sqlite",
-      "http-problem-details",
+      "master-ui-plugin-shell",
       "repository-inmemory",
-      "master-ui-plugin-shell"
+      "observability-otel",
+      "http-problem-details"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -253,7 +253,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-18T06:20:58.507975+00:00",
+    "generated_at": "2026-04-18T06:55:18.742287+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "complete",
@@ -340,9 +340,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-18 15:18:27 +0900",
+            "timestamp": "2026-04-18 15:43:30 +0900",
             "title": "git commit",
-            "detail": "chore(artifacts): sync harness eval + master-planner after harness:check",
+            "detail": "test(harness-runtime-router): expand unit coverage 2→19 tests",
             "tag": "git"
           }
         ]
