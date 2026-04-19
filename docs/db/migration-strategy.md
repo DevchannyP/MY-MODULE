@@ -12,8 +12,9 @@
 | 현재 DB | SQLite (단일 파일, 로컬 개발/단일 인스턴스) |
 | 스키마 위치 | `domains/{domain}/src/infrastructure/schema.sql` |
 | 마이그레이션 방식 | `CREATE TABLE IF NOT EXISTS` — 멱등성 DDL |
-| 연결 | better-sqlite3 (동기, process-bound) |
-| 도메인 | productivity/task-tracking (SQLite 구현체 존재), billing/video (InMemory) |
+| 연결 | node:sqlite (Node.js 22.5+ 내장, 동기, process-bound) |
+| 도메인 | 전 3개 도메인 SQLite 구현체 완료 (task-tracking, billing, video) |
+| Phase 2 스캐폴딩 | PostgresXxxRepository 스켈레톤 전 도메인 존재 (injectable client, 실 DB 불필요) |
 
 ---
 
