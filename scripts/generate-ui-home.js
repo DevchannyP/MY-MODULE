@@ -819,6 +819,7 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
         <a class="chip-link" href="audit/index.html">감사 로그</a>
         <a class="chip-link" href="quality/index.html">품질 게이트</a>
         <a class="chip-link" href="lifecycle/index.html">라이프사이클</a>
+        <a class="chip-link" href="#automation-bridge" style="background:linear-gradient(135deg,rgba(15,118,110,0.12),rgba(29,78,216,0.10));border-color:rgba(15,118,110,0.35);color:#0f766e;font-weight:700;" onclick="document.getElementById('automation-bridge').scrollIntoView({behavior:'smooth'});return false;">⚡ 자동화 브리지</a>
       </div>
       </nav>
     </header>
@@ -1014,8 +1015,11 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
 
     <p class="foot" style="font-size:12px;color:#61707f;margin-top:8px;">같은 자동화 저장 재시도는 안전하게 재사용됩니다. 같은 계획 초안을 다시 저장해도 중복 기록되지 않습니다.</p>
     <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
+
+${buildAutomationBridgeHtml()}
   </div>
 <script>
+${buildAutomationBridgeJs()}
 ${OPERATOR_ACTION_CLIENT_RUNTIME_SOURCE}
 ${DEEP_LINK_CLIENT_RUNTIME_SOURCE}
 ${BROWSER_UTILITY_RUNTIME_SOURCE}
@@ -2156,6 +2160,611 @@ function main() {
 
 if (require.main === module) {
   main();
+}
+
+// ── Automation Bridge ─────────────────────────────────────────────────────────
+function buildAutomationBridgeHtml() {
+  return `
+  <style>
+  #automation-bridge{margin-top:48px;padding-top:20px;border-top:2px solid rgba(15,118,110,0.18);scroll-margin-top:80px}
+  .ab-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .ab-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:linear-gradient(135deg,rgba(15,118,110,0.12),rgba(29,78,216,0.10));border:1px solid rgba(15,118,110,0.3);color:#0f766e;font-size:12px;font-weight:700}
+  .ab-status-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;display:inline-block;animation:ab-pulse 2s infinite}
+  .ab-status-dot.connected{background:#22c55e}.ab-status-dot.error{background:#ef4444;animation:none}
+  @keyframes ab-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .ab-tabs{display:flex;gap:0;border-bottom:2px solid rgba(220,207,186,0.8);margin-bottom:0;overflow-x:auto}
+  .ab-tab{padding:10px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .13s;white-space:nowrap;font-family:var(--font-ui)}
+  .ab-tab:hover{color:var(--text)}.ab-tab.ab-active{color:var(--accent);border-bottom-color:var(--accent)}
+  .ab-panel{display:none;padding:20px 0}.ab-panel.ab-active{display:block}
+  .ab-term-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .ab-card{background:var(--surface);border:1px solid rgba(220,207,186,0.92);border-radius:var(--radius-lg);padding:18px}
+  .ab-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
+  .ab-session-list{display:grid;gap:6px;max-height:220px;overflow-y:auto}
+  .ab-session-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border:2px solid rgba(220,207,186,0.7);border-radius:10px;cursor:pointer;transition:all .13s;font-size:12px}
+  .ab-session-item:hover{border-color:var(--accent);background:rgba(15,118,110,0.04)}.ab-session-item.ab-selected{border-color:var(--accent);background:rgba(15,118,110,0.07)}
+  .ab-session-pts{font-family:var(--font-mono);font-weight:700;color:var(--accent);font-size:11px}
+  .ab-session-info{color:var(--muted);font-size:11px}
+  .ab-session-badge{padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(15,118,110,0.1);color:var(--accent);border:1px solid rgba(15,118,110,0.2);flex-shrink:0}
+  .ab-session-badge.ai{background:rgba(29,78,216,0.1);color:#1d4ed8;border-color:rgba(29,78,216,0.2)}
+  .ab-cmd-input{width:100%;padding:10px 14px;border:2px solid rgba(220,207,186,0.8);border-radius:10px;font-family:var(--font-mono);font-size:13px;background:var(--surface);color:var(--text);margin-bottom:10px;box-sizing:border-box}
+  .ab-cmd-input:focus{outline:none;border-color:var(--accent)}
+  .ab-btn-row{display:flex;gap:8px;flex-wrap:wrap}
+  .ab-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font-ui);transition:all .13s}
+  .ab-btn:active{transform:scale(.97)}.ab-btn:disabled{opacity:.45;cursor:not-allowed}
+  .ab-btn-primary{background:var(--accent);color:#fff}.ab-btn-primary:hover{background:#0d6860}
+  .ab-btn-secondary{background:var(--surface-strong);color:var(--text);border:1px solid rgba(220,207,186,0.9)}.ab-btn-secondary:hover{border-color:var(--accent)}
+  .ab-btn-sm{padding:5px 11px;font-size:11px;border-radius:8px}
+  .ab-log{background:#1a1f2e;border-radius:12px;padding:12px 14px;height:150px;overflow-y:auto;font-family:var(--font-mono);font-size:11px;line-height:1.7}
+  .ab-log-line{color:#a8b5cc}.ab-log-ok{color:#6ee7b7}.ab-log-fail{color:#fca5a5}.ab-log-info{color:#93c5fd}.ab-log-empty{color:#4b5563;font-style:italic}
+  .ab-result{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;margin-top:8px;display:none}
+  .ab-result-ok{background:#dcfce7;color:#166534;border:1px solid #86efac;display:block}.ab-result-fail{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;display:block}
+  .ab-cmd-search{width:100%;padding:10px 14px;border:2px solid rgba(220,207,186,0.8);border-radius:10px;font-family:var(--font-ui);font-size:13px;background:var(--surface);color:var(--text);margin-bottom:14px;box-sizing:border-box}
+  .ab-cmd-search:focus{outline:none;border-color:var(--accent)}
+  .ab-palette-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .ab-palette-section{background:var(--surface);border:1px solid rgba(220,207,186,0.85);border-radius:var(--radius-lg);overflow:hidden}
+  .ab-palette-section-head{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.7);border-bottom:1px solid rgba(220,207,186,0.7);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .ab-palette-list{padding:8px;display:grid;gap:4px}
+  .ab-palette-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;transition:all .1s;font-size:12px}
+  .ab-palette-item:hover{background:rgba(15,118,110,0.07)}.ab-palette-item.ab-hidden{display:none}
+  .ab-palette-cmd{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+  .ab-palette-run{flex-shrink:0;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;background:transparent;border:1px solid rgba(220,207,186,0.8);color:var(--muted);cursor:pointer;font-family:var(--font-ui);transition:all .1s}
+  .ab-palette-run:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .ab-kw-table{width:100%;border-collapse:collapse;font-size:13px}
+  .ab-kw-table th{text-align:left;padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid rgba(220,207,186,0.8)}
+  .ab-kw-table td{padding:9px 12px;border-bottom:1px solid rgba(220,207,186,0.5);vertical-align:middle}
+  .ab-kw-table tr:last-child td{border-bottom:none}.ab-kw-table tr:hover td{background:rgba(15,118,110,0.04)}
+  .ab-kw-code{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--accent);background:rgba(15,118,110,0.08);padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid rgba(15,118,110,0.2);transition:all .1s;display:inline-block}
+  .ab-kw-code:hover{background:var(--accent);color:#fff}
+  .ab-kw-run-btn{padding:4px 10px;border-radius:7px;font-size:10px;font-weight:700;background:transparent;border:1px solid rgba(220,207,186,0.8);color:var(--muted);cursor:pointer;font-family:var(--font-ui);transition:all .1s}
+  .ab-kw-run-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .ab-file-tree{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .ab-file-group{background:var(--surface);border:1px solid rgba(220,207,186,0.85);border-radius:var(--radius-lg);overflow:hidden}
+  .ab-file-group-head{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.7);border-bottom:1px solid rgba(220,207,186,0.7);font-size:12px;font-weight:700;color:var(--text)}
+  .ab-file-list{padding:8px;display:grid;gap:2px}
+  .ab-file-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .1s;text-decoration:none}
+  .ab-file-item:hover{background:rgba(15,118,110,0.07);color:var(--accent)}
+  .ab-file-name{font-family:var(--font-mono);font-size:11px;flex:1}
+  .ab-file-actions{display:flex;gap:4px;opacity:0;transition:opacity .1s}
+  .ab-file-item:hover .ab-file-actions{opacity:1}
+  .ab-file-action-btn{padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;background:transparent;border:1px solid rgba(220,207,186,0.8);color:var(--muted);cursor:pointer;font-family:var(--font-ui);transition:all .1s}
+  .ab-file-action-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .ab-guide-grid{display:grid;gap:14px}
+  .ab-guide-block{background:var(--surface);border:1px solid rgba(220,207,186,0.85);border-radius:var(--radius-lg);overflow:hidden}
+  .ab-guide-block-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;cursor:pointer;transition:background .1s}
+  .ab-guide-block-head:hover{background:rgba(255,255,255,0.5)}
+  .ab-guide-block-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700}
+  .ab-guide-chevron{color:var(--muted);transition:transform .2s}
+  .ab-guide-block.ab-open .ab-guide-chevron{transform:rotate(180deg)}
+  .ab-guide-body{display:none;padding:0 18px 18px}
+  .ab-guide-block.ab-open .ab-guide-body{display:block}
+  .ab-guide-body p{color:var(--muted);font-size:14px;line-height:1.75;margin:0 0 12px}
+  .ab-guide-body ul{margin:0 0 12px;padding-left:18px}
+  .ab-guide-body li{color:var(--muted);font-size:14px;line-height:1.75}
+  .ab-guide-body code{font-family:var(--font-mono);font-size:12px;background:rgba(15,118,110,0.08);color:var(--accent);padding:2px 7px;border-radius:6px;cursor:pointer}
+  .ab-guide-body code:hover{background:var(--accent);color:#fff}
+  .ab-guide-body pre{background:#1a1f2e;color:#a8b5cc;font-family:var(--font-mono);font-size:12px;border-radius:10px;padding:14px;overflow-x:auto;line-height:1.7;margin:10px 0}
+  .ab-stage-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:12px 0}
+  .ab-stage-node{display:flex;align-items:center;gap:6px}
+  .ab-stage-pill{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;transition:all .13s;border:2px solid}
+  .ab-stage-a{background:rgba(29,78,216,0.1);color:#1d4ed8;border-color:rgba(29,78,216,0.3)}
+  .ab-stage-b{background:rgba(139,92,246,0.1);color:#7c3aed;border-color:rgba(139,92,246,0.3)}
+  .ab-stage-c{background:rgba(180,83,9,0.1);color:#b45309;border-color:rgba(180,83,9,0.3)}
+  .ab-stage-d{background:rgba(15,118,110,0.1);color:#0f766e;border-color:rgba(15,118,110,0.3)}
+  .ab-stage-e{background:rgba(220,38,38,0.1);color:#dc2626;border-color:rgba(220,38,38,0.3)}
+  .ab-stage-pill:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,0.1)}
+  .ab-arrow{color:var(--muted);font-size:16px}
+  .ab-state-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:rgba(15,118,110,0.06);border:1px solid rgba(15,118,110,0.18);border-radius:var(--radius-md);margin-bottom:16px;font-size:12px}
+  .ab-state-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,0.7);border:1px solid rgba(220,207,186,0.8);color:var(--muted);font-size:11px;font-weight:600}
+  .ab-state-pill strong{color:var(--text)}
+  @media(max-width:900px){.ab-term-grid,.ab-palette-grid,.ab-file-tree{grid-template-columns:1fr}}
+  </style>
+
+  <section id="automation-bridge">
+    <div class="ab-header">
+      <div class="section-head" style="margin:0;flex:1;">
+        <div>
+          <h2>⚡ Automation Bridge</h2>
+          <p>UI에서 VS Code 터미널을 직접 제어하고, 전체 프로젝트 사용법 + 명령 팔레트 + 파일 탐색을 한 화면에서 사용합니다.</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <span class="ab-badge"><span class="ab-status-dot" id="ab-conn-dot"></span><span id="ab-conn-label">서버 연결 중...</span></span>
+        <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRefreshSessions()">⟳ 세션 갱신</button>
+      </div>
+    </div>
+    <div class="ab-state-bar">
+      <span class="ab-state-pill">WP <strong id="ab-wp-live">—</strong></span>
+      <span class="ab-state-pill">브랜치 <strong id="ab-branch-live">—</strong></span>
+      <span class="ab-state-pill">터미널 <strong id="ab-pty-live">—</strong></span>
+      <span class="ab-state-pill">대상 세션 <strong id="ab-target-pts">미선택</strong></span>
+      <span class="ab-state-pill" style="margin-left:auto;">서버 <strong id="ab-server-status">localhost:8080</strong></span>
+    </div>
+    <div class="ab-tabs">
+      <button class="ab-tab ab-active" onclick="abSwitchTab('guide',this)">📖 사용법 가이드</button>
+      <button class="ab-tab" onclick="abSwitchTab('terminal',this)">🖥 터미널 브리지</button>
+      <button class="ab-tab" onclick="abSwitchTab('commands',this)">⚡ 명령 팔레트</button>
+      <button class="ab-tab" onclick="abSwitchTab('files',this)">📂 파일 탐색</button>
+      <button class="ab-tab" onclick="abSwitchTab('keywords',this)">🔑 키워드 실행표</button>
+    </div>
+
+    <!-- 사용법 가이드 -->
+    <div class="ab-panel ab-active" id="ab-panel-guide">
+      <div class="ab-guide-grid">
+        <div class="ab-guide-block ab-open">
+          <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
+            <div class="ab-guide-block-title"><span>🗺</span><span>한눈에 보기 — Workflow OS란?</span></div>
+            <span class="ab-guide-chevron">▼</span>
+          </div>
+          <div class="ab-guide-body">
+            <p>Workflow OS는 요구사항→설계→구현→검증의 전 사이클을 <strong>Work Packet</strong> 단위로 추적하고, Claude Code가 자율적으로 실행하는 프로젝트 운영 시스템입니다.</p>
+            <div class="ab-stage-flow">
+              <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-a" onclick="abSendKeyword('A 도메인명')">A 분석</span><span class="ab-arrow">→</span></div>
+              <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-b" onclick="abSendKeyword('B_review 도메인명')">B 리뷰</span><span class="ab-arrow">→</span></div>
+              <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-c" onclick="abSendKeyword('계속')">C 쉘</span><span class="ab-arrow">→</span></div>
+              <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-d" onclick="abSendKeyword('D 도메인명')">D 구현</span><span class="ab-arrow">→</span></div>
+              <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-e" onclick="abSendKeyword('E 도메인명')">E 검증</span></div>
+            </div>
+            <ul>
+              <li><strong>사용자가 하는 일</strong>: 요구사항과 우선순위 정의, <code>requirements/requirements.yaml</code> 편집</li>
+              <li><strong>Claude가 하는 일</strong>: 한 번에 하나의 Work Packet을 끝까지 닫음</li>
+              <li><strong>상태 추적</strong>: <code>memory/L0-hot/current-state.yaml</code>에서 현재 stage 확인</li>
+              <li><strong>빠른 시작</strong>: 터미널에 <code>npm run project:status</code></li>
+            </ul>
+          </div>
+        </div>
+        <div class="ab-guide-block">
+          <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
+            <div class="ab-guide-block-title"><span>📁</span><span>저장소 구조</span></div>
+            <span class="ab-guide-chevron">▼</span>
+          </div>
+          <div class="ab-guide-body">
+            <pre>my-module/
+├── requirements/requirements.yaml  ← ★ 단일 진실원
+├── domains/[도메인]/
+│   ├── contracts/  ← OpenAPI·Events·UI·Capability
+│   ├── src/        ← 실제 코드
+│   └── tests/      ← 단위 + 적대적 테스트
+├── master-shell/   ← 플러그인·피처플래그·네비게이션
+├── memory/L0-hot/  ← 핫 상태 (세션 간 인수인계)
+├── docs/adr/       ← 아키텍처 결정 기록
+├── worklog/        ← 실행 이력
+└── artifacts/      ← UI 포털 (현재 화면)</pre>
+          </div>
+        </div>
+        <div class="ab-guide-block">
+          <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
+            <div class="ab-guide-block-title"><span>🚀</span><span>5분 빠른 시작</span></div>
+            <span class="ab-guide-chevron">▼</span>
+          </div>
+          <div class="ab-guide-body">
+            <p><strong>Step 1</strong>: <code>requirements/requirements.yaml</code>에 도메인 추가</p>
+            <p><strong>Step 2</strong>: Claude Code 터미널에 입력 (아래 키워드 탭 또는 터미널 브리지 탭 사용)</p>
+            <pre>A my-feature    # 전체 Stage A~E 실행
+D my-feature    # Stage D만 (구현)
+E my-feature    # Stage E + B_review (검증)</pre>
+            <p><strong>Step 3</strong>: 상태 확인</p>
+            <pre>npm run project:status
+npm run wp:next
+npm run gate:all</pre>
+          </div>
+        </div>
+        <div class="ab-guide-block">
+          <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
+            <div class="ab-guide-block-title"><span>🔑</span><span>단일 키워드 실행표</span></div>
+            <span class="ab-guide-chevron">▼</span>
+          </div>
+          <div class="ab-guide-body">
+            <p>키워드를 클릭하면 선택된 터미널에 전송됩니다. 터미널 브리지 탭에서 세션을 먼저 선택하세요.</p>
+            <ul>
+              <li><code onclick="abSendKeyword(this.textContent)">계속</code> — next-actions priority 1 실행</li>
+              <li><code onclick="abSendKeyword('A 도메인명')">A [도메인]</code> — Stage A~E 전체 실행</li>
+              <li><code onclick="abSendKeyword('D 도메인명')">D [도메인]</code> — Stage D만 (구현 전용)</li>
+              <li><code onclick="abSendKeyword('E 도메인명')">E [도메인]</code> — Stage E + B_review</li>
+              <li><code onclick="abSendKeyword('검토')">검토</code> — 현재 상태 보고</li>
+              <li><code onclick="abSendKeyword('게이트')">게이트</code> — 전 도메인 품질 게이트</li>
+              <li><code onclick="abSendKeyword('건강')">건강</code> — 건강도 대시보드</li>
+              <li><code onclick="abSendKeyword('A *')">A *</code> — 전 도메인 병렬 실행</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ab-guide-block">
+          <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
+            <div class="ab-guide-block-title"><span>🏗</span><span>아키텍처 원칙 10가지</span></div>
+            <span class="ab-guide-chevron">▼</span>
+          </div>
+          <div class="ab-guide-body">
+            <ul>
+              <li><strong>계약 전용 연결</strong>: 도메인 간 직접 src/ import 금지</li>
+              <li><strong>Clean Architecture</strong>: 의존성은 바깥→안쪽만</li>
+              <li><strong>품질 게이트 절대주의</strong>: FAIL이면 완료 선언 금지</li>
+              <li><strong>메모리 우선</strong>: <code>memory/L0-hot/</code>를 먼저 읽음</li>
+              <li><strong>ADR 필수</strong>: 구조적 판단 변경 시 ADR 생성 (<code>npm run adr:new</code>)</li>
+              <li><strong>불확실성 명시</strong>: [확인 필요] 태그 사용</li>
+              <li><strong>리스크 비례 방어</strong>: risk_level에 비례해 보안 강화</li>
+              <li><strong>불변 패턴</strong>: 엔티티 상태 직접 수정 금지</li>
+              <li><strong>증거 기반 리뷰</strong>: 재현 절차 없는 지적은 "추정"</li>
+              <li><strong>모놀리스 우선</strong>: 계약 안정 후에만 도메인 분리</li>
+            </ul>
+          </div>
+        </div>
+        <div class="ab-guide-block">
+          <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
+            <div class="ab-guide-block-title"><span>🔧</span><span>트러블슈팅</span></div>
+            <span class="ab-guide-chevron">▼</span>
+          </div>
+          <div class="ab-guide-body">
+            <ul>
+              <li><strong>테스트 FAIL</strong>: Claude가 최대 3회 자동 재시도. 3회 초과 시 멈추고 보고</li>
+              <li><strong>서버 연결 안됨</strong>: <code>python3 scripts/serve.py</code> (포트 8080) 실행</li>
+              <li><strong>세션 없음</strong>: 터미널 탭 → 세션 갱신 → CLI 탭 선택</li>
+              <li><strong>상태 불일치</strong>: <code>npm run wp:reconcile</code></li>
+              <li><strong>INV 충돌</strong>: ADR 생성 → <code>npm run adr:new</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 터미널 브리지 -->
+    <div class="ab-panel" id="ab-panel-terminal">
+      <div class="ab-term-grid">
+        <div class="ab-card">
+          <div class="ab-card-title">VS Code 터미널 세션 선택</div>
+          <div class="ab-session-list" id="ab-session-list"><div style="font-size:12px;color:var(--muted);padding:8px;">세션 로딩 중...</div></div>
+          <div style="margin-top:10px;display:flex;gap:6px;">
+            <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRefreshSessions()">⟳ 새로고침</button>
+            <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abSendEnter()">↵ Enter</button>
+          </div>
+        </div>
+        <div class="ab-card">
+          <div class="ab-card-title">명령 전송</div>
+          <input class="ab-cmd-input" id="ab-cmd-input" type="text" placeholder="명령어 또는 Claude 키워드... (Enter로 전송)" autocomplete="off" spellcheck="false">
+          <div class="ab-btn-row">
+            <button class="ab-btn ab-btn-primary" onclick="abSendCmd()">▶ 전송 + Enter</button>
+            <button class="ab-btn ab-btn-secondary" onclick="abSendCmdNoEnter()">전송만</button>
+          </div>
+          <div id="ab-send-result" class="ab-result"></div>
+          <div style="margin-top:14px;">
+            <div class="ab-card-title" style="margin-bottom:8px;">빠른 키워드</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('계속')">계속</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('검토')">검토</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('게이트')">게이트</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('건강')">건강</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('게이트 *')">게이트 *</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('A *')">A *</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('D *')">D *</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('그래프')">그래프</button>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <div class="ab-card-title" style="margin-bottom:8px;">도메인 지정 실행</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input class="ab-cmd-input" id="ab-domain-input" type="text" placeholder="도메인명 (예: billing)" style="flex:1;margin-bottom:0;min-width:120px;">
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRunWithDomain('A')">A</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRunWithDomain('D')">D</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRunWithDomain('E')">E</button>
+              <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRunWithDomain('보고서')">보고서</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ab-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="ab-card-title" style="margin:0;">전송 로그</div>
+          <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abClearLog()">지우기</button>
+        </div>
+        <div class="ab-log" id="ab-log"><div class="ab-log-line ab-log-empty">명령을 전송하면 여기에 결과가 표시됩니다.</div></div>
+      </div>
+    </div>
+
+    <!-- 명령 팔레트 -->
+    <div class="ab-panel" id="ab-panel-commands">
+      <input class="ab-cmd-search" id="ab-cmd-search" type="text" placeholder="명령어 검색... (예: test, validate, wp, health)" oninput="abFilterPalette(this.value)">
+      <div class="ab-palette-grid">
+        <div class="ab-palette-section"><div class="ab-palette-section-head">🧪 테스트</div><div class="ab-palette-list">
+          <div class="ab-palette-item" data-search="test 전체"><span>전체 테스트</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm test</span><button class="ab-palette-run" onclick="abSendCmd2('npm test')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="test:contract 계약"><span>계약 드리프트 테스트</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run test:contract</span><button class="ab-palette-run" onclick="abSendCmd2('npm run test:contract')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="test:integration 통합"><span>통합 테스트</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run test:integration</span><button class="ab-palette-run" onclick="abSendCmd2('npm run test:integration')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="test:e2e smoke"><span>E2E 스모크</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run test:e2e-smoke</span><button class="ab-palette-run" onclick="abSendCmd2('npm run test:e2e-smoke')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="test:property 프로퍼티"><span>프로퍼티 테스트</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run test:property</span><button class="ab-palette-run" onclick="abSendCmd2('npm run test:property')">▶</button></div></div>
+        </div></div>
+        <div class="ab-palette-section"><div class="ab-palette-section-head">✅ 검증 · 품질</div><div class="ab-palette-list">
+          <div class="ab-palette-item" data-search="gate:all 전체 품질"><span>전체 품질 게이트</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run gate:all</span><button class="ab-palette-run" onclick="abSendCmd2('npm run gate:all')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="lint eslint"><span>린트 (ESLint)</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run lint</span><button class="ab-palette-run" onclick="abSendCmd2('npm run lint')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="validate:requirements 요구사항"><span>요구사항 검증</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run validate:requirements</span><button class="ab-palette-run" onclick="abSendCmd2('npm run validate:requirements')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="validate:contracts 계약"><span>계약 검증</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run validate:contracts</span><button class="ab-palette-run" onclick="abSendCmd2('npm run validate:contracts')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="validate:fitness 아키텍처"><span>아키텍처 피트니스</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run validate:fitness</span><button class="ab-palette-run" onclick="abSendCmd2('npm run validate:fitness')">▶</button></div></div>
+        </div></div>
+        <div class="ab-palette-section"><div class="ab-palette-section-head">📦 Work Packet</div><div class="ab-palette-list">
+          <div class="ab-palette-item" data-search="wp:next 다음"><span>다음 WP 확인</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run wp:next</span><button class="ab-palette-run" onclick="abSendCmd2('npm run wp:next')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="wp:gaps 갭"><span>갭 분석</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run wp:gaps</span><button class="ab-palette-run" onclick="abSendCmd2('npm run wp:gaps')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="wp:gaps:gen 갭 생성"><span>갭 → WP 스켈레톤</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run wp:gaps:gen</span><button class="ab-palette-run" onclick="abSendCmd2('npm run wp:gaps:gen')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="wp:health 세션 메트릭"><span>세션 메트릭</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run wp:health</span><button class="ab-palette-run" onclick="abSendCmd2('npm run wp:health')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="wp:reconcile 동기화"><span>상태 동기화</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run wp:reconcile</span><button class="ab-palette-run" onclick="abSendCmd2('npm run wp:reconcile')">▶</button></div></div>
+        </div></div>
+        <div class="ab-palette-section"><div class="ab-palette-section-head">🏥 상태 · 모니터링</div><div class="ab-palette-list">
+          <div class="ab-palette-item" data-search="health 건강도"><span>건강도 대시보드</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run health</span><button class="ab-palette-run" onclick="abSendCmd2('npm run health')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="project:status 상태"><span>프로젝트 상태</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run project:status</span><button class="ab-palette-run" onclick="abSendCmd2('npm run project:status')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="error-budget 에러 버젯"><span>에러 버젯</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run error-budget</span><button class="ab-palette-run" onclick="abSendCmd2('npm run error-budget')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="operator:cockpit 오퍼레이터"><span>Operator Cockpit</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run operator:cockpit</span><button class="ab-palette-run" onclick="abSendCmd2('npm run operator:cockpit')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="audit:verify 감사"><span>감사 체인 검증</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run audit:verify</span><button class="ab-palette-run" onclick="abSendCmd2('npm run audit:verify')">▶</button></div></div>
+        </div></div>
+        <div class="ab-palette-section"><div class="ab-palette-section-head">⚙️ 생성 · 빌드</div><div class="ab-palette-list">
+          <div class="ab-palette-item" data-search="ui:build UI 빌드"><span>UI 전체 재생성</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run ui:build</span><button class="ab-palette-run" onclick="abSendCmd2('npm run ui:build')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="generate:graph 의존성"><span>의존성 그래프</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run generate:graph</span><button class="ab-palette-run" onclick="abSendCmd2('npm run generate:graph')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="scaffold 스캐폴드"><span>도메인 스캐폴드</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run scaffold</span><button class="ab-palette-run" onclick="abSendCmd2('npm run scaffold')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="adr:new ADR"><span>ADR 새로 생성</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run adr:new</span><button class="ab-palette-run" onclick="abSendCmd2('npm run adr:new')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="orchestrate 병렬"><span>병렬 실행 계획</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run orchestrate</span><button class="ab-palette-run" onclick="abSendCmd2('npm run orchestrate')">▶</button></div></div>
+        </div></div>
+        <div class="ab-palette-section"><div class="ab-palette-section-head">🔄 세션 · 커밋</div><div class="ab-palette-list">
+          <div class="ab-palette-item" data-search="session:bootstrap 시작"><span>세션 부트스트랩</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run session:bootstrap</span><button class="ab-palette-run" onclick="abSendCmd2('npm run session:bootstrap')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="session:end 종료"><span>세션 종료</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run session:end</span><button class="ab-palette-run" onclick="abSendCmd2('npm run session:end')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="commit:guard 커밋 가드"><span>커밋 가드</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run commit:guard</span><button class="ab-palette-run" onclick="abSendCmd2('npm run commit:guard')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="commit:guard:verify 검증"><span>커밋 가드 (검증만)</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run commit:guard:verify</span><button class="ab-palette-run" onclick="abSendCmd2('npm run commit:guard:verify')">▶</button></div></div>
+          <div class="ab-palette-item" data-search="branch:bootstrap 브랜치"><span>브랜치 부트스트랩</span><div style="display:flex;align-items:center;gap:8px;"><span class="ab-palette-cmd">npm run branch:bootstrap</span><button class="ab-palette-run" onclick="abSendCmd2('npm run branch:bootstrap')">▶</button></div></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 파일 탐색 -->
+    <div class="ab-panel" id="ab-panel-files">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">파일을 클릭하면 VS Code에서 열립니다. 「보기/열기」 버튼으로 경로를 터미널에 전송합니다.</p>
+      <div class="ab-file-tree">
+        <div class="ab-file-group"><div class="ab-file-group-head">📋 요구사항</div><div class="ab-file-list">
+          <a class="ab-file-item" href="#" onclick="abOpenFile('requirements/requirements.yaml');return false;"><span>📄</span><span class="ab-file-name">requirements.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('code requirements/requirements.yaml');event.stopPropagation();">VS Code</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('requirements/DOMAIN_TEMPLATE.yaml');return false;"><span>📄</span><span class="ab-file-name">DOMAIN_TEMPLATE.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('code requirements/DOMAIN_TEMPLATE.yaml');event.stopPropagation();">VS Code</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('requirements/constraints.yaml');return false;"><span>🔒</span><span class="ab-file-name">constraints.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('cat requirements/constraints.yaml');event.stopPropagation();">보기</button></div></a>
+        </div></div>
+        <div class="ab-file-group"><div class="ab-file-group-head">🧠 메모리 (핫 상태)</div><div class="ab-file-list">
+          <a class="ab-file-item" href="#" onclick="abOpenFile('memory/L0-hot/current-state.yaml');return false;"><span>🔴</span><span class="ab-file-name">current-state.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('cat memory/L0-hot/current-state.yaml');event.stopPropagation();">보기</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('memory/L0-hot/next-actions.yaml');return false;"><span>⚡</span><span class="ab-file-name">next-actions.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('cat memory/L0-hot/next-actions.yaml');event.stopPropagation();">보기</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('memory/L0-hot/reflection-log.yaml');return false;"><span>📝</span><span class="ab-file-name">reflection-log.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('cat memory/L0-hot/reflection-log.yaml');event.stopPropagation();">보기</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('memory/project/lessons-learned.yaml');return false;"><span>📚</span><span class="ab-file-name">lessons-learned.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('cat memory/project/lessons-learned.yaml');event.stopPropagation();">보기</button></div></a>
+        </div></div>
+        <div class="ab-file-group"><div class="ab-file-group-head">⚙️ 설정 · 거버넌스</div><div class="ab-file-list">
+          <a class="ab-file-item" href="#" onclick="abOpenFile('CLAUDE.md');return false;"><span>🤖</span><span class="ab-file-name">CLAUDE.md</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('code CLAUDE.md');event.stopPropagation();">VS Code</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('HOW_TO_USE.md');return false;"><span>📖</span><span class="ab-file-name">HOW_TO_USE.md</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('code HOW_TO_USE.md');event.stopPropagation();">VS Code</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('package.json');return false;"><span>📦</span><span class="ab-file-name">package.json</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('code package.json');event.stopPropagation();">VS Code</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abOpenFile('master-shell/plugin-registry/registry.yaml');return false;"><span>🔌</span><span class="ab-file-name">plugin-registry.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('code master-shell/plugin-registry/registry.yaml');event.stopPropagation();">VS Code</button></div></a>
+        </div></div>
+        <div class="ab-file-group"><div class="ab-file-group-head">📜 문서 · ADR</div><div class="ab-file-list">
+          <a class="ab-file-item" href="#" onclick="abSendToTerminal('ls docs/adr/');return false;"><span>📁</span><span class="ab-file-name">docs/adr/ 목록</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('ls docs/adr/');event.stopPropagation();">ls</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abSendToTerminal('ls worklog/ | tail -10');return false;"><span>📁</span><span class="ab-file-name">worklog/ 최근</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('ls worklog/ | tail -10');event.stopPropagation();">ls</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abSendToTerminal('ls domains/');return false;"><span>📁</span><span class="ab-file-name">domains/ 전체</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('ls domains/');event.stopPropagation();">ls</button></div></a>
+          <a class="ab-file-item" href="#" onclick="abSendToTerminal('ls memory/reflections/');return false;"><span>📁</span><span class="ab-file-name">memory/reflections/</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('ls memory/reflections/');event.stopPropagation();">ls</button></div></a>
+        </div></div>
+        <div class="ab-file-group"><div class="ab-file-group-head">🖥 서버 · 자동화</div><div class="ab-file-list">
+          <a class="ab-file-item" href="vscode-cli-automation/index.html" target="_blank"><span>⚡</span><span class="ab-file-name">CLI 자동 전송기</span></a>
+          <a class="ab-file-item" href="#" onclick="abSendToTerminal('python3 scripts/serve.py');return false;"><span>🌐</span><span class="ab-file-name">서버 시작 (8080)</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('python3 scripts/serve.py');event.stopPropagation();">실행</button></div></a>
+          <a class="ab-file-item" href="/api/pty/sessions" target="_blank"><span>📡</span><span class="ab-file-name">/api/pty/sessions</span></a>
+          <a class="ab-file-item" href="/api/automation/state" target="_blank"><span>📊</span><span class="ab-file-name">/api/automation/state</span></a>
+        </div></div>
+        <div class="ab-file-group"><div class="ab-file-group-head">📊 UI 포털</div><div class="ab-file-list">
+          <a class="ab-file-item" href="master-planner/index.html" target="_blank"><span>🗂</span><span class="ab-file-name">마스터 플래너</span></a>
+          <a class="ab-file-item" href="catalog-site/index.html" target="_blank"><span>📚</span><span class="ab-file-name">도메인 카탈로그</span></a>
+          <a class="ab-file-item" href="mindmap/index.html" target="_blank"><span>🎛</span><span class="ab-file-name">통합 통제 센터</span></a>
+          <a class="ab-file-item" href="quality/index.html" target="_blank"><span>✅</span><span class="ab-file-name">품질 게이트</span></a>
+          <a class="ab-file-item" href="audit/index.html" target="_blank"><span>🔍</span><span class="ab-file-name">감사 로그</span></a>
+          <a class="ab-file-item" href="study-guide/index.html" target="_blank"><span>🎓</span><span class="ab-file-name">학습 가이드</span></a>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- 키워드 실행표 -->
+    <div class="ab-panel" id="ab-panel-keywords">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">키워드를 클릭하면 선택된 VS Code 터미널에 바로 전송됩니다. 도메인 이름이 필요한 키워드는 아래 입력창에서 설정하세요.</p>
+      <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);">도메인명:</span>
+        <input class="ab-cmd-input" id="ab-kw-domain" type="text" placeholder="billing, video, task-tracking ..." style="width:220px;margin:0;">
+      </div>
+      <div class="ab-card">
+        <table class="ab-kw-table">
+          <thead><tr><th>키워드</th><th>설명</th><th>에이전트</th><th>실행</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('계속')">계속</span></td><td>next-actions priority 1 실행</td><td>—</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('계속')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwWithDomain('A')">A [도메인]</span></td><td>Stage A~E 전체 실행</td><td>architect→implementer→adversary</td><td><button class="ab-kw-run-btn" onclick="abSendKwWithDomain('A')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwWithDomain('D')">D [도메인]</span></td><td>Stage D만 (구현 전용)</td><td>implementer</td><td><button class="ab-kw-run-btn" onclick="abSendKwWithDomain('D')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwWithDomain('E')">E [도메인]</span></td><td>Stage E + B_review (검증)</td><td>adversary→reviewer</td><td><button class="ab-kw-run-btn" onclick="abSendKwWithDomain('E')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('검토')">검토</span></td><td>현재 상태 보고</td><td>—</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('검토')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('게이트')">게이트</span></td><td>전 도메인 품질 게이트</td><td>observer</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('게이트')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwWithDomain('B_review')">B_review [도메인]</span></td><td>적대적 리뷰만 (ultrathink)</td><td>reviewer (opus)</td><td><button class="ab-kw-run-btn" onclick="abSendKwWithDomain('B_review')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwWithDomain('보고서')">보고서 [도메인]</span></td><td>학습보고서 생성</td><td>reporter</td><td><button class="ab-kw-run-btn" onclick="abSendKwWithDomain('보고서')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('건강')">건강</span></td><td>건강도 대시보드</td><td>—</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('건강')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('그래프')">그래프</span></td><td>의존성 다이어그램 생성</td><td>—</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('그래프')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('카탈로그')">카탈로그</span></td><td>도메인 카탈로그 생성</td><td>—</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('카탈로그')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('A *')">A *</span></td><td>전 도메인 병렬 실행</td><td>ultrathink</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('A *')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('D *')">D *</span></td><td>전 도메인 Stage D 병렬</td><td>implementer×n</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('D *')">▶</button></td></tr>
+            <tr><td><span class="ab-kw-code" onclick="abSendKwSimple('게이트 *')">게이트 *</span></td><td>전 도메인 품질 게이트</td><td>observer</td><td><button class="ab-kw-run-btn" onclick="abSendKwSimple('게이트 *')">▶</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>`;
+}
+
+function buildAutomationBridgeJs() {
+  return `
+(function() {
+  'use strict';
+  const AB_API = '';
+  let abSelectedPts = '';
+  let abSessions = [];
+
+  window.abSwitchTab = function(tabId, btn) {
+    document.querySelectorAll('.ab-tab').forEach(function(t){ t.classList.remove('ab-active'); });
+    document.querySelectorAll('.ab-panel').forEach(function(p){ p.classList.remove('ab-active'); });
+    btn.classList.add('ab-active');
+    var panel = document.getElementById('ab-panel-' + tabId);
+    if (panel) panel.classList.add('ab-active');
+  };
+
+  window.abToggleGuide = function(head) {
+    var block = head.closest('.ab-guide-block');
+    if (block) block.classList.toggle('ab-open');
+  };
+
+  window.abRefreshSessions = function() {
+    fetch(AB_API + '/api/pty/sessions')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        abSessions = Array.isArray(d.sessions) ? d.sessions : [];
+        renderAbSessions();
+        updateAbConn(true);
+        var ptyEl = document.getElementById('ab-pty-live');
+        if (ptyEl) ptyEl.textContent = abSessions.length + '개';
+        var wpEl = document.getElementById('ab-wp-live');
+        var wpSrc = document.getElementById('live-current-wp');
+        if (wpEl && wpSrc) wpEl.textContent = wpSrc.textContent || '—';
+        var brEl = document.getElementById('ab-branch-live');
+        var brSrc = document.getElementById('live-branch-status');
+        if (brEl && brSrc) brEl.textContent = brSrc.textContent || '—';
+      })
+      .catch(function(){
+        updateAbConn(false);
+        var el = document.getElementById('ab-session-list');
+        if (el) el.innerHTML = '<div style="font-size:12px;color:#dc2626;padding:8px;">서버 연결 실패. python3 scripts/serve.py를 실행하세요.</div>';
+      });
+  };
+
+  function renderAbSessions() {
+    var el = document.getElementById('ab-session-list');
+    if (!el) return;
+    if (!abSessions.length) { el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px;">열린 터미널이 없습니다.</div>'; return; }
+    var html = '';
+    abSessions.forEach(function(s) {
+      var pts = String(s.pts || '');
+      var procs = Array.isArray(s.processes) ? s.processes : [];
+      var aiCli = ['claude','codex','aider','gemini','amp'].find(function(n){
+        return procs.some(function(p){ return (String(p.comm||'')+String(p.cmdline||'')).toLowerCase().includes(n); });
+      }) || '';
+      var shellType = ['bash','zsh','fish','sh'].find(function(n){
+        return procs.some(function(p){ return String(p.comm||'').toLowerCase() === n; });
+      }) || '';
+      var sel = pts === abSelectedPts ? ' ab-selected' : '';
+      var badge = aiCli ? '<span class="ab-session-badge ai">'+aiCli+'</span>' : (shellType ? '<span class="ab-session-badge">'+shellType+'</span>' : '');
+      var procLabel = procs.map(function(p){ return p.comm; }).filter(Boolean).slice(0,3).join(', ');
+      html += '<div class="ab-session-item'+sel+'" onclick="abSelectSession(\\''+pts.replace(/'/g,"\\\\'")+'\\')"><div><div class="ab-session-pts">'+pts+'</div><div class="ab-session-info">'+(procLabel||'—')+'</div></div>'+badge+'</div>';
+    });
+    el.innerHTML = html;
+  }
+
+  window.abSelectSession = function(pts) {
+    abSelectedPts = pts;
+    renderAbSessions();
+    var el = document.getElementById('ab-target-pts');
+    if (el) el.textContent = pts || '미선택';
+    abLog('세션 선택: ' + pts, 'info');
+  };
+
+  function updateAbConn(ok) {
+    var dot = document.getElementById('ab-conn-dot');
+    var lbl = document.getElementById('ab-conn-label');
+    if (dot) dot.className = 'ab-status-dot' + (ok ? ' connected' : ' error');
+    if (lbl) lbl.textContent = ok ? '서버 연결됨' : '서버 연결 실패';
+  }
+
+  function abSendText(text, addEnter) {
+    if (!abSelectedPts) {
+      abLog('오류: 터미널 세션을 먼저 선택하세요 (터미널 브리지 탭)', 'fail');
+      showAbResult('터미널 세션을 먼저 선택하세요', false);
+      return Promise.resolve(false);
+    }
+    var payload = { pts: abSelectedPts, text: addEnter ? text + '\\r' : text, action: 'prompt', name: 'automation-bridge' };
+    return fetch(AB_API + '/api/pty/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, data: d }; }); })
+      .then(function(res) {
+        if (res.ok && res.data.ok) { abLog('전송: ' + (text.length > 50 ? text.slice(0,47)+'...' : text), 'ok'); showAbResult('전송 완료', true); return true; }
+        else { abLog('전송 실패: ' + (res.data.error||'오류'), 'fail'); showAbResult('전송 실패', false); return false; }
+      })
+      .catch(function(e){ abLog('네트워크 오류: '+e.message, 'fail'); showAbResult('서버 연결 오류', false); return false; });
+  }
+
+  window.abSendCmd = function() { var i = document.getElementById('ab-cmd-input'); if (i&&i.value.trim()) abSendText(i.value.trim(), true); };
+  window.abSendCmdNoEnter = function() { var i = document.getElementById('ab-cmd-input'); if (i&&i.value.trim()) abSendText(i.value.trim(), false); };
+  window.abSendEnter = function() {
+    if (!abSelectedPts) { abLog('터미널 세션을 먼저 선택하세요', 'fail'); return; }
+    fetch(AB_API + '/api/pty/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pts: abSelectedPts, text: '\\r', action: 'enter', name: 'automation-bridge' }) }).then(function(){ abLog('Enter 전송', 'ok'); });
+  };
+  window.abFillCmd = function(cmd) { var i = document.getElementById('ab-cmd-input'); if (i){ i.value = cmd; i.focus(); } };
+  window.abSendCmd2 = function(cmd) {
+    if (!abSelectedPts) {
+      if (confirm('터미널 세션이 선택되지 않았습니다.\\n터미널 브리지 탭에서 세션을 선택하세요.')) { document.querySelectorAll('.ab-tab')[1].click(); }
+      return;
+    }
+    abSendText(cmd, true);
+  };
+  window.abSendToTerminal = function(cmd) {
+    if (!abSelectedPts) {
+      if (confirm('터미널 세션이 선택되지 않았습니다.\\n터미널 탭에서 세션을 먼저 선택하세요.')) { document.querySelectorAll('.ab-tab')[1].click(); }
+      return;
+    }
+    abSendText(cmd, true);
+  };
+  window.abSendKeyword = function(kw) {
+    if (!abSelectedPts) { abFillCmd(typeof kw === 'string' ? kw : ''); document.querySelectorAll('.ab-tab')[1].click(); abLog('터미널 탭에서 세션 선택 후 전송하세요: ' + kw, 'info'); return; }
+    if (typeof kw === 'string') abSendText(kw, true);
+  };
+  window.abRunWithDomain = function(stage) {
+    var d = (document.getElementById('ab-domain-input')||{}).value||'';
+    if (!d.trim()) { abLog('도메인명을 입력하세요', 'fail'); return; }
+    abSendText(stage + ' ' + d.trim(), true);
+  };
+  window.abSendKwSimple = function(kw) { abSendText(kw, true); };
+  window.abSendKwWithDomain = function(keyword) {
+    var d = (document.getElementById('ab-kw-domain')||{}).value||'';
+    if (!d.trim()) {
+      abLog('도메인명을 입력한 후 실행하세요', 'info');
+      var el = document.getElementById('ab-kw-domain');
+      if (el) { el.focus(); el.style.borderColor = '#dc2626'; setTimeout(function(){ el.style.borderColor = ''; }, 1500); }
+      return;
+    }
+    abSendText(keyword + ' ' + d.trim(), true);
+  };
+  window.abOpenFile = function(relPath) {
+    var uri = 'vscode://file/root/workspace/my-module/' + relPath;
+    window.open(uri);
+    abLog('VS Code 열기: ' + relPath, 'info');
+  };
+  window.abFilterPalette = function(query) {
+    var q = query.toLowerCase().trim();
+    document.querySelectorAll('.ab-palette-item').forEach(function(item) {
+      item.classList.toggle('ab-hidden', q && !(item.getAttribute('data-search')||'').toLowerCase().includes(q));
+    });
+  };
+  window.abLog = function(msg, type) {
+    var box = document.getElementById('ab-log');
+    if (!box) return;
+    var empty = box.querySelector('.ab-log-empty');
+    if (empty) empty.remove();
+    var line = document.createElement('div');
+    var now = new Date().toTimeString().slice(0,8);
+    line.className = 'ab-log-line' + (type==='ok'?' ab-log-ok':type==='fail'?' ab-log-fail':type==='info'?' ab-log-info':'');
+    line.textContent = '['+now+'] '+msg;
+    box.insertBefore(line, box.firstChild);
+    if (box.children.length > 60) box.removeChild(box.lastChild);
+  };
+  window.abClearLog = function() {
+    var box = document.getElementById('ab-log');
+    if (box) box.innerHTML = '<div class="ab-log-line ab-log-empty">로그가 여기에 표시됩니다.</div>';
+  };
+  function showAbResult(msg, ok) {
+    var el = document.getElementById('ab-send-result');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'ab-result ' + (ok ? 'ab-result-ok' : 'ab-result-fail');
+    clearTimeout(el._t);
+    el._t = setTimeout(function(){ el.className = 'ab-result'; }, 3000);
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var inp = document.getElementById('ab-cmd-input');
+    if (inp) inp.addEventListener('keydown', function(e){ if (e.key==='Enter'){ e.preventDefault(); abSendCmd(); } });
+    abRefreshSessions();
+    setInterval(abRefreshSessions, 8000);
+    abLog('Automation Bridge 초기화 완료', 'info');
+  });
+})();
+`;
 }
 
 // ── WP-UI-006: System OS 라이브 상태 섹션 ─────────────────────────────────────
