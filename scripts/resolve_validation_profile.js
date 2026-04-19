@@ -48,9 +48,51 @@ function normalizePacketType(packetType, aliases = {}) {
   };
 }
 
+function deriveProfileType(currentWp = {}, options = {}, aliases = {}) {
+  if (options.mpo) {
+    const packetType = String(options.packetType || currentWp.packet_type || currentWp.type || '').trim().toLowerCase();
+    const mpoMap = {
+      feature: 'domain',
+      bugfix: 'domain',
+      refactor: 'arch',
+      docs: 'meta',
+      ops: 'executor',
+      spike: 'arch',
+    };
+    return normalizePacketType(mpoMap[packetType] || packetType || 'planning', aliases);
+  }
+  return normalizePacketType(options.packetType || currentWp.type || 'planning', aliases);
+}
+
+function buildVerificationBundle(profileCommands, currentWp = {}, _profileDoc = {}, stage = '') {
+  const required = unique(profileCommands).map((command) => ({
+    command,
+    pass_criteria: 'exit code 0',
+  }));
+  const optional = [];
+
+  if ((currentWp.layer || '').includes('test')) {
+    optional.push({
+      command: 'npm run test:e2e-smoke',
+      pass_criteria: 'targeted smoke passes',
+    });
+  }
+  if ((currentWp.domain || '') === 'mpo' || stage === 'MPO') {
+    required.push({
+      command: 'node scripts/validate-harness-contract.js',
+      pass_criteria: 'harness contract validation PASS',
+    });
+  }
+
+  return {
+    required,
+    optional,
+  };
+}
+
 function resolveValidationProfile(currentWp = {}, options = {}) {
   const profileDoc = readYaml(PROFILE_PATH);
-  const normalizedPacketType = normalizePacketType(options.packetType || currentWp.type || 'planning', profileDoc.aliases || {});
+  const normalizedPacketType = deriveProfileType(currentWp, options, profileDoc.aliases || {});
   const stage = String(options.stage || currentWp.stage || '').trim().toUpperCase();
   const defaults = ensureList(profileDoc.defaults?.commands);
   const profiles = profileDoc.profiles || {};
@@ -59,6 +101,7 @@ function resolveValidationProfile(currentWp = {}, options = {}) {
   const packetCommands = ensureList(currentWp.validation);
   const stageAdds = ensureList(profileDoc.stage_overrides?.[stage]?.add);
   const commands = unique([...defaults, ...profileCommands, ...stageAdds, ...packetCommands]);
+  const bundle = buildVerificationBundle(commands, currentWp, profileDoc, stage);
 
   return {
     path: PROFILE_PATH,
@@ -72,6 +115,8 @@ function resolveValidationProfile(currentWp = {}, options = {}) {
     success_criteria: ensureList(profile.success_criteria),
     primary_command: commands[0] || '',
     commands,
+    required: bundle.required,
+    optional: bundle.optional,
     source_breakdown: {
       defaults,
       profile: profileCommands,

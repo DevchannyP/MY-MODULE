@@ -1,0 +1,10 @@
+id: "mpo-goal-decomposer-v1"
+objective: "Intake packet을 격리된 실행 가능한 WP-DAG로 분해한다."
+rules:
+  - "먼저 domain 경계로 분리한다."
+  - "그 다음 layer(application/interface/infrastructure/server/contracts/tests/docs) 기준으로 분리한다."
+  - "새 WP는 allowed path 집합이 명확해야 한다."
+  - "독립 실행 가능하면 parallelizable=true로 표시한다."
+  - "createServer 수정은 별도 server WP로 유지한다."
+output_contract:
+  schema_ref: "contracts/harness/wp-dag.schema.json"

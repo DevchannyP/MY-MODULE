@@ -5,8 +5,11 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const ROOT = path.resolve(__dirname, '..');
+const RAW_INTENT_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'raw-intent.schema.json');
 const INTAKE_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'intake.schema.json');
+const WP_DAG_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'wp-dag.schema.json');
 const OUTPUT_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'output.schema.json');
+const COMPLETION_REPORT_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'completion-report.schema.json');
 const PROVIDER_ADAPTER_PATH = path.join(ROOT, 'contracts', 'harness', 'provider-adapter.yaml');
 const GOLDEN_SET_PATH = path.join(ROOT, 'evals', 'golden', 'harness-core.jsonl');
 const HARNESS_CONTRACT_PATH = path.join(ROOT, 'requirements', 'harness-engineering.yaml');
@@ -168,7 +171,19 @@ function validateProviderAdapterYaml(providerDoc) {
 
 const VALID_MODES = new Set(['Research', 'Build', 'Debug', 'Operate', 'Policy']);
 const VALID_ZONE_RULES = new Set(['single-zone-preferred', 'global-scan-allowed']);
-const VALID_PACKET_TYPES = new Set(['arch', 'governance', 'meta', 'shell', 'executor']);
+const VALID_PACKET_TYPES = new Set([
+  'arch',
+  'governance',
+  'meta',
+  'shell',
+  'executor',
+  'feature',
+  'bugfix',
+  'refactor',
+  'docs',
+  'ops',
+  'spike',
+]);
 
 function validateGoldenSet(intakeSchema) {
   const content = fs.readFileSync(GOLDEN_SET_PATH, 'utf8')
@@ -180,7 +195,8 @@ function validateGoldenSet(intakeSchema) {
     fail('harness contract validation FAIL: golden set must contain at least 5 cases');
   }
 
-  const requiredInputFields = Array.isArray(intakeSchema.required) ? intakeSchema.required : [];
+  const requiredInputFields = (Array.isArray(intakeSchema.required) ? intakeSchema.required : [])
+    .filter((field) => !['packet_type', 'risk_level', 'trust_level', 'evidence_required', 'interactive_class'].includes(field));
 
   content.forEach((line, index) => {
     let record;
@@ -223,19 +239,30 @@ function validateGoldenSet(intakeSchema) {
 function main() {
   [
     INTAKE_SCHEMA_PATH,
+    RAW_INTENT_SCHEMA_PATH,
+    WP_DAG_SCHEMA_PATH,
     OUTPUT_SCHEMA_PATH,
+    COMPLETION_REPORT_SCHEMA_PATH,
     PROVIDER_ADAPTER_PATH,
     GOLDEN_SET_PATH,
     HARNESS_CONTRACT_PATH,
   ].forEach(requireFile);
 
+  const rawIntentSchema = readJson(RAW_INTENT_SCHEMA_PATH);
   const intakeSchema = readJson(INTAKE_SCHEMA_PATH);
+  const wpDagSchema = readJson(WP_DAG_SCHEMA_PATH);
   const outputSchema = readJson(OUTPUT_SCHEMA_PATH);
+  const completionReportSchema = readJson(COMPLETION_REPORT_SCHEMA_PATH);
   const harnessContract = readYaml(HARNESS_CONTRACT_PATH);
   const providerAdapterContract = readYaml(PROVIDER_ADAPTER_PATH);
 
+  requireRequiredFields(rawIntentSchema, ['raw_intent', 'goal', 'session_context'], 'raw-intent.schema');
   requireRequiredFields(intakeSchema, ['goal', 'context', 'constraints', 'done_when', 'work_mode', 'verification'], 'intake.schema');
+  requireRequiredFields(intakeSchema, ['packet_type', 'risk_level', 'trust_level', 'evidence_required', 'interactive_class'], 'intake.schema');
+  requireRequiredFields(wpDagSchema, ['schema_version', 'session_id', 'intake_packet', 'wp_list', 'edges'], 'wp-dag.schema');
   requireRequiredFields(outputSchema, [
+    'session_id',
+    'wp_id',
     'verification_status',
     'evidence_status',
     'tests_run',
@@ -247,10 +274,18 @@ function main() {
     'verification',
     'risks',
     'next_action',
+    'changed_files',
+    'evidence',
+    'provider',
+    'token_usage',
+    'attempt',
   ], 'output.schema');
+  requireRequiredFields(completionReportSchema, ['session_id', 'wp_id', 'verification_status', 'evidence_status', 'summary', 'changed_files', 'evidence', 'provider', 'token_usage', 'attempt'], 'completion-report.schema');
 
   requireEnum(outputSchema, 'verification_status', ['PASS', 'PARTIAL_PASS', 'FAIL', 'PLANNED', 'NOT_RUN'], 'output.schema');
   requireEnum(outputSchema, 'evidence_status', ['observed', 'mixed', 'planned', 'not_observed'], 'output.schema');
+  requireEnum(intakeSchema, 'packet_type', ['feature', 'bugfix', 'refactor', 'docs', 'ops', 'spike'], 'intake.schema');
+  requireEnum(intakeSchema, 'risk_level', ['low', 'medium', 'high', 'critical'], 'intake.schema');
 
   validateHarnessYaml(harnessContract);
   validateProviderAdapterYaml(providerAdapterContract);

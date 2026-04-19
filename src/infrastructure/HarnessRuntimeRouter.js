@@ -58,7 +58,13 @@ function evaluateFlag(flagsProvider, flagName) {
   }));
 }
 
-function resolveRouteShape(mode, toggles) {
+function bumpTier(tier) {
+  if (tier === 'mini') return 'standard';
+  if (tier === 'standard') return 'frontier';
+  return 'frontier';
+}
+
+function resolveLegacyRouteShape(mode, toggles) {
   switch (mode) {
     case 'Research':
       return toggles.frontierResearch
@@ -85,7 +91,63 @@ function resolveRouteShape(mode, toggles) {
   }
 }
 
-function resolveHarnessRuntimeRoute({ mode = 'Build', flagsProvider = null } = {}) {
+function resolveMpoRouteShape({ mode, riskLevel, evidenceRequired, interactiveClass }) {
+  const risk = String(riskLevel || 'medium').toLowerCase();
+  let selectedModelTier = 'standard';
+
+  if (mode === 'Research') {
+    selectedModelTier = ['critical', 'high'].includes(risk) ? 'frontier' : 'standard';
+  } else if (mode === 'Build') {
+    if (risk === 'critical') selectedModelTier = 'standard';
+    else if (risk === 'high') selectedModelTier = 'standard';
+    else selectedModelTier = 'mini';
+  } else if (mode === 'Debug') {
+    selectedModelTier = 'standard';
+  } else if (mode === 'Operate') {
+    selectedModelTier = 'mini';
+  } else if (mode === 'Policy') {
+    selectedModelTier = 'frontier';
+  }
+
+  if (String(evidenceRequired || '').toLowerCase() === 'strict') {
+    selectedModelTier = bumpTier(selectedModelTier);
+  }
+  if (String(interactiveClass || '').toLowerCase() === 'realtime' && selectedModelTier === 'mini') {
+    selectedModelTier = 'standard';
+  }
+
+  const reasoningEffort = selectedModelTier === 'frontier'
+    ? 'high'
+    : mode === 'Debug'
+      ? 'high'
+      : 'medium';
+
+  return {
+    route_id: `${selectedModelTier}-${String(mode || 'Build').toLowerCase()}-${risk}`,
+    selected_model_tier: selectedModelTier,
+    reasoning_effort: reasoningEffort,
+  };
+}
+
+function resolveFallbackChain(selectedModelTier) {
+  if (selectedModelTier === 'frontier') {
+    return ['openai-responses', 'openai-responses:standard', 'null-harness-provider'];
+  }
+  if (selectedModelTier === 'standard') {
+    return ['openai-responses', 'null-harness-provider'];
+  }
+  return ['openai-responses', 'null-harness-provider'];
+}
+
+function resolveHarnessRuntimeRoute({
+  mode = 'Build',
+  flagsProvider = null,
+  riskLevel = '',
+  trustLevel = '',
+  evidenceRequired = '',
+  interactiveClass = '',
+  budget = 0,
+} = {}) {
   const release = loadHarnessReleaseMetadata();
   const toggles = {
     frontierResearch: evaluateFlag(flagsProvider, 'harness_routing_frontier_research'),
@@ -93,10 +155,14 @@ function resolveHarnessRuntimeRoute({ mode = 'Build', flagsProvider = null } = {
     promptCaching: evaluateFlag(flagsProvider, 'harness_prompt_caching_enabled'),
     batchEval: evaluateFlag(flagsProvider, 'harness_batch_eval_enabled'),
   };
-  const routeShape = resolveRouteShape(String(mode || 'Build'), toggles);
+  const normalizedMode = String(mode || 'Build');
+  const useMpoSignals = Boolean(String(riskLevel || '') || String(evidenceRequired || '') || String(interactiveClass || '') || Number(budget || 0) > 0);
+  const routeShape = useMpoSignals
+    ? resolveMpoRouteShape({ mode: normalizedMode, riskLevel, evidenceRequired, interactiveClass })
+    : resolveLegacyRouteShape(normalizedMode, toggles);
 
   return {
-    mode: String(mode || 'Build'),
+    mode: normalizedMode,
     recipe_id: 'harness-vnext-router',
     prompt_version: release.prompt_version,
     rollout_stage: release.rollout_stage,
@@ -109,13 +175,27 @@ function resolveHarnessRuntimeRoute({ mode = 'Build', flagsProvider = null } = {
     reasoning_effort: routeShape.reasoning_effort,
     prompt_caching_enabled: toggles.promptCaching,
     batch_eval_enabled: toggles.batchEval,
-    batch_recommended: toggles.batchEval && ['Research', 'Policy'].includes(String(mode || 'Build')),
+    batch_recommended: toggles.batchEval && ['Research', 'Policy'].includes(normalizedMode),
     flags_consumed: [
       'harness_routing_frontier_research',
       'harness_routing_mini_build',
       'harness_prompt_caching_enabled',
       'harness_batch_eval_enabled',
     ],
+    risk_level: String(riskLevel || 'medium'),
+    trust_level: String(trustLevel || 'trusted'),
+    evidence_required: String(evidenceRequired || 'standard'),
+    interactive_class: String(interactiveClass || 'batch'),
+    budget: Number(budget || 0),
+    fallback_chain: resolveFallbackChain(routeShape.selected_model_tier),
+    learning_record: {
+      mode: normalizedMode,
+      selected_model_tier: routeShape.selected_model_tier,
+      risk_level: String(riskLevel || 'medium'),
+      trust_level: String(trustLevel || 'trusted'),
+      evidence_required: String(evidenceRequired || 'standard'),
+      budget: Number(budget || 0),
+    },
   };
 }
 

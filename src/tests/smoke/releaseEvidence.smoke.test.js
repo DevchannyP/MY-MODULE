@@ -24,6 +24,20 @@ test('[release evidence smoke] sbom, provenance, and release evidence are regene
   assert.equal(typeof releaseEvidence.quality_gate_result, 'string');
   assert.ok(Array.isArray(releaseEvidence.quality_gate_inputs));
   assert.ok(releaseEvidence.quality_gate_inputs.length >= 4);
+  assert.equal(typeof releaseEvidence.stage_run_evidence, 'object');
+  assert.equal(releaseEvidence.stage_run_evidence.report_path, 'memory/project/stage-run-latest.yaml');
+  assert.equal(releaseEvidence.stage_run_evidence.history_path, 'memory/project/stage-run-history.yaml');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.history_count, 'number');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.release_evidence_ready, 'boolean');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.release_evidence_blocker, 'string');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.stage_run_contract, 'object');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.stage_run_contract.drift_status, 'string');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.stage_run_contract.latest_history_head_match, 'boolean');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.stage_run_contract.release_evidence_surface_complete, 'boolean');
+  assert.ok(Array.isArray(releaseEvidence.stage_run_evidence.stage_run_contract.issues));
+  assert.equal(releaseEvidence.stage_run_evidence.save_command, 'python3 scripts/planning_studio_api.py save-stage-run');
+  assert.equal(releaseEvidence.stage_run_evidence.artifact_paths.last_report, 'memory/project/stage-run-latest.yaml');
+  assert.equal(releaseEvidence.stage_run_evidence.artifact_paths.recent_reports, 'memory/project/stage-run-history.yaml');
 
   assert.equal(typeof releaseEvidence.git_status, 'object');
   assert.equal(typeof releaseEvidence.git_status.is_clean, 'boolean');

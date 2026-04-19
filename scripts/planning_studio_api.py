@@ -23,11 +23,16 @@ ROOT = Path(__file__).resolve().parent.parent
 CURRENT_WP_PATH = ROOT / "memory" / "current-wp.yaml"
 NEXT_ACTIONS_PATH = ROOT / "memory" / "next-actions.yaml"
 WP_QUEUE_PATH = ROOT / "memory" / "wp-queue.yaml"
+ROOT_CURRENT_STATE_PATH = ROOT / "memory" / "current-state.yaml"
+LEGACY_CURRENT_STATE_PATH = ROOT / "memory" / "project" / "current-state.yaml"
 PLANNER_DRAFT_PATH = ROOT / "memory" / "project" / "master-planner-draft.yaml"
 AUTOMATION_CONFIG_PATH = ROOT / "memory" / "project" / "vscode-cli-automation.yaml"
 STAGE_RUN_REPORT_PATH = ROOT / "memory" / "project" / "stage-run-latest.yaml"
 STAGE_RUN_HISTORY_PATH = ROOT / "memory" / "project" / "stage-run-history.yaml"
 STAGE_RUN_HISTORY_LIMIT = 5
+STAGE_RUN_SAVE_COMMAND = "python3 scripts/planning_studio_api.py save-stage-run"
+RELEASE_EVIDENCE_COMMAND = "python3 scripts/generate_release_evidence.py"
+RELEASE_EVIDENCE_PATH = str((ROOT / "artifacts" / "release-evidence" / "release-evidence.json").relative_to(ROOT))
 
 COMPLETED_STATUSES = {"done", "completed", "complete"}
 
@@ -68,6 +73,13 @@ def now_iso() -> str:
     return dt.datetime.now().replace(microsecond=0).isoformat()
 
 
+def safe_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def is_completed(status: str) -> bool:
     return str(status or "").strip().lower() in COMPLETED_STATUSES
 
@@ -98,6 +110,251 @@ def parse_git_status_line(line: str) -> dict | None:
     return {
         "status": status,
         "path": payload,
+    }
+
+
+def default_stage_run_release_evidence(report):
+    execution_mode = str((report or {}).get("execution_mode", "")).strip()
+    quality_gate_result = str((report or {}).get("quality_gate_result", "")).strip().upper()
+    trigger_reason = "not-recorded"
+    if execution_mode != "execute":
+        trigger_reason = "dry-run-only"
+    elif quality_gate_result == "PASS":
+        trigger_reason = "legacy-execute-pass"
+    elif quality_gate_result:
+        trigger_reason = f"quality gate {quality_gate_result}"
+    return {
+        "triggered": False,
+        "generated": False,
+        "exit_code": 0,
+        "error": None,
+        "path": RELEASE_EVIDENCE_PATH,
+        "command": RELEASE_EVIDENCE_COMMAND,
+        "trigger_reason": trigger_reason,
+    }
+
+
+def normalize_stage_run_release_evidence(release_evidence, report=None):
+    if not isinstance(release_evidence, dict):
+        release_evidence = default_stage_run_release_evidence(report)
+    return {
+        "triggered": bool(release_evidence.get("triggered")),
+        "generated": bool(release_evidence.get("generated")),
+        "exit_code": safe_int(release_evidence.get("exit_code"), 0),
+        "error": str(release_evidence.get("error", "")).strip() or None,
+        "path": str(release_evidence.get("path", "")).strip() or RELEASE_EVIDENCE_PATH,
+        "command": str(release_evidence.get("command", "")).strip() or RELEASE_EVIDENCE_COMMAND,
+        "trigger_reason": str(release_evidence.get("trigger_reason", "")).strip() or default_stage_run_release_evidence(report)["trigger_reason"],
+    }
+
+
+def normalize_stage_run_runtime_observability(runtime_observability, report=None):
+    artifact_paths = {
+        "last_report": str(STAGE_RUN_REPORT_PATH.relative_to(ROOT)),
+        "recent_reports": str(STAGE_RUN_HISTORY_PATH.relative_to(ROOT)),
+    }
+    if not isinstance(runtime_observability, dict):
+        runtime_observability = {}
+    data = dict(runtime_observability)
+    data["report_saved"] = bool(runtime_observability.get("report_saved")) if "report_saved" in runtime_observability else True
+    data["save_exit_code"] = safe_int(runtime_observability.get("save_exit_code"), 0)
+    data["save_error"] = str(runtime_observability.get("save_error", "")).strip() or None
+    data["request_id"] = str(runtime_observability.get("request_id", "")).strip()
+    data["correlation_id"] = str(runtime_observability.get("correlation_id", "")).strip()
+    data["save_command"] = str(runtime_observability.get("save_command", "")).strip() or STAGE_RUN_SAVE_COMMAND
+    data["artifact_target_count"] = safe_int(runtime_observability.get("artifact_target_count"), len(artifact_paths)) or len(artifact_paths)
+    incoming_artifact_paths = runtime_observability.get("artifact_paths")
+    data["artifact_paths"] = artifact_paths if not isinstance(incoming_artifact_paths, dict) else {
+        "last_report": str(incoming_artifact_paths.get("last_report", "")).strip() or artifact_paths["last_report"],
+        "recent_reports": str(incoming_artifact_paths.get("recent_reports", "")).strip() or artifact_paths["recent_reports"],
+    }
+    data["release_evidence"] = normalize_stage_run_release_evidence(runtime_observability.get("release_evidence"), report)
+    return data
+
+
+def collect_stage_run_quality_gate_candidates(root_current_state, legacy_current_state):
+    candidates = []
+    for label, current_state in (
+        ("root", root_current_state if isinstance(root_current_state, dict) else {}),
+        ("legacy", legacy_current_state if isinstance(legacy_current_state, dict) else {}),
+    ):
+        release_summary = current_state.get("release_summary")
+        if isinstance(release_summary, dict):
+            result = str(release_summary.get("quality_gate_result", "")).strip().upper()
+            if result:
+                candidates.append({
+                    "result": result,
+                    "source": f"{label}-release-summary",
+                })
+        result = str(current_state.get("quality_gate_result", "")).strip().upper()
+        if result:
+            candidates.append({
+                "result": result,
+                "source": f"{label}-current-state",
+            })
+    return candidates
+
+
+def resolve_stage_run_quality_gate(report, quality_gate_candidates=None):
+    report = report if isinstance(report, dict) else {}
+    raw_result = str(report.get("quality_gate_result", "")).strip().upper()
+    execution_mode = str(report.get("execution_mode", "")).strip()
+    if raw_result:
+        return {
+            "reported_result": raw_result,
+            "resolved_result": raw_result,
+            "source": "stage-run-report",
+            "ready_for_release_evidence": execution_mode == "execute" and raw_result == "PASS",
+        }
+    if execution_mode != "execute":
+        return {
+            "reported_result": "",
+            "resolved_result": "DRY_RUN_ONLY",
+            "source": "dry-run-only",
+            "ready_for_release_evidence": False,
+        }
+    for candidate in quality_gate_candidates or []:
+        result = str((candidate or {}).get("result", "")).strip().upper()
+        if result:
+            return {
+                "reported_result": "",
+                "resolved_result": result,
+                "source": str((candidate or {}).get("source", "")).strip() or "fallback",
+                "ready_for_release_evidence": result == "PASS",
+            }
+    return {
+        "reported_result": "",
+        "resolved_result": "UNKNOWN",
+        "source": "unknown",
+        "ready_for_release_evidence": False,
+    }
+
+
+def normalize_stage_run_report(report, quality_gate_candidates=None):
+    if not isinstance(report, dict):
+        return {}
+    data = dict(report)
+    quality_gate = resolve_stage_run_quality_gate(report, quality_gate_candidates)
+    data["requested_stage"] = str(report.get("requested_stage", "")).strip().upper()
+    data["requested_module"] = str(report.get("requested_module", "")).strip()
+    data["execution_mode"] = str(report.get("execution_mode", "")).strip()
+    data["status"] = str(report.get("status", "")).strip()
+    data["quality_gate_result_reported"] = quality_gate["reported_result"]
+    data["quality_gate_result"] = quality_gate["resolved_result"]
+    data["quality_gate_source"] = quality_gate["source"]
+    data["quality_gate_ready_for_release_evidence"] = quality_gate["ready_for_release_evidence"]
+    data["summary"] = str(report.get("summary", "")).strip()
+    data["recorded_at"] = str(report.get("recorded_at", "")).strip()
+    data["runtime_observability"] = normalize_stage_run_runtime_observability(report.get("runtime_observability"), data)
+    return data
+
+
+def migrate_stage_run_storage(quality_gate_candidates=None):
+    raw_stage_run_last_report = load_yaml(STAGE_RUN_REPORT_PATH, {})
+    raw_stage_run_recent_reports = load_yaml(STAGE_RUN_HISTORY_PATH, [])
+    if not isinstance(raw_stage_run_recent_reports, list):
+        raw_stage_run_recent_reports = []
+
+    migrated_last_report = normalize_stage_run_report(raw_stage_run_last_report, quality_gate_candidates) if isinstance(raw_stage_run_last_report, dict) else {}
+    migrated_recent_reports = [
+        normalize_stage_run_report(report, quality_gate_candidates)
+        for report in raw_stage_run_recent_reports
+        if isinstance(report, dict)
+    ]
+
+    if isinstance(raw_stage_run_last_report, dict) and migrated_last_report and migrated_last_report != raw_stage_run_last_report:
+        save_yaml(STAGE_RUN_REPORT_PATH, migrated_last_report)
+    if migrated_recent_reports != raw_stage_run_recent_reports:
+        save_yaml(STAGE_RUN_HISTORY_PATH, migrated_recent_reports[:STAGE_RUN_HISTORY_LIMIT])
+
+    return migrated_last_report, migrated_recent_reports[:STAGE_RUN_HISTORY_LIMIT]
+
+
+def build_stage_run_quality_gate(stage_run_last_report):
+    report = stage_run_last_report if isinstance(stage_run_last_report, dict) else {}
+    if not report:
+        return {
+            "result": "UNKNOWN",
+            "reported_result": "",
+            "source": "missing-stage-run-report",
+            "execution_mode": "UNKNOWN",
+            "ready_for_release_evidence": False,
+            "blocker": "stage-run latest report missing",
+            "next_action": "stage-run latest report를 다시 저장해 quality gate 판정을 복구하세요.",
+        }
+
+    execution_mode = str(report.get("execution_mode", "")).strip() or "UNKNOWN"
+    resolved_result = str(report.get("quality_gate_result", "")).strip().upper() or "UNKNOWN"
+    reported_result = str(report.get("quality_gate_result_reported", "")).strip().upper()
+    source = str(report.get("quality_gate_source", "")).strip() or "unknown"
+    ready_for_release_evidence = bool(report.get("quality_gate_ready_for_release_evidence"))
+
+    if execution_mode != "execute":
+        blocker = "dry-run-only"
+        next_action = "execute Stage를 실행해 실제 quality gate 결과를 기록하세요."
+    elif resolved_result == "PASS":
+        blocker = "NONE"
+        next_action = "quality gate PASS가 확보되어 release evidence 생성 또는 운영 반영으로 이동할 수 있습니다."
+    elif resolved_result == "UNKNOWN":
+        blocker = "quality gate unresolved"
+        next_action = "quality gate 결과가 비어 있어 current-state 또는 execute stage-run 보고서를 다시 정렬해야 합니다."
+    else:
+        blocker = f"quality gate {resolved_result}"
+        next_action = "실패한 quality gate를 해소한 뒤 execute Stage를 다시 실행하세요."
+
+    return {
+        "result": resolved_result,
+        "reported_result": reported_result,
+        "source": source,
+        "execution_mode": execution_mode,
+        "ready_for_release_evidence": ready_for_release_evidence,
+        "blocker": blocker,
+        "next_action": next_action,
+    }
+
+
+def build_stage_run_contract(raw_last_report, raw_recent_reports, stage_run_last_report, stage_run_recent_reports):
+    issues = []
+    history_head = stage_run_recent_reports[0] if stage_run_recent_reports else {}
+    raw_history_head = raw_recent_reports[0] if raw_recent_reports and isinstance(raw_recent_reports[0], dict) else {}
+
+    latest_history_head_match = bool(stage_run_last_report) and bool(history_head) and (
+        str(stage_run_last_report.get("requested_stage", "")) == str(history_head.get("requested_stage", ""))
+        and str(stage_run_last_report.get("requested_module", "")) == str(history_head.get("requested_module", ""))
+        and str(stage_run_last_report.get("execution_mode", "")) == str(history_head.get("execution_mode", ""))
+        and str(stage_run_last_report.get("recorded_at", "")) == str(history_head.get("recorded_at", ""))
+        and str(((stage_run_last_report.get("runtime_observability") or {}).get("request_id", ""))) == str(((history_head.get("runtime_observability") or {}).get("request_id", "")))
+        and str(((stage_run_last_report.get("runtime_observability") or {}).get("correlation_id", ""))) == str(((history_head.get("runtime_observability") or {}).get("correlation_id", "")))
+        and bool(((stage_run_last_report.get("runtime_observability") or {}).get("report_saved"))) == bool(((history_head.get("runtime_observability") or {}).get("report_saved")))
+        and bool((((stage_run_last_report.get("runtime_observability") or {}).get("release_evidence") or {}).get("generated"))) == bool((((history_head.get("runtime_observability") or {}).get("release_evidence") or {}).get("generated")))
+    )
+
+    if stage_run_last_report and not stage_run_recent_reports:
+        issues.append("history-empty")
+    if stage_run_last_report and stage_run_recent_reports and not latest_history_head_match:
+        issues.append("latest-history-head-mismatch")
+
+    raw_last_runtime = raw_last_report.get("runtime_observability") if isinstance(raw_last_report, dict) else None
+    raw_head_runtime = raw_history_head.get("runtime_observability") if isinstance(raw_history_head, dict) else None
+    raw_last_release = raw_last_runtime.get("release_evidence") if isinstance(raw_last_runtime, dict) else None
+    raw_head_release = raw_head_runtime.get("release_evidence") if isinstance(raw_head_runtime, dict) else None
+    release_evidence_surface_complete = isinstance(raw_last_release, dict) and (not history_head or isinstance(raw_head_release, dict))
+
+    if stage_run_last_report and not isinstance(raw_last_release, dict):
+        issues.append("latest-release-evidence-missing")
+    if history_head and not isinstance(raw_head_release, dict):
+        issues.append("history-head-release-evidence-missing")
+
+    runtime_observability = stage_run_last_report.get("runtime_observability") if isinstance(stage_run_last_report, dict) else {}
+    release_evidence = runtime_observability.get("release_evidence") if isinstance(runtime_observability, dict) else {}
+    return {
+        "drift_status": "clean" if not issues else "drifted",
+        "latest_history_head_match": latest_history_head_match,
+        "history_head_available": bool(history_head),
+        "release_evidence_surface_complete": release_evidence_surface_complete,
+        "release_evidence_generated": bool(release_evidence.get("generated")),
+        "release_evidence_trigger_reason": str(release_evidence.get("trigger_reason", "")).strip(),
+        "issues": issues,
     }
 
 
@@ -220,12 +477,14 @@ def collect_snapshot():
     current_wp = load_yaml(CURRENT_WP_PATH, {})
     next_actions = load_yaml(NEXT_ACTIONS_PATH, {})
     wp_queue = load_yaml(WP_QUEUE_PATH, {})
+    root_current_state = load_yaml(ROOT_CURRENT_STATE_PATH, {})
+    legacy_current_state = load_yaml(LEGACY_CURRENT_STATE_PATH, {})
     planner_draft = load_yaml(PLANNER_DRAFT_PATH, {"updated_at": "", "sections": []})
     automation_config = load_yaml(AUTOMATION_CONFIG_PATH, {"enabled": False, "cycle_minutes": 30, "enter_seconds": 10, "workers": []})
-    stage_run_last_report = load_yaml(STAGE_RUN_REPORT_PATH, {})
-    stage_run_recent_reports = load_yaml(STAGE_RUN_HISTORY_PATH, [])
-    if not isinstance(stage_run_recent_reports, list):
-        stage_run_recent_reports = []
+    quality_gate_candidates = collect_stage_run_quality_gate_candidates(root_current_state, legacy_current_state)
+    stage_run_last_report, stage_run_recent_reports = migrate_stage_run_storage(quality_gate_candidates)
+    raw_stage_run_last_report = stage_run_last_report
+    raw_stage_run_recent_reports = stage_run_recent_reports
 
     packets_by_id = {}
 
@@ -315,6 +574,19 @@ def collect_snapshot():
         "automation_config": automation_config,
         "stage_run_last_report": stage_run_last_report,
         "stage_run_recent_reports": stage_run_recent_reports[:STAGE_RUN_HISTORY_LIMIT],
+        "stage_run_quality_gate": build_stage_run_quality_gate(stage_run_last_report),
+        "stage_run_contract": build_stage_run_contract(
+            raw_stage_run_last_report,
+            raw_stage_run_recent_reports[:STAGE_RUN_HISTORY_LIMIT],
+            stage_run_last_report,
+            stage_run_recent_reports[:STAGE_RUN_HISTORY_LIMIT],
+        ),
+        "stage_run_artifacts": {
+            "last_report": str(STAGE_RUN_REPORT_PATH.relative_to(ROOT)),
+            "recent_reports": str(STAGE_RUN_HISTORY_PATH.relative_to(ROOT)),
+            "history_limit": STAGE_RUN_HISTORY_LIMIT,
+            "save_command": STAGE_RUN_SAVE_COMMAND,
+        },
         "code_status": {
             "branch": git_output("rev-parse", "--abbrev-ref", "HEAD") or "unknown",
             "head": git_output("rev-parse", "--short", "HEAD") or "",
@@ -463,7 +735,7 @@ def update_stage_run_file(payload):
     if not requested_stage:
         raise SystemExit("save-stage-run requires requested_stage")
 
-    data = dict(payload)
+    data = normalize_stage_run_report(payload)
     data["requested_stage"] = requested_stage
     data["requested_module"] = str(payload.get("requested_module", "")).strip()
     data["recorded_at"] = now_iso()

@@ -84,6 +84,10 @@ test('[mindmap control center smoke] integrated control center is generated with
   assert.match(html, /현재 실행/);
   assert.match(html, /마지막 전송/);
   assert.match(html, /즉시 가능 제어/);
+  assert.match(html, /제어 체크포인트/);
+  assert.match(html, /제어 체크 요약/);
+  assert.match(html, /실행 제어/);
+  assert.match(html, /가시화/);
   assert.match(html, /execution-worker-card/);
   assert.match(html, /execution-worker-pill/);
   assert.match(html, /focusExecutionWorker/);
@@ -93,6 +97,8 @@ test('[mindmap control center smoke] integrated control center is generated with
   assert.match(html, /이 worker 즉시 전송/);
   assert.match(html, /이 worker 재시도/);
   assert.match(html, /이 worker에서 자동 전송 중지/);
+  assert.match(html, /로그 확인/);
+  assert.match(html, /터미널 상태/);
   assert.match(html, /실패 위치/);
   assert.match(html, /Operator Cockpit/);
   assert.match(html, /권장 브랜치/);

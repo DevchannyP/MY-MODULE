@@ -1,0 +1,18 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-04-19T11:33:44.227Z",
+  "latest_session_id": "mpo-f55c5bfd-a234-4ca1-8a4b-321560077798",
+  "latest_packet_type": "docs",
+  "latest_risk_level": "low",
+  "routing_learning": [
+    {
+      "mode": "Build",
+      "tier": "mini",
+      "count": 11
+    }
+  ],
+  "notes": [
+    "MPO invocation-log 기반의 초기 learning snapshot",
+    "현재는 데이터 수집과 요약만 수행하며, 후속 tier weighting 반영의 근거로 사용한다."
+  ]
+}

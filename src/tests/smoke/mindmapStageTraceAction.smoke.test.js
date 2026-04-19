@@ -141,10 +141,16 @@ async function loadTraceHelpers() {
     S: {
       execution: {
         promptText: '',
+        controls: {
+          sendPrompt: true,
+        },
       },
       stageRun: {
         history: [],
         lastReport: null,
+        contract: null,
+        selectedStage: 'D',
+        selectedModule: '',
       },
     },
     Number,
@@ -168,6 +174,14 @@ async function loadTraceHelpers() {
       statuses.push({ tone, title, detail });
     },
     renderExecutionConsole() {},
+    hydrateCalls: 0,
+    hydrateShouldFail: false,
+    hydratePlanningSnapshot() {
+      context.hydrateCalls += 1;
+      return context.hydrateShouldFail
+        ? Promise.reject(new Error('snapshot refresh failed'))
+        : Promise.resolve();
+    },
     sendPromptNow() {
       context.sendCalls += 1;
     },
@@ -178,12 +192,20 @@ async function loadTraceHelpers() {
 
   vm.createContext(context);
   [
+    'normalizeStageRunContract',
+    'stageRunContractStatus',
+    'stageRunContractIssues',
+    'stageRunContractNextAction',
     'stageRunRequestId',
     'stageRunCorrelationId',
     'stageRunTraceQuery',
     'copyStageRunTraceQuery',
     'loadStageRunTracePrompt',
     'sendStageRunTracePrompt',
+    'stageRunContractRecoveryPrompt',
+    'loadStageRunContractRecoveryPrompt',
+    'sendStageRunContractRecoveryPrompt',
+    'refreshStageRunContract',
   ].forEach((name) => {
     vm.runInContext(extractFunctionSource(script, name), context);
   });
@@ -347,4 +369,89 @@ test('[mindmap stage trace action smoke] send action does not forward when no re
   assert.equal(context.sendCalls, 0);
   assert.deepEqual(context.statuses, []);
   assert.deepEqual(context.toasts, ['채울 stage 실행 추적값이 없습니다.']);
+});
+
+test('[mindmap stage trace action smoke] contract recovery load action stores recovery prompt into execution prompt', async () => {
+  const context = await loadTraceHelpers();
+  context.S.stageRun.lastReport = {
+    requested_stage: 'D',
+    requested_module: 'task-management',
+  };
+  context.S.stageRun.contract = {
+    drift_status: 'drifted',
+    issues: ['latest-release-evidence-missing'],
+  };
+
+  context.loadStageRunContractRecoveryPrompt();
+
+  assert.match(context.S.execution.promptText, /\[stage-run 계약 복구\]/);
+  assert.match(context.S.execution.promptText, /드리프트 이슈: latest-release-evidence-missing/);
+  assert.deepEqual(context.toasts, ['stage-run 계약 복구 안내 반영 완료']);
+  assert.deepEqual(context.statuses, [
+    {
+      tone: 'idle',
+      title: 'stage-run 계약 복구 안내 준비 완료',
+      detail: '계약 드리프트 복구 지시를 실행 패널에 채웠습니다. 전송 전에 세션과 명령을 확인하세요.',
+    },
+  ]);
+});
+
+test('[mindmap stage trace action smoke] contract recovery send action loads prompt and forwards to send-now helper', async () => {
+  const context = await loadTraceHelpers();
+  context.S.stageRun.lastReport = {
+    requested_stage: 'D',
+    requested_module: 'task-management',
+  };
+  context.S.stageRun.contract = {
+    drift_status: 'drifted',
+    issues: ['latest-release-evidence-missing'],
+  };
+
+  context.sendStageRunContractRecoveryPrompt();
+
+  assert.match(context.S.execution.promptText, /\[stage-run 계약 복구\]/);
+  assert.equal(context.sendCalls, 1);
+  assert.deepEqual(context.toasts, ['stage-run 계약 복구 안내 반영 완료']);
+});
+
+test('[mindmap stage trace action smoke] contract refresh action rehydrates snapshot and reports result', async () => {
+  const context = await loadTraceHelpers();
+
+  context.refreshStageRunContract();
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(context.hydrateCalls, 1);
+  assert.deepEqual(context.toasts, ['stage-run 계약 재확인 완료']);
+  assert.deepEqual(context.statuses, [
+    {
+      tone: 'idle',
+      title: 'stage-run 계약 재확인 중',
+      detail: 'planning studio snapshot을 다시 불러와 계약 드리프트를 재확인하는 중입니다.',
+    },
+    {
+      tone: 'idle',
+      title: 'stage-run 계약 재확인 완료',
+      detail: '최신 snapshot 기준으로 stage-run 계약 상태를 다시 반영했습니다.',
+    },
+  ]);
+
+  const failedContext = await loadTraceHelpers();
+  failedContext.hydrateShouldFail = true;
+  failedContext.refreshStageRunContract();
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(failedContext.hydrateCalls, 1);
+  assert.deepEqual(failedContext.toasts, ['stage-run 계약 재확인 실패']);
+  assert.deepEqual(failedContext.statuses, [
+    {
+      tone: 'idle',
+      title: 'stage-run 계약 재확인 중',
+      detail: 'planning studio snapshot을 다시 불러와 계약 드리프트를 재확인하는 중입니다.',
+    },
+    {
+      tone: 'error',
+      title: 'stage-run 계약 재확인 실패',
+      detail: 'snapshot refresh failed',
+    },
+  ]);
 });

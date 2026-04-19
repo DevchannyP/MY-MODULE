@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/contracts/harness/raw-intent.schema.json",
+  "title": "Workflow OS MPO Raw Intent Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "raw_intent",
+    "goal",
+    "session_context"
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "properties": {
+    "raw_intent": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "goal": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "approval_requested": {
+      "type": "boolean"
+    },
+    "session_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anchors"
+      ],
+      "properties": {
+        "anchors": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "current_state",
+            "current_wp",
+            "next_actions",
+            "requirements"
+          ],
+          "properties": {
+            "current_state": {
+              "type": "object"
+            },
+            "current_wp": {
+              "type": "object"
+            },
+            "next_actions": {
+              "type": "object"
+            },
+            "requirements": {
+              "type": "object"
+            }
+          }
+        },
+        "branch": {
+          "type": "string"
+        },
+        "captured_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

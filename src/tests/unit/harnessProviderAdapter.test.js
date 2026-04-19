@@ -449,3 +449,110 @@ test('[harness provider adapter] both providers fail — throws primary error wi
     (error) => error.message === 'null also failed',
   );
 });
+
+// ── executeWorkPacket — live provider path ──────────────────────────────────
+
+test('[harness provider adapter] executeWorkPacket uses openai provider result and appends eval artifact', async () => {
+  const evalArtifactPath = createEvalArtifactPath();
+  const adapter = new HarnessProviderAdapter({
+    preferredProvider: 'openai',
+    openAiProvider: {
+      providerId: 'openai-responses',
+      isConfigured() {
+        return true;
+      },
+      async generateWorkPacketResult() {
+        return {
+          session_id: 'mpo-session-test',
+          wp_id: 'WP-TEST-001',
+          changed_files: ['src/server/routes/mpo.js'],
+          summary: 'provider executed packet',
+          provider: {
+            provider_id: 'openai-responses',
+            route_id: 'standard-build',
+            selected_model_tier: 'standard',
+            reasoning_effort: 'medium',
+            fallback_applied: false,
+            model: 'gpt-5.2',
+          },
+          latency_ms: 180,
+        };
+      },
+    },
+    nullProvider: new NullHarnessProvider(),
+    evalArtifactPath,
+  });
+
+  const result = await adapter.executeWorkPacket({
+    route: createRoute(),
+    sessionId: 'mpo-session-test',
+    wp: {
+      id: 'WP-TEST-001',
+    },
+    correlationId: 'corr-exec-1',
+    requestId: 'req-exec-1',
+  });
+
+  assert.equal(result.session_id, 'mpo-session-test');
+  assert.equal(result.wp_id, 'WP-TEST-001');
+  assert.deepEqual(result.changed_files, ['src/server/routes/mpo.js']);
+  assert.equal(result.provider.provider_id, 'openai-responses');
+  assert.equal(result.provider.fallback_applied, false);
+
+  const artifact = JSON.parse(fs.readFileSync(evalArtifactPath, 'utf8'));
+  assert.equal(artifact.last_provider_invocation.provider_id, 'openai-responses');
+  assert.equal(artifact.last_provider_invocation.wp_id, 'WP-TEST-001');
+  assert.equal(artifact.last_provider_invocation.fallback_applied, false);
+});
+
+test('[harness provider adapter] executeWorkPacket schema mismatch does not fall back to null provider', async () => {
+  const evalArtifactPath = createEvalArtifactPath();
+  let nullCalls = 0;
+
+  const adapter = new HarnessProviderAdapter({
+    preferredProvider: 'openai',
+    openAiProvider: {
+      providerId: 'openai-responses',
+      isConfigured() {
+        return true;
+      },
+      async generateWorkPacketResult() {
+        throw Object.assign(new Error('invalid execution JSON'), { code: 'PROVIDER_SCHEMA_MISMATCH' });
+      },
+    },
+    nullProvider: {
+      providerId: 'null-harness-provider',
+      isConfigured() {
+        return true;
+      },
+      async generateWorkPacketResult() {
+        nullCalls += 1;
+        return {
+          session_id: 'should-not-run',
+          wp_id: 'should-not-run',
+          changed_files: [],
+          provider: {
+            provider_id: 'null-harness-provider',
+            route_id: 'null-route',
+            selected_model_tier: 'mini',
+            fallback_applied: true,
+          },
+        };
+      },
+    },
+    evalArtifactPath,
+  });
+
+  await assert.rejects(
+    adapter.executeWorkPacket({
+      route: createRoute(),
+      sessionId: 'mpo-session-test',
+      wp: { id: 'WP-TEST-001' },
+      correlationId: 'corr-exec-2',
+      requestId: 'req-exec-2',
+    }),
+    (error) => error && error.code === 'PROVIDER_SCHEMA_MISMATCH',
+  );
+  assert.equal(nullCalls, 0);
+  assert.equal(fs.existsSync(evalArtifactPath), false);
+});

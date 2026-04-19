@@ -13,6 +13,7 @@ const { BROWSER_UTILITY_RUNTIME_SOURCE } = require('../src/shared/browserUtility
 const ROOT = path.join(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'artifacts', 'mindmap');
 const OUT_FILE = path.join(OUT_DIR, 'index.html');
+const RELEASE_EVIDENCE_FILE = path.join(ROOT, 'artifacts', 'release-evidence', 'release-evidence.json');
 
 // ─── Position helpers ────────────────────────────────────────────────────────
 
@@ -55,6 +56,17 @@ function uniqueStrings(values) {
     .flatMap((value) => Array.isArray(value) ? value : [value])
     .map((value) => String(value || '').trim())
     .filter(Boolean)));
+}
+
+function readJsonIfExists(filePath, fallbackValue) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return fallbackValue;
+    }
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (_) {
+    return fallbackValue;
+  }
 }
 
 function stageProgress(stageValue) {
@@ -1987,6 +1999,7 @@ const S = {
   scaffoldCatalog: CONTROL.scaffoldCatalog || { blueprints: [], recipes: [], profiles: [], defaultBlueprint: '', defaultRecipe: '' },
   roadmapSections: Array.isArray(CONTROL.roadmapSections) ? CONTROL.roadmapSections.slice() : [],
   planningSnapshot: null,
+  releaseEvidence: RAW.meta.releaseEvidence || null,
   scaffoldForm: {
     domain: '',
     blueprint: (CONTROL.scaffoldCatalog && CONTROL.scaffoldCatalog.defaultBlueprint) || 'domain-module-extension',
@@ -2020,6 +2033,7 @@ const S = {
     lastActivity: null,
     lastError: null,
     guidance: null,
+    controlReadiness: null,
     operatorBrief: null,
     operatorCockpit: null,
     operatorActionHistory: [],
@@ -2050,6 +2064,8 @@ const S = {
     selectedModule: '',
     supportedStages: ['A', 'B', 'C', 'D', 'E'],
     runEndpoint: '/api/planning-studio/stage-run',
+    contract: null,
+    qualityGate: null,
     history: [],
     historyFilter: 'all',
     historySignalView: 'all',
@@ -2853,14 +2869,64 @@ function executionOperatorCockpitChainSummary() {
 function executionOperatorCockpitReleaseEvidenceSummary() {
   var cockpit = S.execution.operatorCockpit || null;
   var evidence = cockpit && cockpit.promotionEvidence ? cockpit.promotionEvidence : null;
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
   if (!evidence) {
-    return 'release evidence 정보 없음';
+    if (!releaseArtifact) {
+      return 'release evidence 정보 없음';
+    }
+    return [
+      releaseArtifact.quality_gate_result || 'UNKNOWN',
+      String(((S.releaseEvidence.release_artifacts || {}).release_evidence || {}).exists === true ? 1 : 0) + ' artifact',
+      ((S.releaseEvidence.next_action || {}).id || 'NONE'),
+    ].join(' / ');
   }
   return [
     evidence.qualityGateResult || 'UNKNOWN',
     String(evidence.artifactCount || 0) + ' artifacts',
     evidence.nextActionId || 'NONE',
   ].join(' / ');
+}
+
+function executionOperatorCockpitReleaseEvidenceBlocker() {
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
+  if (!releaseArtifact) {
+    return 'release evidence blocker 정보 없음';
+  }
+  return String(releaseArtifact.release_evidence_blocker || 'UNKNOWN').trim() || 'UNKNOWN';
+}
+
+function executionOperatorCockpitReleaseEvidenceContractSummary() {
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
+  var contract = releaseArtifact && releaseArtifact.stage_run_contract ? releaseArtifact.stage_run_contract : null;
+  if (!contract) {
+    return 'stage-run contract 정보 없음';
+  }
+  return [
+    String(contract.drift_status || 'unknown'),
+    contract.release_evidence_surface_complete === true ? 'surface ready' : 'surface missing',
+    Array.isArray(contract.issues) && contract.issues.length > 0 ? contract.issues.join(', ') : 'issues 없음',
+  ].join(' / ');
+}
+
+function executionOperatorCockpitReleaseEvidenceNextAction() {
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
+  if (!releaseArtifact) {
+    return 'release evidence artifact를 다시 생성해 상태를 확인하세요.';
+  }
+  var blocker = String(releaseArtifact.release_evidence_blocker || 'UNKNOWN').trim();
+  if (blocker === 'NONE') {
+    return 'release evidence가 준비되어 있어 운영 반영 또는 다음 packet으로 이동할 수 있습니다.';
+  }
+  if (blocker.indexOf('quality gate ') === 0) {
+    return 'Stage 품질 게이트 결과를 다시 확보한 뒤 release evidence를 재생성하세요.';
+  }
+  if (blocker.indexOf('stage-run contract ') === 0) {
+    return 'stage-run 계약 드리프트를 먼저 해소한 뒤 release evidence를 다시 생성하세요.';
+  }
+  if (blocker === 'stage-run latest report missing' || blocker === 'stage-run report not persisted') {
+    return 'stage-run 최신 보고서를 다시 저장한 뒤 release evidence를 재생성하세요.';
+  }
+  return '현재 blocker를 해소한 뒤 release evidence를 다시 생성하세요.';
 }
 
 function renderOperatorChainCards() {
@@ -3423,10 +3489,57 @@ function deriveExecutionControlMatrix() {
       enabled: true,
       reason: '현재 터미널, worker, 최근 실행 상태를 화면에 표시합니다.',
     },
+    log_visibility: {
+      enabled: true,
+      reason: '실행 이력, 실패 위치, stage 추적값을 화면에서 확인할 수 있습니다.',
+    },
     failure_reason_visible: {
       enabled: failureVisible,
       reason: failureVisible ? '최근 실패 원인을 바로 확인할 수 있습니다.' : '최근 실패가 없어 표시할 실패 원인이 없습니다.',
     },
+  };
+}
+
+function deriveExecutionControlReadiness(controlMatrix) {
+  var matrix = normalizeExecutionControlMatrix(controlMatrix);
+  var specs = [
+    { id: 'send_prompt', label: '전송', mode: 'action' },
+    { id: 'auto_send_toggle', label: '자동전송', mode: 'action' },
+    { id: 'stop', label: '중지', mode: 'action' },
+    { id: 'retry_last_prompt', label: '재시도', mode: 'action' },
+    { id: 'rollback', label: '롤백', mode: 'action' },
+    { id: 'terminal_status_visible', label: '터미널 상태', mode: 'visibility' },
+    { id: 'log_visibility', label: '로그 확인', mode: 'visibility' },
+    { id: 'failure_reason_visible', label: '실패 원인', mode: 'visibility' },
+  ];
+  var items = specs.map(function(spec) {
+    var enabled = matrix[spec.id] && matrix[spec.id].enabled === true;
+    return {
+      id: spec.id,
+      label: spec.label,
+      mode: spec.mode,
+      enabled: enabled,
+      statusLabel: spec.mode === 'action'
+        ? (enabled ? '가능' : '대기')
+        : (enabled ? '표시 중' : '숨김'),
+      tone: enabled
+        ? (spec.mode === 'action' ? 'ready' : 'info')
+        : 'warn',
+      reason: String((matrix[spec.id] && matrix[spec.id].reason) || ''),
+    };
+  });
+  var actionable = items.filter(function(item) { return item.mode === 'action'; });
+  var visibility = items.filter(function(item) { return item.mode === 'visibility'; });
+  var actionableReady = actionable.filter(function(item) { return item.enabled; }).length;
+  var visibilityReady = visibility.filter(function(item) { return item.enabled; }).length;
+
+  return {
+    summary: '실행 제어 ' + actionableReady + '/' + actionable.length + ' 가능 · 가시화 ' + visibilityReady + '/' + visibility.length + ' 확보',
+    actionableReadyCount: actionableReady,
+    actionableTotalCount: actionable.length,
+    visibilityReadyCount: visibilityReady,
+    visibilityTotalCount: visibility.length,
+    items: items,
   };
 }
 
@@ -3447,6 +3560,44 @@ function normalizeExecutionControlMatrix(controlMatrix) {
   return normalized;
 }
 
+function normalizeExecutionControlReadiness(controlReadiness) {
+  var fallback = deriveExecutionControlReadiness(S.execution.controlMatrix);
+  if (!controlReadiness || typeof controlReadiness !== 'object') {
+    return fallback;
+  }
+
+  return {
+    summary: String(controlReadiness.summary || fallback.summary),
+    actionableReadyCount: Number.isInteger(controlReadiness.actionableReadyCount)
+      ? controlReadiness.actionableReadyCount
+      : fallback.actionableReadyCount,
+    actionableTotalCount: Number.isInteger(controlReadiness.actionableTotalCount)
+      ? controlReadiness.actionableTotalCount
+      : fallback.actionableTotalCount,
+    visibilityReadyCount: Number.isInteger(controlReadiness.visibilityReadyCount)
+      ? controlReadiness.visibilityReadyCount
+      : fallback.visibilityReadyCount,
+    visibilityTotalCount: Number.isInteger(controlReadiness.visibilityTotalCount)
+      ? controlReadiness.visibilityTotalCount
+      : fallback.visibilityTotalCount,
+    items: Array.isArray(controlReadiness.items) && controlReadiness.items.length > 0
+      ? controlReadiness.items.map(function(item) {
+        return {
+          id: String(item.id || '').trim(),
+          label: String(item.label || '').trim(),
+          mode: String(item.mode || '').trim() || 'action',
+          enabled: item.enabled === true,
+          statusLabel: String(item.statusLabel || item.status_label || '').trim() || '대기',
+          tone: String(item.tone || '').trim() || 'warn',
+          reason: String(item.reason || '').trim(),
+        };
+      }).filter(function(item) {
+        return item.id && item.label;
+      })
+      : fallback.items,
+  };
+}
+
 function executionControlSummary() {
   var guidance = S.execution.guidance || {};
   if (String(guidance.controlSummary || '').trim()) {
@@ -3459,7 +3610,36 @@ function executionControlSummary() {
     '중지: ' + (matrix.stop.enabled ? '가능' : '대기') + ' / ' + matrix.stop.reason,
     '재시도: ' + (matrix.retry_last_prompt.enabled ? '가능' : '대기') + ' / ' + matrix.retry_last_prompt.reason,
     '롤백: ' + (matrix.rollback.enabled ? '가능' : '대기') + ' / ' + matrix.rollback.reason,
+    '터미널 상태: ' + (matrix.terminal_status_visible.enabled ? '표시 중' : '숨김') + ' / ' + matrix.terminal_status_visible.reason,
+    '로그 확인: ' + (matrix.log_visibility.enabled ? '표시 중' : '숨김') + ' / ' + matrix.log_visibility.reason,
+    '실패 원인: ' + (matrix.failure_reason_visible.enabled ? '표시 중' : '숨김') + ' / ' + matrix.failure_reason_visible.reason,
   ].join('\n');
+}
+
+function executionControlReadinessCardsMarkup() {
+  var readiness = normalizeExecutionControlReadiness(S.execution.controlReadiness);
+  var items = Array.isArray(readiness.items) ? readiness.items : [];
+  var toneClass = {
+    ready: 'ov-pass',
+    info: 'ov-idle',
+    warn: 'ov-warn',
+  };
+
+  return '<div class="detail-grid-cards">' +
+    '<article class="detail-card">' +
+      '<span>제어 체크 요약</span>' +
+      '<strong>' + escHtml(readiness.summary || '제어 체크 정보 없음') + '</strong>' +
+      '<p>' + escHtml(executionNextAction()) + '</p>' +
+    '</article>' +
+    items.map(function(item) {
+      var tone = toneClass[item.tone] || 'ov-idle';
+      return '<article class="detail-card">' +
+        '<span>' + escHtml(item.label) + '</span>' +
+        '<strong class="' + escHtml(tone) + '">' + escHtml(item.statusLabel || '대기') + '</strong>' +
+        '<p>' + escHtml(item.reason || '사유 없음') + '</p>' +
+      '</article>';
+    }).join('') +
+  '</div>';
 }
 
 function executionFailureRecoverySummary() {
@@ -3513,6 +3693,17 @@ function normalizeStageRunReport(report) {
       save_error: String(report.runtime_observability.save_error || '').trim(),
       correlation_id: String(report.runtime_observability.correlation_id || '').trim(),
       request_id: String(report.runtime_observability.request_id || '').trim(),
+      release_evidence: report.runtime_observability.release_evidence && typeof report.runtime_observability.release_evidence === 'object'
+        ? {
+          triggered: report.runtime_observability.release_evidence.triggered === true,
+          generated: report.runtime_observability.release_evidence.generated === true,
+          exit_code: Number.isInteger(report.runtime_observability.release_evidence.exit_code) ? report.runtime_observability.release_evidence.exit_code : 0,
+          error: String(report.runtime_observability.release_evidence.error || '').trim(),
+          path: String(report.runtime_observability.release_evidence.path || '').trim(),
+          command: String(report.runtime_observability.release_evidence.command || '').trim(),
+          trigger_reason: String(report.runtime_observability.release_evidence.trigger_reason || '').trim(),
+        }
+        : null,
     }
     : null;
 
@@ -3534,6 +3725,38 @@ function normalizeStageRunReport(report) {
     recorded_at: String(report.recorded_at || ''),
     operator_guidance: operatorGuidance,
     runtime_observability: runtimeObservability,
+  };
+}
+
+function normalizeStageRunContract(contract) {
+  if (!contract || typeof contract !== 'object') {
+    return null;
+  }
+  return {
+    drift_status: String(contract.drift_status || '').trim() || 'unknown',
+    latest_history_head_match: contract.latest_history_head_match === true,
+    history_head_available: contract.history_head_available === true,
+    release_evidence_surface_complete: contract.release_evidence_surface_complete === true,
+    release_evidence_generated: contract.release_evidence_generated === true,
+    release_evidence_trigger_reason: String(contract.release_evidence_trigger_reason || '').trim(),
+    issues: Array.isArray(contract.issues)
+      ? contract.issues.map(function(issue) { return String(issue || '').trim(); }).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizeStageRunQualityGate(qualityGate) {
+  if (!qualityGate || typeof qualityGate !== 'object') {
+    return null;
+  }
+  return {
+    result: String(qualityGate.result || '').trim() || 'UNKNOWN',
+    reported_result: String(qualityGate.reported_result || '').trim(),
+    source: String(qualityGate.source || '').trim() || 'unknown',
+    execution_mode: String(qualityGate.execution_mode || '').trim() || 'UNKNOWN',
+    ready_for_release_evidence: qualityGate.ready_for_release_evidence === true,
+    blocker: String(qualityGate.blocker || '').trim() || 'unknown',
+    next_action: String(qualityGate.next_action || '').trim() || 'quality gate 상태를 다시 확인하세요.',
   };
 }
 
@@ -3577,6 +3800,16 @@ function rememberStageRunReport(report) {
 }
 
 function deriveStageRunNextAction(report) {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (contract && contract.drift_status !== 'clean') {
+    if (contract.issues.indexOf('latest-history-head-mismatch') >= 0) {
+      return 'snapshot latest와 recent history head를 다시 저장해 stage-run 정본을 정렬하세요.';
+    }
+    if (contract.issues.indexOf('latest-release-evidence-missing') >= 0 || contract.issues.indexOf('history-head-release-evidence-missing') >= 0) {
+      return 'stage-run을 다시 저장하거나 release evidence가 포함된 최신 실행 결과로 갱신하세요.';
+    }
+    return 'stage-run 계약 드리프트 원인을 확인한 뒤 snapshot 정본을 다시 생성하세요.';
+  }
   if (!report) {
     return 'Stage를 고른 뒤 dry-run으로 현재 경로를 먼저 확인하세요.';
   }
@@ -3595,6 +3828,15 @@ function deriveStageRunNextAction(report) {
       : '실패 원인을 해소한 뒤 마지막 stage 재실행을 누르세요.';
   }
   if (report.execution_mode === 'execute' && report.status === 'pass') {
+    var releaseEvidence = report.runtime_observability && report.runtime_observability.release_evidence
+      ? report.runtime_observability.release_evidence
+      : null;
+    if (releaseEvidence && releaseEvidence.triggered && releaseEvidence.generated) {
+      return 'release evidence를 확인하고 다음 Stage 또는 운영 반영으로 이동하세요.';
+    }
+    if (releaseEvidence && releaseEvidence.triggered && !releaseEvidence.generated) {
+      return 'release evidence 생성 실패 원인을 확인한 뒤 execute 재실행 또는 증거 생성 명령을 다시 실행하세요.';
+    }
     return '품질 게이트 결과를 확인하고 다음 Stage 또는 운영 증거 생성으로 이동하세요.';
   }
   if (report.status === 'ready') {
@@ -3711,6 +3953,195 @@ function stageRunEvidenceError(report) {
     return '없음';
   }
   return '저장 오류 기록 없음';
+}
+
+function stageRunReleaseEvidenceStatus(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability) {
+    return '확인 필요 / release evidence 관측 정보 없음';
+  }
+  var releaseEvidence = runtimeObservability.release_evidence || null;
+  if (!releaseEvidence) {
+    return '확인 필요 / release evidence 관측 정보 없음';
+  }
+  if (!releaseEvidence.triggered) {
+    return '대기 / ' + (String(releaseEvidence.trigger_reason || '').trim() || '자동 생성 조건 미충족');
+  }
+  return releaseEvidence.generated
+    ? '생성 완료 / release evidence 기록됨'
+    : '생성 실패 / 응답은 수신됐지만 release evidence 생성이 실패했습니다.';
+}
+
+function stageRunReleaseEvidenceError(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability || !runtimeObservability.release_evidence) {
+    return 'release_evidence 없음';
+  }
+  var errorText = String(runtimeObservability.release_evidence.error || '').trim();
+  if (errorText) {
+    return errorText;
+  }
+  if (runtimeObservability.release_evidence.triggered && runtimeObservability.release_evidence.generated) {
+    return '없음';
+  }
+  return 'release evidence 오류 기록 없음';
+}
+
+function stageRunReleaseEvidencePath(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability || !runtimeObservability.release_evidence) {
+    return '없음';
+  }
+  return String(runtimeObservability.release_evidence.path || '').trim() || '없음';
+}
+
+function stageRunReleaseEvidenceCommand(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability || !runtimeObservability.release_evidence) {
+    return '없음';
+  }
+  return String(runtimeObservability.release_evidence.command || '').trim() || '없음';
+}
+
+function stageRunContractStatus() {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return '확인 필요 / stage-run 계약 정보 없음';
+  }
+  return contract.drift_status === 'clean'
+    ? '정상 / latest-history-head와 release evidence 표면이 정렬됨'
+    : '드리프트 감지 / snapshot과 저장 정본 사이 확인 필요';
+}
+
+function stageRunContractIssues() {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return 'stage_run_contract 없음';
+  }
+  return contract.issues.length > 0 ? contract.issues.join(', ') : '없음';
+}
+
+function stageRunContractNextAction() {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return 'snapshot을 다시 불러와 stage-run 계약 상태를 확인하세요.';
+  }
+  if (contract.drift_status === 'clean') {
+    return '현재 snapshot 계약이 정렬되어 있어 다음 Stage 또는 운영 반영으로 이동할 수 있습니다.';
+  }
+  if (contract.issues.indexOf('latest-history-head-mismatch') >= 0) {
+    return 'latest/history head mismatch를 해소하도록 stage-run을 다시 저장하세요.';
+  }
+  if (contract.issues.indexOf('latest-release-evidence-missing') >= 0 || contract.issues.indexOf('history-head-release-evidence-missing') >= 0) {
+    return 'release evidence가 포함된 최신 stage-run으로 snapshot을 다시 적재하세요.';
+  }
+  return 'stage-run 저장 정본과 snapshot 드리프트를 먼저 해소하세요.';
+}
+
+function stageRunQualityGateStatus() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return '확인 필요 / stage-run quality gate 정보 없음';
+  }
+  if (qualityGate.result === 'DRY_RUN_ONLY') {
+    return '대기 / dry-run-only 상태로 실제 quality gate가 아직 실행되지 않았습니다.';
+  }
+  if (qualityGate.result === 'PASS') {
+    return '정상 / quality gate PASS가 확보되었습니다.';
+  }
+  if (qualityGate.result === 'UNKNOWN') {
+    return '확인 필요 / quality gate 결과를 아직 확정할 수 없습니다.';
+  }
+  return '차단 / quality gate ' + qualityGate.result;
+}
+
+function stageRunQualityGateSource() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return 'stage_run_quality_gate 없음';
+  }
+  var reported = qualityGate.reported_result || '없음';
+  return [qualityGate.source, 'reported=' + reported, 'mode=' + qualityGate.execution_mode].join(' / ');
+}
+
+function stageRunQualityGateReadiness() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return '불가 / release evidence 준비 판정을 내릴 수 없습니다.';
+  }
+  return qualityGate.ready_for_release_evidence
+    ? '가능 / release evidence 준비 판정에 사용할 수 있습니다.'
+    : '대기 / release evidence 준비 판정에 아직 사용할 수 없습니다.';
+}
+
+function stageRunQualityGateNextAction() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return 'snapshot을 다시 불러와 quality gate 판정 상태를 확인하세요.';
+  }
+  return qualityGate.next_action;
+}
+
+function stageRunContractRecoveryPrompt() {
+  var report = normalizeStageRunReport(S.stageRun.lastReport);
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return '';
+  }
+  return [
+    '[stage-run 계약 복구]',
+    '계약 상태: ' + stageRunContractStatus(),
+    '드리프트 이슈: ' + stageRunContractIssues(),
+    '현재 Stage: ' + String(report && report.requested_stage || S.stageRun.selectedStage || 'D'),
+    '대상 module: ' + String(report && report.requested_module || S.stageRun.selectedModule || 'all'),
+    '다음 행동: ' + stageRunContractNextAction(),
+    '저장 정본과 snapshot 계약을 유지하면서 필요한 재실행 또는 재확인만 진행하라.',
+  ].join(String.fromCharCode(10));
+}
+
+function loadStageRunContractRecoveryPrompt() {
+  var prompt = stageRunContractRecoveryPrompt();
+  if (!prompt) {
+    showToast('채울 stage-run 계약 복구 안내가 없습니다.');
+    return false;
+  }
+  S.execution.promptText = prompt;
+  setExecutionStatus('idle', 'stage-run 계약 복구 안내 준비 완료', '계약 드리프트 복구 지시를 실행 패널에 채웠습니다. 전송 전에 세션과 명령을 확인하세요.');
+  renderExecutionConsole();
+  showToast('stage-run 계약 복구 안내 반영 완료');
+  return true;
+}
+
+function sendStageRunContractRecoveryPrompt() {
+  if (!loadStageRunContractRecoveryPrompt()) {
+    return;
+  }
+  sendPromptNow();
+}
+
+function refreshStageRunContract() {
+  setExecutionStatus('idle', 'stage-run 계약 재확인 중', 'planning studio snapshot을 다시 불러와 계약 드리프트를 재확인하는 중입니다.');
+  hydratePlanningSnapshot()
+    .then(function() {
+      setExecutionStatus('idle', 'stage-run 계약 재확인 완료', '최신 snapshot 기준으로 stage-run 계약 상태를 다시 반영했습니다.');
+      showToast('stage-run 계약 재확인 완료');
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', 'stage-run 계약 재확인 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+      showToast('stage-run 계약 재확인 실패');
+    });
 }
 
 function stageRunRequestId(report) {
@@ -4153,6 +4584,7 @@ function renderStageRunWorkbench() {
   var retryableLabel = stageRunRetryableSummary(report);
   var failureLocationLabel = stageRunFailureLocation(report);
   var failureReasonLabel = stageRunFailureReason(report);
+  var contractRecoverySendDisabled = !S.execution.controls.sendPrompt;
   var traceSendDisabled = !S.execution.controls.sendPrompt;
   var traceSendSummary = traceSendDisabled
     ? '대기 / 연결된 PTY 세션이 없어 즉시 전송할 수 없습니다.'
@@ -4243,6 +4675,17 @@ function renderStageRunWorkbench() {
       '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(stageRunFailureReason(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>운영 증거</span><strong>' + escHtml(stageRunEvidenceStatus(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>저장 오류</span><strong>' + escHtml(stageRunEvidenceError(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Release Evidence</span><strong>' + escHtml(stageRunReleaseEvidenceStatus(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Evidence 오류</span><strong>' + escHtml(stageRunReleaseEvidenceError(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Evidence 경로</span><strong>' + escHtml(stageRunReleaseEvidencePath(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Evidence 명령</span><strong>' + escHtml(stageRunReleaseEvidenceCommand(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Quality Gate 판정</span><strong>' + escHtml(stageRunQualityGateStatus()) + '</strong></div>' +
+      '<div class="execution-row"><span>Gate 판정 출처</span><strong>' + escHtml(stageRunQualityGateSource()) + '</strong></div>' +
+      '<div class="execution-row"><span>Gate 운영 준비</span><strong>' + escHtml(stageRunQualityGateReadiness()) + '</strong></div>' +
+      '<div class="execution-row"><span>Gate 다음 행동</span><strong>' + escHtml(stageRunQualityGateNextAction()) + '</strong></div>' +
+      '<div class="execution-row"><span>계약 드리프트</span><strong>' + escHtml(stageRunContractStatus()) + '</strong></div>' +
+      '<div class="execution-row"><span>드리프트 이슈</span><strong>' + escHtml(stageRunContractIssues()) + '</strong></div>' +
+      '<div class="execution-row"><span>계약 다음 행동</span><strong>' + escHtml(stageRunContractNextAction()) + '</strong></div>' +
       '<div class="execution-row"><span>요청 ID</span><strong>' + escHtml(stageRunRequestId(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>상관 ID</span><strong>' + escHtml(stageRunCorrelationId(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>로그 확인</span><strong>' + escHtml(stageRunTraceQuery(focusReport)) + '</strong></div>' +
@@ -4278,6 +4721,9 @@ function renderStageRunWorkbench() {
         '기록 시각: ' + (item.recorded_at || '없음'),
         '실패 명령: ' + (item.failed_command || '없음'),
         '운영 증거: ' + stageRunEvidenceStatus(item),
+        'Release Evidence: ' + stageRunReleaseEvidenceStatus(item),
+        'Quality Gate 판정: ' + stageRunQualityGateStatus(),
+        '계약 드리프트: ' + stageRunContractStatus(),
         '요청 ID: ' + stageRunRequestId(item),
         '상관 ID: ' + stageRunCorrelationId(item),
         '다음 행동: ' + itemNextAction,
@@ -4324,6 +4770,22 @@ function renderStageRunWorkbench() {
         '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(failureReasonLabel) + '</strong></div>' +
         '<div class="execution-row"><span>운영 증거</span><strong>' + escHtml(stageRunEvidenceStatus(report)) + '</strong></div>' +
         '<div class="execution-row"><span>저장 오류</span><strong>' + escHtml(stageRunEvidenceError(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Release Evidence</span><strong>' + escHtml(stageRunReleaseEvidenceStatus(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Evidence 오류</span><strong>' + escHtml(stageRunReleaseEvidenceError(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Evidence 경로</span><strong>' + escHtml(stageRunReleaseEvidencePath(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Evidence 명령</span><strong>' + escHtml(stageRunReleaseEvidenceCommand(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Quality Gate 판정</span><strong>' + escHtml(stageRunQualityGateStatus()) + '</strong></div>' +
+        '<div class="execution-row"><span>Gate 판정 출처</span><strong>' + escHtml(stageRunQualityGateSource()) + '</strong></div>' +
+        '<div class="execution-row"><span>Gate 운영 준비</span><strong>' + escHtml(stageRunQualityGateReadiness()) + '</strong></div>' +
+        '<div class="execution-row"><span>Gate 다음 행동</span><strong>' + escHtml(stageRunQualityGateNextAction()) + '</strong></div>' +
+        '<div class="execution-row"><span>계약 드리프트</span><strong>' + escHtml(stageRunContractStatus()) + '</strong></div>' +
+        '<div class="execution-row"><span>드리프트 이슈</span><strong>' + escHtml(stageRunContractIssues()) + '</strong></div>' +
+        '<div class="execution-row"><span>계약 다음 행동</span><strong>' + escHtml(stageRunContractNextAction()) + '</strong></div>' +
+        '<div class="execution-actions">' +
+          '<button type="button" class="execution-button secondary" onclick="refreshStageRunContract()">계약 재확인</button>' +
+          '<button type="button" class="execution-button secondary" onclick="loadStageRunContractRecoveryPrompt()">복구 안내 채우기</button>' +
+          '<button type="button" class="execution-button primary" onclick="sendStageRunContractRecoveryPrompt()"' + htmlDisabled(contractRecoverySendDisabled) + '>복구 안내 전송</button>' +
+        '</div>' +
         '<div class="execution-row"><span>요청 ID</span><strong>' + escHtml(stageRunRequestId(report)) + '</strong></div>' +
         '<div class="execution-row"><span>상관 ID</span><strong>' + escHtml(stageRunCorrelationId(report)) + '</strong></div>' +
         '<div class="execution-row"><span>로그 확인</span><strong>' + escHtml(stageRunTraceQuery(report)) + '</strong></div>' +
@@ -4521,6 +4983,34 @@ function applyControlCenterRuntimeState(runtimePayload) {
       return item.id && item.label;
     }) : [],
   } : null;
+  S.execution.controlReadiness = controls.control_readiness && typeof controls.control_readiness === 'object' ? {
+    summary: String(controls.control_readiness.summary || '').trim(),
+    actionableReadyCount: Number.isInteger(controls.control_readiness.actionable_ready_count)
+      ? controls.control_readiness.actionable_ready_count
+      : null,
+    actionableTotalCount: Number.isInteger(controls.control_readiness.actionable_total_count)
+      ? controls.control_readiness.actionable_total_count
+      : null,
+    visibilityReadyCount: Number.isInteger(controls.control_readiness.visibility_ready_count)
+      ? controls.control_readiness.visibility_ready_count
+      : null,
+    visibilityTotalCount: Number.isInteger(controls.control_readiness.visibility_total_count)
+      ? controls.control_readiness.visibility_total_count
+      : null,
+    items: Array.isArray(controls.control_readiness.items) ? controls.control_readiness.items.map(function(item) {
+      return {
+        id: String(item && item.id || '').trim(),
+        label: String(item && item.label || '').trim(),
+        mode: String(item && item.mode || '').trim(),
+        enabled: item && item.enabled === true,
+        statusLabel: String(item && (item.status_label || item.statusLabel) || '').trim(),
+        tone: String(item && item.tone || '').trim(),
+        reason: String(item && item.reason || '').trim(),
+      };
+    }).filter(function(item) {
+      return item.id && item.label;
+    }) : [],
+  } : null;
   S.execution.operatorBrief = execution.operator_brief ? {
     autoSendStatus: String(execution.operator_brief.auto_send_status || '').trim(),
     currentExecution: String(execution.operator_brief.current_execution || '').trim(),
@@ -4609,6 +5099,7 @@ function applyControlCenterRuntimeState(runtimePayload) {
     retryLastPrompt: controls.retry_last_prompt === true,
     rollback: controls.rollback === true,
     terminalStatusVisible: controls.terminal_status_visible !== false,
+    logVisibility: controls.log_visibility !== false,
     failureReasonVisible: controls.failure_reason_visible === true,
   };
   S.execution.controlMatrix = normalizeExecutionControlMatrix(controls.control_matrix);
@@ -4772,6 +5263,7 @@ function renderExecutionConsole() {
   var operatorChainMarkup = renderOperatorChainCards();
   var operatorSourceSummary = operatorActionSourceSummary(S.execution.operatorActionHistory);
   var controlGuidanceSummary = executionControlSummary();
+  var controlReadinessMarkup = executionControlReadinessCardsMarkup();
   var failureRecoverySummary = executionFailureRecoverySummary();
   var rollbackReadinessSummary = executionRollbackReadinessSummary();
 
@@ -4805,10 +5297,21 @@ function renderExecutionConsole() {
       '<div class="execution-row"><span>커밋 가드</span><strong>' + escHtml(executionOperatorCockpitGuardSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>검증 프로파일</span><strong>' + escHtml(executionOperatorCockpitValidationSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>Release Evidence</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Release Blocker</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceBlocker()) + '</strong></div>' +
+      '<div class="execution-row"><span>Release 계약</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceContractSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Release 다음 행동</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceNextAction()) + '</strong></div>' +
+      '<div class="execution-actions">' +
+        '<button type="button" class="execution-button secondary" onclick="copyOperatorCommand(' + "'release-evidence'" + ')">Release 명령 복사</button>' +
+        '<button type="button" class="execution-button primary" onclick="loadOperatorCommandPrompt(' + "'release-evidence'" + ')">Release 명령 채우기</button>' +
+      '</div>' +
       '<div class="execution-row"><span>Operator Chain</span><strong>' + escHtml(executionOperatorCockpitChainSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>Action Sources</span><strong>' + escHtml(operatorSourceSummary) + '</strong></div>' +
       '<div class="execution-row"><span>운영 액션</span><strong>' + escHtml(executionOperatorCockpitActionsSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>Operator Action History</span>' + operatorHistoryMarkup + '</div>' +
+    '</div>' +
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">제어 체크포인트</div>' +
+      controlReadinessMarkup +
     '</div>' +
     '<div class="detail-section">' +
       '<div class="detail-section-title">Operator Chain</div>' +
@@ -4963,6 +5466,16 @@ function applyStageRunReport(report) {
 
 function applyStageRunHistory(reports) {
   S.stageRun.history = normalizeStageRunHistory(reports);
+}
+
+function applyStageRunContract(contract) {
+  S.stageRun.contract = normalizeStageRunContract(contract);
+  renderExecutionConsole();
+}
+
+function applyStageRunQualityGate(qualityGate) {
+  S.stageRun.qualityGate = normalizeStageRunQualityGate(qualityGate);
+  renderExecutionConsole();
 }
 
 function setStageRunHistoryFilter(filter) {
@@ -5993,6 +6506,15 @@ function getOperatorCommandPayload(actionScope) {
       toast: 'operator cockpit 명령을 준비했습니다.',
     };
   }
+  if (scope === 'release-evidence') {
+    return {
+      title: 'Release Evidence',
+      command: 'python3 scripts/generate_release_evidence.py',
+      scope: scope,
+      source: 'control-center',
+      toast: 'release evidence 생성 명령을 준비했습니다.',
+    };
+  }
   if (scope.indexOf('chain:') === 0) {
     var chainId = scope.slice('chain:'.length);
     var chainItem = operatorCockpitChainItems().find(function(item) {
@@ -6617,6 +7139,12 @@ function applyPlanningSnapshot(snapshot) {
   if (snapshot.stage_run_last_report && typeof snapshot.stage_run_last_report === 'object' && Object.keys(snapshot.stage_run_last_report).length > 0) {
     applyStageRunReport(snapshot.stage_run_last_report);
   }
+  if (snapshot.stage_run_contract && typeof snapshot.stage_run_contract === 'object') {
+    applyStageRunContract(snapshot.stage_run_contract);
+  }
+  if (snapshot.stage_run_quality_gate && typeof snapshot.stage_run_quality_gate === 'object') {
+    applyStageRunQualityGate(snapshot.stage_run_quality_gate);
+  }
 
   var automationConfig = snapshot.automation || snapshot.automation_config || null;
   if (automationConfig && typeof automationConfig.enabled === 'boolean') {
@@ -7084,6 +7612,9 @@ window.setStageRunHistorySort = setStageRunHistorySort;
 window.copyStageRunTraceQuery = copyStageRunTraceQuery;
 window.loadStageRunTracePrompt = loadStageRunTracePrompt;
 window.sendStageRunTracePrompt = sendStageRunTracePrompt;
+window.loadStageRunContractRecoveryPrompt = loadStageRunContractRecoveryPrompt;
+window.sendStageRunContractRecoveryPrompt = sendStageRunContractRecoveryPrompt;
+window.refreshStageRunContract = refreshStageRunContract;
 window.loadRecommendedPrompt = loadRecommendedPrompt;
 window.copyOperatorCommand = copyOperatorCommand;
 window.loadOperatorCommandPrompt = loadOperatorCommandPrompt;
@@ -7306,6 +7837,7 @@ function buildData() {
     !Array.isArray(stageRunLatestRaw) &&
     Object.keys(stageRunLatestRaw).length > 0
   ) ? stageRunLatestRaw : null;
+  graphData.meta.releaseEvidence = readJsonIfExists(RELEASE_EVIDENCE_FILE, null);
 
   return graphData;
 }

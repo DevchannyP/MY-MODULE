@@ -26,6 +26,8 @@ ROOT_CURRENT_STATE = ROOT / "memory/current-state.yaml"
 LEGACY_CURRENT_STATE = ROOT / "memory/project/current-state.yaml"
 ROOT_NEXT_ACTIONS = ROOT / "memory/next-actions.yaml"
 LEGACY_NEXT_ACTIONS = ROOT / "memory/project/next-actions.yaml"
+STAGE_RUN_REPORT = ROOT / "memory/project/stage-run-latest.yaml"
+STAGE_RUN_HISTORY = ROOT / "memory/project/stage-run-history.yaml"
 OUTPUT = ROOT / "artifacts/release-evidence/release-evidence.json"
 
 
@@ -51,6 +53,21 @@ def pick_memory_path(primary: Path, fallback: Path) -> Path:
 
 def load_yaml(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def load_planning_snapshot() -> dict:
+    try:
+        completed = subprocess.run(
+            ["python3", "scripts/planning_studio_api.py", "snapshot"],
+            cwd=ROOT,
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+        payload = json.loads(completed.stdout or "{}")
+        return payload if isinstance(payload, dict) else {}
+    except Exception:
+        return {}
 
 
 def sha256_file(path: Path) -> str:
@@ -194,11 +211,92 @@ def extract_next_action(next_actions: dict) -> dict[str, str]:
     return {"priority": "NONE", "id": "NONE", "track": "NONE", "action": "NONE"}
 
 
+def extract_stage_run_evidence(snapshot: dict | None = None) -> dict[str, object]:
+    snapshot = snapshot if isinstance(snapshot, dict) else {}
+    latest = snapshot.get("stage_run_last_report")
+    history = snapshot.get("stage_run_recent_reports")
+    contract = snapshot.get("stage_run_contract")
+
+    if not isinstance(latest, dict):
+        latest = load_yaml(STAGE_RUN_REPORT) if STAGE_RUN_REPORT.exists() else {}
+    if not isinstance(history, list):
+        history = load_yaml(STAGE_RUN_HISTORY) if STAGE_RUN_HISTORY.exists() else []
+    if not isinstance(latest, dict):
+        latest = {}
+    if not isinstance(history, list):
+        history = []
+    if not isinstance(contract, dict):
+        contract = {}
+
+    runtime_observability = latest.get("runtime_observability")
+    if not isinstance(runtime_observability, dict):
+        runtime_observability = {}
+
+    artifact_paths = runtime_observability.get("artifact_paths")
+    if not isinstance(artifact_paths, dict):
+        artifact_paths = {
+            "last_report": str(STAGE_RUN_REPORT.relative_to(ROOT)),
+            "recent_reports": str(STAGE_RUN_HISTORY.relative_to(ROOT)),
+        }
+
+    requested_stage = str(latest.get("requested_stage", ""))
+    quality_gate_result = str(latest.get("quality_gate_result", "") or "UNKNOWN")
+    report_saved = runtime_observability.get("report_saved")
+    if not isinstance(report_saved, bool):
+        report_saved = bool(requested_stage)
+    contract_drift_status = str(contract.get("drift_status", "") or "unknown")
+    contract_issues = contract.get("issues") if isinstance(contract.get("issues"), list) else []
+    contract_clean = contract_drift_status == "clean"
+
+    release_ready = quality_gate_result == "PASS" and report_saved and contract_clean
+    if release_ready:
+        blocker = "NONE"
+    elif not requested_stage:
+        blocker = "stage-run latest report missing"
+    elif not contract_clean:
+        blocker = f"stage-run contract {contract_drift_status}"
+    elif quality_gate_result != "PASS":
+        blocker = f"quality gate {quality_gate_result}"
+    else:
+        blocker = "stage-run report not persisted"
+
+    return {
+        "available": bool(requested_stage),
+        "report_path": str(STAGE_RUN_REPORT.relative_to(ROOT)),
+        "history_path": str(STAGE_RUN_HISTORY.relative_to(ROOT)),
+        "history_count": len(history),
+        "requested_stage": requested_stage or "UNKNOWN",
+        "requested_module": str(latest.get("requested_module", "")) or "all",
+        "execution_mode": str(latest.get("execution_mode", "UNKNOWN")),
+        "status": str(latest.get("status", "UNKNOWN")),
+        "quality_gate_result": quality_gate_result,
+        "recorded_at": str(latest.get("recorded_at", "")),
+        "docs_ref": str(latest.get("docs_ref", "")),
+        "report_saved": report_saved,
+        "request_id": str(runtime_observability.get("request_id", "")),
+        "correlation_id": str(runtime_observability.get("correlation_id", "")),
+        "artifact_paths": artifact_paths,
+        "save_command": str(runtime_observability.get("save_command", "python3 scripts/planning_studio_api.py save-stage-run")),
+        "stage_run_contract": {
+            "drift_status": contract_drift_status,
+            "latest_history_head_match": bool(contract.get("latest_history_head_match")),
+            "history_head_available": bool(contract.get("history_head_available")),
+            "release_evidence_surface_complete": bool(contract.get("release_evidence_surface_complete")),
+            "release_evidence_generated": bool(contract.get("release_evidence_generated")),
+            "release_evidence_trigger_reason": str(contract.get("release_evidence_trigger_reason", "")),
+            "issues": [str(item) for item in contract_issues if str(item)],
+        },
+        "release_evidence_ready": release_ready,
+        "release_evidence_blocker": blocker,
+    }
+
+
 def main() -> None:
     current_state_path = pick_memory_path(ROOT_CURRENT_STATE, LEGACY_CURRENT_STATE)
     next_actions_path = pick_memory_path(ROOT_NEXT_ACTIONS, LEGACY_NEXT_ACTIONS)
     current_state = load_yaml(current_state_path)
     next_actions = load_yaml(next_actions_path)
+    planning_snapshot = load_planning_snapshot()
 
     import os
     # SLSA-compatible provenance fields (GitHub Actions environment)
@@ -226,6 +324,7 @@ def main() -> None:
         "last_completed_unit": extract_last_completed_unit(current_state),
         "quality_gate_result": extract_quality_gate_result(current_state),
         "quality_gate_inputs": extract_quality_gate_inputs(current_state),
+        "stage_run_evidence": extract_stage_run_evidence(planning_snapshot),
         "release_artifacts": collect_artifact_evidence(current_state),
         "next_action": extract_next_action(next_actions),
         "harness_release": {

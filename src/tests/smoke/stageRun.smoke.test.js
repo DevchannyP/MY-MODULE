@@ -80,6 +80,10 @@ test('[stage run smoke] POST /api/planning-studio/stage-run returns dry-run repo
     assert.equal(typeof first.json.data.runtime_observability.request_id, 'string');
     assert.equal(typeof first.json.data.runtime_observability.correlation_id, 'string');
     assert.equal(first.json.data.runtime_observability.save_error, null);
+    assert.equal(first.json.data.runtime_observability.artifact_paths.last_report, 'memory/project/stage-run-latest.yaml');
+    assert.equal(first.json.data.runtime_observability.artifact_paths.recent_reports, 'memory/project/stage-run-history.yaml');
+    assert.equal(first.json.data.runtime_observability.artifact_target_count, 2);
+    assert.equal(first.json.data.runtime_observability.save_command, 'python3 scripts/planning_studio_api.py save-stage-run');
 
     const second = await jsonPost(handle.port, '/api/planning-studio/stage-run', requestBody, {
       'idempotency-key': idemKey,
@@ -110,26 +114,51 @@ test('[stage run smoke] POST /api/planning-studio/stage-run returns dry-run repo
     });
     assert.equal(snapshotResponse.status, 200);
     assert.equal(snapshotResponse.json.ok, true);
+    assert.equal(snapshotResponse.json.data.stage_run_artifacts.last_report, 'memory/project/stage-run-latest.yaml');
+    assert.equal(snapshotResponse.json.data.stage_run_artifacts.recent_reports, 'memory/project/stage-run-history.yaml');
+    assert.equal(snapshotResponse.json.data.stage_run_artifacts.history_limit, 5);
+    assert.equal(snapshotResponse.json.data.stage_run_artifacts.save_command, 'python3 scripts/planning_studio_api.py save-stage-run');
+    assert.equal(snapshotResponse.json.data.stage_run_contract.drift_status, 'clean');
+    assert.equal(snapshotResponse.json.data.stage_run_contract.latest_history_head_match, true);
+    assert.equal(snapshotResponse.json.data.stage_run_contract.release_evidence_surface_complete, true);
+    assert.equal(snapshotResponse.json.data.stage_run_contract.release_evidence_generated, false);
+    assert.equal(snapshotResponse.json.data.stage_run_contract.release_evidence_trigger_reason, 'dry-run-only');
     assert.equal(snapshotResponse.json.data.stage_run_last_report.requested_stage, 'D');
     assert.equal(snapshotResponse.json.data.stage_run_last_report.requested_module, 'task-management');
     assert.equal(snapshotResponse.json.data.stage_run_last_report.status, first.json.data.status);
     assert.equal(snapshotResponse.json.data.stage_run_last_report.execution_mode, 'dry-run-only');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.quality_gate_result, 'DRY_RUN_ONLY');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.quality_gate_result_reported, '');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.quality_gate_source, 'dry-run-only');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.quality_gate_ready_for_release_evidence, false);
     assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.summary, 'string');
     assert.ok(snapshotResponse.json.data.stage_run_last_report.summary.length > 0, 'summary must be non-empty after save');
     assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.recorded_at, 'string');
     assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.operator_guidance.current_state, 'string');
     assert.equal(typeof snapshotResponse.json.data.stage_run_last_report.operator_guidance.next_action, 'string');
     assert.equal(snapshotResponse.json.data.stage_run_last_report.runtime_observability.report_saved, true);
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.runtime_observability.artifact_paths.last_report, 'memory/project/stage-run-latest.yaml');
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.runtime_observability.release_evidence.triggered, false);
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.runtime_observability.release_evidence.generated, false);
+    assert.equal(snapshotResponse.json.data.stage_run_last_report.runtime_observability.release_evidence.trigger_reason, 'dry-run-only');
     assert.ok(Array.isArray(snapshotResponse.json.data.stage_run_recent_reports));
     assert.ok(snapshotResponse.json.data.stage_run_recent_reports.length >= 1);
     assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].requested_stage, 'D');
     assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].requested_module, 'task-management');
     assert.equal(typeof snapshotResponse.json.data.stage_run_recent_reports[0].operator_guidance.failure_reason, 'string');
     assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].runtime_observability.report_saved, true);
+    assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].runtime_observability.artifact_paths.recent_reports, 'memory/project/stage-run-history.yaml');
+    assert.equal(snapshotResponse.json.data.stage_run_recent_reports[0].runtime_observability.release_evidence.trigger_reason, 'dry-run-only');
     assert.equal(
       snapshotResponse.json.data.stage_run_recent_reports[0].recorded_at,
       snapshotResponse.json.data.stage_run_last_report.recorded_at,
     );
+    assert.equal(snapshotResponse.json.data.stage_run_quality_gate.result, 'DRY_RUN_ONLY');
+    assert.equal(snapshotResponse.json.data.stage_run_quality_gate.reported_result, '');
+    assert.equal(snapshotResponse.json.data.stage_run_quality_gate.source, 'dry-run-only');
+    assert.equal(snapshotResponse.json.data.stage_run_quality_gate.execution_mode, 'dry-run-only');
+    assert.equal(snapshotResponse.json.data.stage_run_quality_gate.ready_for_release_evidence, false);
+    assert.equal(snapshotResponse.json.data.stage_run_quality_gate.blocker, 'dry-run-only');
   } finally {
     await handle.shutdown();
   }

@@ -63,13 +63,18 @@ function compactPayloadValue(value) {
 }
 
 function buildPromptPayload({ route = {}, intakePacket = {}, basePrompt = '' } = {}) {
+  const workMode = Array.isArray(intakePacket.work_mode)
+    ? intakePacket.work_mode
+    : intakePacket.work_mode
+      ? [String(intakePacket.work_mode)]
+      : [];
   return compactPayloadValue({
     goal: String(intakePacket.goal || ''),
     context: Array.isArray(intakePacket.context) ? intakePacket.context : [],
     constraints: Array.isArray(intakePacket.constraints) ? intakePacket.constraints : [],
     done_when: Array.isArray(intakePacket.done_when) ? intakePacket.done_when : [],
     verification: Array.isArray(intakePacket.verification) ? intakePacket.verification : [],
-    work_mode: Array.isArray(intakePacket.work_mode) ? intakePacket.work_mode : [],
+    work_mode: workMode,
     current_prompt: String(basePrompt || ''),
     route: {
       mode: String(route.mode || ''),
@@ -89,6 +94,32 @@ function buildOpenAiInput({ route = {}, intakePacket = {}, basePrompt = '' } = {
   ].join(' ');
 
   const payload = buildPromptPayload({ route, intakePacket, basePrompt });
+
+  return [
+    { role: 'system', content: [{ type: 'input_text', text: instruction }] },
+    { role: 'user', content: [{ type: 'input_text', text: JSON.stringify(payload) }] },
+  ];
+}
+
+function buildWorkPacketInput({ route = {}, sessionId = '', wp = {} } = {}) {
+  const instruction = [
+    'You execute one Workflow OS MPO work packet.',
+    'Return strict JSON only.',
+    'Do not claim changed files unless they actually exist.',
+    'Use changed_files as a relative path array and keep it empty when in doubt.',
+  ].join(' ');
+
+  const payload = compactPayloadValue({
+    session_id: String(sessionId || ''),
+    wp,
+    route: {
+      mode: String(route.mode || ''),
+      route_id: String(route.route_id || ''),
+      selected_model_tier: String(route.selected_model_tier || ''),
+      reasoning_effort: String(route.reasoning_effort || ''),
+      prompt_version: String(route.prompt_version || ''),
+    },
+  });
 
   return [
     { role: 'system', content: [{ type: 'input_text', text: instruction }] },
@@ -285,11 +316,76 @@ class OpenAIResponsesProvider {
       response_id: String(response.id || ''),
     };
   }
+
+  async generateWorkPacketResult({
+    route = {},
+    sessionId = '',
+    wp = {},
+    correlationId = '',
+    requestId = '',
+  } = {}) {
+    if (!this.isConfigured()) {
+      throw providerError('PROVIDER_NOT_CONFIGURED', 'OpenAI provider requester or API key is not configured');
+    }
+
+    const model = this.resolveModel(route);
+    const timeoutMs = resolveTimeoutMs(route, this.timeoutMs);
+    const payload = {
+      model,
+      reasoning: {
+        effort: String(route.reasoning_effort || 'medium'),
+      },
+      input: buildWorkPacketInput({ route, sessionId, wp }),
+      metadata: {
+        route_id: String(route.route_id || ''),
+        prompt_version: String(route.prompt_version || ''),
+        mode: String(route.mode || ''),
+        request_id: requestId,
+        correlation_id: correlationId,
+      },
+    };
+
+    const startedAt = Date.now();
+    const response = await this.performRequest({
+      payload,
+      timeoutMs,
+      correlationId,
+      requestId,
+    });
+    const outputText = extractOutputText(response);
+    if (!outputText) {
+      throw providerError('PROVIDER_SCHEMA_MISMATCH', 'OpenAI provider returned no JSON payload for MPO work packet');
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(outputText);
+    } catch (error) {
+      throw providerError('PROVIDER_SCHEMA_MISMATCH', `OpenAI provider returned invalid JSON: ${error.message}`);
+    }
+
+    const usage = normalizeUsage(response, outputText, wp);
+    return {
+      ...parsed,
+      provider: {
+        provider_id: this.providerId,
+        route_id: String(route.route_id || ''),
+        selected_model_tier: String(route.selected_model_tier || 'standard'),
+        reasoning_effort: String(route.reasoning_effort || 'medium'),
+        fallback_applied: false,
+        model,
+      },
+      latency_ms: Date.now() - startedAt,
+      input_tokens: usage.input_tokens,
+      output_tokens: usage.output_tokens,
+      cache_read_input_tokens: usage.cache_read_input_tokens,
+    };
+  }
 }
 
 module.exports = {
   OpenAIResponsesProvider,
   buildOpenAiInput,
+  buildWorkPacketInput,
   buildPromptPayload,
   extractOutputText,
 };

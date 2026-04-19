@@ -215,7 +215,16 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.send_prompt.reason, 'string');
     assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.rollback.enabled, 'boolean');
     assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.rollback.reason, 'string');
+    assert.equal(controlRuntime.body.runtime_state.user_controls.control_matrix.log_visibility.enabled, true);
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_matrix.log_visibility.reason, 'string');
     assert.equal(controlRuntime.body.runtime_state.user_controls.terminal_status_visible, true);
+    assert.equal(controlRuntime.body.runtime_state.user_controls.log_visibility, true);
+    assert.equal(typeof controlRuntime.body.runtime_state.user_controls.control_readiness.summary, 'string');
+    assert.ok(Array.isArray(controlRuntime.body.runtime_state.user_controls.control_readiness.items));
+    assert.equal(
+      controlRuntime.body.runtime_state.user_controls.control_readiness.items.some((item) => item.id === 'log_visibility' && item.enabled === true),
+      true,
+    );
     assert.ok(controlRuntime.body.runtime_state.operator_cockpit);
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.git.branch, 'string');
     assert.equal(typeof controlRuntime.body.runtime_state.operator_cockpit.git.dirty, 'boolean');
@@ -244,6 +253,11 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.equal(snapshotResponse.status, 200);
     const snapshotBody = await snapshotResponse.json();
     assert.equal(snapshotBody.ok, true);
+    assert.equal(snapshotBody.data.stage_run_artifacts.last_report, 'memory/project/stage-run-latest.yaml');
+    assert.equal(snapshotBody.data.stage_run_artifacts.recent_reports, 'memory/project/stage-run-history.yaml');
+    assert.equal(typeof snapshotBody.data.stage_run_contract.drift_status, 'string');
+    assert.equal(typeof snapshotBody.data.stage_run_contract.latest_history_head_match, 'boolean');
+    assert.ok(Array.isArray(snapshotBody.data.stage_run_contract.issues));
     assert.ok(Array.isArray(snapshotBody.data.stage_run_recent_reports));
 
     const promptRecommendation = await requestJson(runtime.url, '/api/automation/optimize-prompt');

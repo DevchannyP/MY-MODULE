@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const {
   OpenAIResponsesProvider,
   buildOpenAiInput,
+  buildWorkPacketInput,
   buildPromptPayload,
   extractOutputText,
 } = require('../../infrastructure/ai/OpenAIResponsesProvider');
@@ -43,6 +44,41 @@ test('[openai responses provider] buildOpenAiInput compacts empty fields to redu
       mode: 'Build',
     },
   });
+});
+
+test('[openai responses provider] buildWorkPacketInput preserves route/session metadata and emits compact JSON', () => {
+  const input = buildWorkPacketInput({
+    route: {
+      mode: 'Build',
+      route_id: 'mini-build',
+      selected_model_tier: 'mini',
+      reasoning_effort: 'medium',
+      prompt_version: '0.2.0',
+    },
+    sessionId: 'mpo-session-test',
+    wp: {
+      id: 'WP-TEST-001',
+      title: 'Validate provider execution',
+      allowed_paths: ['src/server/routes/**'],
+      verification_bundle: {
+        required: [
+          {
+            command: 'npm test',
+            pass_criteria: 'exit code 0',
+          },
+        ],
+      },
+    },
+  });
+
+  const userPayloadText = input[1].content[0].text;
+  const userPayload = JSON.parse(userPayloadText);
+
+  assert.doesNotMatch(userPayloadText, /\n/);
+  assert.equal(userPayload.session_id, 'mpo-session-test');
+  assert.equal(userPayload.wp.id, 'WP-TEST-001');
+  assert.equal(userPayload.route.route_id, 'mini-build');
+  assert.equal(userPayload.route.prompt_version, '0.2.0');
 });
 
 // ── buildPromptPayload ────────────────────────────────────────────────────────
@@ -283,4 +319,79 @@ test('[openai responses provider] generatePromptRecommendation returns correct r
   assert.equal(result.stop_reason, 'end_turn');
   assert.equal(result.fallback_applied, false);
   assert.equal(result.retry_count, 0);
+});
+
+// ── generateWorkPacketResult ────────────────────────────────────────────────
+
+test('[openai responses provider] generateWorkPacketResult parses strict JSON payload', async () => {
+  let capturedPayload = null;
+  const provider = new OpenAIResponsesProvider({
+    request: async ({ payload }) => {
+      capturedPayload = payload;
+      return {
+        output_text: JSON.stringify({
+          session_id: 'mpo-session-test',
+          wp_id: 'WP-TEST-001',
+          changed_files: ['src/server/routes/mpo.js'],
+          summary: 'provider executed packet',
+        }),
+        usage: {
+          input_tokens: 24,
+          output_tokens: 16,
+        },
+      };
+    },
+    modelByTier: { standard: 'gpt-test', frontier: 'gpt-f', mini: 'gpt-m' },
+  });
+
+  const result = await provider.generateWorkPacketResult({
+    route: {
+      mode: 'Build',
+      route_id: 'standard-build',
+      selected_model_tier: 'standard',
+      reasoning_effort: 'medium',
+      prompt_version: '0.2.0',
+    },
+    sessionId: 'mpo-session-test',
+    wp: {
+      id: 'WP-TEST-001',
+      title: 'provider execution',
+      allowed_paths: ['src/server/routes/**'],
+    },
+    correlationId: 'corr-work-packet-1',
+    requestId: 'req-work-packet-1',
+  });
+
+  const userPayloadText = capturedPayload.input[1].content[0].text;
+  const userPayload = JSON.parse(userPayloadText);
+
+  assert.equal(userPayload.session_id, 'mpo-session-test');
+  assert.equal(userPayload.wp.id, 'WP-TEST-001');
+  assert.equal(result.session_id, 'mpo-session-test');
+  assert.equal(result.wp_id, 'WP-TEST-001');
+  assert.deepEqual(result.changed_files, ['src/server/routes/mpo.js']);
+  assert.equal(result.provider.provider_id, 'openai-responses');
+  assert.equal(result.provider.model, 'gpt-test');
+  assert.equal(result.input_tokens, 24);
+  assert.equal(result.output_tokens, 16);
+});
+
+test('[openai responses provider] generateWorkPacketResult throws PROVIDER_SCHEMA_MISMATCH on invalid JSON', async () => {
+  const provider = new OpenAIResponsesProvider({
+    request: async () => ({
+      output_text: '{ invalid-json',
+    }),
+  });
+
+  await assert.rejects(
+    () => provider.generateWorkPacketResult({
+      route: { mode: 'Build', route_id: 'standard-build', selected_model_tier: 'standard' },
+      sessionId: 'mpo-session-test',
+      wp: { id: 'WP-TEST-001' },
+    }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_SCHEMA_MISMATCH');
+      return true;
+    },
+  );
 });

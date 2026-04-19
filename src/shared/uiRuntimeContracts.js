@@ -262,10 +262,62 @@ function buildControlMatrix({
       enabled: true,
       reason: '현재 터미널, worker, 최근 실행 상태를 화면에 표시합니다.',
     },
+    log_visibility: {
+      enabled: true,
+      reason: '실행 이력, 실패 위치, stage 추적값을 화면에서 확인할 수 있습니다.',
+    },
     failure_reason_visible: {
       enabled: failureReasonVisible === true,
       reason: failureReasonVisible === true ? '최근 실패 원인을 바로 확인할 수 있습니다.' : '최근 실패가 없어 표시할 실패 원인이 없습니다.',
     },
+  };
+}
+
+function buildControlReadiness(controlMatrix) {
+  const matrix = controlMatrix && typeof controlMatrix === 'object' ? controlMatrix : {};
+  const controlSpecs = [
+    { id: 'send_prompt', label: '전송', mode: 'action' },
+    { id: 'auto_send_toggle', label: '자동전송', mode: 'action' },
+    { id: 'stop', label: '중지', mode: 'action' },
+    { id: 'retry_last_prompt', label: '재시도', mode: 'action' },
+    { id: 'rollback', label: '롤백', mode: 'action' },
+    { id: 'terminal_status_visible', label: '터미널 상태', mode: 'visibility' },
+    { id: 'log_visibility', label: '로그 확인', mode: 'visibility' },
+    { id: 'failure_reason_visible', label: '실패 원인', mode: 'visibility' },
+  ];
+
+  const items = controlSpecs.map((spec) => {
+    const enabled = matrix[spec.id]?.enabled === true;
+    const statusLabel = spec.mode === 'action'
+      ? (enabled ? '가능' : '대기')
+      : (enabled ? '표시 중' : '숨김');
+    const tone = enabled
+      ? (spec.mode === 'action' ? 'ready' : 'info')
+      : 'warn';
+
+    return {
+      id: spec.id,
+      label: spec.label,
+      mode: spec.mode,
+      enabled,
+      status_label: statusLabel,
+      tone,
+      reason: String(matrix[spec.id]?.reason || ''),
+    };
+  });
+
+  const actionable = items.filter((item) => item.mode === 'action');
+  const visibility = items.filter((item) => item.mode === 'visibility');
+  const actionableReady = actionable.filter((item) => item.enabled).length;
+  const visibilityReady = visibility.filter((item) => item.enabled).length;
+
+  return {
+    summary: `실행 제어 ${actionableReady}/${actionable.length} 가능 · 가시화 ${visibilityReady}/${visibility.length} 확보`,
+    actionable_ready_count: actionableReady,
+    actionable_total_count: actionable.length,
+    visibility_ready_count: visibilityReady,
+    visibility_total_count: visibility.length,
+    items,
   };
 }
 
@@ -293,18 +345,22 @@ function buildExecutionGuidance({
   lastActivity,
   nextAction,
 } = {}) {
-  const controlLabels = {
-    send_prompt: '프롬프트 전송',
-    auto_send_toggle: '자동 전송',
-    stop: '중지',
-    retry_last_prompt: '재시도',
-    rollback: '롤백',
-  };
-  const controls = Object.entries(controlLabels).map(([id, label]) => ({
-    id,
-    label,
-    enabled: controlMatrix?.[id]?.enabled === true,
-    reason: String(controlMatrix?.[id]?.reason || ''),
+  const controlSpecs = [
+    { id: 'send_prompt', label: '프롬프트 전송', mode: 'action' },
+    { id: 'auto_send_toggle', label: '자동 전송', mode: 'action' },
+    { id: 'stop', label: '중지', mode: 'action' },
+    { id: 'retry_last_prompt', label: '재시도', mode: 'action' },
+    { id: 'rollback', label: '롤백', mode: 'action' },
+    { id: 'terminal_status_visible', label: '터미널 상태', mode: 'visibility' },
+    { id: 'log_visibility', label: '로그 확인', mode: 'visibility' },
+    { id: 'failure_reason_visible', label: '실패 원인', mode: 'visibility' },
+  ];
+  const controls = controlSpecs.map((item) => ({
+    id: item.id,
+    label: item.label,
+    enabled: controlMatrix?.[item.id]?.enabled === true,
+    reason: String(controlMatrix?.[item.id]?.reason || ''),
+    mode: item.mode,
   }));
   const failureActivity = lastError || (lastActivity?.error ? lastActivity : null);
   const failureSummary = failureActivity?.error
@@ -314,7 +370,12 @@ function buildExecutionGuidance({
   return {
     controls,
     control_summary: controls
-      .map((item) => `${item.label}: ${item.enabled ? '가능' : '대기'} / ${item.reason || '사유 없음'}`)
+      .map((item) => {
+        const statusLabel = item.mode === 'action'
+          ? (item.enabled ? '가능' : '대기')
+          : (item.enabled ? '표시 중' : '숨김');
+        return `${item.label}: ${statusLabel} / ${item.reason || '사유 없음'}`;
+      })
       .join('\n'),
     failure_summary: failureSummary,
     rollback_status: `롤백: ${controlMatrix?.rollback?.enabled === true ? '가능' : '대기'} / ${String(controlMatrix?.rollback?.reason || '사유 없음')}`,
@@ -372,6 +433,7 @@ function buildControlCenterRuntimeState({
     rollbackEnabled,
     failureReasonVisible,
   });
+  const controlReadiness = buildControlReadiness(controlMatrix);
   const nextAction = deriveExecutionNextAction({
     sessionCount: sessions.length,
     schedulerRunning: schedulerStatus.running === true,
@@ -447,8 +509,10 @@ function buildControlCenterRuntimeState({
       retry_last_prompt: Boolean(lastPromptText.trim()),
       rollback: rollbackEnabled,
       terminal_status_visible: true,
+      log_visibility: true,
       failure_reason_visible: failureReasonVisible,
       control_matrix: controlMatrix,
+      control_readiness: controlReadiness,
     },
     operator_cockpit: normalizeOperatorCockpit(operatorCockpit),
     recent_operator_action: normalizeRecentOperatorAction(recentOperatorAction),

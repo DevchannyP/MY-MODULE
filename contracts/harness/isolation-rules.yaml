@@ -1,0 +1,123 @@
+isolation_rules:
+  default:
+    allowed_write:
+      - "src/**"
+      - "scripts/**"
+      - "contracts/**"
+      - "requirements/**"
+      - "memory/**"
+      - "artifacts/**"
+      - "docs/**"
+      - "worklog/**"
+      - "src/tests/**"
+    read_only:
+      - "domains/**"
+      - "master-shell/**"
+    forbidden:
+      - "node_modules/**"
+      - ".git/**"
+
+  docs:
+    allowed_write:
+      - "docs/**"
+      - "artifacts/**"
+      - "worklog/**"
+    read_only:
+      - "contracts/**"
+      - "requirements/**"
+      - "memory/**"
+    forbidden:
+      - "domains/**"
+      - "src/**"
+      - "scripts/**"
+
+  governance:
+    allowed_write:
+      - "contracts/**"
+      - "requirements/**"
+      - "docs/**"
+      - "scripts/**"
+      - "src/tests/**"
+    read_only:
+      - "src/**"
+      - "domains/**"
+      - "memory/**"
+    forbidden:
+      - "node_modules/**"
+      - ".git/**"
+
+  mpo:
+    allowed_write:
+      - "contracts/harness/**"
+      - "scripts/**"
+      - "src/infrastructure/**"
+      - "src/server/routes/**"
+      - "artifacts/**"
+      - "src/tests/**"
+      - "docs/**"
+      - "memory/**"
+      - "worklog/**"
+    read_only:
+      - "requirements/**"
+      - "src/server/createServer.js"
+      - "src/shared/**"
+    forbidden:
+      - "domains/billing/**"
+      - "domains/productivity/**"
+      - "domains/video/**"
+      - "node_modules/**"
+      - ".git/**"
+
+  video:
+    allowed_write:
+      - "domains/video/**"
+      - "src/tests/**"
+    read_only:
+      - "contracts/**"
+      - "requirements/**"
+      - "memory/stageA/video.yaml"
+    forbidden:
+      - "domains/billing/**"
+      - "domains/productivity/**"
+      - "src/server/**"
+
+  billing:
+    allowed_write:
+      - "domains/billing/**"
+      - "src/tests/**"
+    read_only:
+      - "contracts/**"
+      - "requirements/**"
+      - "memory/stageA/billing.invoice.yaml"
+      - "memory/stageA/billing.payment.yaml"
+      - "memory/stageA/billing.exception.yaml"
+    forbidden:
+      - "domains/video/**"
+      - "domains/productivity/**"
+      - "src/server/**"
+
+  productivity:
+    allowed_write:
+      - "domains/productivity/**"
+      - "src/tests/**"
+    read_only:
+      - "contracts/**"
+      - "requirements/**"
+      - "memory/stageA/task-management.yaml"
+    forbidden:
+      - "domains/video/**"
+      - "domains/billing/**"
+      - "src/server/**"
+
+  server:
+    allowed_write:
+      - "src/server/**"
+      - "src/shared/**"
+      - "src/tests/**"
+    read_only:
+      - "contracts/**"
+      - "requirements/**"
+    forbidden:
+      - "domains/**"
+      - "node_modules/**"
+      - ".git/**"

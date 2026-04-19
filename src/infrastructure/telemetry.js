@@ -243,6 +243,12 @@ const metrics = {
   stageRunReportSaveFailuresTotal: meter.createCounter('stage_run_report_save_failures_total', {
     description: 'Stage run report persistence failures',
   }),
+  stageRunReleaseEvidenceGeneratedTotal: meter.createCounter('stage_run_release_evidence_generated_total', {
+    description: 'Release evidence auto-generated after successful execute stage runs',
+  }),
+  stageRunReleaseEvidenceFailuresTotal: meter.createCounter('stage_run_release_evidence_failures_total', {
+    description: 'Release evidence auto-generation failures after execute stage runs',
+  }),
   controlCenterOperationDurationMs: meter.createHistogram('control_center_operation_duration_ms', {
     description: 'Control center bridge operation duration',
     unit: 'ms',

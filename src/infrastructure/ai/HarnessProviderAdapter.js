@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { ContractValidator } = require('../mpo/ContractValidator');
 
 const {
   tracer,
@@ -146,11 +147,13 @@ class HarnessProviderAdapter {
     nullProvider = new NullHarnessProvider(),
     openAiProvider = new OpenAIResponsesProvider(),
     evalArtifactPath = DEFAULT_EVAL_ARTIFACT_PATH,
+    root = path.resolve(__dirname, '../../..'),
   } = {}) {
     this.preferredProvider = preferredProvider;
     this.nullProvider = nullProvider;
     this.openAiProvider = openAiProvider;
     this.evalArtifactPath = evalArtifactPath;
+    this.contractValidator = new ContractValidator({ root });
   }
 
   resolveProviderChain() {
@@ -159,6 +162,25 @@ class HarnessProviderAdapter {
       return [this.openAiProvider, this.nullProvider];
     }
     return [this.nullProvider];
+  }
+
+  resolveProviderResult(route = {}) {
+    const chain = this.resolveProviderChain();
+    const primary = chain[0] || this.nullProvider;
+    return {
+      provider_id: String(primary?.providerId || primary?.provider_id || 'null-harness-provider'),
+      route_id: String(route.route_id || ''),
+      selected_model_tier: String(route.selected_model_tier || 'standard'),
+      reasoning_effort: String(route.reasoning_effort || 'medium'),
+      fallback_applied: false,
+      model: String(route.selected_model_tier || 'standard'),
+    };
+  }
+
+  ensureOutputSchema(report) {
+    this.contractValidator.validateOutput('contracts/harness/output.schema.json', report, 'WPExecutionResult');
+    this.contractValidator.validateOutput('contracts/harness/completion-report.schema.json', report, 'CompletionReport');
+    return report;
   }
 
   async generatePromptRecommendation({
@@ -259,6 +281,74 @@ class HarnessProviderAdapter {
     }
 
     throw lastError || Object.assign(new Error('No harness provider could satisfy the request'), {
+      code: 'PROVIDER_UNAVAILABLE',
+    });
+  }
+
+  async executeWorkPacket({
+    route = {},
+    sessionId = '',
+    wp = {},
+    correlationId = '',
+    requestId = '',
+  } = {}) {
+    const providerChain = this.resolveProviderChain();
+    let lastError = null;
+    let fallbackApplied = false;
+
+    for (let index = 0; index < providerChain.length; index += 1) {
+      const provider = providerChain[index];
+      const providerId = String(provider?.providerId || provider?.provider_id || `provider-${index}`);
+      try {
+        if (typeof provider.generateWorkPacketResult !== 'function') {
+          throw Object.assign(new Error(`Provider ${providerId} does not support work packet execution`), {
+            code: 'PROVIDER_UNAVAILABLE',
+          });
+        }
+        const result = await provider.generateWorkPacketResult({
+          route,
+          sessionId,
+          wp,
+          correlationId,
+          requestId,
+        });
+        const providerMeta = result.provider || this.resolveProviderResult(route);
+        const normalized = {
+          ...result,
+          session_id: String(result.session_id || sessionId),
+          wp_id: String(result.wp_id || wp.id || ''),
+          changed_files: Array.isArray(result.changed_files) ? result.changed_files : [],
+          provider: {
+            ...providerMeta,
+            provider_id: String(providerMeta.provider_id || providerId),
+            route_id: String(providerMeta.route_id || route.route_id || ''),
+            selected_model_tier: String(providerMeta.selected_model_tier || route.selected_model_tier || 'standard'),
+            fallback_applied: fallbackApplied || providerMeta.fallback_applied === true,
+          },
+        };
+        appendEvalArtifact(this.evalArtifactPath, {
+          generated_at_utc: new Date().toISOString(),
+          provider_id: normalized.provider.provider_id,
+          route_id: normalized.provider.route_id,
+          selected_model_tier: normalized.provider.selected_model_tier,
+          session_id: normalized.session_id,
+          wp_id: normalized.wp_id,
+          schema_valid: true,
+          fallback_applied: normalized.provider.fallback_applied,
+          latency_ms: Number(result.latency_ms || 0),
+        });
+        return normalized;
+      } catch (error) {
+        lastError = error;
+        if (index < providerChain.length - 1 && shouldFallback(error)) {
+          fallbackApplied = true;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw lastError || Object.assign(new Error('No harness provider could execute the work packet'), {
       code: 'PROVIDER_UNAVAILABLE',
     });
   }

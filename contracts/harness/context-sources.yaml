@@ -1,0 +1,29 @@
+classification:
+  canonical:
+    - "memory/current-state.yaml"
+    - "memory/current-wp.yaml"
+    - "memory/L0-hot/next-actions.yaml"
+
+  domain_canonical:
+    - "requirements/[domain].yaml"
+    - "memory/stageA/[domain].yaml"
+    - "domains/[domain]/contract/capability.yaml"
+    - "domains/[domain]/contracts/capability.yaml"
+
+  reference:
+    - "domains/[domain]/src/**"
+    - "domains/[domain]/tests/**"
+    - "contracts/**"
+    - "requirements/validation-profiles.yaml"
+    - "requirements/constraints.yaml"
+
+  generated:
+    - "artifacts/**"
+    - "worklog/**"
+    - "generated/**"
+    - "logs/**"
+
+  forbidden:
+    - "node_modules/**"
+    - ".git/**"
+    - "**/*.min.js"

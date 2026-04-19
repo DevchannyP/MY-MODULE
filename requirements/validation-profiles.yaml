@@ -11,17 +11,20 @@ aliases:
   bugfix: "domain"
   regression: "domain"
   feature: "domain"
+  refactor: "arch"
   ui: "shell"
   frontend: "shell"
   contract: "arch"
   schema: "arch"
   docs: "meta"
   documentation: "meta"
+  ops: "executor"
   ci: "governance"
   release: "governance"
   deployment: "governance"
   runtime: "executor"
   orchestration: "executor"
+  terminal: "executor"
 
 profiles:
   planning:
@@ -81,6 +84,17 @@ profiles:
       - "npm run lint"
       - "npm run test:e2e-smoke"
       - "npm run wp:reconcile"
+
+  terminal:
+    description: "MPO 실행/검증처럼 명령 번들과 증거를 직접 다루는 작업"
+    focus_tags: ["execution", "verification", "truthfulness"]
+    success_criteria:
+      - "명령 결과와 completion report가 일치한다"
+      - "evidence path와 memory reconcile이 실제 파일로 남는다"
+    commands:
+      - "npm run lint"
+      - "npm run project:status"
+      - "npm run validate:contracts"
 
   governance:
     description: "CI, release, branch protection, deployment governance가 핵심인 작업"

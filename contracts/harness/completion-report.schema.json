@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/contracts/harness/completion-report.schema.json",
+  "title": "Workflow OS MPO Completion Report Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "session_id",
+    "wp_id",
+    "verification_status",
+    "evidence_status",
+    "summary",
+    "changed_files",
+    "evidence",
+    "provider",
+    "token_usage",
+    "attempt"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "wp_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prompt_version": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string"
+    },
+    "packet_type": {
+      "type": "string"
+    },
+    "risk_level": {
+      "type": "string"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "PARTIAL_PASS",
+        "FAIL",
+        "PLANNED",
+        "NOT_RUN"
+      ]
+    },
+    "evidence_status": {
+      "type": "string",
+      "enum": [
+        "observed",
+        "mixed",
+        "planned",
+        "not_observed"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "analysis": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "change_points": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "tests_run": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "tests_planned": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "verification": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "rollback_plan": {
+      "type": "string"
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "path"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id",
+        "route_id",
+        "selected_model_tier",
+        "fallback_applied"
+      ],
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "route_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selected_model_tier": {
+          "type": "string",
+          "enum": [
+            "frontier",
+            "standard",
+            "mini"
+          ]
+        },
+        "reasoning_effort": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "fallback_applied": {
+          "type": "boolean"
+        }
+      }
+    },
+    "token_usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "budget",
+        "used"
+      ],
+      "properties": {
+        "budget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warning_threshold": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "boundary": {
+      "type": "object"
+    }
+  }
+}

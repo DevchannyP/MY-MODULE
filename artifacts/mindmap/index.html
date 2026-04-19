@@ -1545,7 +1545,7 @@ body { font-family: var(--font-ui); color: var(--text); background: var(--bg); d
   </div>
 </div>
 
-<script id="mindmap-data" type="application/json">{"nodes":[{"id":"root","type":"root","label":"Workflow OS","x":800,"y":500,"fixed":true},{"id":"system","type":"domain","label":"시스템 운영","x":800,"y":320,"healthScore":95,"trend":"→","ejectable":false,"stageStatus":"E/PASS","description":"Workflow OS 운영 포털 — 헬스 모니터링, 피처 플래그, 감사 로그, 품질 게이트, 라이프사이클, 롤백 콘솔","flagActive":false},{"id":"system-A","type":"stage","label":"A","status":"PASS","parentId":"system","x":687.4166975080229,"y":255},{"id":"system-B","type":"stage","label":"B","status":"PASS","parentId":"system","x":735,"y":207.416697508023},{"id":"system-C","type":"stage","label":"C","status":"PASS","parentId":"system","x":800,"y":190},{"id":"system-D","type":"stage","label":"D","status":"PASS","parentId":"system","x":865,"y":207.416697508023},{"id":"system-E","type":"stage","label":"E","status":"PASS","parentId":"system","x":912.583302491977,"y":254.99999999999994},{"id":"flag-system_api.enabled","type":"flag","label":"system_api.enabled","value":false,"parentId":"system","group":"system","x":920.208152801713,"y":199.7918471982869},{"id":"flag-system_api.sse_stream.enabled","type":"flag","label":"system_api.sse_stream.enabled","value":false,"parentId":"system","group":"system","x":964.2073904691416,"y":276.00076233257147},{"id":"flag-system_api.flag_toggle_ui.enabled","type":"flag","label":"system_api.flag_toggle_ui.enabled","value":false,"parentId":"system","group":"system","x":964.2073904691416,"y":363.9992376674284},{"id":"flag-system_api.rollback_ui.enabled","type":"flag","label":"system_api.rollback_ui.enabled","value":false,"parentId":"system","group":"system","x":920.2081528017131,"y":440.208152801713},{"id":"billing","type":"domain","label":"정산관리","x":980,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 도메인 영역","flagActive":false},{"id":"billing-A","type":"stage","label":"A","status":"PASS","parentId":"billing","x":1045,"y":387.416697508023},{"id":"billing-B","type":"stage","label":"B","status":"PASS","parentId":"billing","x":1092.583302491977,"y":435},{"id":"billing-C","type":"stage","label":"C","status":"PASS","parentId":"billing","x":1110,"y":500},{"id":"billing-D","type":"stage","label":"D","status":"PASS","parentId":"billing","x":1092.583302491977,"y":565},{"id":"billing-E","type":"stage","label":"E","status":"PASS","parentId":"billing","x":1045,"y":612.5833024919771},{"id":"flag-billing.enabled","type":"flag","label":"billing.enabled","value":false,"parentId":"billing","group":"billing","x":1100.2081528017131,"y":620.208152801713},{"id":"flag-billing.invoice.enabled","type":"flag","label":"billing.invoice.enabled","value":false,"parentId":"billing","group":"billing","x":1023.9992376674286,"y":664.2073904691416},{"id":"flag-billing.payment.enabled","type":"flag","label":"billing.payment.enabled","value":false,"parentId":"billing","group":"billing","x":936.0007623325715,"y":664.2073904691416},{"id":"flag-billing.exception.enabled","type":"flag","label":"billing.exception.enabled","value":false,"parentId":"billing","group":"billing","x":859.791847198287,"y":620.2081528017131},{"id":"productivity","type":"domain","label":"생산성 관리","x":800,"y":680,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역","flagActive":false},{"id":"productivity-A","type":"stage","label":"A","status":"PASS","parentId":"productivity","x":912.5833024919771,"y":745},{"id":"productivity-B","type":"stage","label":"B","status":"PASS","parentId":"productivity","x":865,"y":792.5833024919771},{"id":"productivity-C","type":"stage","label":"C","status":"PASS","parentId":"productivity","x":800,"y":810},{"id":"productivity-D","type":"stage","label":"D","status":"PASS","parentId":"productivity","x":735,"y":792.5833024919771},{"id":"productivity-E","type":"stage","label":"E","status":"PASS","parentId":"productivity","x":687.4166975080229,"y":745},{"id":"flag-enable_task_management","type":"flag","label":"enable_task_management","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":723.9992376674286},{"id":"flag-enable_bulk_assign","type":"flag","label":"enable_bulk_assign","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":636.0007623325715},{"id":"video","type":"domain","label":"콘텐츠 관리","x":620,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역.","flagActive":false},{"id":"video-A","type":"stage","label":"A","status":"PASS","parentId":"video","x":555,"y":612.5833024919771},{"id":"video-B","type":"stage","label":"B","status":"PASS","parentId":"video","x":507.41669750802293,"y":565},{"id":"video-C","type":"stage","label":"C","status":"PASS","parentId":"video","x":490,"y":500},{"id":"video-D","type":"stage","label":"D","status":"PASS","parentId":"video","x":507.41669750802293,"y":435.00000000000006},{"id":"video-E","type":"stage","label":"E","status":"PASS","parentId":"video","x":555,"y":387.416697508023},{"id":"flag-video.enabled","type":"flag","label":"video.enabled","value":false,"parentId":"video","group":"video","x":499.79184719828686,"y":379.7918471982869},{"id":"flag-video.upload.enabled","type":"flag","label":"video.upload.enabled","value":false,"parentId":"video","group":"video","x":576.0007623325715,"y":335.7926095308584},{"id":"flag-video.transcode.enabled","type":"flag","label":"video.transcode.enabled","value":false,"parentId":"video","group":"video","x":663.9992376674285,"y":335.7926095308584},{"id":"flag-video.admin.enabled","type":"flag","label":"video.admin.enabled","value":false,"parentId":"video","group":"video","x":740.208152801713,"y":379.79184719828686},{"id":"contract-system-api","type":"contract","label":"System API","path":"contracts/system-api/openapi.yaml","x":650,"y":220},{"id":"contract-ui-shell","type":"contract","label":"UI Shell","path":"contracts/ui-shell/ui-contract.yaml","x":950,"y":220},{"id":"control-intake","type":"control","label":"입력 이해","hiddenInGraph":true,"status":"in_progress","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","controlKind":"control"},{"id":"control-planning","type":"control","label":"계획 수립","hiddenInGraph":true,"status":"pending","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","controlKind":"control"},{"id":"control-execution","type":"control","label":"실행","hiddenInGraph":true,"status":"pending","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","controlKind":"control"},{"id":"control-validation","type":"control","label":"검증","hiddenInGraph":true,"status":"pending","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","controlKind":"control"},{"id":"control-complete","type":"control","label":"완료","hiddenInGraph":true,"status":"pending","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","controlKind":"control"},{"id":"control-module","type":"control","label":"모듈 생성","hiddenInGraph":true,"status":"pending","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","controlKind":"module"}],"edges":[{"id":"root-system","source":"root","target":"system","type":"dependency"},{"id":"system-stage-A","source":"system","target":"system-A","type":"lifecycle"},{"id":"system-stage-B","source":"system","target":"system-B","type":"lifecycle"},{"id":"system-stage-C","source":"system","target":"system-C","type":"lifecycle"},{"id":"system-stage-D","source":"system","target":"system-D","type":"lifecycle"},{"id":"system-stage-E","source":"system","target":"system-E","type":"lifecycle"},{"id":"system-flag-system_api.enabled","source":"system","target":"flag-system_api.enabled","type":"flag"},{"id":"system-flag-system_api.sse_stream.enabled","source":"system","target":"flag-system_api.sse_stream.enabled","type":"flag"},{"id":"system-flag-system_api.flag_toggle_ui.enabled","source":"system","target":"flag-system_api.flag_toggle_ui.enabled","type":"flag"},{"id":"system-flag-system_api.rollback_ui.enabled","source":"system","target":"flag-system_api.rollback_ui.enabled","type":"flag"},{"id":"root-billing","source":"root","target":"billing","type":"dependency"},{"id":"billing-stage-A","source":"billing","target":"billing-A","type":"lifecycle"},{"id":"billing-stage-B","source":"billing","target":"billing-B","type":"lifecycle"},{"id":"billing-stage-C","source":"billing","target":"billing-C","type":"lifecycle"},{"id":"billing-stage-D","source":"billing","target":"billing-D","type":"lifecycle"},{"id":"billing-stage-E","source":"billing","target":"billing-E","type":"lifecycle"},{"id":"billing-flag-billing.enabled","source":"billing","target":"flag-billing.enabled","type":"flag"},{"id":"billing-flag-billing.invoice.enabled","source":"billing","target":"flag-billing.invoice.enabled","type":"flag"},{"id":"billing-flag-billing.payment.enabled","source":"billing","target":"flag-billing.payment.enabled","type":"flag"},{"id":"billing-flag-billing.exception.enabled","source":"billing","target":"flag-billing.exception.enabled","type":"flag"},{"id":"root-productivity","source":"root","target":"productivity","type":"dependency"},{"id":"productivity-stage-A","source":"productivity","target":"productivity-A","type":"lifecycle"},{"id":"productivity-stage-B","source":"productivity","target":"productivity-B","type":"lifecycle"},{"id":"productivity-stage-C","source":"productivity","target":"productivity-C","type":"lifecycle"},{"id":"productivity-stage-D","source":"productivity","target":"productivity-D","type":"lifecycle"},{"id":"productivity-stage-E","source":"productivity","target":"productivity-E","type":"lifecycle"},{"id":"productivity-flag-enable_task_management","source":"productivity","target":"flag-enable_task_management","type":"flag"},{"id":"productivity-flag-enable_bulk_assign","source":"productivity","target":"flag-enable_bulk_assign","type":"flag"},{"id":"root-video","source":"root","target":"video","type":"dependency"},{"id":"video-stage-A","source":"video","target":"video-A","type":"lifecycle"},{"id":"video-stage-B","source":"video","target":"video-B","type":"lifecycle"},{"id":"video-stage-C","source":"video","target":"video-C","type":"lifecycle"},{"id":"video-stage-D","source":"video","target":"video-D","type":"lifecycle"},{"id":"video-stage-E","source":"video","target":"video-E","type":"lifecycle"},{"id":"video-flag-video.enabled","source":"video","target":"flag-video.enabled","type":"flag"},{"id":"video-flag-video.upload.enabled","source":"video","target":"flag-video.upload.enabled","type":"flag"},{"id":"video-flag-video.transcode.enabled","source":"video","target":"flag-video.transcode.enabled","type":"flag"},{"id":"video-flag-video.admin.enabled","source":"video","target":"flag-video.admin.enabled","type":"flag"},{"id":"system-contract-api","source":"system","target":"contract-system-api","type":"contract"},{"id":"system-contract-ui","source":"system","target":"contract-ui-shell","type":"contract"}],"meta":{"generatedAt":"2026-04-19T02:01:09.315Z","flagStates":{"system_api.enabled":false,"system_api.sse_stream.enabled":false,"system_api.flag_toggle_ui.enabled":false,"system_api.rollback_ui.enabled":false},"apiBase":"/api/v1","sseUrl":"/api/v1/system/events","planningApiBase":"/api/planning-studio","report":{"execution_mode":"read-only-status","repository":"my-module","requirements_stage":"D","current_wp":"SPIRAL-19-COMPLETE","current_wp_goal":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","current_wp_type":"governance","current_wp_stage":"complete","current_wp_context_budget":{"tier_reads":0,"context_reads":0,"tier_files":0,"context_files":0,"estimated_tokens":0},"current_wp_scope_boundary":{"scope_in":7,"scope_out":1,"protects_core":true},"promotion_pipeline":{"artifact_dir":"artifacts/promotion-pipeline/latest","available":true,"promotion_ready":true,"locked_tokens":10431,"locked_files":9,"drift_status":"clean","changed_files":0,"missing_files":0},"essential_improvements":[{"id":"master-planning-truth-surface","tracked":true,"ready":true,"detail":"planner artifact + intake canvas + benchmark-backed planning triad"},{"id":"minimum-context-routing-performance","tracked":true,"ready":true,"detail":"promotion pipeline + context lock + drift awareness"},{"id":"guided-learning-live-ops-cockpit","tracked":true,"ready":true,"detail":"timeline feed + replay lenses + observability surfaces"}],"last_completed_wp":"WP-S19-002","next_wp":"NONE","legacy_last_completed_stage":"D(4차)","stage_summary":[{"stage":"A","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-a.md","recommended_commands":["npm run validate:requirements"]},{"stage":"B","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-b.md","recommended_commands":["npm run validate:requirements"]},{"stage":"C","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-c.md","recommended_commands":["npm run validate:requirements","npm run validate:composition"]},{"stage":"D","route_status":"ready","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"]},{"stage":"E","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-e.md","recommended_commands":["npm run validate:requirements","npm run test:e2e-smoke"]}],"capabilities":[{"id":"requirements-validation","status":"pass"},{"id":"work-packet-operator-protocol","status":"pass"},{"id":"requirements-validation-ci","status":"pass"},{"id":"root-memory-bridge","status":"pass"},{"id":"stage-executor-dry-run","status":"pass"},{"id":"project-status-runner","status":"pass"},{"id":"server-wiring-smoke","status":"pass"},{"id":"quality-gate-ci","status":"pass"},{"id":"how-to-truthfulness","status":"pass"},{"id":"video-domain-stage-a","status":"pass"},{"id":"billing-domain-contracts","status":"pass"},{"id":"dag-wp-scheduler","status":"pass"},{"id":"requirements-gap-detector","status":"pass"},{"id":"session-health-metrics","status":"pass"},{"id":"desired-state-reconciliation","status":"pass"},{"id":"wp-queue-ci-validation","status":"pass"},{"id":"release-evidence-automation","status":"pass"},{"id":"branch-protection-ci","status":"pass"},{"id":"cross-domain-event-bus","status":"pass"},{"id":"rfc7807-error-standard","status":"pass"},{"id":"feature-flag-runtime","status":"pass"},{"id":"event-publishing","status":"pass"},{"id":"opentelemetry-instrumentation","status":"pass"},{"id":"sqlite-persistence","status":"pass"},{"id":"self-improvement-loop","status":"pass"},{"id":"cloudevents-envelope","status":"pass"},{"id":"contract-drift-validation","status":"pass"},{"id":"master-shell-composition-validation","status":"pass"},{"id":"quality-gate-baseline","status":"pass"},{"id":"deployment-environment-smoke-runner","status":"pass"},{"id":"root-entry-doc-truthfulness","status":"pass"},{"id":"deployment-environment-binding","status":"pass"},{"id":"deployment-environment-provisioning-audit","status":"pass"}],"manual_placeholders":[{"id":"deployment-environment-smoke","status":"operator-triggered"},{"id":"deployment-environment-provisioning-audit","status":"operator-collected"}],"known_issues":[{"id":"KI-RUN-001","severity":"low"}],"memory_sources":{"current_state":"memory/current-state.yaml","current_wp":"memory/current-wp.yaml","next_actions":"memory/next-actions.yaml","legacy_project_state":"memory/project/current-state.yaml"}},"controlCenter":{"statusBar":{"goal":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","currentStage":"COMPLETE","progress":10,"blocker":"확인 필요 1건","nextTask":"NONE","autoSendEnabled":false,"currentLaneId":"control-intake","summary":"현재 packet SPIRAL-19-COMPLETE 기준 통제 상태"},"controlNodes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","status":"in_progress","kind":"control"},{"id":"control-planning","label":"계획 수립","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","status":"pending","kind":"control"},{"id":"control-execution","label":"실행","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","status":"pending","kind":"control"},{"id":"control-validation","label":"검증","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","status":"pending","kind":"control"},{"id":"control-complete","label":"완료","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","status":"pending","kind":"control"},{"id":"control-module","label":"모듈 생성","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","status":"pending","kind":"module"}],"planRows":[{"id":"plan-intake","nodeId":"control-intake","step":"1","task":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","status":"in_progress","priority":"최고","owner":"Planner","nextAction":"계획 수립"},{"id":"plan-planning","nodeId":"control-planning","step":"2","task":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 COMPLETE / 다음 NONE","status":"pending","priority":"최고","owner":"Planner","nextAction":"실행 패널 동기화"},{"id":"plan-execution","nodeId":"control-execution","step":"3","task":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"SPIRAL-19-COMPLETE","status":"pending","priority":"최고","owner":"Builder","nextAction":"검증 evidence 적재"},{"id":"plan-validation","nodeId":"control-validation","step":"4","task":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","status":"pending","priority":"최고","owner":"Reviewer","nextAction":"완료 판정"},{"id":"plan-complete","nodeId":"control-complete","step":"5","task":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","status":"pending","priority":"높음","owner":"Reporter","nextAction":"홈 또는 다음 작업 이동"},{"id":"plan-module","nodeId":"control-module","step":"6","task":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","status":"pending","priority":"최고","owner":"Builder","nextAction":"dry-run preview 실행"}],"kanbanLanes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","status":"in_progress","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","is_current":true,"cards":[{"id":"plan-intake","title":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","next_action":"계획 수립","owner":"Planner","priority":"최고","status":"in_progress"}]},{"id":"control-planning","label":"계획 수립","owner":"Planner","status":"pending","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","is_current":false,"cards":[{"id":"plan-planning","title":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 COMPLETE / 다음 NONE","next_action":"실행 패널 동기화","owner":"Planner","priority":"최고","status":"pending"}]},{"id":"control-execution","label":"실행","owner":"Builder","status":"pending","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","is_current":false,"cards":[{"id":"plan-execution","title":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"SPIRAL-19-COMPLETE","next_action":"검증 evidence 적재","owner":"Builder","priority":"최고","status":"pending"}]},{"id":"control-validation","label":"검증","owner":"Reviewer","status":"pending","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","is_current":false,"cards":[{"id":"plan-validation","title":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","next_action":"완료 판정","owner":"Reviewer","priority":"최고","status":"pending"}]},{"id":"control-complete","label":"완료","owner":"Reporter","status":"pending","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","is_current":false,"cards":[{"id":"plan-complete","title":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","next_action":"홈 또는 다음 작업 이동","owner":"Reporter","priority":"높음","status":"pending"}]},{"id":"control-module","label":"모듈 생성","owner":"Builder","status":"pending","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","is_current":false,"cards":[{"id":"plan-module","title":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","next_action":"dry-run preview 실행","owner":"Builder","priority":"최고","status":"pending"}]}],"roadmapSections":[],"scaffoldCatalog":{"blueprints":[{"id":"master-os-ai-studio","name":"마스터 OS AI 스튜디오","summary":"하나의 마스터 UI에서 AI 계획, 학습, 운영, 모듈 확장을 함께 다루는 기본 청사진","architecture_profile":"master-os-shell","starter_sequence":[{"step":"요구사항 정의","focus":"requirements, constraints, domain-map을 먼저 확정한다"},{"step":"도메인 포트 생성","focus":"OpenAPI, events, ui-contract, capability를 먼저 만든다"},{"step":"마스터 UI 편입","focus":"plugin-registry, navigation, feature-flags, planner guide를 연결한다"},{"step":"운영 게이트 고정","focus":"smoke, slo, rollout, rollback, observability를 활성화한다"}]},{"id":"domain-module-extension","name":"도메인 모듈 확장","summary":"기존 마스터 OS에 새 bounded context를 안전하게 추가하는 확장 청사진","architecture_profile":"workflow-domain-module","starter_sequence":[{"step":"Stage A 설계 메모 생성","focus":"유비쿼터스 언어, INV, 권한, 이벤트를 먼저 합의한다"},{"step":"어댑터 선택","focus":"transport, observability, storage를 profile로 선택한다"},{"step":"master-shell 등록","focus":"plugin-registry와 nav에 entry point를 연결한다"},{"step":"feature rollout 준비","focus":"flag metadata와 smoke 시나리오를 추가한다"}]},{"id":"stateful-workflow-service","name":"상태 저장형 워크플로우 서비스","summary":"영속 저장소와 운영 지표를 갖춘 실서비스형 워크플로우 모듈 청사진","architecture_profile":"stateful-domain-module","starter_sequence":[{"step":"포트 유지","focus":"repository port를 유지한 채 in-memory와 SQLite를 병행한다"},{"step":"관측 강화","focus":"trace, request id, deployment smoke를 먼저 연결한다"},{"step":"운영 안전장치","focus":"idempotency, timeout, drain, rate limit을 transport에 고정한다"}]}],"recipes":[{"id":"planner-first-hybrid","name":"Planner-First Hybrid","objective":"기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피","architecture_profile":"master-os-shell","blueprint_refs":["master-os-ai-studio"]},{"id":"contract-first-module-builder","name":"Contract-First Module Builder","objective":"새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피","architecture_profile":"workflow-domain-module","blueprint_refs":["domain-module-extension"]},{"id":"stateful-ops-guarded","name":"Stateful Ops Guarded","objective":"상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피","architecture_profile":"stateful-domain-module","blueprint_refs":["stateful-workflow-service"]},{"id":"harness-vnext-router","name":"Harness vNext Router Recipe","objective":"AI 하네스의 모드별 provider tier와 routing 전략을 결정하는 레시피","architecture_profile":"master-os-shell","blueprint_refs":[]}],"profiles":[{"id":"master-os-shell","notes":["마스터 UI와 planner를 동시에 가져가야 기획/학습 일관성이 유지된다."],"recommended_recipes":["planner-first-hybrid"]},{"id":"workflow-domain-module","notes":["도메인 확장 단계에서는 메모리 저장소로 빠르게 검증하고, 영속 저장소는 별도 profile로 분리한다."],"recommended_recipes":["contract-first-module-builder"]},{"id":"stateful-domain-module","notes":["영속 저장소를 쓰더라도 memory adapter를 유지해 테스트와 smoke를 빠르게 돌릴 수 있어야 한다."],"recommended_recipes":["stateful-ops-guarded"]}],"defaultBlueprint":"domain-module-extension","defaultRecipe":"contract-first-module-builder"}},"stageRunHistory":[{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T15:55:20"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-18T15:55:20"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T15:21:00"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-18T15:20:59"},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T14:38:56"}],"stageRunLatest":{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T15:55:20"}}}</script>
+<script id="mindmap-data" type="application/json">{"nodes":[{"id":"root","type":"root","label":"Workflow OS","x":800,"y":500,"fixed":true},{"id":"system","type":"domain","label":"시스템 운영","x":800,"y":320,"healthScore":95,"trend":"→","ejectable":false,"stageStatus":"E/PASS","description":"Workflow OS 운영 포털 — 헬스 모니터링, 피처 플래그, 감사 로그, 품질 게이트, 라이프사이클, 롤백 콘솔","flagActive":false},{"id":"system-A","type":"stage","label":"A","status":"PASS","parentId":"system","x":687.4166975080229,"y":255},{"id":"system-B","type":"stage","label":"B","status":"PASS","parentId":"system","x":735,"y":207.416697508023},{"id":"system-C","type":"stage","label":"C","status":"PASS","parentId":"system","x":800,"y":190},{"id":"system-D","type":"stage","label":"D","status":"PASS","parentId":"system","x":865,"y":207.416697508023},{"id":"system-E","type":"stage","label":"E","status":"PASS","parentId":"system","x":912.583302491977,"y":254.99999999999994},{"id":"flag-system_api.enabled","type":"flag","label":"system_api.enabled","value":false,"parentId":"system","group":"system","x":920.208152801713,"y":199.7918471982869},{"id":"flag-system_api.sse_stream.enabled","type":"flag","label":"system_api.sse_stream.enabled","value":false,"parentId":"system","group":"system","x":964.2073904691416,"y":276.00076233257147},{"id":"flag-system_api.flag_toggle_ui.enabled","type":"flag","label":"system_api.flag_toggle_ui.enabled","value":false,"parentId":"system","group":"system","x":964.2073904691416,"y":363.9992376674284},{"id":"flag-system_api.rollback_ui.enabled","type":"flag","label":"system_api.rollback_ui.enabled","value":false,"parentId":"system","group":"system","x":920.2081528017131,"y":440.208152801713},{"id":"billing","type":"domain","label":"정산관리","x":980,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"인보이스 생성·상태전이, 결제 추적, 미매칭 예외처리를 담당하는 도메인 영역","flagActive":false},{"id":"billing-A","type":"stage","label":"A","status":"PASS","parentId":"billing","x":1045,"y":387.416697508023},{"id":"billing-B","type":"stage","label":"B","status":"PASS","parentId":"billing","x":1092.583302491977,"y":435},{"id":"billing-C","type":"stage","label":"C","status":"PASS","parentId":"billing","x":1110,"y":500},{"id":"billing-D","type":"stage","label":"D","status":"PASS","parentId":"billing","x":1092.583302491977,"y":565},{"id":"billing-E","type":"stage","label":"E","status":"PASS","parentId":"billing","x":1045,"y":612.5833024919771},{"id":"flag-billing.enabled","type":"flag","label":"billing.enabled","value":false,"parentId":"billing","group":"billing","x":1100.2081528017131,"y":620.208152801713},{"id":"flag-billing.invoice.enabled","type":"flag","label":"billing.invoice.enabled","value":false,"parentId":"billing","group":"billing","x":1023.9992376674286,"y":664.2073904691416},{"id":"flag-billing.payment.enabled","type":"flag","label":"billing.payment.enabled","value":false,"parentId":"billing","group":"billing","x":936.0007623325715,"y":664.2073904691416},{"id":"flag-billing.exception.enabled","type":"flag","label":"billing.exception.enabled","value":false,"parentId":"billing","group":"billing","x":859.791847198287,"y":620.2081528017131},{"id":"productivity","type":"domain","label":"생산성 관리","x":800,"y":680,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역","flagActive":false},{"id":"productivity-A","type":"stage","label":"A","status":"PASS","parentId":"productivity","x":912.5833024919771,"y":745},{"id":"productivity-B","type":"stage","label":"B","status":"PASS","parentId":"productivity","x":865,"y":792.5833024919771},{"id":"productivity-C","type":"stage","label":"C","status":"PASS","parentId":"productivity","x":800,"y":810},{"id":"productivity-D","type":"stage","label":"D","status":"PASS","parentId":"productivity","x":735,"y":792.5833024919771},{"id":"productivity-E","type":"stage","label":"E","status":"PASS","parentId":"productivity","x":687.4166975080229,"y":745},{"id":"flag-enable_task_management","type":"flag","label":"enable_task_management","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":723.9992376674286},{"id":"flag-enable_bulk_assign","type":"flag","label":"enable_bulk_assign","value":false,"parentId":"productivity","group":"productivity","x":635.7926095308584,"y":636.0007623325715},{"id":"video","type":"domain","label":"콘텐츠 관리","x":620,"y":500,"healthScore":100,"trend":"→","ejectable":true,"stageStatus":"E/PASS","description":"영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역.","flagActive":false},{"id":"video-A","type":"stage","label":"A","status":"PASS","parentId":"video","x":555,"y":612.5833024919771},{"id":"video-B","type":"stage","label":"B","status":"PASS","parentId":"video","x":507.41669750802293,"y":565},{"id":"video-C","type":"stage","label":"C","status":"PASS","parentId":"video","x":490,"y":500},{"id":"video-D","type":"stage","label":"D","status":"PASS","parentId":"video","x":507.41669750802293,"y":435.00000000000006},{"id":"video-E","type":"stage","label":"E","status":"PASS","parentId":"video","x":555,"y":387.416697508023},{"id":"flag-video.enabled","type":"flag","label":"video.enabled","value":false,"parentId":"video","group":"video","x":499.79184719828686,"y":379.7918471982869},{"id":"flag-video.upload.enabled","type":"flag","label":"video.upload.enabled","value":false,"parentId":"video","group":"video","x":576.0007623325715,"y":335.7926095308584},{"id":"flag-video.transcode.enabled","type":"flag","label":"video.transcode.enabled","value":false,"parentId":"video","group":"video","x":663.9992376674285,"y":335.7926095308584},{"id":"flag-video.admin.enabled","type":"flag","label":"video.admin.enabled","value":false,"parentId":"video","group":"video","x":740.208152801713,"y":379.79184719828686},{"id":"contract-system-api","type":"contract","label":"System API","path":"contracts/system-api/openapi.yaml","x":650,"y":220},{"id":"contract-ui-shell","type":"contract","label":"UI Shell","path":"contracts/ui-shell/ui-contract.yaml","x":950,"y":220},{"id":"control-intake","type":"control","label":"입력 이해","hiddenInGraph":true,"status":"in_progress","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","controlKind":"control"},{"id":"control-planning","type":"control","label":"계획 수립","hiddenInGraph":true,"status":"pending","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","controlKind":"control"},{"id":"control-execution","type":"control","label":"실행","hiddenInGraph":true,"status":"pending","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","controlKind":"control"},{"id":"control-validation","type":"control","label":"검증","hiddenInGraph":true,"status":"pending","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","controlKind":"control"},{"id":"control-complete","type":"control","label":"완료","hiddenInGraph":true,"status":"pending","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","controlKind":"control"},{"id":"control-module","type":"control","label":"모듈 생성","hiddenInGraph":true,"status":"pending","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","controlKind":"module"}],"edges":[{"id":"root-system","source":"root","target":"system","type":"dependency"},{"id":"system-stage-A","source":"system","target":"system-A","type":"lifecycle"},{"id":"system-stage-B","source":"system","target":"system-B","type":"lifecycle"},{"id":"system-stage-C","source":"system","target":"system-C","type":"lifecycle"},{"id":"system-stage-D","source":"system","target":"system-D","type":"lifecycle"},{"id":"system-stage-E","source":"system","target":"system-E","type":"lifecycle"},{"id":"system-flag-system_api.enabled","source":"system","target":"flag-system_api.enabled","type":"flag"},{"id":"system-flag-system_api.sse_stream.enabled","source":"system","target":"flag-system_api.sse_stream.enabled","type":"flag"},{"id":"system-flag-system_api.flag_toggle_ui.enabled","source":"system","target":"flag-system_api.flag_toggle_ui.enabled","type":"flag"},{"id":"system-flag-system_api.rollback_ui.enabled","source":"system","target":"flag-system_api.rollback_ui.enabled","type":"flag"},{"id":"root-billing","source":"root","target":"billing","type":"dependency"},{"id":"billing-stage-A","source":"billing","target":"billing-A","type":"lifecycle"},{"id":"billing-stage-B","source":"billing","target":"billing-B","type":"lifecycle"},{"id":"billing-stage-C","source":"billing","target":"billing-C","type":"lifecycle"},{"id":"billing-stage-D","source":"billing","target":"billing-D","type":"lifecycle"},{"id":"billing-stage-E","source":"billing","target":"billing-E","type":"lifecycle"},{"id":"billing-flag-billing.enabled","source":"billing","target":"flag-billing.enabled","type":"flag"},{"id":"billing-flag-billing.invoice.enabled","source":"billing","target":"flag-billing.invoice.enabled","type":"flag"},{"id":"billing-flag-billing.payment.enabled","source":"billing","target":"flag-billing.payment.enabled","type":"flag"},{"id":"billing-flag-billing.exception.enabled","source":"billing","target":"flag-billing.exception.enabled","type":"flag"},{"id":"root-productivity","source":"root","target":"productivity","type":"dependency"},{"id":"productivity-stage-A","source":"productivity","target":"productivity-A","type":"lifecycle"},{"id":"productivity-stage-B","source":"productivity","target":"productivity-B","type":"lifecycle"},{"id":"productivity-stage-C","source":"productivity","target":"productivity-C","type":"lifecycle"},{"id":"productivity-stage-D","source":"productivity","target":"productivity-D","type":"lifecycle"},{"id":"productivity-stage-E","source":"productivity","target":"productivity-E","type":"lifecycle"},{"id":"productivity-flag-enable_task_management","source":"productivity","target":"flag-enable_task_management","type":"flag"},{"id":"productivity-flag-enable_bulk_assign","source":"productivity","target":"flag-enable_bulk_assign","type":"flag"},{"id":"root-video","source":"root","target":"video","type":"dependency"},{"id":"video-stage-A","source":"video","target":"video-A","type":"lifecycle"},{"id":"video-stage-B","source":"video","target":"video-B","type":"lifecycle"},{"id":"video-stage-C","source":"video","target":"video-C","type":"lifecycle"},{"id":"video-stage-D","source":"video","target":"video-D","type":"lifecycle"},{"id":"video-stage-E","source":"video","target":"video-E","type":"lifecycle"},{"id":"video-flag-video.enabled","source":"video","target":"flag-video.enabled","type":"flag"},{"id":"video-flag-video.upload.enabled","source":"video","target":"flag-video.upload.enabled","type":"flag"},{"id":"video-flag-video.transcode.enabled","source":"video","target":"flag-video.transcode.enabled","type":"flag"},{"id":"video-flag-video.admin.enabled","source":"video","target":"flag-video.admin.enabled","type":"flag"},{"id":"system-contract-api","source":"system","target":"contract-system-api","type":"contract"},{"id":"system-contract-ui","source":"system","target":"contract-ui-shell","type":"contract"}],"meta":{"generatedAt":"2026-04-19T04:24:33.293Z","flagStates":{"system_api.enabled":false,"system_api.sse_stream.enabled":false,"system_api.flag_toggle_ui.enabled":false,"system_api.rollback_ui.enabled":false},"apiBase":"/api/v1","sseUrl":"/api/v1/system/events","planningApiBase":"/api/planning-studio","report":{"execution_mode":"read-only-status","repository":"my-module","requirements_stage":"D","current_wp":"SPIRAL-19-COMPLETE","current_wp_goal":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","current_wp_type":"governance","current_wp_stage":"complete","current_wp_context_budget":{"tier_reads":0,"context_reads":0,"tier_files":0,"context_files":0,"estimated_tokens":0},"current_wp_scope_boundary":{"scope_in":7,"scope_out":1,"protects_core":true},"promotion_pipeline":{"artifact_dir":"artifacts/promotion-pipeline/latest","available":true,"promotion_ready":true,"locked_tokens":10431,"locked_files":9,"drift_status":"clean","changed_files":0,"missing_files":0},"essential_improvements":[{"id":"master-planning-truth-surface","tracked":true,"ready":true,"detail":"planner artifact + intake canvas + benchmark-backed planning triad"},{"id":"minimum-context-routing-performance","tracked":true,"ready":true,"detail":"promotion pipeline + context lock + drift awareness"},{"id":"guided-learning-live-ops-cockpit","tracked":true,"ready":true,"detail":"timeline feed + replay lenses + observability surfaces"}],"last_completed_wp":"WP-S19-002","next_wp":"NONE","legacy_last_completed_stage":"D(4차)","stage_summary":[{"stage":"A","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-a.md","recommended_commands":["npm run validate:requirements"]},{"stage":"B","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-b.md","recommended_commands":["npm run validate:requirements"]},{"stage":"C","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-c.md","recommended_commands":["npm run validate:requirements","npm run validate:composition"]},{"stage":"D","route_status":"ready","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"]},{"stage":"E","route_status":"out-of-route","legacy_stage_state":"PASS","unmet_prerequisites":[],"docs_ref":"docs/how-to/run-stage-e.md","recommended_commands":["npm run validate:requirements","npm run test:e2e-smoke"]}],"capabilities":[{"id":"requirements-validation","status":"pass"},{"id":"work-packet-operator-protocol","status":"pass"},{"id":"requirements-validation-ci","status":"pass"},{"id":"root-memory-bridge","status":"pass"},{"id":"stage-executor-dry-run","status":"pass"},{"id":"project-status-runner","status":"pass"},{"id":"server-wiring-smoke","status":"pass"},{"id":"quality-gate-ci","status":"pass"},{"id":"how-to-truthfulness","status":"pass"},{"id":"video-domain-stage-a","status":"pass"},{"id":"billing-domain-contracts","status":"pass"},{"id":"dag-wp-scheduler","status":"pass"},{"id":"requirements-gap-detector","status":"pass"},{"id":"session-health-metrics","status":"pass"},{"id":"desired-state-reconciliation","status":"pass"},{"id":"wp-queue-ci-validation","status":"pass"},{"id":"release-evidence-automation","status":"pass"},{"id":"branch-protection-ci","status":"pass"},{"id":"cross-domain-event-bus","status":"pass"},{"id":"rfc7807-error-standard","status":"pass"},{"id":"feature-flag-runtime","status":"pass"},{"id":"event-publishing","status":"pass"},{"id":"opentelemetry-instrumentation","status":"pass"},{"id":"sqlite-persistence","status":"pass"},{"id":"self-improvement-loop","status":"pass"},{"id":"cloudevents-envelope","status":"pass"},{"id":"contract-drift-validation","status":"pass"},{"id":"master-shell-composition-validation","status":"pass"},{"id":"quality-gate-baseline","status":"pass"},{"id":"deployment-environment-smoke-runner","status":"pass"},{"id":"root-entry-doc-truthfulness","status":"pass"},{"id":"deployment-environment-binding","status":"pass"},{"id":"deployment-environment-provisioning-audit","status":"pass"}],"manual_placeholders":[{"id":"deployment-environment-smoke","status":"operator-triggered"},{"id":"deployment-environment-provisioning-audit","status":"operator-collected"}],"known_issues":[{"id":"KI-RUN-001","severity":"low"}],"memory_sources":{"current_state":"memory/current-state.yaml","current_wp":"memory/current-wp.yaml","next_actions":"memory/next-actions.yaml","legacy_project_state":"memory/project/current-state.yaml"}},"controlCenter":{"statusBar":{"goal":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","currentStage":"COMPLETE","progress":10,"blocker":"확인 필요 1건","nextTask":"NONE","autoSendEnabled":false,"currentLaneId":"control-intake","summary":"현재 packet SPIRAL-19-COMPLETE 기준 통제 상태"},"controlNodes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","inputs":["사용자 요청","현재 Work Packet","next-actions"],"outputs":["정리된 목표","제약 목록","누락 정보"],"issues":["KI-RUN-001: low"],"nextAction":"계획 수립으로 연결","status":"in_progress","kind":"control"},{"id":"control-planning","label":"계획 수립","owner":"Planner","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","inputs":["current-wp","planner draft","promotion pipeline"],"outputs":["실행 계획","우선순위","성공조건"],"issues":["promotion drift 없음"],"nextAction":"실행 카드와 계획표 동기화","status":"pending","kind":"control"},{"id":"control-execution","label":"실행","owner":"Builder","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","inputs":["현재 packet 목표","CLI 허브","system API"],"outputs":["산출물","실행 로그","적용 결과"],"issues":["기존 홈의 CLI 허브와 runtime bridge를 그대로 사용"],"nextAction":"검증 단계로 넘길 evidence 준비","status":"pending","kind":"control"},{"id":"control-validation","label":"검증","owner":"Reviewer","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","inputs":["quality gate","drift control","recent runtime"],"outputs":["PASS/FAIL 판정","수정 필요 항목"],"issues":["기존 smoke를 유지하면서 통제 센터 전용 smoke를 추가"],"nextAction":"완료 조건 충족 여부 판정","status":"pending","kind":"control"},{"id":"control-complete","label":"완료","owner":"Reporter","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","inputs":["검증 결과","완료 artifact","다음 packet"],"outputs":["완료 보고","다음 작업","결과 요약"],"issues":["사용자에게는 지금/결과/다음만 강하게 노출"],"nextAction":"홈 또는 다음 packet으로 이동","status":"pending","kind":"control"},{"id":"control-module","label":"모듈 생성","owner":"Builder","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","inputs":["project blueprints","runtime recipes","generate-domain-scaffold.js"],"outputs":["requirements preview","신규 requirements 파일","다음 단계 안내"],"issues":["실제 생성 전 preview를 먼저 강제"],"nextAction":"blueprint와 recipe를 고른 뒤 dry-run preview 실행","status":"pending","kind":"module"}],"planRows":[{"id":"plan-intake","nodeId":"control-intake","step":"1","task":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","status":"in_progress","priority":"최고","owner":"Planner","nextAction":"계획 수립"},{"id":"plan-planning","nodeId":"control-planning","step":"2","task":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 COMPLETE / 다음 NONE","status":"pending","priority":"최고","owner":"Planner","nextAction":"실행 패널 동기화"},{"id":"plan-execution","nodeId":"control-execution","step":"3","task":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"SPIRAL-19-COMPLETE","status":"pending","priority":"최고","owner":"Builder","nextAction":"검증 evidence 적재"},{"id":"plan-validation","nodeId":"control-validation","step":"4","task":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","status":"pending","priority":"최고","owner":"Reviewer","nextAction":"완료 판정"},{"id":"plan-complete","nodeId":"control-complete","step":"5","task":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","status":"pending","priority":"높음","owner":"Reporter","nextAction":"홈 또는 다음 작업 이동"},{"id":"plan-module","nodeId":"control-module","step":"6","task":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","status":"pending","priority":"최고","owner":"Builder","nextAction":"dry-run preview 실행"}],"kanbanLanes":[{"id":"control-intake","label":"입력 이해","owner":"Planner","status":"in_progress","purpose":"사용자 요청, 제약, 누락 정보를 한 묶음으로 정리한다.","is_current":true,"cards":[{"id":"plan-intake","title":"입력 이해","purpose":"현재 목표와 제약을 빠르게 고정","input":"사용자 요청 / current-wp / next-actions","output":"Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.","next_action":"계획 수립","owner":"Planner","priority":"최고","status":"in_progress"}]},{"id":"control-planning","label":"계획 수립","owner":"Planner","status":"pending","purpose":"작업을 분해하고 우선순위와 성공조건을 확정한다.","is_current":false,"cards":[{"id":"plan-planning","title":"계획 수립","purpose":"작업 분해와 성공조건 고정","input":"planner draft / promotion pipeline","output":"현재 단계 COMPLETE / 다음 NONE","next_action":"실행 패널 동기화","owner":"Planner","priority":"최고","status":"pending"}]},{"id":"control-execution","label":"실행","owner":"Builder","status":"pending","purpose":"자료 수집, 분석, 생성/수정, CLI 실행을 통제한다.","is_current":false,"cards":[{"id":"plan-execution","title":"실행","purpose":"자료 수집, 생성/수정, CLI 실행","input":"system API / CLI hub / packet focus","output":"SPIRAL-19-COMPLETE","next_action":"검증 evidence 적재","owner":"Builder","priority":"최고","status":"pending"}]},{"id":"control-validation","label":"검증","owner":"Reviewer","status":"pending","purpose":"드리프트, 품질 게이트, smoke 결과를 한 표로 확인한다.","is_current":false,"cards":[{"id":"plan-validation","title":"검증","purpose":"drift, gate, smoke 상태 확인","input":"quality / runtime / changed files","output":"drift clean","next_action":"완료 판정","owner":"Reviewer","priority":"최고","status":"pending"}]},{"id":"control-complete","label":"완료","owner":"Reporter","status":"pending","purpose":"지금까지의 결과와 다음 액션을 사용자 기준으로 마감한다.","is_current":false,"cards":[{"id":"plan-complete","title":"완료","purpose":"결과와 다음 작업을 사용자 기준으로 정리","input":"검증 결과 / completed work","output":"다음 packet NONE","next_action":"홈 또는 다음 작업 이동","owner":"Reporter","priority":"높음","status":"pending"}]},{"id":"control-module","label":"모듈 생성","owner":"Builder","status":"pending","purpose":"새 모듈 추가를 GUI에서 preview -\u003e dry-run -\u003e confirm -\u003e create로 통제한다.","is_current":false,"cards":[{"id":"plan-module","title":"모듈 생성","purpose":"새 모듈 추가를 안전하게 preview","input":"blueprint / recipe / domain id","output":"blueprints 3개","next_action":"dry-run preview 실행","owner":"Builder","priority":"최고","status":"pending"}]}],"roadmapSections":[],"scaffoldCatalog":{"blueprints":[{"id":"master-os-ai-studio","name":"마스터 OS AI 스튜디오","summary":"하나의 마스터 UI에서 AI 계획, 학습, 운영, 모듈 확장을 함께 다루는 기본 청사진","architecture_profile":"master-os-shell","starter_sequence":[{"step":"요구사항 정의","focus":"requirements, constraints, domain-map을 먼저 확정한다"},{"step":"도메인 포트 생성","focus":"OpenAPI, events, ui-contract, capability를 먼저 만든다"},{"step":"마스터 UI 편입","focus":"plugin-registry, navigation, feature-flags, planner guide를 연결한다"},{"step":"운영 게이트 고정","focus":"smoke, slo, rollout, rollback, observability를 활성화한다"}]},{"id":"domain-module-extension","name":"도메인 모듈 확장","summary":"기존 마스터 OS에 새 bounded context를 안전하게 추가하는 확장 청사진","architecture_profile":"workflow-domain-module","starter_sequence":[{"step":"Stage A 설계 메모 생성","focus":"유비쿼터스 언어, INV, 권한, 이벤트를 먼저 합의한다"},{"step":"어댑터 선택","focus":"transport, observability, storage를 profile로 선택한다"},{"step":"master-shell 등록","focus":"plugin-registry와 nav에 entry point를 연결한다"},{"step":"feature rollout 준비","focus":"flag metadata와 smoke 시나리오를 추가한다"}]},{"id":"stateful-workflow-service","name":"상태 저장형 워크플로우 서비스","summary":"영속 저장소와 운영 지표를 갖춘 실서비스형 워크플로우 모듈 청사진","architecture_profile":"stateful-domain-module","starter_sequence":[{"step":"포트 유지","focus":"repository port를 유지한 채 in-memory와 SQLite를 병행한다"},{"step":"관측 강화","focus":"trace, request id, deployment smoke를 먼저 연결한다"},{"step":"운영 안전장치","focus":"idempotency, timeout, drain, rate limit을 transport에 고정한다"}]}],"recipes":[{"id":"planner-first-hybrid","name":"Planner-First Hybrid","objective":"기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피","architecture_profile":"master-os-shell","blueprint_refs":["master-os-ai-studio"]},{"id":"contract-first-module-builder","name":"Contract-First Module Builder","objective":"새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피","architecture_profile":"workflow-domain-module","blueprint_refs":["domain-module-extension"]},{"id":"stateful-ops-guarded","name":"Stateful Ops Guarded","objective":"상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피","architecture_profile":"stateful-domain-module","blueprint_refs":["stateful-workflow-service"]},{"id":"harness-vnext-router","name":"Harness vNext Router Recipe","objective":"AI 하네스의 모드별 provider tier와 routing 전략을 결정하는 레시피","architecture_profile":"master-os-shell","blueprint_refs":[]}],"profiles":[{"id":"master-os-shell","notes":["마스터 UI와 planner를 동시에 가져가야 기획/학습 일관성이 유지된다."],"recommended_recipes":["planner-first-hybrid"]},{"id":"workflow-domain-module","notes":["도메인 확장 단계에서는 메모리 저장소로 빠르게 검증하고, 영속 저장소는 별도 profile로 분리한다."],"recommended_recipes":["contract-first-module-builder"]},{"id":"stateful-domain-module","notes":["영속 저장소를 쓰더라도 memory adapter를 유지해 테스트와 smoke를 빠르게 돌릴 수 있어야 한다."],"recommended_recipes":["stateful-ops-guarded"]}],"defaultBlueprint":"domain-module-extension","defaultRecipe":"contract-first-module-builder"}},"stageRunHistory":[{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T15:55:20","quality_gate_result":"DRY_RUN_ONLY","runtime_observability":{"report_saved":true,"save_exit_code":0,"save_error":"None","request_id":"","correlation_id":"","save_command":"python3 scripts/planning_studio_api.py save-stage-run","artifact_target_count":2,"artifact_paths":{"last_report":"memory/project/stage-run-latest.yaml","recent_reports":"memory/project/stage-run-history.yaml"},"release_evidence":{"triggered":false,"generated":false,"exit_code":0,"error":"None","path":"artifacts/release-evidence/release-evidence.json","command":"python3 scripts/generate_release_evidence.py","trigger_reason":"dry-run-only"}},"quality_gate_result_reported":"DRY_RUN_ONLY","quality_gate_source":"stage-run-report","quality_gate_ready_for_release_evidence":false},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-18T15:55:20","quality_gate_result":"DRY_RUN_ONLY","runtime_observability":{"report_saved":true,"save_exit_code":0,"save_error":"None","request_id":"","correlation_id":"","save_command":"python3 scripts/planning_studio_api.py save-stage-run","artifact_target_count":2,"artifact_paths":{"last_report":"memory/project/stage-run-latest.yaml","recent_reports":"memory/project/stage-run-history.yaml"},"release_evidence":{"triggered":false,"generated":false,"exit_code":0,"error":"None","path":"artifacts/release-evidence/release-evidence.json","command":"python3 scripts/generate_release_evidence.py","trigger_reason":"dry-run-only"}},"quality_gate_result_reported":"DRY_RUN_ONLY","quality_gate_source":"stage-run-report","quality_gate_ready_for_release_evidence":false},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T15:21:00","quality_gate_result":"DRY_RUN_ONLY","runtime_observability":{"report_saved":true,"save_exit_code":0,"save_error":"None","request_id":"","correlation_id":"","save_command":"python3 scripts/planning_studio_api.py save-stage-run","artifact_target_count":2,"artifact_paths":{"last_report":"memory/project/stage-run-latest.yaml","recent_reports":"memory/project/stage-run-history.yaml"},"release_evidence":{"triggered":false,"generated":false,"exit_code":0,"error":"None","path":"artifacts/release-evidence/release-evidence.json","command":"python3 scripts/generate_release_evidence.py","trigger_reason":"dry-run-only"}},"quality_gate_result_reported":"DRY_RUN_ONLY","quality_gate_source":"stage-run-report","quality_gate_ready_for_release_evidence":false},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"task-management","recorded_at":"2026-04-18T15:20:59","quality_gate_result":"DRY_RUN_ONLY","runtime_observability":{"report_saved":true,"save_exit_code":0,"save_error":"None","request_id":"","correlation_id":"","save_command":"python3 scripts/planning_studio_api.py save-stage-run","artifact_target_count":2,"artifact_paths":{"last_report":"memory/project/stage-run-latest.yaml","recent_reports":"memory/project/stage-run-history.yaml"},"release_evidence":{"triggered":false,"generated":false,"exit_code":0,"error":"None","path":"artifacts/release-evidence/release-evidence.json","command":"python3 scripts/generate_release_evidence.py","trigger_reason":"dry-run-only"}},"quality_gate_result_reported":"DRY_RUN_ONLY","quality_gate_source":"stage-run-report","quality_gate_ready_for_release_evidence":false},{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T14:38:56","quality_gate_result":"DRY_RUN_ONLY","runtime_observability":{"report_saved":true,"save_exit_code":0,"save_error":"None","request_id":"","correlation_id":"","save_command":"python3 scripts/planning_studio_api.py save-stage-run","artifact_target_count":2,"artifact_paths":{"last_report":"memory/project/stage-run-latest.yaml","recent_reports":"memory/project/stage-run-history.yaml"},"release_evidence":{"triggered":false,"generated":false,"exit_code":0,"error":"None","path":"artifacts/release-evidence/release-evidence.json","command":"python3 scripts/generate_release_evidence.py","trigger_reason":"dry-run-only"}},"quality_gate_result_reported":"DRY_RUN_ONLY","quality_gate_source":"stage-run-report","quality_gate_ready_for_release_evidence":false}],"stageRunLatest":{"requested_stage":"D","execution_mode":"dry-run-only","status":"ready","run_now":false,"requirements_stage":"D","legacy_stage_state":"PASS","prerequisites":[{"stage":"A","state":"PASS"},{"stage":"B","state":"PASS"},{"stage":"C","state":"PASS"}],"unmet_prerequisites":[],"summary":"Run correctness, code-health, security, and supply-chain gates.","docs_ref":"docs/how-to/run-stage-d.md","recommended_commands":["npm run validate:requirements","npm run lint","npm run test:contract","npm test"],"root_memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"legacy_memory_fallback":{"current_state":"memory/project/current-state.yaml"},"notes":["This command does not mutate repository state.","Use the referenced how-to document and validators to perform the real stage work.","requirements.yaml currently routes the repository to stage D.","Use --module \u003cid\u003e to target a specific domain (e.g. --module billing, --module video)."],"current_wp":"SPIRAL-19-COMPLETE","requirements_file":"requirements/requirements.yaml","runtime_root":".","requested_module":"","recorded_at":"2026-04-18T15:55:20","quality_gate_result":"DRY_RUN_ONLY","runtime_observability":{"report_saved":true,"save_exit_code":0,"save_error":"None","request_id":"","correlation_id":"","save_command":"python3 scripts/planning_studio_api.py save-stage-run","artifact_target_count":2,"artifact_paths":{"last_report":"memory/project/stage-run-latest.yaml","recent_reports":"memory/project/stage-run-history.yaml"},"release_evidence":{"triggered":false,"generated":false,"exit_code":0,"error":"None","path":"artifacts/release-evidence/release-evidence.json","command":"python3 scripts/generate_release_evidence.py","trigger_reason":"dry-run-only"}},"quality_gate_result_reported":"DRY_RUN_ONLY","quality_gate_source":"stage-run-report","quality_gate_ready_for_release_evidence":false},"releaseEvidence":{"schema_version":"3","generated_at_utc":"2026-04-19T04:17:01.728982+00:00","repository":"my-module","branch":"chore/core-git-governance-activation","head_commit":"124037f2fb845d9214dcb013eeba1fead858daa4","build_environment":{"ci":"false","github_sha":"124037f2fb845d9214dcb013eeba1fead858daa4","github_ref":"local","github_run_id":"local","github_workflow":"local"},"git_status":{"available":true,"is_clean":false,"modified_paths":["artifacts/mindmap/index.html","artifacts/provenance/workflow-os-provenance.json","artifacts/release-evidence/release-evidence.json","scripts/generate-mindmap.js","scripts/generate_release_evidence.py","scripts/planning_studio_api.py","src/infrastructure/telemetry.js","src/server/createServer.js","src/shared/uiRuntimeContracts.js","src/tests/smoke/dynamicFrontendServer.smoke.test.js","src/tests/smoke/harnessReleaseEvidence.smoke.test.js","src/tests/smoke/mindmapControlCenter.smoke.test.js","src/tests/smoke/mindmapControlCenterInteraction.smoke.test.js","src/tests/smoke/mindmapStageTraceAction.smoke.test.js","src/tests/smoke/releaseEvidence.smoke.test.js","src/tests/smoke/stageRun.smoke.test.js","src/tests/smoke/stageRunSaveFailure.smoke.test.js","src/tests/unit/uiRuntimeContracts.test.js"],"untracked_paths":["src/tests/smoke/planningStudioStageRunMigration.smoke.test.js","src/tests/smoke/stageRunReleaseEvidence.smoke.test.js"]},"memory_sources":{"current_state":"memory/current-state.yaml","next_actions":"memory/next-actions.yaml"},"last_completed_stage":"WORK_PACKET_MODE","last_completed_unit":{"mode":"work_packet","id":"WP-S19-002","completed_at":"2026-04-16","result":"PASS"},"quality_gate_result":"PASS","quality_gate_inputs":["npm run validate:requirements","npm run test:contract","npm test","npm run lint"],"stage_run_evidence":{"available":true,"report_path":"memory/project/stage-run-latest.yaml","history_path":"memory/project/stage-run-history.yaml","history_count":5,"requested_stage":"D","requested_module":"all","execution_mode":"dry-run-only","status":"ready","quality_gate_result":"DRY_RUN_ONLY","recorded_at":"2026-04-18T15:55:20","docs_ref":"docs/how-to/run-stage-d.md","report_saved":true,"request_id":"","correlation_id":"","artifact_paths":{"last_report":"memory/project/stage-run-latest.yaml","recent_reports":"memory/project/stage-run-history.yaml"},"save_command":"python3 scripts/planning_studio_api.py save-stage-run","stage_run_contract":{"drift_status":"clean","latest_history_head_match":true,"history_head_available":true,"release_evidence_surface_complete":true,"release_evidence_generated":false,"release_evidence_trigger_reason":"dry-run-only","issues":[]},"release_evidence_ready":false,"release_evidence_blocker":"quality gate DRY_RUN_ONLY"},"release_artifacts":{"release_evidence":{"path":"artifacts/release-evidence/release-evidence.json","exists":true,"digest_strategy":"external-verification-required"},"provenance":{"path":"artifacts/provenance/workflow-os-provenance.json","exists":true,"sha256":"4ec1b4454d4b73ac156e9fc85ae529bda944eaa3535252cf3ec252e2b824d14a"},"sbom":{"path":"artifacts/sbom/workflow-os.spdx.json","exists":true,"sha256":"06d6109a8d60b8be79830bf770668d6de7ce094d8d58a0174ec6071a4789ba58"}},"next_action":{"priority":"NONE","id":"NONE","track":"NONE","action":"NONE"},"harness_release":{"prompt_version":"0.2.0","output_schema_ref":"contracts/harness/output.schema.json","provider_contract_ref":"contracts/harness/provider-adapter.yaml","rollout_stage":"internal","rollback_target":"null-harness-provider","rollback_strategy":"set HARNESS_PROVIDER= in .env and restart server"}}}}</script>
 <script>(function() {
 'use strict';
 
@@ -1859,6 +1859,7 @@ const S = {
   scaffoldCatalog: CONTROL.scaffoldCatalog || { blueprints: [], recipes: [], profiles: [], defaultBlueprint: '', defaultRecipe: '' },
   roadmapSections: Array.isArray(CONTROL.roadmapSections) ? CONTROL.roadmapSections.slice() : [],
   planningSnapshot: null,
+  releaseEvidence: RAW.meta.releaseEvidence || null,
   scaffoldForm: {
     domain: '',
     blueprint: (CONTROL.scaffoldCatalog && CONTROL.scaffoldCatalog.defaultBlueprint) || 'domain-module-extension',
@@ -1892,6 +1893,7 @@ const S = {
     lastActivity: null,
     lastError: null,
     guidance: null,
+    controlReadiness: null,
     operatorBrief: null,
     operatorCockpit: null,
     operatorActionHistory: [],
@@ -1922,6 +1924,8 @@ const S = {
     selectedModule: '',
     supportedStages: ['A', 'B', 'C', 'D', 'E'],
     runEndpoint: '/api/planning-studio/stage-run',
+    contract: null,
+    qualityGate: null,
     history: [],
     historyFilter: 'all',
     historySignalView: 'all',
@@ -2726,14 +2730,64 @@ function executionOperatorCockpitChainSummary() {
 function executionOperatorCockpitReleaseEvidenceSummary() {
   var cockpit = S.execution.operatorCockpit || null;
   var evidence = cockpit && cockpit.promotionEvidence ? cockpit.promotionEvidence : null;
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
   if (!evidence) {
-    return 'release evidence 정보 없음';
+    if (!releaseArtifact) {
+      return 'release evidence 정보 없음';
+    }
+    return [
+      releaseArtifact.quality_gate_result || 'UNKNOWN',
+      String(((S.releaseEvidence.release_artifacts || {}).release_evidence || {}).exists === true ? 1 : 0) + ' artifact',
+      ((S.releaseEvidence.next_action || {}).id || 'NONE'),
+    ].join(' / ');
   }
   return [
     evidence.qualityGateResult || 'UNKNOWN',
     String(evidence.artifactCount || 0) + ' artifacts',
     evidence.nextActionId || 'NONE',
   ].join(' / ');
+}
+
+function executionOperatorCockpitReleaseEvidenceBlocker() {
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
+  if (!releaseArtifact) {
+    return 'release evidence blocker 정보 없음';
+  }
+  return String(releaseArtifact.release_evidence_blocker || 'UNKNOWN').trim() || 'UNKNOWN';
+}
+
+function executionOperatorCockpitReleaseEvidenceContractSummary() {
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
+  var contract = releaseArtifact && releaseArtifact.stage_run_contract ? releaseArtifact.stage_run_contract : null;
+  if (!contract) {
+    return 'stage-run contract 정보 없음';
+  }
+  return [
+    String(contract.drift_status || 'unknown'),
+    contract.release_evidence_surface_complete === true ? 'surface ready' : 'surface missing',
+    Array.isArray(contract.issues) && contract.issues.length > 0 ? contract.issues.join(', ') : 'issues 없음',
+  ].join(' / ');
+}
+
+function executionOperatorCockpitReleaseEvidenceNextAction() {
+  var releaseArtifact = S.releaseEvidence && S.releaseEvidence.stage_run_evidence ? S.releaseEvidence.stage_run_evidence : null;
+  if (!releaseArtifact) {
+    return 'release evidence artifact를 다시 생성해 상태를 확인하세요.';
+  }
+  var blocker = String(releaseArtifact.release_evidence_blocker || 'UNKNOWN').trim();
+  if (blocker === 'NONE') {
+    return 'release evidence가 준비되어 있어 운영 반영 또는 다음 packet으로 이동할 수 있습니다.';
+  }
+  if (blocker.indexOf('quality gate ') === 0) {
+    return 'Stage 품질 게이트 결과를 다시 확보한 뒤 release evidence를 재생성하세요.';
+  }
+  if (blocker.indexOf('stage-run contract ') === 0) {
+    return 'stage-run 계약 드리프트를 먼저 해소한 뒤 release evidence를 다시 생성하세요.';
+  }
+  if (blocker === 'stage-run latest report missing' || blocker === 'stage-run report not persisted') {
+    return 'stage-run 최신 보고서를 다시 저장한 뒤 release evidence를 재생성하세요.';
+  }
+  return '현재 blocker를 해소한 뒤 release evidence를 다시 생성하세요.';
 }
 
 function renderOperatorChainCards() {
@@ -3300,10 +3354,57 @@ function deriveExecutionControlMatrix() {
       enabled: true,
       reason: '현재 터미널, worker, 최근 실행 상태를 화면에 표시합니다.',
     },
+    log_visibility: {
+      enabled: true,
+      reason: '실행 이력, 실패 위치, stage 추적값을 화면에서 확인할 수 있습니다.',
+    },
     failure_reason_visible: {
       enabled: failureVisible,
       reason: failureVisible ? '최근 실패 원인을 바로 확인할 수 있습니다.' : '최근 실패가 없어 표시할 실패 원인이 없습니다.',
     },
+  };
+}
+
+function deriveExecutionControlReadiness(controlMatrix) {
+  var matrix = normalizeExecutionControlMatrix(controlMatrix);
+  var specs = [
+    { id: 'send_prompt', label: '전송', mode: 'action' },
+    { id: 'auto_send_toggle', label: '자동전송', mode: 'action' },
+    { id: 'stop', label: '중지', mode: 'action' },
+    { id: 'retry_last_prompt', label: '재시도', mode: 'action' },
+    { id: 'rollback', label: '롤백', mode: 'action' },
+    { id: 'terminal_status_visible', label: '터미널 상태', mode: 'visibility' },
+    { id: 'log_visibility', label: '로그 확인', mode: 'visibility' },
+    { id: 'failure_reason_visible', label: '실패 원인', mode: 'visibility' },
+  ];
+  var items = specs.map(function(spec) {
+    var enabled = matrix[spec.id] && matrix[spec.id].enabled === true;
+    return {
+      id: spec.id,
+      label: spec.label,
+      mode: spec.mode,
+      enabled: enabled,
+      statusLabel: spec.mode === 'action'
+        ? (enabled ? '가능' : '대기')
+        : (enabled ? '표시 중' : '숨김'),
+      tone: enabled
+        ? (spec.mode === 'action' ? 'ready' : 'info')
+        : 'warn',
+      reason: String((matrix[spec.id] && matrix[spec.id].reason) || ''),
+    };
+  });
+  var actionable = items.filter(function(item) { return item.mode === 'action'; });
+  var visibility = items.filter(function(item) { return item.mode === 'visibility'; });
+  var actionableReady = actionable.filter(function(item) { return item.enabled; }).length;
+  var visibilityReady = visibility.filter(function(item) { return item.enabled; }).length;
+
+  return {
+    summary: '실행 제어 ' + actionableReady + '/' + actionable.length + ' 가능 · 가시화 ' + visibilityReady + '/' + visibility.length + ' 확보',
+    actionableReadyCount: actionableReady,
+    actionableTotalCount: actionable.length,
+    visibilityReadyCount: visibilityReady,
+    visibilityTotalCount: visibility.length,
+    items: items,
   };
 }
 
@@ -3324,6 +3425,44 @@ function normalizeExecutionControlMatrix(controlMatrix) {
   return normalized;
 }
 
+function normalizeExecutionControlReadiness(controlReadiness) {
+  var fallback = deriveExecutionControlReadiness(S.execution.controlMatrix);
+  if (!controlReadiness || typeof controlReadiness !== 'object') {
+    return fallback;
+  }
+
+  return {
+    summary: String(controlReadiness.summary || fallback.summary),
+    actionableReadyCount: Number.isInteger(controlReadiness.actionableReadyCount)
+      ? controlReadiness.actionableReadyCount
+      : fallback.actionableReadyCount,
+    actionableTotalCount: Number.isInteger(controlReadiness.actionableTotalCount)
+      ? controlReadiness.actionableTotalCount
+      : fallback.actionableTotalCount,
+    visibilityReadyCount: Number.isInteger(controlReadiness.visibilityReadyCount)
+      ? controlReadiness.visibilityReadyCount
+      : fallback.visibilityReadyCount,
+    visibilityTotalCount: Number.isInteger(controlReadiness.visibilityTotalCount)
+      ? controlReadiness.visibilityTotalCount
+      : fallback.visibilityTotalCount,
+    items: Array.isArray(controlReadiness.items) && controlReadiness.items.length > 0
+      ? controlReadiness.items.map(function(item) {
+        return {
+          id: String(item.id || '').trim(),
+          label: String(item.label || '').trim(),
+          mode: String(item.mode || '').trim() || 'action',
+          enabled: item.enabled === true,
+          statusLabel: String(item.statusLabel || item.status_label || '').trim() || '대기',
+          tone: String(item.tone || '').trim() || 'warn',
+          reason: String(item.reason || '').trim(),
+        };
+      }).filter(function(item) {
+        return item.id && item.label;
+      })
+      : fallback.items,
+  };
+}
+
 function executionControlSummary() {
   var guidance = S.execution.guidance || {};
   if (String(guidance.controlSummary || '').trim()) {
@@ -3336,8 +3475,37 @@ function executionControlSummary() {
     '중지: ' + (matrix.stop.enabled ? '가능' : '대기') + ' / ' + matrix.stop.reason,
     '재시도: ' + (matrix.retry_last_prompt.enabled ? '가능' : '대기') + ' / ' + matrix.retry_last_prompt.reason,
     '롤백: ' + (matrix.rollback.enabled ? '가능' : '대기') + ' / ' + matrix.rollback.reason,
+    '터미널 상태: ' + (matrix.terminal_status_visible.enabled ? '표시 중' : '숨김') + ' / ' + matrix.terminal_status_visible.reason,
+    '로그 확인: ' + (matrix.log_visibility.enabled ? '표시 중' : '숨김') + ' / ' + matrix.log_visibility.reason,
+    '실패 원인: ' + (matrix.failure_reason_visible.enabled ? '표시 중' : '숨김') + ' / ' + matrix.failure_reason_visible.reason,
   ].join('
 ');
+}
+
+function executionControlReadinessCardsMarkup() {
+  var readiness = normalizeExecutionControlReadiness(S.execution.controlReadiness);
+  var items = Array.isArray(readiness.items) ? readiness.items : [];
+  var toneClass = {
+    ready: 'ov-pass',
+    info: 'ov-idle',
+    warn: 'ov-warn',
+  };
+
+  return '<div class="detail-grid-cards">' +
+    '<article class="detail-card">' +
+      '<span>제어 체크 요약</span>' +
+      '<strong>' + escHtml(readiness.summary || '제어 체크 정보 없음') + '</strong>' +
+      '<p>' + escHtml(executionNextAction()) + '</p>' +
+    '</article>' +
+    items.map(function(item) {
+      var tone = toneClass[item.tone] || 'ov-idle';
+      return '<article class="detail-card">' +
+        '<span>' + escHtml(item.label) + '</span>' +
+        '<strong class="' + escHtml(tone) + '">' + escHtml(item.statusLabel || '대기') + '</strong>' +
+        '<p>' + escHtml(item.reason || '사유 없음') + '</p>' +
+      '</article>';
+    }).join('') +
+  '</div>';
 }
 
 function executionFailureRecoverySummary() {
@@ -3394,6 +3562,17 @@ function normalizeStageRunReport(report) {
       save_error: String(report.runtime_observability.save_error || '').trim(),
       correlation_id: String(report.runtime_observability.correlation_id || '').trim(),
       request_id: String(report.runtime_observability.request_id || '').trim(),
+      release_evidence: report.runtime_observability.release_evidence && typeof report.runtime_observability.release_evidence === 'object'
+        ? {
+          triggered: report.runtime_observability.release_evidence.triggered === true,
+          generated: report.runtime_observability.release_evidence.generated === true,
+          exit_code: Number.isInteger(report.runtime_observability.release_evidence.exit_code) ? report.runtime_observability.release_evidence.exit_code : 0,
+          error: String(report.runtime_observability.release_evidence.error || '').trim(),
+          path: String(report.runtime_observability.release_evidence.path || '').trim(),
+          command: String(report.runtime_observability.release_evidence.command || '').trim(),
+          trigger_reason: String(report.runtime_observability.release_evidence.trigger_reason || '').trim(),
+        }
+        : null,
     }
     : null;
 
@@ -3415,6 +3594,38 @@ function normalizeStageRunReport(report) {
     recorded_at: String(report.recorded_at || ''),
     operator_guidance: operatorGuidance,
     runtime_observability: runtimeObservability,
+  };
+}
+
+function normalizeStageRunContract(contract) {
+  if (!contract || typeof contract !== 'object') {
+    return null;
+  }
+  return {
+    drift_status: String(contract.drift_status || '').trim() || 'unknown',
+    latest_history_head_match: contract.latest_history_head_match === true,
+    history_head_available: contract.history_head_available === true,
+    release_evidence_surface_complete: contract.release_evidence_surface_complete === true,
+    release_evidence_generated: contract.release_evidence_generated === true,
+    release_evidence_trigger_reason: String(contract.release_evidence_trigger_reason || '').trim(),
+    issues: Array.isArray(contract.issues)
+      ? contract.issues.map(function(issue) { return String(issue || '').trim(); }).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizeStageRunQualityGate(qualityGate) {
+  if (!qualityGate || typeof qualityGate !== 'object') {
+    return null;
+  }
+  return {
+    result: String(qualityGate.result || '').trim() || 'UNKNOWN',
+    reported_result: String(qualityGate.reported_result || '').trim(),
+    source: String(qualityGate.source || '').trim() || 'unknown',
+    execution_mode: String(qualityGate.execution_mode || '').trim() || 'UNKNOWN',
+    ready_for_release_evidence: qualityGate.ready_for_release_evidence === true,
+    blocker: String(qualityGate.blocker || '').trim() || 'unknown',
+    next_action: String(qualityGate.next_action || '').trim() || 'quality gate 상태를 다시 확인하세요.',
   };
 }
 
@@ -3458,6 +3669,16 @@ function rememberStageRunReport(report) {
 }
 
 function deriveStageRunNextAction(report) {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (contract && contract.drift_status !== 'clean') {
+    if (contract.issues.indexOf('latest-history-head-mismatch') >= 0) {
+      return 'snapshot latest와 recent history head를 다시 저장해 stage-run 정본을 정렬하세요.';
+    }
+    if (contract.issues.indexOf('latest-release-evidence-missing') >= 0 || contract.issues.indexOf('history-head-release-evidence-missing') >= 0) {
+      return 'stage-run을 다시 저장하거나 release evidence가 포함된 최신 실행 결과로 갱신하세요.';
+    }
+    return 'stage-run 계약 드리프트 원인을 확인한 뒤 snapshot 정본을 다시 생성하세요.';
+  }
   if (!report) {
     return 'Stage를 고른 뒤 dry-run으로 현재 경로를 먼저 확인하세요.';
   }
@@ -3476,6 +3697,15 @@ function deriveStageRunNextAction(report) {
       : '실패 원인을 해소한 뒤 마지막 stage 재실행을 누르세요.';
   }
   if (report.execution_mode === 'execute' && report.status === 'pass') {
+    var releaseEvidence = report.runtime_observability && report.runtime_observability.release_evidence
+      ? report.runtime_observability.release_evidence
+      : null;
+    if (releaseEvidence && releaseEvidence.triggered && releaseEvidence.generated) {
+      return 'release evidence를 확인하고 다음 Stage 또는 운영 반영으로 이동하세요.';
+    }
+    if (releaseEvidence && releaseEvidence.triggered && !releaseEvidence.generated) {
+      return 'release evidence 생성 실패 원인을 확인한 뒤 execute 재실행 또는 증거 생성 명령을 다시 실행하세요.';
+    }
     return '품질 게이트 결과를 확인하고 다음 Stage 또는 운영 증거 생성으로 이동하세요.';
   }
   if (report.status === 'ready') {
@@ -3592,6 +3822,195 @@ function stageRunEvidenceError(report) {
     return '없음';
   }
   return '저장 오류 기록 없음';
+}
+
+function stageRunReleaseEvidenceStatus(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability) {
+    return '확인 필요 / release evidence 관측 정보 없음';
+  }
+  var releaseEvidence = runtimeObservability.release_evidence || null;
+  if (!releaseEvidence) {
+    return '확인 필요 / release evidence 관측 정보 없음';
+  }
+  if (!releaseEvidence.triggered) {
+    return '대기 / ' + (String(releaseEvidence.trigger_reason || '').trim() || '자동 생성 조건 미충족');
+  }
+  return releaseEvidence.generated
+    ? '생성 완료 / release evidence 기록됨'
+    : '생성 실패 / 응답은 수신됐지만 release evidence 생성이 실패했습니다.';
+}
+
+function stageRunReleaseEvidenceError(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability || !runtimeObservability.release_evidence) {
+    return 'release_evidence 없음';
+  }
+  var errorText = String(runtimeObservability.release_evidence.error || '').trim();
+  if (errorText) {
+    return errorText;
+  }
+  if (runtimeObservability.release_evidence.triggered && runtimeObservability.release_evidence.generated) {
+    return '없음';
+  }
+  return 'release evidence 오류 기록 없음';
+}
+
+function stageRunReleaseEvidencePath(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability || !runtimeObservability.release_evidence) {
+    return '없음';
+  }
+  return String(runtimeObservability.release_evidence.path || '').trim() || '없음';
+}
+
+function stageRunReleaseEvidenceCommand(report) {
+  if (!report) {
+    return '없음';
+  }
+  var runtimeObservability = report.runtime_observability || null;
+  if (!runtimeObservability || !runtimeObservability.release_evidence) {
+    return '없음';
+  }
+  return String(runtimeObservability.release_evidence.command || '').trim() || '없음';
+}
+
+function stageRunContractStatus() {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return '확인 필요 / stage-run 계약 정보 없음';
+  }
+  return contract.drift_status === 'clean'
+    ? '정상 / latest-history-head와 release evidence 표면이 정렬됨'
+    : '드리프트 감지 / snapshot과 저장 정본 사이 확인 필요';
+}
+
+function stageRunContractIssues() {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return 'stage_run_contract 없음';
+  }
+  return contract.issues.length > 0 ? contract.issues.join(', ') : '없음';
+}
+
+function stageRunContractNextAction() {
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return 'snapshot을 다시 불러와 stage-run 계약 상태를 확인하세요.';
+  }
+  if (contract.drift_status === 'clean') {
+    return '현재 snapshot 계약이 정렬되어 있어 다음 Stage 또는 운영 반영으로 이동할 수 있습니다.';
+  }
+  if (contract.issues.indexOf('latest-history-head-mismatch') >= 0) {
+    return 'latest/history head mismatch를 해소하도록 stage-run을 다시 저장하세요.';
+  }
+  if (contract.issues.indexOf('latest-release-evidence-missing') >= 0 || contract.issues.indexOf('history-head-release-evidence-missing') >= 0) {
+    return 'release evidence가 포함된 최신 stage-run으로 snapshot을 다시 적재하세요.';
+  }
+  return 'stage-run 저장 정본과 snapshot 드리프트를 먼저 해소하세요.';
+}
+
+function stageRunQualityGateStatus() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return '확인 필요 / stage-run quality gate 정보 없음';
+  }
+  if (qualityGate.result === 'DRY_RUN_ONLY') {
+    return '대기 / dry-run-only 상태로 실제 quality gate가 아직 실행되지 않았습니다.';
+  }
+  if (qualityGate.result === 'PASS') {
+    return '정상 / quality gate PASS가 확보되었습니다.';
+  }
+  if (qualityGate.result === 'UNKNOWN') {
+    return '확인 필요 / quality gate 결과를 아직 확정할 수 없습니다.';
+  }
+  return '차단 / quality gate ' + qualityGate.result;
+}
+
+function stageRunQualityGateSource() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return 'stage_run_quality_gate 없음';
+  }
+  var reported = qualityGate.reported_result || '없음';
+  return [qualityGate.source, 'reported=' + reported, 'mode=' + qualityGate.execution_mode].join(' / ');
+}
+
+function stageRunQualityGateReadiness() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return '불가 / release evidence 준비 판정을 내릴 수 없습니다.';
+  }
+  return qualityGate.ready_for_release_evidence
+    ? '가능 / release evidence 준비 판정에 사용할 수 있습니다.'
+    : '대기 / release evidence 준비 판정에 아직 사용할 수 없습니다.';
+}
+
+function stageRunQualityGateNextAction() {
+  var qualityGate = normalizeStageRunQualityGate(S.stageRun.qualityGate);
+  if (!qualityGate) {
+    return 'snapshot을 다시 불러와 quality gate 판정 상태를 확인하세요.';
+  }
+  return qualityGate.next_action;
+}
+
+function stageRunContractRecoveryPrompt() {
+  var report = normalizeStageRunReport(S.stageRun.lastReport);
+  var contract = normalizeStageRunContract(S.stageRun.contract);
+  if (!contract) {
+    return '';
+  }
+  return [
+    '[stage-run 계약 복구]',
+    '계약 상태: ' + stageRunContractStatus(),
+    '드리프트 이슈: ' + stageRunContractIssues(),
+    '현재 Stage: ' + String(report && report.requested_stage || S.stageRun.selectedStage || 'D'),
+    '대상 module: ' + String(report && report.requested_module || S.stageRun.selectedModule || 'all'),
+    '다음 행동: ' + stageRunContractNextAction(),
+    '저장 정본과 snapshot 계약을 유지하면서 필요한 재실행 또는 재확인만 진행하라.',
+  ].join(String.fromCharCode(10));
+}
+
+function loadStageRunContractRecoveryPrompt() {
+  var prompt = stageRunContractRecoveryPrompt();
+  if (!prompt) {
+    showToast('채울 stage-run 계약 복구 안내가 없습니다.');
+    return false;
+  }
+  S.execution.promptText = prompt;
+  setExecutionStatus('idle', 'stage-run 계약 복구 안내 준비 완료', '계약 드리프트 복구 지시를 실행 패널에 채웠습니다. 전송 전에 세션과 명령을 확인하세요.');
+  renderExecutionConsole();
+  showToast('stage-run 계약 복구 안내 반영 완료');
+  return true;
+}
+
+function sendStageRunContractRecoveryPrompt() {
+  if (!loadStageRunContractRecoveryPrompt()) {
+    return;
+  }
+  sendPromptNow();
+}
+
+function refreshStageRunContract() {
+  setExecutionStatus('idle', 'stage-run 계약 재확인 중', 'planning studio snapshot을 다시 불러와 계약 드리프트를 재확인하는 중입니다.');
+  hydratePlanningSnapshot()
+    .then(function() {
+      setExecutionStatus('idle', 'stage-run 계약 재확인 완료', '최신 snapshot 기준으로 stage-run 계약 상태를 다시 반영했습니다.');
+      showToast('stage-run 계약 재확인 완료');
+    })
+    .catch(function(error) {
+      setExecutionStatus('error', 'stage-run 계약 재확인 실패', String(error && error.message || '원인을 확인한 뒤 다시 시도하세요.'));
+      showToast('stage-run 계약 재확인 실패');
+    });
 }
 
 function stageRunRequestId(report) {
@@ -4035,6 +4454,7 @@ function renderStageRunWorkbench() {
   var retryableLabel = stageRunRetryableSummary(report);
   var failureLocationLabel = stageRunFailureLocation(report);
   var failureReasonLabel = stageRunFailureReason(report);
+  var contractRecoverySendDisabled = !S.execution.controls.sendPrompt;
   var traceSendDisabled = !S.execution.controls.sendPrompt;
   var traceSendSummary = traceSendDisabled
     ? '대기 / 연결된 PTY 세션이 없어 즉시 전송할 수 없습니다.'
@@ -4126,6 +4546,17 @@ function renderStageRunWorkbench() {
       '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(stageRunFailureReason(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>운영 증거</span><strong>' + escHtml(stageRunEvidenceStatus(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>저장 오류</span><strong>' + escHtml(stageRunEvidenceError(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Release Evidence</span><strong>' + escHtml(stageRunReleaseEvidenceStatus(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Evidence 오류</span><strong>' + escHtml(stageRunReleaseEvidenceError(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Evidence 경로</span><strong>' + escHtml(stageRunReleaseEvidencePath(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Evidence 명령</span><strong>' + escHtml(stageRunReleaseEvidenceCommand(focusReport)) + '</strong></div>' +
+      '<div class="execution-row"><span>Quality Gate 판정</span><strong>' + escHtml(stageRunQualityGateStatus()) + '</strong></div>' +
+      '<div class="execution-row"><span>Gate 판정 출처</span><strong>' + escHtml(stageRunQualityGateSource()) + '</strong></div>' +
+      '<div class="execution-row"><span>Gate 운영 준비</span><strong>' + escHtml(stageRunQualityGateReadiness()) + '</strong></div>' +
+      '<div class="execution-row"><span>Gate 다음 행동</span><strong>' + escHtml(stageRunQualityGateNextAction()) + '</strong></div>' +
+      '<div class="execution-row"><span>계약 드리프트</span><strong>' + escHtml(stageRunContractStatus()) + '</strong></div>' +
+      '<div class="execution-row"><span>드리프트 이슈</span><strong>' + escHtml(stageRunContractIssues()) + '</strong></div>' +
+      '<div class="execution-row"><span>계약 다음 행동</span><strong>' + escHtml(stageRunContractNextAction()) + '</strong></div>' +
       '<div class="execution-row"><span>요청 ID</span><strong>' + escHtml(stageRunRequestId(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>상관 ID</span><strong>' + escHtml(stageRunCorrelationId(focusReport)) + '</strong></div>' +
       '<div class="execution-row"><span>로그 확인</span><strong>' + escHtml(stageRunTraceQuery(focusReport)) + '</strong></div>' +
@@ -4161,6 +4592,9 @@ function renderStageRunWorkbench() {
         '기록 시각: ' + (item.recorded_at || '없음'),
         '실패 명령: ' + (item.failed_command || '없음'),
         '운영 증거: ' + stageRunEvidenceStatus(item),
+        'Release Evidence: ' + stageRunReleaseEvidenceStatus(item),
+        'Quality Gate 판정: ' + stageRunQualityGateStatus(),
+        '계약 드리프트: ' + stageRunContractStatus(),
         '요청 ID: ' + stageRunRequestId(item),
         '상관 ID: ' + stageRunCorrelationId(item),
         '다음 행동: ' + itemNextAction,
@@ -4208,6 +4642,22 @@ function renderStageRunWorkbench() {
         '<div class="execution-row"><span>실패 원인</span><strong>' + escHtml(failureReasonLabel) + '</strong></div>' +
         '<div class="execution-row"><span>운영 증거</span><strong>' + escHtml(stageRunEvidenceStatus(report)) + '</strong></div>' +
         '<div class="execution-row"><span>저장 오류</span><strong>' + escHtml(stageRunEvidenceError(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Release Evidence</span><strong>' + escHtml(stageRunReleaseEvidenceStatus(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Evidence 오류</span><strong>' + escHtml(stageRunReleaseEvidenceError(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Evidence 경로</span><strong>' + escHtml(stageRunReleaseEvidencePath(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Evidence 명령</span><strong>' + escHtml(stageRunReleaseEvidenceCommand(report)) + '</strong></div>' +
+        '<div class="execution-row"><span>Quality Gate 판정</span><strong>' + escHtml(stageRunQualityGateStatus()) + '</strong></div>' +
+        '<div class="execution-row"><span>Gate 판정 출처</span><strong>' + escHtml(stageRunQualityGateSource()) + '</strong></div>' +
+        '<div class="execution-row"><span>Gate 운영 준비</span><strong>' + escHtml(stageRunQualityGateReadiness()) + '</strong></div>' +
+        '<div class="execution-row"><span>Gate 다음 행동</span><strong>' + escHtml(stageRunQualityGateNextAction()) + '</strong></div>' +
+        '<div class="execution-row"><span>계약 드리프트</span><strong>' + escHtml(stageRunContractStatus()) + '</strong></div>' +
+        '<div class="execution-row"><span>드리프트 이슈</span><strong>' + escHtml(stageRunContractIssues()) + '</strong></div>' +
+        '<div class="execution-row"><span>계약 다음 행동</span><strong>' + escHtml(stageRunContractNextAction()) + '</strong></div>' +
+        '<div class="execution-actions">' +
+          '<button type="button" class="execution-button secondary" onclick="refreshStageRunContract()">계약 재확인</button>' +
+          '<button type="button" class="execution-button secondary" onclick="loadStageRunContractRecoveryPrompt()">복구 안내 채우기</button>' +
+          '<button type="button" class="execution-button primary" onclick="sendStageRunContractRecoveryPrompt()"' + htmlDisabled(contractRecoverySendDisabled) + '>복구 안내 전송</button>' +
+        '</div>' +
         '<div class="execution-row"><span>요청 ID</span><strong>' + escHtml(stageRunRequestId(report)) + '</strong></div>' +
         '<div class="execution-row"><span>상관 ID</span><strong>' + escHtml(stageRunCorrelationId(report)) + '</strong></div>' +
         '<div class="execution-row"><span>로그 확인</span><strong>' + escHtml(stageRunTraceQuery(report)) + '</strong></div>' +
@@ -4405,6 +4855,34 @@ function applyControlCenterRuntimeState(runtimePayload) {
       return item.id && item.label;
     }) : [],
   } : null;
+  S.execution.controlReadiness = controls.control_readiness && typeof controls.control_readiness === 'object' ? {
+    summary: String(controls.control_readiness.summary || '').trim(),
+    actionableReadyCount: Number.isInteger(controls.control_readiness.actionable_ready_count)
+      ? controls.control_readiness.actionable_ready_count
+      : null,
+    actionableTotalCount: Number.isInteger(controls.control_readiness.actionable_total_count)
+      ? controls.control_readiness.actionable_total_count
+      : null,
+    visibilityReadyCount: Number.isInteger(controls.control_readiness.visibility_ready_count)
+      ? controls.control_readiness.visibility_ready_count
+      : null,
+    visibilityTotalCount: Number.isInteger(controls.control_readiness.visibility_total_count)
+      ? controls.control_readiness.visibility_total_count
+      : null,
+    items: Array.isArray(controls.control_readiness.items) ? controls.control_readiness.items.map(function(item) {
+      return {
+        id: String(item && item.id || '').trim(),
+        label: String(item && item.label || '').trim(),
+        mode: String(item && item.mode || '').trim(),
+        enabled: item && item.enabled === true,
+        statusLabel: String(item && (item.status_label || item.statusLabel) || '').trim(),
+        tone: String(item && item.tone || '').trim(),
+        reason: String(item && item.reason || '').trim(),
+      };
+    }).filter(function(item) {
+      return item.id && item.label;
+    }) : [],
+  } : null;
   S.execution.operatorBrief = execution.operator_brief ? {
     autoSendStatus: String(execution.operator_brief.auto_send_status || '').trim(),
     currentExecution: String(execution.operator_brief.current_execution || '').trim(),
@@ -4493,6 +4971,7 @@ function applyControlCenterRuntimeState(runtimePayload) {
     retryLastPrompt: controls.retry_last_prompt === true,
     rollback: controls.rollback === true,
     terminalStatusVisible: controls.terminal_status_visible !== false,
+    logVisibility: controls.log_visibility !== false,
     failureReasonVisible: controls.failure_reason_visible === true,
   };
   S.execution.controlMatrix = normalizeExecutionControlMatrix(controls.control_matrix);
@@ -4656,6 +5135,7 @@ function renderExecutionConsole() {
   var operatorChainMarkup = renderOperatorChainCards();
   var operatorSourceSummary = operatorActionSourceSummary(S.execution.operatorActionHistory);
   var controlGuidanceSummary = executionControlSummary();
+  var controlReadinessMarkup = executionControlReadinessCardsMarkup();
   var failureRecoverySummary = executionFailureRecoverySummary();
   var rollbackReadinessSummary = executionRollbackReadinessSummary();
 
@@ -4689,10 +5169,21 @@ function renderExecutionConsole() {
       '<div class="execution-row"><span>커밋 가드</span><strong>' + escHtml(executionOperatorCockpitGuardSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>검증 프로파일</span><strong>' + escHtml(executionOperatorCockpitValidationSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>Release Evidence</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Release Blocker</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceBlocker()) + '</strong></div>' +
+      '<div class="execution-row"><span>Release 계약</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceContractSummary()) + '</strong></div>' +
+      '<div class="execution-row"><span>Release 다음 행동</span><strong>' + escHtml(executionOperatorCockpitReleaseEvidenceNextAction()) + '</strong></div>' +
+      '<div class="execution-actions">' +
+        '<button type="button" class="execution-button secondary" onclick="copyOperatorCommand(' + "'release-evidence'" + ')">Release 명령 복사</button>' +
+        '<button type="button" class="execution-button primary" onclick="loadOperatorCommandPrompt(' + "'release-evidence'" + ')">Release 명령 채우기</button>' +
+      '</div>' +
       '<div class="execution-row"><span>Operator Chain</span><strong>' + escHtml(executionOperatorCockpitChainSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>Action Sources</span><strong>' + escHtml(operatorSourceSummary) + '</strong></div>' +
       '<div class="execution-row"><span>운영 액션</span><strong>' + escHtml(executionOperatorCockpitActionsSummary()) + '</strong></div>' +
       '<div class="execution-row"><span>Operator Action History</span>' + operatorHistoryMarkup + '</div>' +
+    '</div>' +
+    '<div class="detail-section">' +
+      '<div class="detail-section-title">제어 체크포인트</div>' +
+      controlReadinessMarkup +
     '</div>' +
     '<div class="detail-section">' +
       '<div class="detail-section-title">Operator Chain</div>' +
@@ -4847,6 +5338,16 @@ function applyStageRunReport(report) {
 
 function applyStageRunHistory(reports) {
   S.stageRun.history = normalizeStageRunHistory(reports);
+}
+
+function applyStageRunContract(contract) {
+  S.stageRun.contract = normalizeStageRunContract(contract);
+  renderExecutionConsole();
+}
+
+function applyStageRunQualityGate(qualityGate) {
+  S.stageRun.qualityGate = normalizeStageRunQualityGate(qualityGate);
+  renderExecutionConsole();
 }
 
 function setStageRunHistoryFilter(filter) {
@@ -5881,6 +6382,15 @@ npm run commit:guard:verify',
       toast: 'operator cockpit 명령을 준비했습니다.',
     };
   }
+  if (scope === 'release-evidence') {
+    return {
+      title: 'Release Evidence',
+      command: 'python3 scripts/generate_release_evidence.py',
+      scope: scope,
+      source: 'control-center',
+      toast: 'release evidence 생성 명령을 준비했습니다.',
+    };
+  }
   if (scope.indexOf('chain:') === 0) {
     var chainId = scope.slice('chain:'.length);
     var chainItem = operatorCockpitChainItems().find(function(item) {
@@ -6505,6 +7015,12 @@ function applyPlanningSnapshot(snapshot) {
   if (snapshot.stage_run_last_report && typeof snapshot.stage_run_last_report === 'object' && Object.keys(snapshot.stage_run_last_report).length > 0) {
     applyStageRunReport(snapshot.stage_run_last_report);
   }
+  if (snapshot.stage_run_contract && typeof snapshot.stage_run_contract === 'object') {
+    applyStageRunContract(snapshot.stage_run_contract);
+  }
+  if (snapshot.stage_run_quality_gate && typeof snapshot.stage_run_quality_gate === 'object') {
+    applyStageRunQualityGate(snapshot.stage_run_quality_gate);
+  }
 
   var automationConfig = snapshot.automation || snapshot.automation_config || null;
   if (automationConfig && typeof automationConfig.enabled === 'boolean') {
@@ -6976,6 +7492,9 @@ window.setStageRunHistorySort = setStageRunHistorySort;
 window.copyStageRunTraceQuery = copyStageRunTraceQuery;
 window.loadStageRunTracePrompt = loadStageRunTracePrompt;
 window.sendStageRunTracePrompt = sendStageRunTracePrompt;
+window.loadStageRunContractRecoveryPrompt = loadStageRunContractRecoveryPrompt;
+window.sendStageRunContractRecoveryPrompt = sendStageRunContractRecoveryPrompt;
+window.refreshStageRunContract = refreshStageRunContract;
 window.loadRecommendedPrompt = loadRecommendedPrompt;
 window.copyOperatorCommand = copyOperatorCommand;
 window.loadOperatorCommandPrompt = loadOperatorCommandPrompt;

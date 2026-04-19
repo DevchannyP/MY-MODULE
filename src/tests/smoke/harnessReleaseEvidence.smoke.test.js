@@ -20,4 +20,10 @@ test('[harness release smoke] release evidence includes prompt version and rollb
   assert.equal(typeof releaseEvidence.harness_release.rollback_target, 'string');
   assert.equal(typeof releaseEvidence.harness_release.rollback_strategy, 'string');
   assert.equal(releaseEvidence.harness_release.output_schema_ref, 'contracts/harness/output.schema.json');
+  assert.equal(typeof releaseEvidence.stage_run_evidence, 'object');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.report_saved, 'boolean');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.request_id, 'string');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.correlation_id, 'string');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.stage_run_contract, 'object');
+  assert.equal(typeof releaseEvidence.stage_run_evidence.stage_run_contract.drift_status, 'string');
 });

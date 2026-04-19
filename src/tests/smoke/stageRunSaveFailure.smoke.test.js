@@ -117,6 +117,10 @@ test('[stage run save failure smoke] stage-run responds with runtime observabili
     assert.equal(response.json.data.runtime_observability.save_error, 'simulated save-stage-run failure');
     assert.equal(typeof response.json.data.runtime_observability.request_id, 'string');
     assert.equal(typeof response.json.data.runtime_observability.correlation_id, 'string');
+    assert.equal(response.json.data.runtime_observability.artifact_paths.last_report, 'memory/project/stage-run-latest.yaml');
+    assert.equal(response.json.data.runtime_observability.artifact_paths.recent_reports, 'memory/project/stage-run-history.yaml');
+    assert.equal(response.json.data.runtime_observability.artifact_target_count, 2);
+    assert.equal(response.json.data.runtime_observability.save_command, 'python3 scripts/planning_studio_api.py save-stage-run');
 
     const replayed = await jsonPost(handle.port, '/api/planning-studio/stage-run', requestBody, {
       'idempotency-key': idemKey,

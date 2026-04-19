@@ -36,6 +36,8 @@ const { InMemoryBillingExceptionRepository } = require('../../domains/billing/sr
 const { InMemoryVideoRepository } = require('../../domains/video/src/infrastructure/InMemoryVideoRepository');
 const { InMemoryTranscodeJobRepository } = require('../../domains/video/src/infrastructure/InMemoryTranscodeJobRepository');
 const { tryServeDynamicUi } = require('../frontend/renderDynamicUi');
+const { createMpoRouteHandler } = require('./routes/mpo');
+const { createEventsRouteHandler } = require('./routes/events');
 const { buildOperatorCockpitSummary } = require('../../scripts/operator_cockpit');
 const { InMemoryOutboxRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/OutboxRepository');
 const { OutboxPoller } = require('../../domains/productivity/task-tracking/src/infrastructure/OutboxPoller');
@@ -915,9 +917,23 @@ function buildStageRunRuntimeObservability({
   reportSaved,
   saveExitCode = 0,
   saveError = null,
+  runtimeRoot = path.resolve(__dirname, '../..'),
+  releaseEvidence = null,
 } = {}) {
   const normalizedSaveError = typeof saveError === 'string' && saveError.trim()
     ? saveError.trim()
+    : null;
+  const rootPath = path.resolve(String(runtimeRoot || path.resolve(__dirname, '../..')));
+  const artifactPaths = {
+    last_report: path.relative(rootPath, path.join(rootPath, 'memory', 'project', 'stage-run-latest.yaml')),
+    recent_reports: path.relative(rootPath, path.join(rootPath, 'memory', 'project', 'stage-run-history.yaml')),
+  };
+  const releaseEvidencePath = path.relative(rootPath, path.join(rootPath, 'artifacts', 'release-evidence', 'release-evidence.json'));
+  const normalizedReleaseEvidence = releaseEvidence && typeof releaseEvidence === 'object'
+    ? releaseEvidence
+    : {};
+  const normalizedReleaseEvidenceError = typeof normalizedReleaseEvidence.error === 'string' && normalizedReleaseEvidence.error.trim()
+    ? normalizedReleaseEvidence.error.trim()
     : null;
 
   return {
@@ -926,6 +942,18 @@ function buildStageRunRuntimeObservability({
     save_error: normalizedSaveError,
     correlation_id: String(correlationId || ''),
     request_id: String(requestId || ''),
+    artifact_paths: artifactPaths,
+    artifact_target_count: Object.keys(artifactPaths).length,
+    save_command: 'python3 scripts/planning_studio_api.py save-stage-run',
+    release_evidence: {
+      triggered: normalizedReleaseEvidence.triggered === true,
+      generated: normalizedReleaseEvidence.generated === true,
+      exit_code: Number.isInteger(normalizedReleaseEvidence.exitCode) ? normalizedReleaseEvidence.exitCode : 0,
+      error: normalizedReleaseEvidenceError,
+      path: releaseEvidencePath,
+      command: 'python3 scripts/generate_release_evidence.py',
+      trigger_reason: String(normalizedReleaseEvidence.triggerReason || 'not-requested'),
+    },
   };
 }
 
@@ -948,10 +976,22 @@ function createAppHandler({
   harnessProviderAdapter = null,  // null → 기본 HarnessProviderAdapter(NullProvider) 사용
 } = {}) {
   // WP-LLM-001: 주입된 adapter 또는 기본 adapter(NullHarnessProvider 폴백)
-  const resolvedHarnessAdapter = harnessProviderAdapter instanceof HarnessProviderAdapter
+  const resolvedHarnessAdapter = (
+    harnessProviderAdapter instanceof HarnessProviderAdapter
+      || (
+        harnessProviderAdapter
+        && typeof harnessProviderAdapter.executeWorkPacket === 'function'
+      )
+  )
     ? harnessProviderAdapter
     : new HarnessProviderAdapter();
   const nodePtyBridge = createNodePtyBridge(runtimeRoot);
+  const mpoRouteHandler = createMpoRouteHandler({
+    runtimeRoot,
+    harnessProviderAdapter: resolvedHarnessAdapter,
+    flagsProvider: flags || null,
+  });
+  const eventsRouteHandler = createEventsRouteHandler();
   const uiOperatorState = {
     recentOperatorAction: null,
     recentOperatorActions: [],
@@ -1149,6 +1189,27 @@ function createAppHandler({
           throw Object.assign(new Error('Idempotency-Key reuse detected with a different request payload'), { code: 'IDEMPOTENCY_KEY_REUSE_MISMATCH' });
         }
         idempotencyScope = claim.scope;
+      }
+
+      if (eventsRouteHandler(req, res, {
+        url,
+        responseHeaders: mergeHeaders(responseBaseHeaders, responseHeaders),
+      })) {
+        return;
+      }
+
+      const mpoHandled = await mpoRouteHandler(req, res, {
+        url,
+        body,
+        sendResponse,
+        mergeHeaders,
+        responseBaseHeaders,
+        responseHeaders,
+        idempotencyScope,
+        idempotencyStore,
+      });
+      if (mpoHandled) {
+        return;
       }
 
       // ── Feature Flag 라우트 게이트 (OpenFeature 패턴) ──────────────────────
@@ -1644,6 +1705,7 @@ function createAppHandler({
             reportSaved: true,
             saveExitCode: 0,
             saveError: null,
+            runtimeRoot,
           }),
         };
         const saveStageRunResult = spawnSync('python3', [
@@ -1658,6 +1720,72 @@ function createAppHandler({
         const saveErrorMessage = saveFailed
           ? ((saveStageRunResult.stderr || '').trim() || (saveStageRunResult.error ? String(saveStageRunResult.error.message) : 'save-stage-run failed'))
           : null;
+        let releaseEvidenceState = {
+          triggered: false,
+          generated: false,
+          exitCode: 0,
+          error: null,
+          triggerReason: executeStage ? `quality gate ${String(stageReport.quality_gate_result || 'UNKNOWN')}` : 'dry-run-only',
+        };
+        if (saveFailed) {
+          releaseEvidenceState = {
+            triggered: false,
+            generated: false,
+            exitCode: 0,
+            error: null,
+            triggerReason: 'stage-run report not persisted',
+          };
+        } else if (executeStage && String(stageReport.quality_gate_result || '').trim().toUpperCase() === 'PASS') {
+          const releaseEvidenceResult = spawnSync('python3', [
+            path.resolve(__dirname, '../../scripts/generate_release_evidence.py'),
+          ], {
+            cwd: runtimeRoot,
+            encoding: 'utf8',
+            timeout: 30_000,
+          });
+          const releaseEvidenceFailed = releaseEvidenceResult.status !== 0 || Boolean(releaseEvidenceResult.error);
+          const releaseEvidenceError = releaseEvidenceFailed
+            ? ((releaseEvidenceResult.stderr || '').trim() || (releaseEvidenceResult.error ? String(releaseEvidenceResult.error.message) : 'generate_release_evidence failed'))
+            : null;
+          releaseEvidenceState = {
+            triggered: true,
+            generated: !releaseEvidenceFailed,
+            exitCode: typeof releaseEvidenceResult.status === 'number' ? releaseEvidenceResult.status : (releaseEvidenceFailed ? 1 : 0),
+            error: releaseEvidenceError,
+            triggerReason: 'execute-pass',
+          };
+
+          if (releaseEvidenceFailed) {
+            metrics.stageRunReleaseEvidenceFailuresTotal.add(1, {
+              route: url.pathname,
+              method,
+              stage: requestedStage,
+              module: requestedModule || 'all',
+            });
+            logger.warn('stage_run.release_evidence_failed', {
+              correlation_id: correlationId,
+              request_id: requestId,
+              stage: requestedStage,
+              module: requestedModule || '',
+              exit_code: releaseEvidenceResult.status,
+              stderr: (releaseEvidenceResult.stderr || '').trim().slice(0, 200),
+              error: releaseEvidenceResult.error ? String(releaseEvidenceResult.error.message) : null,
+            });
+          } else {
+            metrics.stageRunReleaseEvidenceGeneratedTotal.add(1, {
+              route: url.pathname,
+              method,
+              stage: requestedStage,
+              module: requestedModule || 'all',
+            });
+            logger.info('stage_run.release_evidence_ok', {
+              correlation_id: correlationId,
+              request_id: requestId,
+              stage: requestedStage,
+              module: requestedModule || '',
+            });
+          }
+        }
         const stageRunResponseData = saveFailed
           ? {
             ...stageReport,
@@ -1667,9 +1795,22 @@ function createAppHandler({
               reportSaved: false,
               saveExitCode: typeof saveStageRunResult.status === 'number' ? saveStageRunResult.status : 1,
               saveError: saveErrorMessage,
+              runtimeRoot,
+              releaseEvidence: releaseEvidenceState,
             }),
           }
-          : saveStageRunPayload;
+          : {
+            ...saveStageRunPayload,
+            runtime_observability: buildStageRunRuntimeObservability({
+              correlationId,
+              requestId,
+              reportSaved: true,
+              saveExitCode: 0,
+              saveError: null,
+              runtimeRoot,
+              releaseEvidence: releaseEvidenceState,
+            }),
+          };
 
         stageRunObservation.succeed({
           'stage_run.stage': requestedStage,
@@ -1677,6 +1818,7 @@ function createAppHandler({
           'stage_run.mode': executeStage ? 'execute' : 'dry-run',
           'stage_run.status': stageReport.status || 'unknown',
           'stage_run.report_saved': !saveFailed,
+          'stage_run.release_evidence.generated': releaseEvidenceState.generated,
         });
         if (saveFailed) {
           metrics.stageRunReportSaveFailuresTotal.add(1, {

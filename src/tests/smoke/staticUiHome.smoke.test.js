@@ -59,4 +59,9 @@ test('[static ui home] artifacts root home is generated with core navigation lin
   assert.match(html, /focus=guard/);
   assert.match(html, /npm run ui:build/);
   assert.match(html, /master-planner\/index\.html/);
+  assert.match(html, /MPO v1\.0/);
+  assert.match(html, /completed_with_replan/);
+  assert.match(html, /AUTO-REPLAN/);
+  assert.match(html, /mpo\.plan\.replanned/);
+  assert.match(html, /replan of/);
 });

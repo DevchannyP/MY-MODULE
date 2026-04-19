@@ -49,6 +49,196 @@ function statusClass(value) {
   return 'tone-slate';
 }
 
+function buildMpoPanel() {
+  return `
+<section id="mpo-panel" style="position:fixed;right:20px;bottom:20px;z-index:50;width:min(420px,calc(100vw - 32px));background:rgba(10,19,25,0.94);color:#f5f7f9;border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,0.35);backdrop-filter:blur(14px);font-family:'IBM Plex Sans','Pretendard',sans-serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
+    <strong style="font-size:15px;letter-spacing:0.02em;">MPO v1.0</strong>
+    <span id="mpo-status-chip" style="font-size:12px;padding:4px 8px;border-radius:999px;background:#1d3a2b;color:#b8ffd1;">idle</span>
+  </div>
+  <label for="mpo-goal-input" style="display:block;font-size:12px;opacity:0.8;margin-bottom:6px;">목표 한 줄</label>
+  <textarea id="mpo-goal-input" rows="3" style="width:100%;resize:vertical;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#081016;color:#f5f7f9;padding:10px 12px;font:inherit;">문서 정리와 MPO dry-run 검증 경로를 확인해줘</textarea>
+  <div style="display:flex;gap:8px;margin-top:10px;">
+    <button id="mpo-plan-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#f2c14e;color:#1f2022;font-weight:700;cursor:pointer;">계획 만들기</button>
+    <button id="mpo-approve-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#2c7be5;color:#fff;font-weight:700;cursor:pointer;" disabled>승인 후 실행</button>
+  </div>
+  <div id="mpo-summary" style="margin-top:12px;font-size:12px;line-height:1.5;opacity:0.85;">세션 없음</div>
+  <div id="mpo-plan-list" style="margin-top:10px;max-height:220px;overflow:auto;display:grid;gap:8px;"></div>
+  <div id="mpo-events" style="margin-top:10px;max-height:180px;overflow:auto;background:#0f1a21;border-radius:12px;padding:10px;font-size:11px;line-height:1.5;"></div>
+</section>
+<script>
+(function() {
+  var statusChip = document.getElementById('mpo-status-chip');
+  var planButton = document.getElementById('mpo-plan-button');
+  var approveButton = document.getElementById('mpo-approve-button');
+  var goalInput = document.getElementById('mpo-goal-input');
+  var summaryEl = document.getElementById('mpo-summary');
+  var planListEl = document.getElementById('mpo-plan-list');
+  var eventsEl = document.getElementById('mpo-events');
+  var currentSessionId = null;
+  var STATUS_STYLES = {
+    idle: { background: '#334155', color: '#e2e8f0' },
+    planning: { background: '#713f12', color: '#fde68a' },
+    awaiting_approval: { background: '#1e3a8a', color: '#bfdbfe' },
+    queued: { background: '#1e40af', color: '#dbeafe' },
+    running: { background: '#14532d', color: '#bbf7d0' },
+    completed: { background: '#166534', color: '#dcfce7' },
+    completed_with_replan: { background: '#78350f', color: '#fde68a' },
+    failed: { background: '#7f1d1d', color: '#fecaca' },
+    error: { background: '#7f1d1d', color: '#fecaca' }
+  };
+
+  function setStatus(value) {
+    var normalized = String(value || 'idle');
+    var style = STATUS_STYLES[normalized] || STATUS_STYLES.idle;
+    statusChip.textContent = normalized;
+    statusChip.style.background = style.background;
+    statusChip.style.color = style.color;
+  }
+
+  function appendEvent(line) {
+    var item = document.createElement('div');
+    item.textContent = line;
+    eventsEl.prepend(item);
+  }
+
+  function renderPlan(session) {
+    currentSessionId = session && session.session_id ? session.session_id : null;
+    planListEl.innerHTML = '';
+    var wpList = session && session.dag && Array.isArray(session.dag.wp_list) ? session.dag.wp_list : [];
+    var replannedCount = 0;
+    wpList.forEach(function(wp) {
+      var isReplan = Boolean(wp && wp.execution_result && wp.execution_result.auto_replan === true);
+      if (isReplan) {
+        replannedCount += 1;
+      }
+      var meta = [wp.domain, wp.layer, wp.provider_tier || 'unrouted'];
+      if (isReplan && wp.execution_result && wp.execution_result.replan_of) {
+        meta.push('replan of ' + wp.execution_result.replan_of);
+      }
+      var card = document.createElement('div');
+      card.style.padding = '10px';
+      card.style.borderRadius = '12px';
+      card.style.background = isReplan ? 'rgba(245, 158, 11, 0.14)' : 'rgba(255,255,255,0.06)';
+      card.style.border = isReplan ? '1px solid rgba(245,158,11,0.35)' : '1px solid rgba(255,255,255,0.04)';
+      card.innerHTML =
+        '<strong style="display:block;font-size:12px;">' + wp.id + (isReplan ? ' <span style="font-size:10px;padding:2px 6px;border-radius:999px;background:#92400e;color:#fde68a;">AUTO-REPLAN</span>' : '') + '</strong>' +
+        '<div style="font-size:12px;margin-top:4px;">' + wp.title + '</div>' +
+        '<div style="font-size:11px;opacity:0.75;margin-top:4px;">' + meta.join(' · ') + '</div>';
+      planListEl.appendChild(card);
+    });
+    if (session && session.dag && session.dag.plan_summary) {
+      var parts = [
+        '총 ' + session.dag.plan_summary.total_wps + '개 WP',
+        '예상 토큰 ' + session.dag.plan_summary.total_estimated_tokens,
+        '상태 ' + session.status
+      ];
+      if (replannedCount > 0) {
+        parts.push('자동 재계획 ' + replannedCount + '회');
+      }
+      summaryEl.textContent = parts.join(' · ');
+    } else {
+      summaryEl.textContent = '세션 없음';
+    }
+    approveButton.disabled = !(session && session.status === 'awaiting_approval');
+  }
+
+  function describeEvent(eventName, payload) {
+    if (eventName === 'mpo.plan.replanned') {
+      return eventName + ': ' + (payload.failed_wp_id || '') + ' -> ' + (payload.replanned_wp_id || '');
+    }
+    if (eventName === 'mpo.wp.failed') {
+      return eventName + ': ' + (payload.wp_id || '') + ' / ' + (payload.reason || 'unknown');
+    }
+    if (eventName === 'mpo.plan.completed') {
+      return eventName + ': ' + (payload.session_id || '') + ' / completed';
+    }
+    return eventName + ': ' + (payload.wp_id || payload.session_id || '');
+  }
+
+  async function requestJson(url, options) {
+    var response = await fetch(url, Object.assign({
+      headers: {
+        'content-type': 'application/json',
+      }
+    }, options || {}));
+    var body = await response.json();
+    if (!response.ok) {
+      throw new Error(body.detail || body.title || ('HTTP ' + response.status));
+    }
+    return body;
+  }
+
+  planButton.addEventListener('click', async function() {
+    try {
+      setStatus('planning');
+      var session = await requestJson('/api/v1/mpo/plan', {
+        method: 'POST',
+        body: JSON.stringify({
+          goal: goalInput.value,
+        }),
+      });
+      renderPlan(session);
+      setStatus(session.status || 'planned');
+      appendEvent('plan created: ' + session.session_id);
+    } catch (error) {
+      setStatus('error');
+      appendEvent('plan failed: ' + error.message);
+    }
+  });
+
+  approveButton.addEventListener('click', async function() {
+    if (!currentSessionId) {
+      return;
+    }
+    try {
+      setStatus('queued');
+      var session = await requestJson('/api/v1/mpo/session/' + currentSessionId + '/approve', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      renderPlan(session);
+      setStatus(session.status || 'queued');
+      appendEvent('approved: ' + currentSessionId);
+    } catch (error) {
+      setStatus('error');
+      appendEvent('approve failed: ' + error.message);
+    }
+  });
+
+  var source = new EventSource('/api/v1/system/events');
+  source.addEventListener('mpo.connected', function() {
+    appendEvent('sse connected');
+  });
+  [
+    'mpo.intake.normalized',
+    'mpo.decomposition.ready',
+    'mpo.envelope.built',
+    'mpo.wp.started',
+    'mpo.wp.completed',
+    'mpo.wp.failed',
+    'mpo.plan.replanned',
+    'mpo.memory.reconciled',
+    'mpo.plan.completed'
+  ].forEach(function(eventName) {
+    source.addEventListener(eventName, async function(event) {
+      var payload = JSON.parse(event.data);
+      appendEvent(describeEvent(eventName, payload));
+      if (payload.session_id && currentSessionId === payload.session_id) {
+        try {
+          var session = await requestJson('/api/v1/mpo/session/' + currentSessionId, { method: 'GET' });
+          renderPlan(session);
+          setStatus(session.status || eventName);
+        } catch (error) {
+          appendEvent('refresh failed: ' + error.message);
+        }
+      }
+    });
+  });
+})();
+</script>`;
+}
+
 function buildNavigationSummary(nav, registry) {
   const plugins = Array.isArray(registry?.plugins) ? registry.plugins : [];
   const pluginMap = new Map(plugins.map((plugin) => [plugin.id, plugin]));
@@ -1605,6 +1795,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
+${buildMpoPanel()}
 </body>
 </html>`;
 }

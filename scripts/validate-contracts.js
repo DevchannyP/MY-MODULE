@@ -45,7 +45,16 @@ const shellContracts = [
   },
   {
     name: 'harness',
-    files: ['intake.schema.json', 'output.schema.json', 'provider-adapter.yaml'],
+    files: [
+      'raw-intent.schema.json',
+      'intake.schema.json',
+      'wp-dag.schema.json',
+      'output.schema.json',
+      'completion-report.schema.json',
+      'context-sources.yaml',
+      'isolation-rules.yaml',
+      'provider-adapter.yaml',
+    ],
     drift_validated: true,
     note: 'intake schema validated against golden eval records',
   },

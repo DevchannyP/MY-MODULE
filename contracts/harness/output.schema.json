@@ -1,11 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://workflow-os/contracts/harness/output.schema.json",
-  "title": "Workflow OS Harness Output Schema",
-  "description": "Baseline output contract candidate for Harness vNext Phase 0.",
+  "title": "Workflow OS MPO Output Schema",
+  "description": "Runtime-enforced work packet completion contract for MPO v1.0.",
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "session_id",
+    "wp_id",
     "verification_status",
     "evidence_status",
     "tests_run",
@@ -16,7 +18,12 @@
     "change_points",
     "verification",
     "risks",
-    "next_action"
+    "next_action",
+    "changed_files",
+    "evidence",
+    "provider",
+    "token_usage",
+    "attempt"
   ],
   "$defs": {
     "nonEmptyString": {
@@ -29,12 +36,78 @@
         "$ref": "#/$defs/nonEmptyString"
       },
       "minItems": 1
+    },
+    "filePath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "namedStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "PARTIAL_PASS",
+            "FAIL",
+            "PLANNED",
+            "NOT_RUN"
+          ]
+        },
+        "note": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
     }
   },
   "properties": {
+    "session_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "wp_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
     "prompt_version": {
       "type": "string",
       "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "Research",
+        "Build",
+        "Debug",
+        "Operate",
+        "Policy"
+      ]
+    },
+    "packet_type": {
+      "type": "string",
+      "enum": [
+        "feature",
+        "bugfix",
+        "refactor",
+        "docs",
+        "ops",
+        "spike"
+      ]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
     },
     "verification_status": {
       "type": "string",
@@ -55,28 +128,11 @@
         "not_observed"
       ]
     },
-    "mode": {
-      "type": "string",
-      "enum": [
-        "Research",
-        "Build",
-        "Debug",
-        "Operate",
-        "Policy"
-      ]
+    "summary": {
+      "$ref": "#/$defs/nonEmptyString"
     },
-    "packet_type": {
-      "type": "string",
-      "minLength": 2
-    },
-    "risk_level": {
-      "type": "string",
-      "enum": [
-        "LOW",
-        "MEDIUM",
-        "HIGH",
-        "CRITICAL"
-      ]
+    "analysis": {
+      "$ref": "#/$defs/analysisList"
     },
     "assumptions": {
       "type": "array",
@@ -89,6 +145,34 @@
       "items": {
         "$ref": "#/$defs/nonEmptyString"
       }
+    },
+    "change_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "target",
+          "intent"
+        ],
+        "properties": {
+          "target": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "intent": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "changed",
+              "unchanged",
+              "planned"
+            ]
+          }
+        }
+      },
+      "minItems": 1
     },
     "tests_run": {
       "type": "array",
@@ -113,6 +197,10 @@
           },
           "evidence": {
             "$ref": "#/$defs/nonEmptyString"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       }
@@ -136,63 +224,10 @@
         }
       }
     },
-    "rollback_plan": {
-      "$ref": "#/$defs/nonEmptyString"
-    },
-    "summary": {
-      "type": "string",
-      "minLength": 8
-    },
-    "analysis": {
-      "$ref": "#/$defs/analysisList"
-    },
-    "change_points": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "target",
-          "intent"
-        ],
-        "properties": {
-          "target": {
-            "$ref": "#/$defs/nonEmptyString"
-          },
-          "intent": {
-            "$ref": "#/$defs/nonEmptyString"
-          }
-        }
-      },
-      "minItems": 1
-    },
     "verification": {
       "type": "array",
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "name",
-          "status"
-        ],
-        "properties": {
-          "name": {
-            "$ref": "#/$defs/nonEmptyString"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PASS",
-              "PARTIAL_PASS",
-              "FAIL",
-              "PLANNED",
-              "NOT_RUN"
-            ]
-          },
-          "note": {
-            "$ref": "#/$defs/nonEmptyString"
-          }
-        }
+        "$ref": "#/$defs/namedStatus"
       },
       "minItems": 1
     },
@@ -227,6 +262,136 @@
     },
     "next_action": {
       "$ref": "#/$defs/nonEmptyString"
+    },
+    "rollback_plan": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/filePath"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "path"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "file",
+              "command",
+              "report",
+              "log",
+              "memory"
+            ]
+          },
+          "path": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "detail": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id",
+        "route_id",
+        "selected_model_tier",
+        "fallback_applied"
+      ],
+      "properties": {
+        "provider_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "route_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "selected_model_tier": {
+          "type": "string",
+          "enum": [
+            "frontier",
+            "standard",
+            "mini"
+          ]
+        },
+        "reasoning_effort": {
+          "type": "string"
+        },
+        "fallback_applied": {
+          "type": "boolean"
+        },
+        "model": {
+          "type": "string"
+        }
+      }
+    },
+    "token_usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "budget",
+        "used"
+      ],
+      "properties": {
+        "budget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warning_threshold": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/filePath"
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowed_paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filePath"
+          }
+        },
+        "read_only_paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filePath"
+          }
+        },
+        "forbidden_paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/filePath"
+          }
+        }
+      }
     }
   }
 }
