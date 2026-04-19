@@ -361,12 +361,12 @@
       <div class="hero-side">
         <div class="summary-card">
           <h2>등록된 메뉴 그룹</h2>
-          <div class="summary-value">3</div>
+          <div class="summary-value">4</div>
           <div class="summary-note">navigation/nav.yaml 기준 메뉴 그룹 수</div>
         </div>
         <div class="summary-card">
           <h2>플러그인 카드</h2>
-          <div class="summary-value">6</div>
+          <div class="summary-value">13</div>
           <div class="summary-note">registry와 navigation을 결합한 표시 카드 수</div>
         </div>
         <div class="summary-card">
@@ -378,6 +378,334 @@
     </section>
 
     
+  <section class="group-card">
+    <div class="group-head">
+      <div>
+        <div class="eyebrow">system</div>
+        <h2>System OS</h2>
+      </div>
+      <div class="group-count">7개 화면</div>
+    </div>
+    <div class="plugin-grid">
+      
+        <article class="plugin-card">
+          <div class="plugin-top">
+            <div>
+              <h3>대시보드</h3>
+              <div class="plugin-route"><code>/</code></div>
+            </div>
+            <span class="status status-inactive">inactive</span>
+          </div>
+
+          <p class="plugin-desc">System OS 그룹에 노출되는 플러그인입니다. 한국어 메뉴명과 계약 경로를 기준으로 확인합니다.</p>
+
+          <div class="meta-list">
+            <div class="meta-item"><span>플러그인 ID</span><strong>system-api-plugin</strong></div>
+            <div class="meta-item"><span>Feature Flag</span><strong>system_api.enabled</strong></div>
+            <div class="meta-item"><span>Owner</span><strong>platform-team</strong></div>
+            <div class="meta-item"><span>Architecture</span><strong>master-os-shell</strong></div>
+          </div>
+
+          <div class="contract-grid">
+            
+              <div class="contract-pill contract-ok">
+                <span>OpenAPI</span>
+                <code>contracts/ui-shell/openapi.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-missing">
+                <span>Events</span>
+                <code>contracts/ui-shell/events.schema.json</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>UI Contract</span>
+                <code>contracts/ui-shell/ui-contract.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>Capability</span>
+                <code>contracts/system-api/capability.yaml</code>
+              </div>
+            
+          </div>
+
+          <div class="notes">Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.</div>
+        </article>
+      
+        <article class="plugin-card">
+          <div class="plugin-top">
+            <div>
+              <h3>카탈로그</h3>
+              <div class="plugin-route"><code>/catalog</code></div>
+            </div>
+            <span class="status status-inactive">inactive</span>
+          </div>
+
+          <p class="plugin-desc">System OS 그룹에 노출되는 플러그인입니다. 한국어 메뉴명과 계약 경로를 기준으로 확인합니다.</p>
+
+          <div class="meta-list">
+            <div class="meta-item"><span>플러그인 ID</span><strong>system-api-plugin</strong></div>
+            <div class="meta-item"><span>Feature Flag</span><strong>system_api.enabled</strong></div>
+            <div class="meta-item"><span>Owner</span><strong>platform-team</strong></div>
+            <div class="meta-item"><span>Architecture</span><strong>master-os-shell</strong></div>
+          </div>
+
+          <div class="contract-grid">
+            
+              <div class="contract-pill contract-ok">
+                <span>OpenAPI</span>
+                <code>contracts/ui-shell/openapi.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-missing">
+                <span>Events</span>
+                <code>contracts/ui-shell/events.schema.json</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>UI Contract</span>
+                <code>contracts/ui-shell/ui-contract.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>Capability</span>
+                <code>contracts/system-api/capability.yaml</code>
+              </div>
+            
+          </div>
+
+          <div class="notes">Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.</div>
+        </article>
+      
+        <article class="plugin-card">
+          <div class="plugin-top">
+            <div>
+              <h3>피처 플래그</h3>
+              <div class="plugin-route"><code>/flags</code></div>
+            </div>
+            <span class="status status-inactive">inactive</span>
+          </div>
+
+          <p class="plugin-desc">System OS 그룹에 노출되는 플러그인입니다. 한국어 메뉴명과 계약 경로를 기준으로 확인합니다.</p>
+
+          <div class="meta-list">
+            <div class="meta-item"><span>플러그인 ID</span><strong>system-api-plugin</strong></div>
+            <div class="meta-item"><span>Feature Flag</span><strong>system_api.flag_toggle_ui.enabled</strong></div>
+            <div class="meta-item"><span>Owner</span><strong>platform-team</strong></div>
+            <div class="meta-item"><span>Architecture</span><strong>master-os-shell</strong></div>
+          </div>
+
+          <div class="contract-grid">
+            
+              <div class="contract-pill contract-ok">
+                <span>OpenAPI</span>
+                <code>contracts/ui-shell/openapi.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-missing">
+                <span>Events</span>
+                <code>contracts/ui-shell/events.schema.json</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>UI Contract</span>
+                <code>contracts/ui-shell/ui-contract.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>Capability</span>
+                <code>contracts/system-api/capability.yaml</code>
+              </div>
+            
+          </div>
+
+          <div class="notes">Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.</div>
+        </article>
+      
+        <article class="plugin-card">
+          <div class="plugin-top">
+            <div>
+              <h3>감사 로그</h3>
+              <div class="plugin-route"><code>/audit</code></div>
+            </div>
+            <span class="status status-inactive">inactive</span>
+          </div>
+
+          <p class="plugin-desc">System OS 그룹에 노출되는 플러그인입니다. 한국어 메뉴명과 계약 경로를 기준으로 확인합니다.</p>
+
+          <div class="meta-list">
+            <div class="meta-item"><span>플러그인 ID</span><strong>system-api-plugin</strong></div>
+            <div class="meta-item"><span>Feature Flag</span><strong>system_api.enabled</strong></div>
+            <div class="meta-item"><span>Owner</span><strong>platform-team</strong></div>
+            <div class="meta-item"><span>Architecture</span><strong>master-os-shell</strong></div>
+          </div>
+
+          <div class="contract-grid">
+            
+              <div class="contract-pill contract-ok">
+                <span>OpenAPI</span>
+                <code>contracts/ui-shell/openapi.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-missing">
+                <span>Events</span>
+                <code>contracts/ui-shell/events.schema.json</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>UI Contract</span>
+                <code>contracts/ui-shell/ui-contract.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>Capability</span>
+                <code>contracts/system-api/capability.yaml</code>
+              </div>
+            
+          </div>
+
+          <div class="notes">Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.</div>
+        </article>
+      
+        <article class="plugin-card">
+          <div class="plugin-top">
+            <div>
+              <h3>품질 게이트</h3>
+              <div class="plugin-route"><code>/quality</code></div>
+            </div>
+            <span class="status status-inactive">inactive</span>
+          </div>
+
+          <p class="plugin-desc">System OS 그룹에 노출되는 플러그인입니다. 한국어 메뉴명과 계약 경로를 기준으로 확인합니다.</p>
+
+          <div class="meta-list">
+            <div class="meta-item"><span>플러그인 ID</span><strong>system-api-plugin</strong></div>
+            <div class="meta-item"><span>Feature Flag</span><strong>system_api.enabled</strong></div>
+            <div class="meta-item"><span>Owner</span><strong>platform-team</strong></div>
+            <div class="meta-item"><span>Architecture</span><strong>master-os-shell</strong></div>
+          </div>
+
+          <div class="contract-grid">
+            
+              <div class="contract-pill contract-ok">
+                <span>OpenAPI</span>
+                <code>contracts/ui-shell/openapi.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-missing">
+                <span>Events</span>
+                <code>contracts/ui-shell/events.schema.json</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>UI Contract</span>
+                <code>contracts/ui-shell/ui-contract.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>Capability</span>
+                <code>contracts/system-api/capability.yaml</code>
+              </div>
+            
+          </div>
+
+          <div class="notes">Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.</div>
+        </article>
+      
+        <article class="plugin-card">
+          <div class="plugin-top">
+            <div>
+              <h3>라이프사이클</h3>
+              <div class="plugin-route"><code>/lifecycle</code></div>
+            </div>
+            <span class="status status-inactive">inactive</span>
+          </div>
+
+          <p class="plugin-desc">System OS 그룹에 노출되는 플러그인입니다. 한국어 메뉴명과 계약 경로를 기준으로 확인합니다.</p>
+
+          <div class="meta-list">
+            <div class="meta-item"><span>플러그인 ID</span><strong>system-api-plugin</strong></div>
+            <div class="meta-item"><span>Feature Flag</span><strong>system_api.enabled</strong></div>
+            <div class="meta-item"><span>Owner</span><strong>platform-team</strong></div>
+            <div class="meta-item"><span>Architecture</span><strong>master-os-shell</strong></div>
+          </div>
+
+          <div class="contract-grid">
+            
+              <div class="contract-pill contract-ok">
+                <span>OpenAPI</span>
+                <code>contracts/ui-shell/openapi.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-missing">
+                <span>Events</span>
+                <code>contracts/ui-shell/events.schema.json</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>UI Contract</span>
+                <code>contracts/ui-shell/ui-contract.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>Capability</span>
+                <code>contracts/system-api/capability.yaml</code>
+              </div>
+            
+          </div>
+
+          <div class="notes">Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.</div>
+        </article>
+      
+        <article class="plugin-card">
+          <div class="plugin-top">
+            <div>
+              <h3>롤백 콘솔</h3>
+              <div class="plugin-route"><code>/rollback</code></div>
+            </div>
+            <span class="status status-inactive">inactive</span>
+          </div>
+
+          <p class="plugin-desc">System OS 그룹에 노출되는 플러그인입니다. 한국어 메뉴명과 계약 경로를 기준으로 확인합니다.</p>
+
+          <div class="meta-list">
+            <div class="meta-item"><span>플러그인 ID</span><strong>system-api-plugin</strong></div>
+            <div class="meta-item"><span>Feature Flag</span><strong>system_api.rollback_ui.enabled</strong></div>
+            <div class="meta-item"><span>Owner</span><strong>platform-team</strong></div>
+            <div class="meta-item"><span>Architecture</span><strong>master-os-shell</strong></div>
+          </div>
+
+          <div class="contract-grid">
+            
+              <div class="contract-pill contract-ok">
+                <span>OpenAPI</span>
+                <code>contracts/ui-shell/openapi.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-missing">
+                <span>Events</span>
+                <code>contracts/ui-shell/events.schema.json</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>UI Contract</span>
+                <code>contracts/ui-shell/ui-contract.yaml</code>
+              </div>
+            
+              <div class="contract-pill contract-ok">
+                <span>Capability</span>
+                <code>contracts/system-api/capability.yaml</code>
+              </div>
+            
+          </div>
+
+          <div class="notes">Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.</div>
+        </article>
+      
+    </div>
+  </section>
+
   <section class="group-card">
     <div class="group-head">
       <div>

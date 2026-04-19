@@ -175,7 +175,15 @@
       "details": "WP-S8-001 EventBusPublisher 8/8 + WP-S8-002 통합테스트 5/5 + 744/744 PASS — Use case→EventBus→Outbox 루프 완성",
       "prev_hash": "be6b3acaa9a995fd3f6d1f56c29c2c00dea8fe453c28399888700182aa997aa2",
       "hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681"
+    },
+    {
+      "seq": 23,
+      "timestamp": "2026-04-19T02:01:05.919Z",
+      "action": "UI/automation-bridge",
+      "details": "VS Code 터미널 브리지 + 전체 사용법 가이드 + 명령 팔레트 + 파일 탐색 5탭 추가",
+      "prev_hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681",
+      "hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a"
     }
   ],
-  "last_hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681"
+  "last_hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a"
 }
