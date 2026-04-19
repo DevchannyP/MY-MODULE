@@ -1,5 +1,5 @@
 as_of: "2026-04-19"
-current_phase: "spiral-17-complete"
+current_phase: "mpo-v1-complete"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"
 execution_policy:
   mode: "continuous-safe-upgrade"
@@ -10,11 +10,11 @@ execution_policy:
     - "사용자 변경사항은 되돌리지 않는다."
     - "한 턴에서 안전하게 끝낼 수 있는 범위는 연속 처리한다."
 queue_status:
-  total: 54
-  done: 54
+  total: 91
+  done: 91
   ready: 0
   blocked: 0
-  note: "2026-04-12 기준 55/55 WP 완료. Spiral 16 완료 (billing/video EventPublisher 배선, 3/3 smoke PASS). 전 3도메인 이벤트 완전 배선."
+  note: "2026-04-19 MPO v1.0 완료. WP-MPO-001~033 중 Phase 0~4(001~027) + Phase 5 일부(028,031,033) 완료. 783/783 tests PASS. 2 commits: feat(mpo) + test(mpo-adversarial)."
 next_actions:
   - priority: 1
     id: "NEXT-001"
@@ -50,7 +50,8 @@ next_actions:
     track: "SCM-RELEASE"
     done: false
     goal: "GitHub Actions quality-gates PASS 확인 → PR#1 머지"
-    blocked_by: "CI 실행 대기"
+    blocked_by: "CI 실행 대기 — push 필요"
+    note: "MPO v1.0 커밋(2개) 포함하여 push 시 CI 재트리거됨"
     success_criteria:
       - "quality-gates 3 jobs PASS"
       - "PR#1 머지 가능 상태"
@@ -61,6 +62,14 @@ next_actions:
     done: false
     goal: "docs/db/migration-strategy.md Phase 2 기반 WP 설계"
     trigger: "NEXT-005 완료 후"
+  - priority: 7
+    id: "NEXT-007"
+    action: "MPO Phase 5 잔여 — WP-MPO-029/030/032"
+    track: "MPO-V1"
+    done: false
+    goal: "live eval metric loop, 성능 대시보드 6지표, createServer harness surface 분리"
+    depends_on: []
+    note: "NEXT-005와 독립 실행 가능"
 queue:
   - id: "MPO-NONE"
     reason: "session completed"
