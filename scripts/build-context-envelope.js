@@ -44,20 +44,45 @@ function lineRangeForFile(filePath) {
   };
 }
 
+function isClassifiedAs(relPath, patterns) {
+  return patterns.some((pattern) => {
+    const normalized = String(pattern || '').replace(/\\/g, '/');
+    if (normalized.endsWith('/**')) {
+      return relPath.startsWith(normalized.slice(0, -3));
+    }
+    if (normalized.startsWith('**/') || normalized.includes('*')) {
+      const suffix = normalized.replace(/^\*\*\//, '');
+      return relPath.endsWith(suffix);
+    }
+    return relPath === normalized;
+  });
+}
+
 function buildEnvelopeForWp(root, wp, classification) {
+  const generatedPatterns = (classification.generated || []).map((p) => String(p || '').replace(/\\/g, '/'));
+  const forbiddenPatterns = (classification.forbidden || []).map((p) => String(p || '').replace(/\\/g, '/'));
+
+  function isExcluded(relPath) {
+    return isClassifiedAs(relPath, generatedPatterns) || isClassifiedAs(relPath, forbiddenPatterns);
+  }
+
   const canonicalFiles = new Set();
   const partialFiles = [];
 
   (classification.canonical || []).forEach((entry) => {
     const absolute = path.join(root, entry);
-    if (fs.existsSync(absolute)) {
-      canonicalFiles.add(path.relative(root, absolute).replace(/\\/g, '/'));
+    const relPath = path.relative(root, absolute).replace(/\\/g, '/');
+    if (fs.existsSync(absolute) && !isExcluded(relPath)) {
+      canonicalFiles.add(relPath);
     }
   });
 
   (wp.allowed_paths || []).forEach((pattern) => {
     patternToFiles(root, pattern).slice(0, 8).forEach((filePath) => {
-      canonicalFiles.add(path.relative(root, filePath).replace(/\\/g, '/'));
+      const relPath = path.relative(root, filePath).replace(/\\/g, '/');
+      if (!isExcluded(relPath)) {
+        canonicalFiles.add(relPath);
+      }
     });
   });
 
