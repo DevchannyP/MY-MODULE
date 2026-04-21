@@ -1,0 +1,67 @@
+retrospective:
+  id: "mpo-v1.0-retrospective"
+  phase: "MPO v1.0 전체"
+  date: "2026-04-21"
+  commits: "6994204 → 5787ea7"
+  test_result: "791/791 PASS"
+  kpi_result: "6/6 KPI PASS"
+
+what_went_well:
+  - "12모듈 파이프라인을 단일 브랜치에서 완료 — Phase 0~5 순차 실행"
+  - "CONTRACT-INV-01~04 런타임 강제 — 스키마 위반 즉시 거부 확인"
+  - "5대 자동화 루프 구현 완료 (특히 Loop 2 자동 재계획, Loop 5 원자적 메모리 동기화)"
+  - "Behavioral security eval V1~V5 모두 PASS — 경계 위반/증거 위조/목표 주입 방어 확인"
+  - "NullProvider fallback 패턴으로 실 LLM 없이도 E2E 시나리오 4/4 PASS"
+  - "commitlint 규칙 준수 — 첫 커밋 실패 후 소문자 subject로 즉시 수정"
+
+what_went_wrong:
+  - id: "R-MPO-001"
+    category: "implementation_gap"
+    description: "M11 wp-complete.js가 초기에 dry-run 모드로 배포됨 — git commit 미실행"
+    root_cause: "Phase 4 구현 시 보수적 기본값 선택. can_apply 체크 없이 apply 전환하면 테스트 환경 오류 가능"
+    fix: "applyVerifiedCommit try/catch + can_apply guard 추가로 해결"
+    lesson: "자동화 루프에서 '안전한 기본값'이 기능 미동작으로 이어질 수 있음 — 명시적 mode 선택 필요"
+
+  - id: "R-MPO-002"
+    category: "contract_incompleteness"
+    description: "decomposer-prompt.yaml이 10줄 stub 상태로 커밋됨 — system_prompt/few_shot 없음"
+    root_cause: "Phase 1 완료 기준이 '파일 존재'였으나 '내용 검증'이 빠졌음"
+    fix: "Phase 5에서 few-shot 예시 + 분해 규칙 7개 + token_budget 추가"
+    lesson: "계약 파일은 존재 확인이 아닌 필드 완전성 게이트가 필요 (CONTRACT-INV-04 확장 고려)"
+
+  - id: "R-MPO-003"
+    category: "scope_creep_avoided"
+    description: "harness surface 분리(WP-MPO-032)가 createServer.js 리팩터 외 추가 파일로 확산될 위험"
+    root_cause: "routes/harness.js 도입 시 기존 인라인 핸들러 전체를 재설계하려는 충동"
+    fix: "최소 변경 원칙 — 인라인 핸들러 이동만 수행, 추가 추상화 거부"
+    lesson: "리팩터 WP는 범위를 명시적으로 고정하고 '이 이상은 별도 WP' 규칙 적용"
+
+loop_assessment:
+  loop1_auto_approve:
+    status: "PASS"
+    note: "low-risk WP 자동 승인 정상 동작 — E2E 4 WP 모두 자동 승인"
+  loop2_auto_replan:
+    status: "PASS"
+    note: "boundary violation 시 createAutoReplannedPacket 호출 확인"
+  loop3_failure_escalation:
+    status: "PASS"
+    note: "check-failure-patterns.js 3회 동일 패턴 → ADR 초안 생성 확인"
+  loop4_routing_learning:
+    status: "PARTIAL"
+    note: "데이터 수집 단계 완료. 실제 tier weighting 반영은 WP-MPO-026(미완)"
+  loop5_memory_sync:
+    status: "PASS"
+    note: "writeAtomic 6-step + git commit 정상 동작"
+
+known_constraints_at_release:
+  - "LLM provider 미연결 — HarnessProviderAdapter NullProvider 모드로 동작"
+  - "M03 keyword-based 분해 — 실 API 연결 후 standard tier 전환 필요"
+  - "Loop 4 weight 미반영 — 라우팅 학습 데이터 축적 중"
+
+next_improvement_candidates:
+  - "WP-MPO-026: Loop 4 실제 tier weighting 반영"
+  - "KI-HARNESS-001: OpenAI tier 연결 후 M02/M03 LLM 모드 활성화"
+  - "CONTRACT-INV-04 확장: 계약 파일 필드 완전성 검사 추가"
+  - "Spiral 18: PostgreSQL Phase 2 — DB 마이그레이션"
+
+overall_verdict: "MPO v1.0 목표 달성. 12모듈 파이프라인 닫힘. 791/791 PASS. 주요 제약 문서화 완료."
