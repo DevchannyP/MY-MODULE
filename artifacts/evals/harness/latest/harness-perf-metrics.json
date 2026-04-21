@@ -1,0 +1,36 @@
+{
+  "generated_at_utc": "2026-04-21T13:31:53.279Z",
+  "source_log": "/root/workspace/my-module/artifacts/evals/harness/invocation-log.jsonl",
+  "source_eval_report": "/root/workspace/my-module/artifacts/evals/harness/latest/harness-eval-report.json",
+  "session_stats": {
+    "total_sessions": 6,
+    "total_wp_invocations": 15,
+    "avg_wps_per_session": 2.5,
+    "max_wps_per_session": 4
+  },
+  "overall_success_rate": 1,
+  "overall_fallback_count": 0,
+  "per_tier": {
+    "mini": {
+      "invocation_count": 15,
+      "unique_sessions": 6,
+      "unique_wps": 4,
+      "routes": [
+        "mini-build-low"
+      ],
+      "risk_level_distribution": {
+        "low": 15
+      },
+      "trust_level_distribution": {
+        "trusted": 15
+      },
+      "schema_valid_count": 20,
+      "schema_invalid_count": 0,
+      "success_rate": 1,
+      "fallback_count": 0,
+      "fallback_rate": 0,
+      "avg_latency_ms": 0,
+      "latency_sample_count": 20
+    }
+  }
+}
