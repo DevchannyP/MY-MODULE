@@ -66,10 +66,9 @@ next_actions:
     id: "NEXT-007"
     action: "MPO Phase 5 잔여 — WP-MPO-029/030"
     track: "MPO-V1"
-    done: false
-    goal: "live eval metric loop, 성능 대시보드 6지표"
-    depends_on: []
-    note: "NEXT-005와 독립 실행 가능. WP-MPO-032(harness surface 분리) 2026-04-21 완료."
+    done: true
+    completed_at: "2026-04-21"
+    result: "WP-MPO-029(harness-perf-metrics.js) + WP-MPO-030(harness-dashboard.js 6 KPI) 완료. 791/791 PASS. push a9a79d4."
 queue:
   - id: "MPO-NONE"
     reason: "session completed"

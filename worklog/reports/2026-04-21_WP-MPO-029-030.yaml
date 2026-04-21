@@ -1,0 +1,31 @@
+session_id: "2026-04-21-NEXT007"
+wp_id: "WP-MPO-029+030"
+verification_status: "PASS"
+attempt: 1
+summary: |
+  WP-MPO-029: harness-perf-metrics.js (live eval metric loop) — 15 invocations, 6 sessions, 1 tier(s)
+  WP-MPO-030: harness-dashboard.js (6 KPI dashboard) — 6/6 PASS: avg_token=2000tok, intake_rate=100%, gate_first_pass=100%, auto_approve=100%, truthfulness_violation=0%, memory_sync=100%
+tests_run:
+  - name: "harnessDashboard.test.js"
+    status: "PASS"
+    count: 8
+  - name: "full suite"
+    status: "PASS"
+    count: 791
+evidence:
+  - type: "file"
+    path: "artifacts/evals/harness/latest/harness-perf-metrics.json"
+  - type: "file"
+    path: "artifacts/evals/harness/latest/harness-dashboard.json"
+  - type: "command"
+    path: "artifacts/mpo/mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95/WP-AUTO-001/command-1.log"
+changed_files:
+  - "scripts/harness-dashboard.js"
+  - "scripts/harness-perf-metrics.js"
+  - "src/tests/unit/harnessDashboard.test.js"
+  - "package.json"
+token_usage:
+  budget: 10000
+  used: 0
+  warning_threshold: 8000
+completed_at: "2026-04-21"
