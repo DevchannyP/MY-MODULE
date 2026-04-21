@@ -1,0 +1,272 @@
+$ npm run project:status
+
+> my-module@0.2.0 project:status
+> node scripts/project_status.js
+
+{
+  "execution_mode": "read-only-status",
+  "repository": "my-module",
+  "requirements_stage": "D",
+  "current_wp": "MPO-COMPLETE",
+  "current_wp_goal": "MPO session mpo-f55c5bfd-a234-4ca1-8a4b-321560077798 completed",
+  "current_wp_type": "governance",
+  "current_wp_stage": "complete",
+  "current_wp_context_budget": {
+    "tier_reads": 0,
+    "context_reads": 0,
+    "tier_files": 0,
+    "context_files": 0,
+    "estimated_tokens": 0
+  },
+  "current_wp_scope_boundary": {
+    "scope_in": 7,
+    "scope_out": 1,
+    "protects_core": true
+  },
+  "promotion_pipeline": {
+    "artifact_dir": "artifacts/promotion-pipeline/latest",
+    "available": true,
+    "promotion_ready": true,
+    "locked_tokens": 10431,
+    "locked_files": 9,
+    "drift_status": "drifted",
+    "changed_files": 1,
+    "missing_files": 0
+  },
+  "essential_improvements": [
+    {
+      "id": "master-planning-truth-surface",
+      "tracked": true,
+      "ready": true,
+      "detail": "planner artifact + intake canvas + benchmark-backed planning triad"
+    },
+    {
+      "id": "minimum-context-routing-performance",
+      "tracked": true,
+      "ready": true,
+      "detail": "promotion pipeline + context lock + drift awareness"
+    },
+    {
+      "id": "guided-learning-live-ops-cockpit",
+      "tracked": true,
+      "ready": true,
+      "detail": "timeline feed + replay lenses + observability surfaces"
+    }
+  ],
+  "last_completed_wp": "WP-S19-002",
+  "next_wp": "NONE",
+  "legacy_last_completed_stage": "D(4차)",
+  "stage_summary": [
+    {
+      "stage": "A",
+      "route_status": "out-of-route",
+      "legacy_stage_state": "PASS",
+      "unmet_prerequisites": [],
+      "docs_ref": "docs/how-to/run-stage-a.md",
+      "recommended_commands": [
+        "npm run validate:requirements"
+      ]
+    },
+    {
+      "stage": "B",
+      "route_status": "out-of-route",
+      "legacy_stage_state": "PASS",
+      "unmet_prerequisites": [],
+      "docs_ref": "docs/how-to/run-stage-b.md",
+      "recommended_commands": [
+        "npm run validate:requirements"
+      ]
+    },
+    {
+      "stage": "C",
+      "route_status": "out-of-route",
+      "legacy_stage_state": "PASS",
+      "unmet_prerequisites": [],
+      "docs_ref": "docs/how-to/run-stage-c.md",
+      "recommended_commands": [
+        "npm run validate:requirements",
+        "npm run validate:composition"
+      ]
+    },
+    {
+      "stage": "D",
+      "route_status": "ready",
+      "legacy_stage_state": "PASS",
+      "unmet_prerequisites": [],
+      "docs_ref": "docs/how-to/run-stage-d.md",
+      "recommended_commands": [
+        "npm run validate:requirements",
+        "npm run lint",
+        "npm run test:contract",
+        "npm test"
+      ]
+    },
+    {
+      "stage": "E",
+      "route_status": "out-of-route",
+      "legacy_stage_state": "PASS",
+      "unmet_prerequisites": [],
+      "docs_ref": "docs/how-to/run-stage-e.md",
+      "recommended_commands": [
+        "npm run validate:requirements",
+        "npm run test:e2e-smoke"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "requirements-validation",
+      "status": "pass"
+    },
+    {
+      "id": "work-packet-operator-protocol",
+      "status": "pass"
+    },
+    {
+      "id": "requirements-validation-ci",
+      "status": "pass"
+    },
+    {
+      "id": "root-memory-bridge",
+      "status": "pass"
+    },
+    {
+      "id": "stage-executor-dry-run",
+      "status": "pass"
+    },
+    {
+      "id": "project-status-runner",
+      "status": "pass"
+    },
+    {
+      "id": "server-wiring-smoke",
+      "status": "pass"
+    },
+    {
+      "id": "quality-gate-ci",
+      "status": "pass"
+    },
+    {
+      "id": "how-to-truthfulness",
+      "status": "pass"
+    },
+    {
+      "id": "video-domain-stage-a",
+      "status": "pass"
+    },
+    {
+      "id": "billing-domain-contracts",
+      "status": "pass"
+    },
+    {
+      "id": "dag-wp-scheduler",
+      "status": "pass"
+    },
+    {
+      "id": "requirements-gap-detector",
+      "status": "pass"
+    },
+    {
+      "id": "session-health-metrics",
+      "status": "pass"
+    },
+    {
+      "id": "desired-state-reconciliation",
+      "status": "pass"
+    },
+    {
+      "id": "wp-queue-ci-validation",
+      "status": "pass"
+    },
+    {
+      "id": "release-evidence-automation",
+      "status": "pass"
+    },
+    {
+      "id": "branch-protection-ci",
+      "status": "pass"
+    },
+    {
+      "id": "cross-domain-event-bus",
+      "status": "pass"
+    },
+    {
+      "id": "rfc7807-error-standard",
+      "status": "pass"
+    },
+    {
+      "id": "feature-flag-runtime",
+      "status": "pass"
+    },
+    {
+      "id": "event-publishing",
+      "status": "pass"
+    },
+    {
+      "id": "opentelemetry-instrumentation",
+      "status": "pass"
+    },
+    {
+      "id": "sqlite-persistence",
+      "status": "pass"
+    },
+    {
+      "id": "self-improvement-loop",
+      "status": "pass"
+    },
+    {
+      "id": "cloudevents-envelope",
+      "status": "pass"
+    },
+    {
+      "id": "contract-drift-validation",
+      "status": "pass"
+    },
+    {
+      "id": "master-shell-composition-validation",
+      "status": "pass"
+    },
+    {
+      "id": "quality-gate-baseline",
+      "status": "pass"
+    },
+    {
+      "id": "deployment-environment-smoke-runner",
+      "status": "pass"
+    },
+    {
+      "id": "root-entry-doc-truthfulness",
+      "status": "pass"
+    },
+    {
+      "id": "deployment-environment-binding",
+      "status": "pass"
+    },
+    {
+      "id": "deployment-environment-provisioning-audit",
+      "status": "pass"
+    }
+  ],
+  "manual_placeholders": [
+    {
+      "id": "deployment-environment-smoke",
+      "status": "operator-triggered"
+    },
+    {
+      "id": "deployment-environment-provisioning-audit",
+      "status": "operator-collected"
+    }
+  ],
+  "known_issues": [
+    {
+      "id": "KI-RUN-001",
+      "severity": "low"
+    }
+  ],
+  "memory_sources": {
+    "current_state": "memory/current-state.yaml",
+    "current_wp": "memory/current-wp.yaml",
+    "next_actions": "memory/next-actions.yaml",
+    "legacy_project_state": "memory/project/current-state.yaml"
+  }
+}

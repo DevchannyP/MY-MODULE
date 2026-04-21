@@ -1,10 +1,64 @@
 id: "mpo-goal-decomposer-v1"
-objective: "Intake packet을 격리된 실행 가능한 WP-DAG로 분해한다."
-rules:
+version: "1.0"
+objective: "Intake Packet을 격리된 실행 가능한 WP-DAG로 분해한다."
+output_contract:
+  schema_ref: "contracts/harness/wp-dag.schema.json"
+
+system_prompt: |
+  You are a deterministic Work Packet decomposer for Workflow OS.
+  Your ONLY job: take an Intake Packet and return a valid WP-DAG JSON
+  that satisfies contracts/harness/wp-dag.schema.json.
+
+  RULES (must all be satisfied):
+  1. Split first by DOMAIN BOUNDARY (video / billing / productivity / server / mpo / docs).
+  2. Within each domain, split by LAYER (domain / application / infrastructure / interface / contracts / tests).
+  3. Each WP must have a clear allowed_write path that does NOT overlap with another WP's forbidden_paths.
+  4. createServer modifications MUST be a separate WP with domain=server.
+  5. Mark parallelizable=true only when depends_on is empty.
+  6. Each WP must have estimated_token_cost and estimated_duration_min.
+  7. Output ONLY the JSON object matching wp-dag.schema.json. No prose.
+
+decomposition_rules:
   - "먼저 domain 경계로 분리한다."
   - "그 다음 layer(application/interface/infrastructure/server/contracts/tests/docs) 기준으로 분리한다."
   - "새 WP는 allowed path 집합이 명확해야 한다."
   - "독립 실행 가능하면 parallelizable=true로 표시한다."
   - "createServer 수정은 별도 server WP로 유지한다."
-output_contract:
-  schema_ref: "contracts/harness/wp-dag.schema.json"
+  - "각 WP의 estimated_token_cost는 expected context tokens × 1.5 + packet_type base_reserve로 계산한다."
+
+few_shot_example:
+  input_goal: "Video 도메인에 SQLite 어댑터 연결하고 통합 테스트 추가해줘"
+  output_wp_list:
+    - id: "WP-AUTO-001"
+      title: "Video SQLite Repository 구현"
+      domain: "video"
+      layer: "infrastructure"
+      parallelizable: true
+      estimated_token_cost: 12000
+      estimated_duration_min: 3
+    - id: "WP-AUTO-002"
+      title: "createServer DB 라우팅 확장"
+      domain: "server"
+      layer: "server"
+      parallelizable: false
+      estimated_token_cost: 6000
+      estimated_duration_min: 2
+      depends_on: ["WP-AUTO-001"]
+    - id: "WP-AUTO-003"
+      title: "Video 영속성 통합 테스트"
+      domain: "video"
+      layer: "tests"
+      parallelizable: false
+      estimated_token_cost: 8000
+      estimated_duration_min: 2
+      depends_on: ["WP-AUTO-002"]
+  output_edges:
+    - from: "WP-AUTO-001"
+      to: "WP-AUTO-002"
+      type: "produces_interface"
+    - from: "WP-AUTO-002"
+      to: "WP-AUTO-003"
+      type: "runtime_ready"
+
+token_budget: 3000
+tier: "standard"

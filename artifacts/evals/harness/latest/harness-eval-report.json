@@ -108,6 +108,50 @@
   ],
   "provider_invocations": [
     {
+      "generated_at_utc": "2026-04-21T13:19:15.575Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95",
+      "wp_id": "WP-AUTO-004",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-21T13:19:14.925Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95",
+      "wp_id": "WP-AUTO-003",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-21T13:19:14.279Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95",
+      "wp_id": "WP-AUTO-002",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-21T13:19:13.622Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95",
+      "wp_id": "WP-AUTO-001",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
       "generated_at_utc": "2026-04-19T11:33:43.429Z",
       "provider_id": "null-harness-provider",
       "route_id": "mini-build-low",
@@ -282,59 +326,15 @@
       "schema_valid": true,
       "fallback_applied": false,
       "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-19T11:03:44.291Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-18d97cfa-d435-45f9-ae16-286cbab60fb8",
-      "wp_id": "WP-AUTO-001",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-19T10:56:24.197Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-medium",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-114f1dac-a906-45c8-89bb-3829d98f5ebb",
-      "wp_id": "WP-AUTO-001",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-19T10:56:23.148Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-9fb50896-71ef-4a2b-b8e7-a4ba3186934a",
-      "wp_id": "WP-AUTO-004",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-19T10:56:20.263Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-9fb50896-71ef-4a2b-b8e7-a4ba3186934a",
-      "wp_id": "WP-AUTO-003",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
     }
   ],
   "last_provider_invocation": {
-    "generated_at_utc": "2026-04-19T11:33:43.429Z",
+    "generated_at_utc": "2026-04-21T13:19:15.575Z",
     "provider_id": "null-harness-provider",
     "route_id": "mini-build-low",
     "selected_model_tier": "mini",
-    "session_id": "mpo-f55c5bfd-a234-4ca1-8a4b-321560077798",
-    "wp_id": "WP-AUTO-001",
+    "session_id": "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95",
+    "wp_id": "WP-AUTO-004",
     "schema_valid": true,
     "fallback_applied": false,
     "latency_ms": 0

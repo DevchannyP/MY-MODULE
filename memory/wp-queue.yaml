@@ -1162,3 +1162,9 @@ mpo_sessions:
         status: "done"
         report: "worklog/reports/2026-04-19_WP-AUTO-001.yaml"
         completed_at: "2026-04-19T11:33:44.158Z"
+  - session_id: "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95"
+    reports:
+      - wp_id: "WP-AUTO-004"
+        status: "done"
+        report: "worklog/reports/2026-04-21_WP-AUTO-004.yaml"
+        completed_at: "2026-04-21T13:19:16.350Z"

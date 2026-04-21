@@ -1,0 +1,5 @@
+$ npm run validate:requirements
+
+requirements validation PASS: requirements/billing.yaml
+requirements validation PASS: requirements/requirements.yaml
+requirements validation PASS: requirements/video.yaml

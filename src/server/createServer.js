@@ -38,6 +38,7 @@ const { InMemoryTranscodeJobRepository } = require('../../domains/video/src/infr
 const { tryServeDynamicUi } = require('../frontend/renderDynamicUi');
 const { createMpoRouteHandler } = require('./routes/mpo');
 const { createEventsRouteHandler } = require('./routes/events');
+const { createHarnessRouteHandler } = require('./routes/harness');
 const { buildOperatorCockpitSummary } = require('../../scripts/operator_cockpit');
 const { InMemoryOutboxRepository } = require('../../domains/productivity/task-tracking/src/infrastructure/OutboxRepository');
 const { OutboxPoller } = require('../../domains/productivity/task-tracking/src/infrastructure/OutboxPoller');
@@ -992,6 +993,16 @@ function createAppHandler({
     flagsProvider: flags || null,
   });
   const eventsRouteHandler = createEventsRouteHandler();
+  const harnessRouteHandler = createHarnessRouteHandler({
+    harnessProviderAdapter: resolvedHarnessAdapter,
+    flagsProvider: flags || null,
+    recordOperation: recordControlCenterOperation,
+    onMetric: (name) => {
+      if (name === 'controlCenterPromptRecommendationsTotal') {
+        metrics.controlCenterPromptRecommendationsTotal.add(1, {});
+      }
+    },
+  });
   const uiOperatorState = {
     recentOperatorAction: null,
     recentOperatorActions: [],
@@ -1903,59 +1914,22 @@ function createAppHandler({
         return;
       }
 
-      // ── Harness — prompt recommendation (LLM provider 연결) ─────────────────
-      // WP-LLM-001 (KI-HARNESS-001 해소): Router → Provider 실제 연결
-      // POST /api/harness/prompt-recommendation
-      // Body: { mode?, intakePacket?, basePrompt?, correlationId? }
-      if (method === 'POST' && url.pathname === '/api/harness/prompt-recommendation') {
-        const harnessObservation = recordControlCenterOperation({
-          parentSpan: span,
-          operation: 'harness.prompt_recommendation',
-          route: url.pathname,
-          method,
-          correlationId,
-          requestId,
-        });
-
-        const requestedMode = typeof body.mode === 'string' ? body.mode.trim() : 'Build';
-        const intakePacket = body.intakePacket && typeof body.intakePacket === 'object'
-          ? body.intakePacket
-          : { goal: String(body.basePrompt || ''), context: [], constraints: [], done_when: [] };
-        const basePrompt = String(body.basePrompt || intakePacket.goal || '');
-
-        // 1. Router: compute route from flags + mode
-        const route = resolveHarnessRuntimeRoute({ mode: requestedMode, flagsProvider: resolvedFlags });
-
-        try {
-          // 2. Provider: invoke actual LLM or NullProvider fallback
-          const result = await resolvedHarnessAdapter.generatePromptRecommendation({
-            route,
-            intakePacket,
-            basePrompt,
-            correlationId,
-            requestId,
-          });
-
-          metrics.controlCenterPromptRecommendationsTotal.add(1, { route: url.pathname, method });
-          harnessObservation.succeed({
-            'harness.mode':            requestedMode,
-            'harness.route_id':        route.route_id,
-            'harness.provider_id':     String(result.provider?.provider_id || 'unknown'),
-            'harness.fallback_applied':String(result.provider?.fallback_applied || false),
-          });
-
-          if (idempotencyScope) {
-            idempotencyStore.complete(idempotencyScope, { status: 200, body: result });
-          }
-          sendResponse(req, res, 200, result, mergeHeaders(responseBaseHeaders, responseHeaders));
-        } catch (harnessErr) {
-          harnessObservation.fail(harnessErr, { 'harness.mode': requestedMode });
-          if (idempotencyScope) idempotencyStore.abort(idempotencyScope);
-          sendResponse(req, res, 500, fromError(
-            Object.assign(harnessErr, { code: harnessErr.code || 'HARNESS_PROVIDER_ERROR' }),
-            { path: url.pathname },
-          ).body, mergeHeaders(responseBaseHeaders, responseHeaders));
-        }
+      // ── Harness — prompt recommendation (src/server/routes/harness.js) ──────
+      const harnessHandled = await harnessRouteHandler(req, res, {
+        url,
+        body,
+        method,
+        sendResponse,
+        mergeHeaders,
+        responseBaseHeaders,
+        responseHeaders,
+        correlationId,
+        requestId,
+        span,
+        idempotencyScope,
+        idempotencyStore,
+      });
+      if (harnessHandled) {
         return;
       }
 

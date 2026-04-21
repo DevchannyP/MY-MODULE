@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { ContractValidator, readYaml, toYaml } = require('../src/infrastructure/mpo/ContractValidator');
-const { buildAutoCommitGuardSummary } = require('./verified_auto_commit_guard');
+const { buildAutoCommitGuardSummary, applyVerifiedCommit } = require('./verified_auto_commit_guard');
 
 function readYamlIfExists(root, relativePath) {
   const absolute = path.join(root, relativePath);
@@ -114,12 +114,21 @@ function completeWorkPacket(
   writeYamlAtomic(root, 'memory/L0-hot/next-actions.yaml', updatedNextActions, validator);
   writeYamlAtomic(root, 'memory/wp-queue.yaml', updatedQueue, validator);
 
-  const guardSummary = buildAutoCommitGuardSummary({ mode: 'dry-run' });
+  const guardSummary = buildAutoCommitGuardSummary({ mode: 'apply' });
+  let commitResult = null;
+  if (guardSummary.guard.can_apply) {
+    try {
+      commitResult = applyVerifiedCommit(guardSummary);
+    } catch (_) {
+      commitResult = { ok: false, reason: 'commit_apply_error' };
+    }
+  }
 
   return {
     report_path: reportRelativePath,
     next_wp_id: nextWpId,
     commit_guard: guardSummary.guard,
+    commit: commitResult,
   };
 }
 

@@ -1,0 +1,8 @@
+$ npm run validate:requirements
+
+> my-module@0.2.0 validate:requirements
+> python3 scripts/validate_requirements.py --all
+
+requirements validation PASS: requirements/billing.yaml
+requirements validation PASS: requirements/requirements.yaml
+requirements validation PASS: requirements/video.yaml
