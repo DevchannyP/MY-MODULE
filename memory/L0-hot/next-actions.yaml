@@ -50,8 +50,8 @@ next_actions:
     track: "SCM-RELEASE"
     done: false
     goal: "GitHub Actions quality-gates PASS 확인 → PR#1 머지"
-    blocked_by: "CI 실행 대기 — push 필요"
-    note: "MPO v1.0 커밋(2개) 포함하여 push 시 CI 재트리거됨"
+    blocked_by: null
+    note: "2026-04-21 push 완료 (39149da). CI 재트리거됨. gh auth login 후 gh pr checks 로 확인 가능."
     success_criteria:
       - "quality-gates 3 jobs PASS"
       - "PR#1 머지 가능 상태"
@@ -64,12 +64,12 @@ next_actions:
     trigger: "NEXT-005 완료 후"
   - priority: 7
     id: "NEXT-007"
-    action: "MPO Phase 5 잔여 — WP-MPO-029/030/032"
+    action: "MPO Phase 5 잔여 — WP-MPO-029/030"
     track: "MPO-V1"
     done: false
-    goal: "live eval metric loop, 성능 대시보드 6지표, createServer harness surface 분리"
+    goal: "live eval metric loop, 성능 대시보드 6지표"
     depends_on: []
-    note: "NEXT-005와 독립 실행 가능"
+    note: "NEXT-005와 독립 실행 가능. WP-MPO-032(harness surface 분리) 2026-04-21 완료."
 queue:
   - id: "MPO-NONE"
     reason: "session completed"
