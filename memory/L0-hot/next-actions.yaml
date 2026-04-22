@@ -51,7 +51,7 @@ next_actions:
     done: false
     goal: "GitHub Actions quality-gates PASS 확인 → PR#1 머지"
     blocked_by: null
-    note: "2026-04-21 push 완료 (39149da). CI 재트리거됨. gh auth login 후 gh pr checks 로 확인 가능."
+    note: "2026-04-22 push 완료 (7b51cc6). lint 0 errors 해소 (resolveBillingRepositories/resolveVideoRepositories 추가). CI 재트리거됨. gh auth login 후 gh pr checks 로 확인 가능."
     success_criteria:
       - "quality-gates 3 jobs PASS"
       - "PR#1 머지 가능 상태"
