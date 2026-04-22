@@ -1,0 +1,1197 @@
+$ npm run test:integration
+
+> my-module@0.2.0 test:integration
+> node --test 'domains/**/tests/application/**/*.test.js'
+
+TAP version 13
+# Subtest: AddLineItemUseCase
+    # Subtest: 라인 항목 추가 성공 → total 합산 반영 (INV-B001)
+    ok 1 - 라인 항목 추가 성공 → total 합산 반영 (INV-B001)
+      ---
+      duration_ms: 1.470991
+      type: 'test'
+      ...
+    # Subtest: Money 인스턴스 직접 전달 성공
+    ok 2 - Money 인스턴스 직접 전달 성공
+      ---
+      duration_ms: 0.224753
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 3 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.587816
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 invoiceId → NOT_FOUND
+    ok 4 - 존재하지 않는 invoiceId → NOT_FOUND
+      ---
+      duration_ms: 0.193966
+      type: 'test'
+      ...
+    # Subtest: INV-B004: 0원 라인 항목 → 거부
+    ok 5 - INV-B004: 0원 라인 항목 → 거부
+      ---
+      duration_ms: 0.171148
+      type: 'test'
+      ...
+    # Subtest: INV-B004: 음수 금액 → 거부
+    ok 6 - INV-B004: 음수 금액 → 거부
+      ---
+      duration_ms: 0.171704
+      type: 'test'
+      ...
+    # Subtest: 여러 라인 항목 누적 → total 합산
+    ok 7 - 여러 라인 항목 누적 → total 합산
+      ---
+      duration_ms: 0.257561
+      type: 'test'
+      ...
+    1..7
+ok 1 - AddLineItemUseCase
+  ---
+  duration_ms: 3.902186
+  type: 'suite'
+  ...
+# Subtest: ApproveBillingExceptionUseCase (INV-B005)
+    # Subtest: billing.admin으로 DISPUTED→PAID 전이 성공
+    ok 1 - billing.admin으로 DISPUTED→PAID 전이 성공
+      ---
+      duration_ms: 1.552219
+      type: 'test'
+      ...
+    # Subtest: BillingExceptionApproved 이벤트 발행
+    ok 2 - BillingExceptionApproved 이벤트 발행
+      ---
+      duration_ms: 0.265479
+      type: 'test'
+      ...
+    # Subtest: INV-B005: billing.admin 없으면 FORBIDDEN
+    ok 3 - INV-B005: billing.admin 없으면 FORBIDDEN
+      ---
+      duration_ms: 0.399113
+      type: 'test'
+      ...
+    # Subtest: reason 없으면 VALIDATION_ERROR
+    ok 4 - reason 없으면 VALIDATION_ERROR
+      ---
+      duration_ms: 0.281141
+      type: 'test'
+      ...
+    # Subtest: 이미 처리된 예외는 CONFLICT
+    ok 5 - 이미 처리된 예외는 CONFLICT
+      ---
+      duration_ms: 0.247884
+      type: 'test'
+      ...
+    # Subtest: INV-B002: DISPUTED가 아닌 인보이스에 연결된 예외 승인 시 오류
+    ok 6 - INV-B002: DISPUTED가 아닌 인보이스에 연결된 예외 승인 시 오류
+      ---
+      duration_ms: 0.173383
+      type: 'test'
+      ...
+    1..6
+ok 2 - ApproveBillingExceptionUseCase (INV-B005)
+  ---
+  duration_ms: 3.731273
+  type: 'suite'
+  ...
+# Subtest: CreateInvoiceUseCase
+    # Subtest: billing.write 권한으로 DRAFT 인보이스 생성 성공
+    ok 1 - billing.write 권한으로 DRAFT 인보이스 생성 성공
+      ---
+      duration_ms: 1.061411
+      type: 'test'
+      ...
+    # Subtest: InvoiceCreated 이벤트를 발행한다
+    ok 2 - InvoiceCreated 이벤트를 발행한다
+      ---
+      duration_ms: 0.18639
+      type: 'test'
+      ...
+    # Subtest: billing.write 없으면 FORBIDDEN
+    ok 3 - billing.write 없으면 FORBIDDEN
+      ---
+      duration_ms: 0.427643
+      type: 'test'
+      ...
+    # Subtest: customerId 없으면 VALIDATION_ERROR
+    ok 4 - customerId 없으면 VALIDATION_ERROR
+      ---
+      duration_ms: 0.136426
+      type: 'test'
+      ...
+    1..4
+ok 3 - CreateInvoiceUseCase
+  ---
+  duration_ms: 2.66081
+  type: 'suite'
+  ...
+# Subtest: GetBillingSummaryUseCase
+    # Subtest: 빈 저장소 → 모든 count 0
+    ok 1 - 빈 저장소 → 모든 count 0
+      ---
+      duration_ms: 0.702565
+      type: 'test'
+      ...
+    # Subtest: 인보이스 2개 생성 → total_invoices=2
+    ok 2 - 인보이스 2개 생성 → total_invoices=2
+      ---
+      duration_ms: 0.736125
+      type: 'test'
+      ...
+    # Subtest: PENDING 인보이스 → pending_count 반영
+    ok 3 - PENDING 인보이스 → pending_count 반영
+      ---
+      duration_ms: 0.495368
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 4 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.517729
+      type: 'test'
+      ...
+    # Subtest: billing.write는 billing.read 없이 summary 조회 불가 → FORBIDDEN
+    ok 5 - billing.write는 billing.read 없이 summary 조회 불가 → FORBIDDEN
+      ---
+      duration_ms: 0.155008
+      type: 'test'
+      ...
+    # Subtest: [NFR async-first] 4개 조회가 Promise.all 병렬 실행 — 단일 execute 호출로 5개 필드 일관 반환
+    ok 6 - [NFR async-first] 4개 조회가 Promise.all 병렬 실행 — 단일 execute 호출로 5개 필드 일관 반환
+      ---
+      duration_ms: 0.308071
+      type: 'test'
+      ...
+    1..6
+ok 4 - GetBillingSummaryUseCase
+  ---
+  duration_ms: 4.746957
+  type: 'suite'
+  ...
+# Subtest: GetInvoiceListUseCase
+    # Subtest: 빈 저장소 → items=[], total=0
+    ok 1 - 빈 저장소 → items=[], total=0
+      ---
+      duration_ms: 1.364746
+      type: 'test'
+      ...
+    # Subtest: 인보이스 3개 → total=3, items 반환
+    ok 2 - 인보이스 3개 → total=3, items 반환
+      ---
+      duration_ms: 0.738215
+      type: 'test'
+      ...
+    # Subtest: customerId 필터 동작
+    ok 3 - customerId 필터 동작
+      ---
+      duration_ms: 0.220955
+      type: 'test'
+      ...
+    # Subtest: status 필터: PENDING만 반환
+    ok 4 - status 필터: PENDING만 반환
+      ---
+      duration_ms: 0.400919
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션: pageSize=1
+    ok 5 - 페이지네이션: pageSize=1
+      ---
+      duration_ms: 1.104073
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 6 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.686699
+      type: 'test'
+      ...
+    1..6
+ok 5 - GetInvoiceListUseCase
+  ---
+  duration_ms: 5.487017
+  type: 'suite'
+  ...
+# Subtest: GetPaymentUseCase
+    # Subtest: billing.read 없으면 FORBIDDEN
+    ok 1 - billing.read 없으면 FORBIDDEN
+      ---
+      duration_ms: 4.768741
+      type: 'test'
+      ...
+    # Subtest: billing.write만 있으면 FORBIDDEN
+    ok 2 - billing.write만 있으면 FORBIDDEN
+      ---
+      duration_ms: 0.178119
+      type: 'test'
+      ...
+    # Subtest: paymentId 누락 → VALIDATION_ERROR
+    ok 3 - paymentId 누락 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.822782
+      type: 'test'
+      ...
+    # Subtest: 존재하는 paymentId → Payment 반환
+    ok 4 - 존재하는 paymentId → Payment 반환
+      ---
+      duration_ms: 0.50317
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 paymentId → NOT_FOUND
+    ok 5 - 존재하지 않는 paymentId → NOT_FOUND
+      ---
+      duration_ms: 0.169214
+      type: 'test'
+      ...
+    1..5
+ok 6 - GetPaymentUseCase
+  ---
+  duration_ms: 7.518044
+  type: 'suite'
+  ...
+# Subtest: ListPaymentsUseCase
+    # Subtest: billing.read 없으면 FORBIDDEN
+    ok 1 - billing.read 없으면 FORBIDDEN
+      ---
+      duration_ms: 1.138411
+      type: 'test'
+      ...
+    # Subtest: billing.write만 있으면 FORBIDDEN (read 없음)
+    ok 2 - billing.write만 있으면 FORBIDDEN (read 없음)
+      ---
+      duration_ms: 0.133262
+      type: 'test'
+      ...
+    # Subtest: 빈 저장소 → items=[], total=0
+    ok 3 - 빈 저장소 → items=[], total=0
+      ---
+      duration_ms: 1.146389
+      type: 'test'
+      ...
+    # Subtest: 결제 1건 저장 후 조회 → items.length=1
+    ok 4 - 결제 1건 저장 후 조회 → items.length=1
+      ---
+      duration_ms: 0.393362
+      type: 'test'
+      ...
+    # Subtest: invoiceId 필터 → 해당 invoice 결제만 반환
+    ok 5 - invoiceId 필터 → 해당 invoice 결제만 반환
+      ---
+      duration_ms: 0.152302
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션 — pageSize=1, page=2 → 두 번째 항목
+    ok 6 - 페이지네이션 — pageSize=1, page=2 → 두 번째 항목
+      ---
+      duration_ms: 0.20043
+      type: 'test'
+      ...
+    1..6
+ok 7 - ListPaymentsUseCase
+  ---
+  duration_ms: 4.203831
+  type: 'suite'
+  ...
+# Subtest: RejectBillingExceptionUseCase
+    # Subtest: 정상 거부 → status=REJECTED, 이벤트 발행
+    ok 1 - 정상 거부 → status=REJECTED, 이벤트 발행
+      ---
+      duration_ms: 1.217619
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 (NO_PERM) → FORBIDDEN
+    ok 2 - 권한 없음 (NO_PERM) → FORBIDDEN
+      ---
+      duration_ms: 1.184693
+      type: 'test'
+      ...
+    # Subtest: billing.write만으로는 불가 (billing.admin 필요)
+    ok 3 - billing.write만으로는 불가 (billing.admin 필요)
+      ---
+      duration_ms: 0.220935
+      type: 'test'
+      ...
+    # Subtest: reason 누락 → VALIDATION_ERROR
+    ok 4 - reason 누락 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.156296
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 exceptionId → NOT_FOUND
+    ok 5 - 존재하지 않는 exceptionId → NOT_FOUND
+      ---
+      duration_ms: 0.167798
+      type: 'test'
+      ...
+    # Subtest: 이미 처리된 예외 항목 거부 → CONFLICT
+    ok 6 - 이미 처리된 예외 항목 거부 → CONFLICT
+      ---
+      duration_ms: 0.253314
+      type: 'test'
+      ...
+    # Subtest: correlationId가 이벤트 페이로드에 포함됨
+    ok 7 - correlationId가 이벤트 페이로드에 포함됨
+      ---
+      duration_ms: 0.197062
+      type: 'test'
+      ...
+    1..7
+ok 8 - RejectBillingExceptionUseCase
+  ---
+  duration_ms: 4.248336
+  type: 'suite'
+  ...
+# Subtest: RetryPaymentSyncUseCase
+    # Subtest: billing.write 없으면 FORBIDDEN
+    ok 1 - billing.write 없으면 FORBIDDEN
+      ---
+      duration_ms: 1.049273
+      type: 'test'
+      ...
+    # Subtest: billing.read만 있으면 FORBIDDEN (write 필요)
+    ok 2 - billing.read만 있으면 FORBIDDEN (write 필요)
+      ---
+      duration_ms: 0.138565
+      type: 'test'
+      ...
+    # Subtest: paymentId 누락 → VALIDATION_ERROR
+    ok 3 - paymentId 누락 → VALIDATION_ERROR
+      ---
+      duration_ms: 1.041521
+      type: 'test'
+      ...
+    # Subtest: 존재하는 paymentId → Payment 반환 (ADR-0006 Phase 2 전 기본 동작)
+    ok 4 - 존재하는 paymentId → Payment 반환 (ADR-0006 Phase 2 전 기본 동작)
+      ---
+      duration_ms: 0.392844
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 paymentId → NOT_FOUND
+    ok 5 - 존재하지 않는 paymentId → NOT_FOUND
+      ---
+      duration_ms: 0.127072
+      type: 'test'
+      ...
+    1..5
+ok 9 - RetryPaymentSyncUseCase
+  ---
+  duration_ms: 3.731546
+  type: 'suite'
+  ...
+# Subtest: TransitionInvoiceStatusUseCase
+    # Subtest: DRAFT → PENDING 전이 성공
+    ok 1 - DRAFT → PENDING 전이 성공
+      ---
+      duration_ms: 1.323073
+      type: 'test'
+      ...
+    # Subtest: InvoiceStatusChanged 이벤트 발행
+    ok 2 - InvoiceStatusChanged 이벤트 발행
+      ---
+      duration_ms: 0.202784
+      type: 'test'
+      ...
+    # Subtest: INV-B005: DISPUTED→PAID는 이 유스케이스에서 FORBIDDEN
+    ok 3 - INV-B005: DISPUTED→PAID는 이 유스케이스에서 FORBIDDEN
+      ---
+      duration_ms: 0.576158
+      type: 'test'
+      ...
+    # Subtest: billing.write 없으면 FORBIDDEN
+    ok 4 - billing.write 없으면 FORBIDDEN
+      ---
+      duration_ms: 0.213035
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 invoiceId면 NOT_FOUND
+    ok 5 - 존재하지 않는 invoiceId면 NOT_FOUND
+      ---
+      duration_ms: 0.123918
+      type: 'test'
+      ...
+    # Subtest: INV-B002: 허용되지 않는 전이는 도메인에서 오류
+    ok 6 - INV-B002: 허용되지 않는 전이는 도메인에서 오류
+      ---
+      duration_ms: 0.122746
+      type: 'test'
+      ...
+    1..6
+ok 10 - TransitionInvoiceStatusUseCase
+  ---
+  duration_ms: 3.353231
+  type: 'suite'
+  ...
+# Subtest: InMemoryInvoiceRepository satisfies InvoiceRepository port interface
+ok 11 - InMemoryInvoiceRepository satisfies InvoiceRepository port interface
+  ---
+  duration_ms: 0.626112
+  type: 'test'
+  ...
+# Subtest: InMemoryBillingExceptionRepository satisfies BillingExceptionRepository port interface
+ok 12 - InMemoryBillingExceptionRepository satisfies BillingExceptionRepository port interface
+  ---
+  duration_ms: 0.1818
+  type: 'test'
+  ...
+# Subtest: InMemoryPaymentRepository satisfies PaymentRepository port interface
+ok 13 - InMemoryPaymentRepository satisfies PaymentRepository port interface
+  ---
+  duration_ms: 0.136729
+  type: 'test'
+  ...
+# Subtest: CreateTaskUseCase — outbox dual-write
+    # Subtest: task 생성 시 EventBus와 OutboxRepository 양쪽에 이벤트가 기록된다
+    ok 1 - task 생성 시 EventBus와 OutboxRepository 양쪽에 이벤트가 기록된다
+      ---
+      duration_ms: 1.682777
+      type: 'test'
+      ...
+    # Subtest: outboxRepository 없이도 정상 동작한다 (하위 호환)
+    ok 2 - outboxRepository 없이도 정상 동작한다 (하위 호환)
+      ---
+      duration_ms: 0.184231
+      type: 'test'
+      ...
+    # Subtest: 복수 task 생성 시 outbox에 건수만큼 기록된다
+    ok 3 - 복수 task 생성 시 outbox에 건수만큼 기록된다
+      ---
+      duration_ms: 6.594173
+      type: 'test'
+      ...
+    # Subtest: outbox 이벤트가 OutboxPoller를 통해 EventBus에 재전달된다 (at-least-once)
+    ok 4 - outbox 이벤트가 OutboxPoller를 통해 EventBus에 재전달된다 (at-least-once)
+      ---
+      duration_ms: 0.382895
+      type: 'test'
+      ...
+    1..4
+ok 14 - CreateTaskUseCase — outbox dual-write
+  ---
+  duration_ms: 9.684921
+  type: 'suite'
+  ...
+# Subtest: CreateTaskUseCase
+    # Subtest: 작업 생성 후 조회 가능 (create-task → get-task capability 흐름)
+    ok 1 - 작업 생성 후 조회 가능 (create-task → get-task capability 흐름)
+      ---
+      duration_ms: 1.34762
+      type: 'test'
+      ...
+    # Subtest: [INV001] 담당자 없으면 에러
+    ok 2 - [INV001] 담당자 없으면 에러
+      ---
+      duration_ms: 0.498825
+      type: 'test'
+      ...
+    # Subtest: 도메인 이벤트를 EventPublisher 포트로 발행한다
+    ok 3 - 도메인 이벤트를 EventPublisher 포트로 발행한다
+      ---
+      duration_ms: 0.221511
+      type: 'test'
+      ...
+    1..3
+ok 15 - CreateTaskUseCase
+  ---
+  duration_ms: 2.738426
+  type: 'suite'
+  ...
+# Subtest: ListTasksUseCase
+    # Subtest: 필터 없이 전체 조회
+    ok 1 - 필터 없이 전체 조회
+      ---
+      duration_ms: 0.409316
+      type: 'test'
+      ...
+    # Subtest: 담당자 필터링
+    ok 2 - 담당자 필터링
+      ---
+      duration_ms: 0.246029
+      type: 'test'
+      ...
+    1..2
+ok 16 - ListTasksUseCase
+  ---
+  duration_ms: 1.90006
+  type: 'suite'
+  ...
+# Subtest: TransitionTaskStatusUseCase
+    # Subtest: PENDING → IN_PROGRESS 전이
+    ok 1 - PENDING → IN_PROGRESS 전이
+      ---
+      duration_ms: 0.494285
+      type: 'test'
+      ...
+    # Subtest: [INV002] DONE → IN_PROGRESS 불가
+    ok 2 - [INV002] DONE → IN_PROGRESS 불가
+      ---
+      duration_ms: 0.442231
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 작업 조회 에러
+    ok 3 - 존재하지 않는 작업 조회 에러
+      ---
+      duration_ms: 0.19257
+      type: 'test'
+      ...
+    1..3
+ok 17 - TransitionTaskStatusUseCase
+  ---
+  duration_ms: 1.424396
+  type: 'suite'
+  ...
+# Subtest: ReassignTaskUseCase
+    # Subtest: 담당자 변경 성공
+    ok 1 - 담당자 변경 성공
+      ---
+      duration_ms: 0.399201
+      type: 'test'
+      ...
+    # Subtest: DONE 상태 작업은 담당자 변경 불가
+    ok 2 - DONE 상태 작업은 담당자 변경 불가
+      ---
+      duration_ms: 0.378842
+      type: 'test'
+      ...
+    1..2
+ok 18 - ReassignTaskUseCase
+  ---
+  duration_ms: 0.889091
+  type: 'suite'
+  ...
+# Subtest: GetTaskUseCase
+    # Subtest: 존재하는 task_id → snapshot 반환
+    ok 1 - 존재하는 task_id → snapshot 반환
+      ---
+      duration_ms: 4.977124
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → Error throw
+    ok 2 - 존재하지 않는 task_id → Error throw
+      ---
+      duration_ms: 0.444878
+      type: 'test'
+      ...
+    # Subtest: [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+    ok 3 - [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+      ---
+      duration_ms: 0.187981
+      type: 'test'
+      ...
+    # Subtest: snapshot에 status 필드 포함됨
+    ok 4 - snapshot에 status 필드 포함됨
+      ---
+      duration_ms: 0.181546
+      type: 'test'
+      ...
+    1..4
+ok 19 - GetTaskUseCase
+  ---
+  duration_ms: 6.545835
+  type: 'suite'
+  ...
+# Subtest: ListTasksUseCase
+    # Subtest: 빈 저장소 → items=[], total=0
+    ok 1 - 빈 저장소 → items=[], total=0
+      ---
+      duration_ms: 2.911501
+      type: 'test'
+      ...
+    # Subtest: 작업 3개 → total=3, items 반환
+    ok 2 - 작업 3개 → total=3, items 반환
+      ---
+      duration_ms: 0.710308
+      type: 'test'
+      ...
+    # Subtest: assignee_id 필터 동작
+    ok 3 - assignee_id 필터 동작
+      ---
+      duration_ms: 0.282157
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션: page_size=1
+    ok 4 - 페이지네이션: page_size=1
+      ---
+      duration_ms: 0.2717
+      type: 'test'
+      ...
+    # Subtest: items의 각 snapshot에 id/title/status 포함
+    ok 5 - items의 각 snapshot에 id/title/status 포함
+      ---
+      duration_ms: 0.383285
+      type: 'test'
+      ...
+    1..5
+ok 20 - ListTasksUseCase
+  ---
+  duration_ms: 5.448853
+  type: 'suite'
+  ...
+# Subtest: ReassignTaskUseCase
+    # Subtest: PENDING 상태 작업 담당자 변경 성공
+    ok 1 - PENDING 상태 작업 담당자 변경 성공
+      ---
+      duration_ms: 1.111393
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS 상태 작업 담당자 변경 성공
+    ok 2 - IN_PROGRESS 상태 작업 담당자 변경 성공
+      ---
+      duration_ms: 0.379828
+      type: 'test'
+      ...
+    # Subtest: DONE 상태 작업 담당자 변경 불가 → Error
+    ok 3 - DONE 상태 작업 담당자 변경 불가 → Error
+      ---
+      duration_ms: 0.625184
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → Error
+    ok 4 - 존재하지 않는 task_id → Error
+      ---
+      duration_ms: 0.192863
+      type: 'test'
+      ...
+    # Subtest: INV001: 빈 new_assignee_id → Error
+    ok 5 - INV001: 빈 new_assignee_id → Error
+      ---
+      duration_ms: 0.25798
+      type: 'test'
+      ...
+    # Subtest: [회귀] DONE 작업 재할당 → code=CONFLICT (HTTP 409 보장)
+    ok 6 - [회귀] DONE 작업 재할당 → code=CONFLICT (HTTP 409 보장)
+      ---
+      duration_ms: 0.237788
+      type: 'test'
+      ...
+    # Subtest: [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+    ok 7 - [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+      ---
+      duration_ms: 0.153572
+      type: 'test'
+      ...
+    # Subtest: [회귀] INV001: 빈 new_assignee_id → code=VALIDATION_ERROR (HTTP 400 보장)
+    ok 8 - [회귀] INV001: 빈 new_assignee_id → code=VALIDATION_ERROR (HTTP 400 보장)
+      ---
+      duration_ms: 0.190139
+      type: 'test'
+      ...
+    1..8
+ok 21 - ReassignTaskUseCase
+  ---
+  duration_ms: 3.961396
+  type: 'suite'
+  ...
+# Subtest: TransitionTaskStatusUseCase
+    # Subtest: PENDING → IN_PROGRESS 전이 성공
+    ok 1 - PENDING → IN_PROGRESS 전이 성공
+      ---
+      duration_ms: 2.125838
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → DONE 전이 성공
+    ok 2 - IN_PROGRESS → DONE 전이 성공
+      ---
+      duration_ms: 0.284647
+      type: 'test'
+      ...
+    # Subtest: PENDING → DONE 직접 전이 불가 (INV002)
+    ok 3 - PENDING → DONE 직접 전이 불가 (INV002)
+      ---
+      duration_ms: 0.526828
+      type: 'test'
+      ...
+    # Subtest: DONE → 다시 IN_PROGRESS 불가 (terminal 상태)
+    ok 4 - DONE → 다시 IN_PROGRESS 불가 (terminal 상태)
+      ---
+      duration_ms: 0.354598
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → Error
+    ok 5 - 존재하지 않는 task_id → Error
+      ---
+      duration_ms: 0.12508
+      type: 'test'
+      ...
+    # Subtest: [회귀] INV002 상태 전이 불가 → code=CONFLICT (HTTP 409 보장)
+    ok 6 - [회귀] INV002 상태 전이 불가 → code=CONFLICT (HTTP 409 보장)
+      ---
+      duration_ms: 0.282079
+      type: 'test'
+      ...
+    # Subtest: [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+    ok 7 - [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+      ---
+      duration_ms: 0.18223
+      type: 'test'
+      ...
+    # Subtest: result에 task_id/old_status/new_status 포함
+    ok 8 - result에 task_id/old_status/new_status 포함
+      ---
+      duration_ms: 0.380317
+      type: 'test'
+      ...
+    1..8
+ok 22 - TransitionTaskStatusUseCase
+  ---
+  duration_ms: 5.160618
+  type: 'suite'
+  ...
+# Subtest: Task 낙관적 잠금 — 엔티티 version 계약
+    # Subtest: 새로 생성된 Task의 version은 1이다
+    ok 1 - 새로 생성된 Task의 version은 1이다
+      ---
+      duration_ms: 0.990845
+      type: 'test'
+      ...
+    # Subtest: transitionTo()는 version을 1 증가시킨다
+    ok 2 - transitionTo()는 version을 1 증가시킨다
+      ---
+      duration_ms: 0.254231
+      type: 'test'
+      ...
+    # Subtest: reassign()은 version을 1 증가시킨다
+    ok 3 - reassign()은 version을 1 증가시킨다
+      ---
+      duration_ms: 0.165387
+      type: 'test'
+      ...
+    # Subtest: reconstitute()는 snapshot의 version을 그대로 복원한다
+    ok 4 - reconstitute()는 snapshot의 version을 그대로 복원한다
+      ---
+      duration_ms: 0.120823
+      type: 'test'
+      ...
+    1..4
+ok 23 - Task 낙관적 잠금 — 엔티티 version 계약
+  ---
+  duration_ms: 2.993746
+  type: 'suite'
+  ...
+# Subtest: InMemoryTaskRepository 낙관적 잠금 — 충돌 감지
+    # Subtest: 정상 read-modify-write 흐름은 충돌 없이 성공한다
+    ok 1 - 정상 read-modify-write 흐름은 충돌 없이 성공한다
+      ---
+      duration_ms: 0.288113
+      type: 'test'
+      ...
+    # Subtest: 동일 version으로 두 번 저장하면 OPTIMISTIC_LOCK_CONFLICT를 던진다
+    ok 2 - 동일 version으로 두 번 저장하면 OPTIMISTIC_LOCK_CONFLICT를 던진다
+      ---
+      duration_ms: 0.540421
+      type: 'test'
+      ...
+    # Subtest: 신규 엔티티 저장 시 충돌 체크를 생략한다
+    ok 3 - 신규 엔티티 저장 시 충돌 체크를 생략한다
+      ---
+      duration_ms: 0.254055
+      type: 'test'
+      ...
+    1..3
+ok 24 - InMemoryTaskRepository 낙관적 잠금 — 충돌 감지
+  ---
+  duration_ms: 1.408656
+  type: 'suite'
+  ...
+# Subtest: TransitionTaskStatusUseCase 동시 전이 시뮬레이션
+    # Subtest: 두 동시 전이 중 첫 번째만 성공하고 두 번째는 충돌한다
+    ok 1 - 두 동시 전이 중 첫 번째만 성공하고 두 번째는 충돌한다
+      ---
+      duration_ms: 0.827524
+      type: 'test'
+      ...
+    1..1
+ok 25 - TransitionTaskStatusUseCase 동시 전이 시뮬레이션
+  ---
+  duration_ms: 0.93992
+  type: 'suite'
+  ...
+# Subtest: ArchiveVideoUseCase
+    # Subtest: READY → ARCHIVED 성공 (INV-V002)
+    ok 1 - READY → ARCHIVED 성공 (INV-V002)
+      ---
+      duration_ms: 1.016368
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 (NO_PERM) → FORBIDDEN 에러
+    ok 2 - 권한 없음 (NO_PERM) → FORBIDDEN 에러
+      ---
+      duration_ms: 0.670998
+      type: 'test'
+      ...
+    # Subtest: video:write만으로는 아카이브 불가 (video:admin 필요)
+    ok 3 - video:write만으로는 아카이브 불가 (video:admin 필요)
+      ---
+      duration_ms: 1.219035
+      type: 'test'
+      ...
+    # Subtest: UPLOADED → ARCHIVED 실패 (INV-V002)
+    ok 4 - UPLOADED → ARCHIVED 실패 (INV-V002)
+      ---
+      duration_ms: 0.150857
+      type: 'test'
+      ...
+    # Subtest: PROCESSING → ARCHIVED 실패 (INV-V002)
+    ok 5 - PROCESSING → ARCHIVED 실패 (INV-V002)
+      ---
+      duration_ms: 0.130567
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 Video → NOT_FOUND 에러
+    ok 6 - 존재하지 않는 Video → NOT_FOUND 에러
+      ---
+      duration_ms: 0.106703
+      type: 'test'
+      ...
+    # Subtest: 이미 ARCHIVED 영상 재아카이브 시도 → CONFLICT (INV-V002)
+    ok 7 - 이미 ARCHIVED 영상 재아카이브 시도 → CONFLICT (INV-V002)
+      ---
+      duration_ms: 0.187698
+      type: 'test'
+      ...
+    1..7
+ok 26 - ArchiveVideoUseCase
+  ---
+  duration_ms: 4.501759
+  type: 'suite'
+  ...
+# Subtest: ChangeAccessPolicyUseCase
+    # Subtest: 정상 변경 — PRIVATE → PUBLIC
+    ok 1 - 정상 변경 — PRIVATE → PUBLIC
+      ---
+      duration_ms: 1.170926
+      type: 'test'
+      ...
+    # Subtest: 정상 변경 — PUBLIC → ORG_INTERNAL
+    ok 2 - 정상 변경 — PUBLIC → ORG_INTERNAL
+      ---
+      duration_ms: 0.187268
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 3 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 1.655007
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 Video → NOT_FOUND 에러
+    ok 4 - 존재하지 않는 Video → NOT_FOUND 에러
+      ---
+      duration_ms: 0.144129
+      type: 'test'
+      ...
+    # Subtest: ARCHIVED 영상 정책 변경 불가 (INV-V002)
+    ok 5 - ARCHIVED 영상 정책 변경 불가 (INV-V002)
+      ---
+      duration_ms: 0.233424
+      type: 'test'
+      ...
+    # Subtest: PROCESSING 상태에서도 정책 변경 가능
+    ok 6 - PROCESSING 상태에서도 정책 변경 가능
+      ---
+      duration_ms: 0.149373
+      type: 'test'
+      ...
+    # Subtest: [회귀] 비소유자 video:write → FORBIDDEN (INV-V003)
+    ok 7 - [회귀] 비소유자 video:write → FORBIDDEN (INV-V003)
+      ---
+      duration_ms: 0.403834
+      type: 'test'
+      ...
+    # Subtest: [회귀] video:admin은 타인 영상 정책 변경 가능
+    ok 8 - [회귀] video:admin은 타인 영상 정책 변경 가능
+      ---
+      duration_ms: 0.212265
+      type: 'test'
+      ...
+    1..8
+ok 27 - ChangeAccessPolicyUseCase
+  ---
+  duration_ms: 5.070518
+  type: 'suite'
+  ...
+# Subtest: GetTranscodeJobUseCase
+    # Subtest: 정상 조회 — video:read 권한 + 존재하는 Job
+    ok 1 - 정상 조회 — video:read 권한 + 존재하는 Job
+      ---
+      duration_ms: 1.495616
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 2 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.587153
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 videoId → NOT_FOUND
+    ok 3 - 존재하지 않는 videoId → NOT_FOUND
+      ---
+      duration_ms: 0.111341
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 jobId → NOT_FOUND
+    ok 4 - 존재하지 않는 jobId → NOT_FOUND
+      ---
+      duration_ms: 0.081014
+      type: 'test'
+      ...
+    # Subtest: 다른 videoId의 Job 조회 시도 → NOT_FOUND (소유권 강제)
+    ok 5 - 다른 videoId의 Job 조회 시도 → NOT_FOUND (소유권 강제)
+      ---
+      duration_ms: 0.082791
+      type: 'test'
+      ...
+    # Subtest: RUNNING 상태 Job 조회 성공
+    ok 6 - RUNNING 상태 Job 조회 성공
+      ---
+      duration_ms: 0.145291
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상의 Job을 비소유자가 조회 → FORBIDDEN (INV-V003)
+    ok 7 - [회귀] PRIVATE 영상의 Job을 비소유자가 조회 → FORBIDDEN (INV-V003)
+      ---
+      duration_ms: 0.087927
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상의 Job을 소유자가 조회 → 성공 (INV-V003)
+    ok 8 - [회귀] PRIVATE 영상의 Job을 소유자가 조회 → 성공 (INV-V003)
+      ---
+      duration_ms: 0.11017
+      type: 'test'
+      ...
+    # Subtest: COMPLETED 상태 Job + outputRenditionRef 포함 조회 성공
+    ok 9 - COMPLETED 상태 Job + outputRenditionRef 포함 조회 성공
+      ---
+      duration_ms: 0.250062
+      type: 'test'
+      ...
+    1..9
+ok 28 - GetTranscodeJobUseCase
+  ---
+  duration_ms: 3.718891
+  type: 'suite'
+  ...
+# Subtest: GetVideoUseCase
+    # Subtest: PUBLIC 영상 — video:read 권한으로 조회 성공
+    ok 1 - PUBLIC 영상 — video:read 권한으로 조회 성공
+      ---
+      duration_ms: 0.949239
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 videoId → NOT_FOUND 에러
+    ok 2 - 존재하지 않는 videoId → NOT_FOUND 에러
+      ---
+      duration_ms: 0.548427
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 3 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 0.264943
+      type: 'test'
+      ...
+    # Subtest: INV-V003: PRIVATE 영상 — 업로더 본인은 조회 가능
+    ok 4 - INV-V003: PRIVATE 영상 — 업로더 본인은 조회 가능
+      ---
+      duration_ms: 0.190636
+      type: 'test'
+      ...
+    # Subtest: INV-V003: PRIVATE 영상 — 다른 사용자는 FORBIDDEN
+    ok 5 - INV-V003: PRIVATE 영상 — 다른 사용자는 FORBIDDEN
+      ---
+      duration_ms: 0.15201
+      type: 'test'
+      ...
+    # Subtest: [회귀] INV-V003: PRIVATE 영상 — video:admin은 조회 가능 (일관성)
+    ok 6 - [회귀] INV-V003: PRIVATE 영상 — video:admin은 조회 가능 (일관성)
+      ---
+      duration_ms: 0.205049
+      type: 'test'
+      ...
+    1..6
+ok 29 - GetVideoUseCase
+  ---
+  duration_ms: 3.952422
+  type: 'suite'
+  ...
+# Subtest: ListVideosUseCase
+    # Subtest: 정상 조회 — 빈 저장소
+    ok 1 - 정상 조회 — 빈 저장소
+      ---
+      duration_ms: 1.045505
+      type: 'test'
+      ...
+    # Subtest: FORBIDDEN — video:read 권한 없음
+    ok 2 - FORBIDDEN — video:read 권한 없음
+      ---
+      duration_ms: 0.473975
+      type: 'test'
+      ...
+    # Subtest: PUBLIC 영상은 모든 video:read 사용자에게 노출
+    ok 3 - PUBLIC 영상은 모든 video:read 사용자에게 노출
+      ---
+      duration_ms: 0.640992
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상은 비소유자에게 노출되지 않음 (INV-V003)
+    ok 4 - [회귀] PRIVATE 영상은 비소유자에게 노출되지 않음 (INV-V003)
+      ---
+      duration_ms: 0.187434
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상은 소유자 본인에게는 노출
+    ok 5 - [회귀] PRIVATE 영상은 소유자 본인에게는 노출
+      ---
+      duration_ms: 0.133994
+      type: 'test'
+      ...
+    # Subtest: [회귀] video:admin은 PRIVATE 영상 포함 전체 목록 조회 가능
+    ok 6 - [회귀] video:admin은 PRIVATE 영상 포함 전체 목록 조회 가능
+      ---
+      duration_ms: 0.135654
+      type: 'test'
+      ...
+    # Subtest: 혼합 정책 — PUBLIC + PRIVATE 혼재 시 비소유자에게 PUBLIC만 노출
+    ok 7 - 혼합 정책 — PUBLIC + PRIVATE 혼재 시 비소유자에게 PUBLIC만 노출
+      ---
+      duration_ms: 0.192727
+      type: 'test'
+      ...
+    # Subtest: uploaderId 필터 적용 — 본인 업로드 영상만 조회
+    ok 8 - uploaderId 필터 적용 — 본인 업로드 영상만 조회
+      ---
+      duration_ms: 0.278681
+      type: 'test'
+      ...
+    # Subtest: [회귀] 권한 필터는 페이지네이션보다 먼저 적용된다
+    ok 9 - [회귀] 권한 필터는 페이지네이션보다 먼저 적용된다
+      ---
+      duration_ms: 0.369117
+      type: 'test'
+      ...
+    1..9
+ok 30 - ListVideosUseCase
+  ---
+  duration_ms: 4.513436
+  type: 'suite'
+  ...
+# Subtest: StartTranscodeJobUseCase
+    # Subtest: 정상 시작 — PENDING 상태 TranscodeJob 반환
+    ok 1 - 정상 시작 — PENDING 상태 TranscodeJob 반환
+      ---
+      duration_ms: 1.024824
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 2 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 0.442212
+      type: 'test'
+      ...
+    # Subtest: Video 없음 → NOT_FOUND 에러
+    ok 3 - Video 없음 → NOT_FOUND 에러
+      ---
+      duration_ms: 0.093561
+      type: 'test'
+      ...
+    # Subtest: INV-V004: 이미 RUNNING Job 존재 → CONFLICT 에러
+    ok 4 - INV-V004: 이미 RUNNING Job 존재 → CONFLICT 에러
+      ---
+      duration_ms: 0.14161
+      type: 'test'
+      ...
+    # Subtest: [회귀] ARCHIVED 영상 트랜스코딩 시도 → CONFLICT (INV-V002 terminal 상태)
+    ok 5 - [회귀] ARCHIVED 영상 트랜스코딩 시도 → CONFLICT (INV-V002 terminal 상태)
+      ---
+      duration_ms: 0.106625
+      type: 'test'
+      ...
+    # Subtest: INV-V004: PENDING Job만 있으면 새 Job 시작 가능 (RUNNING 아님)
+    ok 6 - INV-V004: PENDING Job만 있으면 새 Job 시작 가능 (RUNNING 아님)
+      ---
+      duration_ms: 0.090778
+      type: 'test'
+      ...
+    1..6
+ok 31 - StartTranscodeJobUseCase
+  ---
+  duration_ms: 2.43471
+  type: 'suite'
+  ...
+# Subtest: StartTranscodeJobUseCase — Worker Thread NFR
+    # Subtest: [NFR] workerAdapter 없이 실행 — 기존 동작 회귀 없음 (PENDING 반환)
+    ok 1 - [NFR] workerAdapter 없이 실행 — 기존 동작 회귀 없음 (PENDING 반환)
+      ---
+      duration_ms: 1.420187
+      type: 'test'
+      ...
+    # Subtest: [NFR] NullWorkerAdapter 주입 — dispatch 호출 확인, PENDING 즉시 반환
+    ok 2 - [NFR] NullWorkerAdapter 주입 — dispatch 호출 확인, PENDING 즉시 반환
+      ---
+      duration_ms: 0.320853
+      type: 'test'
+      ...
+    # Subtest: [NFR] Worker Thread 실제 분리 실행 — PENDING 반환 후 Worker 완료 메시지 비동기 수신
+    ok 3 - [NFR] Worker Thread 실제 분리 실행 — PENDING 반환 후 Worker 완료 메시지 비동기 수신
+      ---
+      duration_ms: 51.403763
+      type: 'test'
+      ...
+    1..3
+ok 32 - StartTranscodeJobUseCase — Worker Thread NFR
+  ---
+  duration_ms: 54.096884
+  type: 'suite'
+  ...
+# Subtest: UploadVideoUseCase
+    # Subtest: 정상 업로드 — UPLOADED 상태 Video 반환
+    ok 1 - 정상 업로드 — UPLOADED 상태 Video 반환
+      ---
+      duration_ms: 0.793431
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 2 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 0.488904
+      type: 'test'
+      ...
+    # Subtest: title 누락 → VALIDATION_ERROR (INV-V001)
+    ok 3 - title 누락 → VALIDATION_ERROR (INV-V001)
+      ---
+      duration_ms: 0.113675
+      type: 'test'
+      ...
+    # Subtest: originalFileRef 누락 → VALIDATION_ERROR (INV-V001)
+    ok 4 - originalFileRef 누락 → VALIDATION_ERROR (INV-V001)
+      ---
+      duration_ms: 0.073066
+      type: 'test'
+      ...
+    # Subtest: 기본 accessPolicy는 PRIVATE
+    ok 5 - 기본 accessPolicy는 PRIVATE
+      ---
+      duration_ms: 0.067588
+      type: 'test'
+      ...
+    # Subtest: 업로드 후 repository에 저장됨
+    ok 6 - 업로드 후 repository에 저장됨
+      ---
+      duration_ms: 0.162769
+      type: 'test'
+      ...
+    1..6
+ok 33 - UploadVideoUseCase
+  ---
+  duration_ms: 2.303723
+  type: 'suite'
+  ...
+1..33
+# tests 162
+# suites 30
+# pass 162
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3142.326193

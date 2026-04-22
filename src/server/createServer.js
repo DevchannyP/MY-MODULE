@@ -33,8 +33,20 @@ const { HarnessProviderAdapter } = require('../infrastructure/ai/HarnessProvider
 const { InMemoryInvoiceRepository } = require('../../domains/billing/src/infrastructure/InMemoryInvoiceRepository');
 const { InMemoryPaymentRepository } = require('../../domains/billing/src/infrastructure/InMemoryPaymentRepository');
 const { InMemoryBillingExceptionRepository } = require('../../domains/billing/src/infrastructure/InMemoryBillingExceptionRepository');
+const {
+  PostgresInvoiceRepository,
+  PostgresPaymentRepository,
+  PostgresBillingExceptionRepository,
+} = require('../../domains/billing/src/infrastructure/PostgresBillingRepository');
+const {
+  SQLiteInvoiceRepository,
+  SQLitePaymentRepository,
+  SQLiteBillingExceptionRepository,
+} = require('../../domains/billing/src/infrastructure/SQLiteBillingRepository');
 const { InMemoryVideoRepository } = require('../../domains/video/src/infrastructure/InMemoryVideoRepository');
 const { InMemoryTranscodeJobRepository } = require('../../domains/video/src/infrastructure/InMemoryTranscodeJobRepository');
+const { PostgresVideoRepository, PostgresTranscodeJobRepository } = require('../../domains/video/src/infrastructure/PostgresVideoRepository');
+const { SQLiteVideoRepository, SQLiteTranscodeJobRepository } = require('../../domains/video/src/infrastructure/SQLiteVideoRepository');
 const { tryServeDynamicUi } = require('../frontend/renderDynamicUi');
 const { createMpoRouteHandler } = require('./routes/mpo');
 const { createEventsRouteHandler } = require('./routes/events');
@@ -138,14 +150,71 @@ function createTaskController(
   });
 }
 
+function resolveBillingRepositories({
+  dbType = process.env.DB_TYPE || 'sqlite',
+  sqliteDbPath = process.env.BILLING_SQLITE_DB_PATH || ':memory:',
+  postgresClient = null,
+  postgresSchema = process.env.POSTGRES_SCHEMA || 'public',
+} = {}) {
+  const normalized = String(dbType || 'sqlite').trim().toLowerCase();
+  if (normalized === 'sqlite') {
+    const invoiceRepo = SQLiteInvoiceRepository.create(sqliteDbPath);
+    const paymentRepo = SQLitePaymentRepository.create(sqliteDbPath);
+    const exceptionRepo = SQLiteBillingExceptionRepository.create(sqliteDbPath);
+    return { invoiceRepo, paymentRepo, exceptionRepo };
+  }
+  if (normalized === 'postgres') {
+    const client = postgresClient || createUnconfiguredPostgresClient({
+      connectionString: process.env.POSTGRES_URL || '',
+    });
+    return {
+      invoiceRepo: new PostgresInvoiceRepository({ client, schema: postgresSchema }),
+      paymentRepo: new PostgresPaymentRepository({ client, schema: postgresSchema }),
+      exceptionRepo: new PostgresBillingExceptionRepository({ client, schema: postgresSchema }),
+    };
+  }
+  return {
+    invoiceRepo: new InMemoryInvoiceRepository(),
+    paymentRepo: new InMemoryPaymentRepository(),
+    exceptionRepo: new InMemoryBillingExceptionRepository(),
+  };
+}
+
+function resolveVideoRepositories({
+  dbType = process.env.DB_TYPE || 'sqlite',
+  sqliteDbPath = process.env.VIDEO_SQLITE_DB_PATH || ':memory:',
+  postgresClient = null,
+  postgresSchema = process.env.POSTGRES_SCHEMA || 'public',
+} = {}) {
+  const normalized = String(dbType || 'sqlite').trim().toLowerCase();
+  if (normalized === 'sqlite') {
+    return {
+      videoRepository: SQLiteVideoRepository.create(sqliteDbPath),
+      transcodeJobRepository: SQLiteTranscodeJobRepository.create(sqliteDbPath),
+    };
+  }
+  if (normalized === 'postgres') {
+    const client = postgresClient || createUnconfiguredPostgresClient({
+      connectionString: process.env.POSTGRES_URL || '',
+    });
+    return {
+      videoRepository: new PostgresVideoRepository({ client, schema: postgresSchema }),
+      transcodeJobRepository: new PostgresTranscodeJobRepository({ client, schema: postgresSchema }),
+    };
+  }
+  return {
+    videoRepository: new InMemoryVideoRepository(),
+    transcodeJobRepository: new InMemoryTranscodeJobRepository(),
+  };
+}
+
 function createBillingController(eventPublisher = null) {
   // billing/video의 eventPublisher는 (event) => void 시그니처 — EventBusPublisher 래핑
   const billingPublisher = eventPublisher
     || ((event) => _sharedDomainEventPublisher.publish(event));
+  const repos = resolveBillingRepositories();
   return new BillingController({
-    invoiceRepo: new InMemoryInvoiceRepository(),
-    paymentRepo: new InMemoryPaymentRepository(),
-    exceptionRepo: new InMemoryBillingExceptionRepository(),
+    ...repos,
     eventPublisher: billingPublisher,
   });
 }
@@ -153,9 +222,9 @@ function createBillingController(eventPublisher = null) {
 function createVideoController(eventPublisher = null) {
   const videoPublisher = eventPublisher
     || ((event) => _sharedDomainEventPublisher.publish(event));
+  const repos = resolveVideoRepositories();
   return new VideoController({
-    videoRepository: new InMemoryVideoRepository(),
-    transcodeJobRepository: new InMemoryTranscodeJobRepository(),
+    ...repos,
     eventPublisher: videoPublisher,
   });
 }

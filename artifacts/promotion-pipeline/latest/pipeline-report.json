@@ -15,9 +15,9 @@
     "risk": 1
   },
   "locked_context_budget": {
-    "primary_estimated_tokens": 4930,
+    "primary_estimated_tokens": 4931,
     "secondary_estimated_tokens": 5501,
-    "locked_total_estimated_tokens": 10431
+    "locked_total_estimated_tokens": 10432
   },
   "commands": {
     "context_drift_json": "python3 scripts/check_context_drift.py --input /root/workspace/my-module/artifacts/promotion-pipeline/latest/context-lock.json --json",

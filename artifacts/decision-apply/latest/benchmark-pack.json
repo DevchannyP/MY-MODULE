@@ -1,9 +1,9 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-18T06:55:18.742408+00:00",
+  "generated_at": "2026-04-22T14:43:48.539417+00:00",
   "goal": "stateful-ops",
   "current_wp": {
-    "id": "SPIRAL-19-COMPLETE",
+    "id": "MPO-COMPLETE",
     "type": "governance",
     "stage": "complete",
     "status": "completed"

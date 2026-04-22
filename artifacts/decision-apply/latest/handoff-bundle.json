@@ -1,10 +1,10 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-18T06:55:18.742310+00:00",
+  "generated_at": "2026-04-22T14:43:48.539338+00:00",
   "goal": "stateful-ops",
   "current_packet": {
-    "id": "SPIRAL-19-COMPLETE",
-    "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
+    "id": "MPO-COMPLETE",
+    "goal": "MPO session mpo-258dbd06-7612-41b6-aec8-1129f9e6554f completed",
     "type": "governance",
     "stage": "complete",
     "status": "completed"
@@ -15,8 +15,8 @@
     "profile_id": "stateful-ops-routing",
     "profile_objective": "운영 안전장치, 로그, smoke 기준을 우선 읽고 구현 세부는 나중에 읽는다.",
     "current_wp": {
-      "id": "SPIRAL-19-COMPLETE",
-      "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
+      "id": "MPO-COMPLETE",
+      "goal": "MPO session mpo-258dbd06-7612-41b6-aec8-1129f9e6554f completed",
       "type": "governance",
       "stage": "complete"
     },
@@ -45,8 +45,8 @@
     "budget": {
       "primary": {
         "file_count": 6,
-        "total_bytes": 18238,
-        "estimated_tokens": 6080
+        "total_bytes": 18240,
+        "estimated_tokens": 6081
       },
       "secondary": {
         "file_count": 3,
@@ -54,11 +54,11 @@
         "estimated_tokens": 934
       },
       "deferred": {
-        "file_count": 192,
-        "total_bytes": 645269,
-        "estimated_tokens": 215090
+        "file_count": 208,
+        "total_bytes": 1607269,
+        "estimated_tokens": 535756
       },
-      "total_estimated_tokens": 222104
+      "total_estimated_tokens": 542771
     },
     "path_metrics": {
       "read_first": [
@@ -73,8 +73,8 @@
           "path": "memory/current-wp.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 816,
-          "estimated_tokens": 272
+          "total_bytes": 818,
+          "estimated_tokens": 273
         },
         {
           "path": "master-shell/observability/config.yaml",
@@ -132,23 +132,23 @@
         {
           "path": "domains/",
           "exists": true,
-          "file_count": 135,
-          "total_bytes": 554561,
-          "estimated_tokens": 184854
+          "file_count": 147,
+          "total_bytes": 629292,
+          "estimated_tokens": 209764
         },
         {
           "path": "worklog/reports/",
           "exists": true,
-          "file_count": 56,
-          "total_bytes": 68828,
-          "estimated_tokens": 22943
+          "file_count": 60,
+          "total_bytes": 942534,
+          "estimated_tokens": 314178
         },
         {
           "path": "artifacts/catalog-site/index.html",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 21880,
-          "estimated_tokens": 7293
+          "total_bytes": 35443,
+          "estimated_tokens": 11814
         }
       ]
     }
@@ -159,8 +159,8 @@
     "profile_id": "stateful-domain-module",
     "routing_profile_id": "stateful-ops-routing",
     "current_wp": {
-      "id": "SPIRAL-19-COMPLETE",
-      "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
+      "id": "MPO-COMPLETE",
+      "goal": "MPO session mpo-258dbd06-7612-41b6-aec8-1129f9e6554f completed",
       "type": "governance",
       "stage": "complete",
       "status": "completed"
@@ -194,7 +194,7 @@
         "id": "token-budget",
         "label": "토큰 예산 적합성",
         "status": "risk",
-        "detail": "primary 6080 tok / total 222104 tok"
+        "detail": "primary 6081 tok / total 542771 tok"
       },
       {
         "id": "completed-packet",
@@ -211,8 +211,8 @@
     "bundle_budget": {
       "primary": {
         "file_count": 6,
-        "total_bytes": 18238,
-        "estimated_tokens": 6080
+        "total_bytes": 18240,
+        "estimated_tokens": 6081
       },
       "secondary": {
         "file_count": 3,
@@ -220,11 +220,11 @@
         "estimated_tokens": 934
       },
       "deferred": {
-        "file_count": 192,
-        "total_bytes": 645269,
-        "estimated_tokens": 215090
+        "file_count": 208,
+        "total_bytes": 1607269,
+        "estimated_tokens": 535756
       },
-      "total_estimated_tokens": 222104
+      "total_estimated_tokens": 542771
     },
     "required_adapters": [
       "master-ui-plugin-shell",
@@ -236,11 +236,11 @@
     ],
     "selected_adapters": [
       "feature-flag-provider",
-      "repository-sqlite",
-      "master-ui-plugin-shell",
+      "http-problem-details",
       "repository-inmemory",
+      "master-ui-plugin-shell",
       "observability-otel",
-      "http-problem-details"
+      "repository-sqlite"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -253,7 +253,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-18T06:55:18.742287+00:00",
+    "generated_at": "2026-04-22T14:43:48.539316+00:00",
     "goal": "최근 audit 시그널을 기준으로 actor? 9543a440d4e4",
     "type": "governance",
     "stage": "complete",
@@ -340,9 +340,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-18 15:43:30 +0900",
+            "timestamp": "2026-04-21 22:44:06 +0900",
             "title": "git commit",
-            "detail": "test(harness-runtime-router): expand unit coverage 2→19 tests",
+            "detail": "docs(mpo): add mpo v1.0 release notes and retrospective (WP-MPO-033)",
             "tag": "git"
           }
         ]

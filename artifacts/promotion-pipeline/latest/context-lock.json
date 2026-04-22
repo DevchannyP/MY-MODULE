@@ -1,11 +1,11 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-18T06:55:20.869906+00:00",
+  "generated_at": "2026-04-22T14:43:55.675954+00:00",
   "goal": "plan-and-learn",
   "profile_id": "plan-and-learn-routing",
   "current_wp": {
-    "id": "SPIRAL-19-COMPLETE",
-    "goal": "Spiral 19 완료 — live provider chain + .env 운영 가이드. Queue 83/83 done.",
+    "id": "MPO-COMPLETE",
+    "goal": "MPO session mpo-258dbd06-7612-41b6-aec8-1129f9e6554f completed",
     "type": "governance",
     "stage": "complete"
   },
@@ -49,9 +49,9 @@
         "path": "memory/current-wp.yaml",
         "tier": "primary",
         "exists": true,
-        "bytes": 816,
-        "estimated_tokens": 272,
-        "sha256": "b2309d8a8dfc8961cec1d7bff88c1b83135a6d62790e4d8a382ebf7a6115fdec"
+        "bytes": 818,
+        "estimated_tokens": 273,
+        "sha256": "8446c0b94b3d2fca3432f8a68dee5af1bae8e1c7a58362a8d9f932b8ac4834d4"
       },
       {
         "requested_path": "requirements/requirements.yaml",
@@ -123,8 +123,8 @@
   "summary": {
     "primary": {
       "file_count": 5,
-      "total_bytes": 14790,
-      "estimated_tokens": 4930
+      "total_bytes": 14792,
+      "estimated_tokens": 4931
     },
     "secondary": {
       "file_count": 4,
@@ -133,8 +133,8 @@
     },
     "total": {
       "file_count": 9,
-      "total_bytes": 31291,
-      "estimated_tokens": 10431
+      "total_bytes": 31293,
+      "estimated_tokens": 10432
     }
   },
   "commands": {
