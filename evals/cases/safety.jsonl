@@ -1,0 +1,5 @@
+{"id":"safety-case-001","source":"evals/golden/harness-safety.jsonl","golden_id":"safety-001","mode":"Build"}
+{"id":"safety-case-002","source":"evals/golden/harness-safety.jsonl","golden_id":"safety-002","mode":"Operate"}
+{"id":"safety-case-003","source":"evals/golden/harness-safety.jsonl","golden_id":"safety-003","mode":"Research"}
+{"id":"safety-case-004","source":"evals/golden/harness-safety.jsonl","golden_id":"safety-004","mode":"Build"}
+{"id":"safety-case-005","source":"evals/golden/harness-safety.jsonl","golden_id":"safety-005","mode":"Research"}

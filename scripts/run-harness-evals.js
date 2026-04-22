@@ -6,6 +6,7 @@ const crypto = require('node:crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 const GOLDEN_PATH = path.join(ROOT, 'evals', 'golden', 'harness-core.jsonl');
+const SAFETY_GOLDEN_PATH = path.join(ROOT, 'evals', 'golden', 'harness-safety.jsonl');
 const BASELINE_PATH = path.join(ROOT, 'evals', 'metrics', 'baseline.json');
 const CASES_DIR = path.join(ROOT, 'evals', 'cases');
 const OUTPUT_DIR = path.join(ROOT, 'artifacts', 'evals', 'harness', 'latest');
@@ -106,12 +107,15 @@ function loadCaseFiles() {
 
 function buildReport() {
   const golden = readJsonLines(GOLDEN_PATH);
+  const safetyGolden = fs.existsSync(SAFETY_GOLDEN_PATH) ? readJsonLines(SAFETY_GOLDEN_PATH) : [];
   const baseline = readJson(BASELINE_PATH);
   const validationFailures = validateGoldenRecords(golden);
+  const safetyValidationFailures = validateGoldenRecords(safetyGolden);
   const modeCoverage = summarizeModes(golden);
   const packetTypeCoverage = summarizePacketTypes(golden);
   const packetTypeCoverageCheck = checkPacketTypeCoverage(golden);
   const caseFiles = loadCaseFiles();
+  const allValid = validationFailures.length === 0 && safetyValidationFailures.length === 0;
   const report = {
     eval_run_id: crypto.randomUUID(),
     generated_at_utc: stableNow(),
@@ -119,9 +123,10 @@ function buildReport() {
     suite: 'harness-core-offline',
     baseline_id: String(baseline.baseline_id || 'unknown'),
     prompt_version: String(baseline.prompt_version || 'unknown'),
-    status: validationFailures.length === 0 && packetTypeCoverageCheck.missing.length === 0 ? 'PASS' : 'FAIL',
+    status: allValid && packetTypeCoverageCheck.missing.length === 0 ? 'PASS' : 'FAIL',
     summary: {
       golden_case_count: golden.length,
+      safety_case_count: safetyGolden.length,
       baseline_case_count: Number(baseline?.golden_set?.case_count || 0),
       case_count_delta: golden.length - Number(baseline?.golden_set?.case_count || 0),
       modes: modeCoverage,
@@ -136,13 +141,14 @@ function buildReport() {
       required_packet_types_present: packetTypeCoverageCheck.missing.length === 0,
       packet_type_coverage: packetTypeCoverageCheck,
       validation_failures: validationFailures,
+      safety_set_parsed: safetyGolden.length > 0,
+      safety_validation_failures: safetyValidationFailures,
     },
     case_files: caseFiles,
-    next_steps: validationFailures.length === 0
+    next_steps: allValid
       ? [
         '모델 호출 기반 grader를 추가한다',
         'baseline 대비 schema_violation_rate와 retry_rate를 측정한다',
-        'safety/red-team case file을 별도 추가한다',
       ]
       : [
         'golden set record schema를 수정한다',
@@ -168,6 +174,7 @@ function main() {
     `status      : ${report.status}`,
     `eval_run_id : ${report.eval_run_id}`,
     `golden      : ${report.summary.golden_case_count}`,
+    `safety      : ${report.summary.safety_case_count}`,
     `baseline    : ${report.summary.baseline_case_count}`,
     `case delta  : ${report.summary.case_count_delta}`,
     `artifact    : artifacts/evals/harness/latest/harness-eval-report.json`,

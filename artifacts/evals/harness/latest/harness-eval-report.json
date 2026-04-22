@@ -1,6 +1,6 @@
 {
-  "eval_run_id": "7191b965-3dec-4ce1-923e-9eb39f4c7c61",
-  "generated_at_utc": "2026-04-22T14:43:47.363Z",
+  "eval_run_id": "66111c78-4fd0-433a-b36f-3f1849691aa3",
+  "generated_at_utc": "2026-04-22T15:23:25.629Z",
   "repository": "my-module",
   "suite": "harness-core-offline",
   "baseline_id": "harness-spiral19-baseline-2026-04-18",
@@ -8,6 +8,7 @@
   "status": "PASS",
   "summary": {
     "golden_case_count": 10,
+    "safety_case_count": 5,
     "baseline_case_count": 10,
     "case_count_delta": 0,
     "modes": {
@@ -24,7 +25,7 @@
       "shell": 1,
       "executor": 1
     },
-    "case_files": 5
+    "case_files": 6
   },
   "checks": {
     "golden_set_parsed": true,
@@ -42,7 +43,9 @@
       ],
       "missing": []
     },
-    "validation_failures": []
+    "validation_failures": [],
+    "safety_set_parsed": true,
+    "safety_validation_failures": []
   },
   "case_files": [
     {
@@ -99,134 +102,26 @@
         "research-001",
         "research-002"
       ]
+    },
+    {
+      "path": "evals/cases/safety.jsonl",
+      "count": 5,
+      "modes": [
+        "Build",
+        "Operate",
+        "Research"
+      ],
+      "ids": [
+        "safety-case-001",
+        "safety-case-002",
+        "safety-case-003",
+        "safety-case-004",
+        "safety-case-005"
+      ]
     }
   ],
   "next_steps": [
     "모델 호출 기반 grader를 추가한다",
-    "baseline 대비 schema_violation_rate와 retry_rate를 측정한다",
-    "safety/red-team case file을 별도 추가한다"
-  ],
-  "provider_invocations": [
-    {
-      "generated_at_utc": "2026-04-22T14:44:32.618Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-medium",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-ab86a876-1275-4668-bbca-fc1384060ebb",
-      "wp_id": "WP-AUTO-001",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:44:29.505Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-650b2173-a5aa-4bef-9c3c-b33a737f5d01",
-      "wp_id": "WP-AUTO-004",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:44:28.856Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-650b2173-a5aa-4bef-9c3c-b33a737f5d01",
-      "wp_id": "WP-AUTO-003",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:44:28.211Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-650b2173-a5aa-4bef-9c3c-b33a737f5d01",
-      "wp_id": "WP-AUTO-002",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:44:27.572Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-650b2173-a5aa-4bef-9c3c-b33a737f5d01",
-      "wp_id": "WP-AUTO-001",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:43:59.891Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-medium",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-c0aaa8f9-1508-4f96-b6f8-85331c9c80a6",
-      "wp_id": "WP-AUTO-001",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:43:54.468Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-22bcb5ba-5efd-4e08-a3df-7f37010df893",
-      "wp_id": "WP-AUTO-004",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:43:52.873Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-22bcb5ba-5efd-4e08-a3df-7f37010df893",
-      "wp_id": "WP-AUTO-003",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:43:50.861Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-22bcb5ba-5efd-4e08-a3df-7f37010df893",
-      "wp_id": "WP-AUTO-002",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    },
-    {
-      "generated_at_utc": "2026-04-22T14:43:49.160Z",
-      "provider_id": "null-harness-provider",
-      "route_id": "mini-build-low",
-      "selected_model_tier": "mini",
-      "session_id": "mpo-22bcb5ba-5efd-4e08-a3df-7f37010df893",
-      "wp_id": "WP-AUTO-001",
-      "schema_valid": true,
-      "fallback_applied": false,
-      "latency_ms": 0
-    }
-  ],
-  "last_provider_invocation": {
-    "generated_at_utc": "2026-04-22T14:44:32.618Z",
-    "provider_id": "null-harness-provider",
-    "route_id": "mini-build-medium",
-    "selected_model_tier": "mini",
-    "session_id": "mpo-ab86a876-1275-4668-bbca-fc1384060ebb",
-    "wp_id": "WP-AUTO-001",
-    "schema_valid": true,
-    "fallback_applied": false,
-    "latency_ms": 0
-  }
+    "baseline 대비 schema_violation_rate와 retry_rate를 측정한다"
+  ]
 }

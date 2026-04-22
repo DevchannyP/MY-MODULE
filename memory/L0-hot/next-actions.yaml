@@ -69,6 +69,13 @@ next_actions:
     done: true
     completed_at: "2026-04-21"
     result: "WP-MPO-029(harness-perf-metrics.js) + WP-MPO-030(harness-dashboard.js 6 KPI) 완료. 791/791 PASS. push a9a79d4."
+  - priority: 8
+    id: "NEXT-008"
+    action: "test:contract FAIL 수정 — golden records MPO v1.0 intake schema 정렬"
+    track: "QUALITY-GATE"
+    done: true
+    completed_at: "2026-04-23"
+    result: "harness-core.jsonl 10 레코드 work_mode enum 변환 + 5개 필수 필드 추가. test:contract PASS (was 70 errors). commit c288a39."
 queue:
   - id: "MPO-NONE"
     reason: "session completed"
