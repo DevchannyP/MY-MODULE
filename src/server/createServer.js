@@ -2519,6 +2519,8 @@ module.exports = {
   startServer,
   createAllEnabledFlags,
   resolveTaskRepository,
+  resolveBillingRepositories,
+  resolveVideoRepositories,
   _domainEventRingBuffer,
   _domainEventDlq,
   _sharedOutboxPoller,
