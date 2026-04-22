@@ -122,6 +122,7 @@
     "operator:cockpit": "node scripts/operator_cockpit.js",
     "db:migrate": "node scripts/db-migrate.js",
     "db:migrate:test": "node scripts/db-migrate.js --test",
+    "db:migrate:pg:validate": "node scripts/db-migrate-pg-validate.js",
     "session:end": "python3 scripts/session_end.py",
     "session:end:apply": "python3 scripts/session_end.py --apply",
     "prepare": "husky",

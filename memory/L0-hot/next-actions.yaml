@@ -59,9 +59,9 @@ next_actions:
     id: "NEXT-006"
     action: "Spiral 18 설계 — DB 마이그레이션 SQLite→PostgreSQL Phase 2"
     track: "SPIRAL-18"
-    done: false
-    goal: "docs/db/migration-strategy.md Phase 2 기반 WP 설계"
-    trigger: "NEXT-005 완료 후"
+    done: true
+    completed_at: "2026-04-23"
+    result: "resolveBillingRepositories/resolveVideoRepositories 익스포트 추가. billingRepositoryRouting.test.js + videoRepositoryRouting.test.js 5×2=10 테스트 PASS. 801/801 PASS. lint 0 errors. commit f06e33b."
   - priority: 7
     id: "NEXT-007"
     action: "MPO Phase 5 잔여 — WP-MPO-029/030"

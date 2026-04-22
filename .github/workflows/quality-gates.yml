@@ -46,6 +46,9 @@ jobs:
       - name: Repository test suite
         run: npm test
 
+      - name: PG migration baseline
+        run: npm run db:migrate:pg:validate
+
       - name: Authn/Authz regression
         run: npm run test:authn-authz
 
