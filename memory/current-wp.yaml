@@ -1,9 +1,9 @@
 id: "MPO-COMPLETE"
-goal: "MPO session mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95 completed"
+goal: "MPO session mpo-c661e92f-f43c-40d2-bf43-2b67b555b1fc completed"
 type: "governance"
 stage: "complete"
 status: "completed"
-completed_at: "2026-04-21T13:19:16.350Z"
+completed_at: "2026-04-22T14:44:22.853Z"
 scope_in:
   - "src/server/createServer.js"
   - "src/tests/smoke/harnessLiveProvider.smoke.test.js"
@@ -15,7 +15,7 @@ scope_in:
 scope_out:
   - "domains/"
 last_completed_wp: "WP-AUTO-004"
-last_completed_at: "2026-04-21T13:19:16.350Z"
+last_completed_at: "2026-04-22T14:44:22.853Z"
 queue_state:
   total: 83
   done: 83

@@ -1,14 +1,14 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-21T13:19:19.653Z",
-  "latest_session_id": "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95",
-  "latest_packet_type": "docs",
-  "latest_risk_level": "low",
+  "generated_at": "2026-04-22T14:44:25.338Z",
+  "latest_session_id": "mpo-c661e92f-f43c-40d2-bf43-2b67b555b1fc",
+  "latest_packet_type": "feature",
+  "latest_risk_level": "medium",
   "routing_learning": [
     {
       "mode": "Build",
       "tier": "mini",
-      "count": 15
+      "count": 27
     }
   ],
   "notes": [
