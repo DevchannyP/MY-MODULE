@@ -1535,7 +1535,7 @@ capabilities:
         result: "PASS — replay_next_packet 생성, actor/hash 문구 정제, audit_signals 노출, lint 0 warnings"
       - id: "WP-HO-012"
         goal: "promotion pipeline과 handoff bundle 연결 — promotion 결과가 handoff bundle path와 evidence status를 포함"
-        status: "pending"
+        status: "done"
         tier: "governance"
         depends_on:
           - "WP-HO-011"

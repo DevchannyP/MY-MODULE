@@ -18,6 +18,7 @@ import sys
 import yaml
 
 from apply_execution_packet import DEFAULT_NEXT_ACTIONS, save_yaml, update_next_actions
+from check_context_drift import build_drift_report
 from compose_handoff_bundle import build_handoff_bundle
 from export_context_bundle import CURRENT_WP_PATH, CONSTRAINTS_PATH, ROUTING_PATH, infer_goal_from_current_wp, load_yaml
 from export_context_lock import build_context_lock
@@ -63,6 +64,7 @@ def main() -> None:
     handoff_bundle = build_handoff_bundle(goal, current_wp)
     benchmark_pack = build_benchmark_pack(goal, current_wp, benchmark_catalog)
     promotion_report, promoted_packet = build_promotion_report(goal, current_wp)
+    drift_report = build_drift_report(context_lock, ROOT)
 
     context_lock_path = artifact_dir / "context-lock.json"
     handoff_bundle_path = artifact_dir / "handoff-bundle.json"
@@ -75,10 +77,25 @@ def main() -> None:
     benchmark_pack_path.write_text(json.dumps(benchmark_pack, indent=2, ensure_ascii=False), encoding="utf-8")
     promoted_packet_path.write_text(yaml.dump(promoted_packet, allow_unicode=True, default_flow_style=False, sort_keys=False), encoding="utf-8")
 
+    fit_counts = promotion_report.get("fit_counts", {})
+    budget_risk = handoff_bundle.get("fit_report", {}).get("budget_risk", {})
+    evidence_status = (
+        "risk" if budget_risk.get("status") == "risk" or fit_counts.get("risk", 0) > 0
+        else "warn" if budget_risk.get("status") == "warn" or fit_counts.get("warn", 0) > 0
+        else "pass"
+    )
+    promotion_ready = promotion_report.get("promotion_ready", False)
+    handoff_ready = evidence_status != "risk" and fit_counts.get("pass", 0) > 0
+
     report = {
         "schema_version": "1",
         "goal": goal,
-        "promotion_ready": promotion_report.get("promotion_ready", False),
+        "promotion_ready": promotion_ready,
+        "handoff_ready": handoff_ready,
+        "handoff_bundle_path": str(handoff_bundle_path),
+        "evidence_status": evidence_status,
+        "drift_status": drift_report.get("drift_status", "unknown"),
+        "promotion_handoff_conflict": promotion_ready != handoff_ready,
         "artifacts": {
             "context_lock": str(context_lock_path),
             "handoff_bundle": str(handoff_bundle_path),
@@ -86,7 +103,7 @@ def main() -> None:
             "promoted_packet": str(promoted_packet_path),
             "pipeline_report": str(pipeline_report_path),
         },
-        "fit_counts": promotion_report.get("fit_counts", {}),
+        "fit_counts": fit_counts,
         "locked_context_budget": promotion_report.get("locked_context_budget", {}),
         "commands": {
             "context_drift_json": f"python3 scripts/check_context_drift.py --input {context_lock_path} --json",

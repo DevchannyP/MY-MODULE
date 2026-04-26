@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-26T14:53:13.732958+00:00",
-  "goal": "plan-and-learn",
+  "generated_at": "2026-04-26T15:21:37.008949+00:00",
+  "goal": "stateful-ops",
   "intake_packet": {
     "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
     "context": [
@@ -75,9 +75,9 @@
   },
   "context_bundle": {
     "schema_version": "1",
-    "goal": "plan-and-learn",
-    "profile_id": "plan-and-learn-routing",
-    "profile_objective": "기획, 학습, planner editing에 필요한 최소 문맥만 우선 읽는다.",
+    "goal": "stateful-ops",
+    "profile_id": "stateful-ops-routing",
+    "profile_objective": "운영 안전장치, 로그, smoke 기준을 우선 읽고 구현 세부는 나중에 읽는다.",
     "current_wp": {
       "id": "MPO-COMPLETE",
       "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
@@ -87,23 +87,23 @@
     "read_first": [
       "memory/checkpoint.yaml",
       "memory/current-wp.yaml",
-      "requirements/requirements.yaml",
-      "requirements/constraints.yaml",
-      "master-shell/catalog/project-intake-canvas.yaml",
+      "master-shell/observability/config.yaml",
+      "master-shell/operations/rollback-playbook.yaml",
+      "master-shell/catalog/execution-packet-templates.yaml",
+      "master-shell/catalog/context-routing-profiles.yaml",
       "scripts/generate_replay_packet.py",
       "scripts/generate_routing_learning_ledger.py"
     ],
     "read_next": [
-      "master-shell/catalog/project-blueprints.yaml",
-      "master-shell/catalog/planning-studio-modes.yaml",
-      "master-shell/catalog/ai-learning-map.yaml",
-      "master-shell/catalog/master-os-relations.yaml",
+      "master-shell/observability/health-scores.yaml",
+      "master-shell/operations/deployment-environments.yaml",
+      "artifacts/deployment-smoke/target-resolution.json",
       "artifacts/promotion-pipeline/latest/handoff-bundle.json"
     ],
     "read_later": [
       "domains/",
-      "artifacts/deployment-smoke/",
       "worklog/reports/",
+      "artifacts/catalog-site/index.html",
       "worklog/audit-chain.jsonl",
       "master-shell/observability/timeline.jsonl"
     ],
@@ -125,19 +125,19 @@
           "guidance": "read_later는 active context에서 제외한다. 필요한 경우 특정 path와 reason을 적어 승인 후 재읽기한다."
         },
         {
-          "path": "artifacts/deployment-smoke/",
-          "approval_required": true,
-          "reason_required": true,
-          "estimated_tokens": 8734,
-          "file_count": 4,
-          "guidance": "read_later는 active context에서 제외한다. 필요한 경우 특정 path와 reason을 적어 승인 후 재읽기한다."
-        },
-        {
           "path": "worklog/reports/",
           "approval_required": true,
           "reason_required": true,
           "estimated_tokens": 321919,
           "file_count": 61,
+          "guidance": "read_later는 active context에서 제외한다. 필요한 경우 특정 path와 reason을 적어 승인 후 재읽기한다."
+        },
+        {
+          "path": "artifacts/catalog-site/index.html",
+          "approval_required": true,
+          "reason_required": true,
+          "estimated_tokens": 11814,
+          "file_count": 1,
           "guidance": "read_later는 active context에서 제외한다. 필요한 경우 특정 path와 reason을 적어 승인 후 재읽기한다."
         },
         {
@@ -166,32 +166,32 @@
     "core_guardrails": [],
     "budget": {
       "primary": {
-        "file_count": 7,
-        "total_bytes": 33230,
-        "estimated_tokens": 11076
+        "file_count": 8,
+        "total_bytes": 36973,
+        "estimated_tokens": 12325
       },
       "secondary": {
-        "file_count": 5,
-        "total_bytes": 39393,
-        "estimated_tokens": 13132
+        "file_count": 4,
+        "total_bytes": 25748,
+        "estimated_tokens": 8582
       },
       "deferred": {
-        "file_count": 214,
-        "total_bytes": 1622868,
-        "estimated_tokens": 540956
+        "file_count": 211,
+        "total_bytes": 1632108,
+        "estimated_tokens": 544036
       },
-      "active_estimated_tokens": 24208,
+      "active_estimated_tokens": 20907,
       "deferred_excluded_by_default": true,
-      "total_estimated_tokens": 565164
+      "total_estimated_tokens": 564943
     },
     "budget_risk": {
       "status": "risk",
       "primary_status": "risk",
       "active_status": "warn",
       "deferred_status": "risk",
-      "primary_estimated_tokens": 11076,
-      "active_estimated_tokens": 24208,
-      "deferred_excluded_tokens": 540956,
+      "primary_estimated_tokens": 12325,
+      "active_estimated_tokens": 20907,
+      "deferred_excluded_tokens": 544036,
       "thresholds": {
         "primary_token_limit": 6000,
         "active_token_limit": 18000,
@@ -215,25 +215,32 @@
           "estimated_tokens": 1094
         },
         {
-          "path": "requirements/requirements.yaml",
+          "path": "master-shell/observability/config.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 2425,
-          "estimated_tokens": 808
+          "total_bytes": 6017,
+          "estimated_tokens": 2006
         },
         {
-          "path": "requirements/constraints.yaml",
+          "path": "master-shell/operations/rollback-playbook.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 1921,
-          "estimated_tokens": 640
+          "total_bytes": 2756,
+          "estimated_tokens": 919
         },
         {
-          "path": "master-shell/catalog/project-intake-canvas.yaml",
+          "path": "master-shell/catalog/execution-packet-templates.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 7547,
-          "estimated_tokens": 2516
+          "total_bytes": 2484,
+          "estimated_tokens": 828
+        },
+        {
+          "path": "master-shell/catalog/context-routing-profiles.yaml",
+          "exists": true,
+          "file_count": 1,
+          "total_bytes": 4379,
+          "estimated_tokens": 1460
         },
         {
           "path": "scripts/generate_replay_packet.py",
@@ -252,39 +259,32 @@
       ],
       "read_next": [
         {
-          "path": "master-shell/catalog/project-blueprints.yaml",
+          "path": "master-shell/observability/health-scores.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 6170,
-          "estimated_tokens": 2057
+          "total_bytes": 265,
+          "estimated_tokens": 88
         },
         {
-          "path": "master-shell/catalog/planning-studio-modes.yaml",
+          "path": "master-shell/operations/deployment-environments.yaml",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 3544,
-          "estimated_tokens": 1181
+          "total_bytes": 2101,
+          "estimated_tokens": 700
         },
         {
-          "path": "master-shell/catalog/ai-learning-map.yaml",
+          "path": "artifacts/deployment-smoke/target-resolution.json",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 4502,
-          "estimated_tokens": 1501
-        },
-        {
-          "path": "master-shell/catalog/master-os-relations.yaml",
-          "exists": true,
-          "file_count": 1,
-          "total_bytes": 2285,
-          "estimated_tokens": 762
+          "total_bytes": 437,
+          "estimated_tokens": 146
         },
         {
           "path": "artifacts/promotion-pipeline/latest/handoff-bundle.json",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 22892,
-          "estimated_tokens": 7631
+          "total_bytes": 22945,
+          "estimated_tokens": 7648
         }
       ],
       "read_later": [
@@ -296,18 +296,18 @@
           "estimated_tokens": 209764
         },
         {
-          "path": "artifacts/deployment-smoke/",
-          "exists": true,
-          "file_count": 4,
-          "total_bytes": 26203,
-          "estimated_tokens": 8734
-        },
-        {
           "path": "worklog/reports/",
           "exists": true,
           "file_count": 61,
           "total_bytes": 965757,
           "estimated_tokens": 321919
+        },
+        {
+          "path": "artifacts/catalog-site/index.html",
+          "exists": true,
+          "file_count": 1,
+          "total_bytes": 35443,
+          "estimated_tokens": 11814
         },
         {
           "path": "worklog/audit-chain.jsonl",
@@ -328,9 +328,9 @@
   },
   "fit_report": {
     "schema_version": "1",
-    "goal": "plan-and-learn",
-    "profile_id": "master-os-shell",
-    "routing_profile_id": "plan-and-learn-routing",
+    "goal": "stateful-ops",
+    "profile_id": "stateful-domain-module",
+    "routing_profile_id": "stateful-ops-routing",
     "current_wp": {
       "id": "MPO-COMPLETE",
       "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
@@ -367,7 +367,7 @@
         "id": "token-budget",
         "label": "토큰 예산 적합성",
         "status": "risk",
-        "detail": "primary 11076 tok / active 24208 tok / deferred excluded 540956 tok"
+        "detail": "primary 12325 tok / active 20907 tok / deferred excluded 544036 tok"
       },
       {
         "id": "read-later-exception-policy",
@@ -389,32 +389,32 @@
     },
     "bundle_budget": {
       "primary": {
-        "file_count": 7,
-        "total_bytes": 33230,
-        "estimated_tokens": 11076
+        "file_count": 8,
+        "total_bytes": 36973,
+        "estimated_tokens": 12325
       },
       "secondary": {
-        "file_count": 5,
-        "total_bytes": 39393,
-        "estimated_tokens": 13132
+        "file_count": 4,
+        "total_bytes": 25748,
+        "estimated_tokens": 8582
       },
       "deferred": {
-        "file_count": 214,
-        "total_bytes": 1622868,
-        "estimated_tokens": 540956
+        "file_count": 211,
+        "total_bytes": 1632108,
+        "estimated_tokens": 544036
       },
-      "active_estimated_tokens": 24208,
+      "active_estimated_tokens": 20907,
       "deferred_excluded_by_default": true,
-      "total_estimated_tokens": 565164
+      "total_estimated_tokens": 564943
     },
     "budget_risk": {
       "status": "risk",
       "primary_status": "risk",
       "active_status": "warn",
       "deferred_status": "risk",
-      "primary_estimated_tokens": 11076,
-      "active_estimated_tokens": 24208,
-      "deferred_excluded_tokens": 540956,
+      "primary_estimated_tokens": 12325,
+      "active_estimated_tokens": 20907,
+      "deferred_excluded_tokens": 544036,
       "thresholds": {
         "primary_token_limit": 6000,
         "active_token_limit": 18000,
@@ -433,20 +433,19 @@
     },
     "required_adapters": [
       "master-ui-plugin-shell",
-      "master-ui-static-planner",
-      "planner-state-memory",
-      "openai-responses-agent",
-      "feature-flag-provider"
-    ],
-    "selected_adapters": [
-      "master-ui-plugin-shell",
-      "openai-responses-agent",
-      "remote-mcp-connector",
-      "planner-state-memory",
-      "master-ui-static-planner",
       "http-problem-details",
       "feature-flag-provider",
-      "observability-otel"
+      "observability-otel",
+      "repository-inmemory",
+      "repository-sqlite"
+    ],
+    "selected_adapters": [
+      "repository-inmemory",
+      "master-ui-plugin-shell",
+      "repository-sqlite",
+      "observability-otel",
+      "http-problem-details",
+      "feature-flag-provider"
     ],
     "hard_constraints": [
       "모듈 간 직접 코드 참조 금지",
@@ -552,7 +551,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-26T14:53:13.726507+00:00",
+    "generated_at": "2026-04-26T15:21:37.005125+00:00",
     "goal": "최근 audit 시그널 기반으로 zone-feature-flags 후속 packet을 정리한다",
     "type": "infra",
     "stage": "complete",
@@ -577,9 +576,9 @@
     "validation": [],
     "audit_signals": [
       {
-        "timestamp": "2026-04-26 23:32:54 +0900",
+        "timestamp": "2026-04-27 00:09:13 +0900",
         "title": "git commit",
-        "detail": "feat(ui): kanban board collapsible section + per-lane paging",
+        "detail": "fix(ui): fix 3 broken interactive elements in home UI",
         "tag": "git"
       },
       {
@@ -683,9 +682,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-26 23:32:54 +0900",
+            "timestamp": "2026-04-27 00:09:13 +0900",
             "title": "git commit",
-            "detail": "feat(ui): kanban board collapsible section + per-lane paging",
+            "detail": "fix(ui): fix 3 broken interactive elements in home UI",
             "tag": "git"
           }
         ]
@@ -693,10 +692,10 @@
     ]
   },
   "commands": {
-    "context_bundle_json": "python3 scripts/export_context_bundle.py --goal plan-and-learn --json",
-    "fit_report_json": "python3 scripts/check_planning_fit.py --goal plan-and-learn --json",
+    "context_bundle_json": "python3 scripts/export_context_bundle.py --goal stateful-ops --json",
+    "fit_report_json": "python3 scripts/check_planning_fit.py --goal stateful-ops --json",
     "replay_packet_json": "python3 scripts/generate_replay_packet.py --json",
-    "handoff_bundle_json": "python3 scripts/compose_handoff_bundle.py --goal plan-and-learn --json"
+    "handoff_bundle_json": "python3 scripts/compose_handoff_bundle.py --goal stateful-ops --json"
   },
   "sequence": [
     "context bundle을 export해 최소 읽기 묶음을 고정한다",

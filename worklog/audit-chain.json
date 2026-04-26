@@ -191,7 +191,23 @@
       "details": "replay_next_packet 생성, actor/hash 문구 제거, audit_signals 노출, lint 0 warnings — 188/194 PASS",
       "prev_hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a",
       "hash": "05b231566fcb9649a84c6226457b095f2c73289d7e9b5515ddc82dd6b29e7036"
+    },
+    {
+      "seq": 25,
+      "timestamp": "2026-04-26T15:09:58.984Z",
+      "action": "D/ui",
+      "details": "UI 3 버그 수정 + push 793db36 — mpo-term-bar display 충돌, spotlight-fill data-command 누락, showTermBar hex 계산 버그",
+      "prev_hash": "05b231566fcb9649a84c6226457b095f2c73289d7e9b5515ddc82dd6b29e7036",
+      "hash": "0eea6e468980314b6219c7e87cb5f96856b2621713cb8947e198ec32fc07914c"
+    },
+    {
+      "seq": 26,
+      "timestamp": "2026-04-26T15:22:37.917Z",
+      "action": "D/WP-HO-012",
+      "details": "promotion pipeline handoff 연결 — handoff_bundle_path/evidence_status/drift_status/promotion_handoff_conflict 필드 추가. 816/816 PASS",
+      "prev_hash": "0eea6e468980314b6219c7e87cb5f96856b2621713cb8947e198ec32fc07914c",
+      "hash": "deec5ebcbb7f49ff511669175a1a92aa201848b75da3e75a1600ee3682c540c8"
     }
   ],
-  "last_hash": "05b231566fcb9649a84c6226457b095f2c73289d7e9b5515ddc82dd6b29e7036"
+  "last_hash": "deec5ebcbb7f49ff511669175a1a92aa201848b75da3e75a1600ee3682c540c8"
 }

@@ -1,7 +1,12 @@
 {
   "schema_version": "1",
-  "goal": "plan-and-learn",
+  "goal": "stateful-ops",
   "promotion_ready": false,
+  "handoff_ready": false,
+  "handoff_bundle_path": "/root/workspace/my-module/artifacts/promotion-pipeline/latest/handoff-bundle.json",
+  "evidence_status": "risk",
+  "drift_status": "clean",
+  "promotion_handoff_conflict": false,
   "artifacts": {
     "context_lock": "/root/workspace/my-module/artifacts/promotion-pipeline/latest/context-lock.json",
     "handoff_bundle": "/root/workspace/my-module/artifacts/promotion-pipeline/latest/handoff-bundle.json",
@@ -15,14 +20,14 @@
     "risk": 1
   },
   "locked_context_budget": {
-    "primary_estimated_tokens": 11076,
-    "secondary_estimated_tokens": 13132,
-    "locked_total_estimated_tokens": 24208
+    "primary_estimated_tokens": 12325,
+    "secondary_estimated_tokens": 8582,
+    "locked_total_estimated_tokens": 20907
   },
   "commands": {
     "context_drift_json": "python3 scripts/check_context_drift.py --input /root/workspace/my-module/artifacts/promotion-pipeline/latest/context-lock.json --json",
-    "promote_pipeline_json": "python3 scripts/run_promotion_pipeline.py --goal plan-and-learn --json",
-    "promote_pipeline_apply_json": "python3 scripts/run_promotion_pipeline.py --goal plan-and-learn --apply --json"
+    "promote_pipeline_json": "python3 scripts/run_promotion_pipeline.py --goal stateful-ops --json",
+    "promote_pipeline_apply_json": "python3 scripts/run_promotion_pipeline.py --goal stateful-ops --apply --json"
   },
   "result": "dry-run"
 }

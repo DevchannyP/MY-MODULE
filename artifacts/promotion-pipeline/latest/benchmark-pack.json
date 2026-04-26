@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-26T14:53:13.733084+00:00",
-  "goal": "plan-and-learn",
+  "generated_at": "2026-04-26T15:21:37.009015+00:00",
+  "goal": "stateful-ops",
   "current_wp": {
     "id": "MPO-COMPLETE",
     "type": "infra",
@@ -17,110 +17,6 @@
     ]
   },
   "recommended_focuses": [
-    {
-      "id": "master-planning-truth-surface",
-      "title": "마스터 UI 기획 진실면 강화",
-      "outcome": "새 프로젝트 시작 전, planner 한 화면에서 질문지·추천 조합·launch brief·planning mode를 쉽게 고르고 바로 수정한다.",
-      "preserve_essence": "마스터 OS 코어는 건드리지 않고, 시작 전 기획 truth surface만 더 강하게 만든다.",
-      "delivered_by": [
-        "확장된 Project Intake Canvas로 core policy, 학습 surface, context budget 우선순위를 시작점에서 고른다.",
-        "Benchmark Action Pack은 항상 이 축을 포함한 필수 개선 3종을 먼저 제안한다.",
-        "Project Status가 planner truth surface 준비도를 별도 readiness로 요약한다."
-      ],
-      "why_now": [
-        "프로젝트 시작 전 최고의 기획 툴이라는 본질을 첫 화면에서 더 분명하게 만들어야 한다.",
-        "질문지, planning mode, launch brief가 같은 결정 흐름으로 이어져야 사용자가 배우면서 선택할 수 있다."
-      ],
-      "related_focuses": [
-        {
-          "id": "project-intake-launch-brief",
-          "title": "프로젝트 시작 추천을 실행 브리프로 승격"
-        },
-        {
-          "id": "seed-tuning-scorecard-and-blueprint-launch",
-          "title": "seed 튜닝 + apply 성과 점수표 + blueprint launch deck"
-        },
-        {
-          "id": "launch-autopilot-routing-ledger-and-kickoff-gate",
-          "title": "launch autopilot + routing learning ledger + kickoff ready gate"
-        }
-      ],
-      "benchmark_signals": [
-        {
-          "id": "figjam-strategy-planning",
-          "region": "global",
-          "product": "Figma FigJam",
-          "category": "planning",
-          "source_url": "https://www.figma.com/figjam/",
-          "signal": "전략 수립, 브레인스토밍, 다이어그램, 액션 정렬을 한 화면에서 연결한다.",
-          "lessons": [
-            "질문지와 starter sequence를 한 흐름으로 보여줘야 한다.",
-            "아이디어를 즉시 실행 항목으로 환원하는 planner가 필요하다."
-          ],
-          "adopted_into": [
-            "프로젝트 시작 질문지",
-            "블루프린트 starter sequence",
-            "planner requirements 탭"
-          ]
-        },
-        {
-          "id": "jira-product-discovery",
-          "region": "global",
-          "product": "Jira Product Discovery",
-          "category": "planning",
-          "source_url": "https://www.atlassian.com/software/jira/product-discovery/guides/getting-started/introduction",
-          "signal": "idea, insight, priority, roadmap를 연결해 기획의 왜와 실행의 무엇을 같이 관리한다.",
-          "lessons": [
-            "planner는 단순 task list가 아니라 why, impact, priority를 함께 담아야 한다.",
-            "기획 surface가 실행 packet 생성의 상위 truth surface가 되어야 한다."
-          ],
-          "adopted_into": [
-            "Planning Studio",
-            "Execution Packet Draft",
-            "launch brief"
-          ]
-        },
-        {
-          "id": "linear-focus-priority",
-          "region": "global",
-          "product": "Linear",
-          "category": "execution",
-          "source_url": "https://linear.app/docs/my-issues",
-          "signal": "가장 중요한 작업을 큐레이션된 우선순위로 보여주고 다음 행동을 빠르게 결정하게 만든다.",
-          "lessons": [
-            "추천 결과는 하나의 top choice와 이유를 먼저 보여줘야 한다.",
-            "현재 focus와 next action을 짧고 선명하게 노출해야 한다."
-          ],
-          "adopted_into": [
-            "추천 조합 상단 요약",
-            "launch brief",
-            "work packet focus 표현"
-          ]
-        },
-        {
-          "id": "figjam-project-status-template",
-          "region": "global",
-          "product": "FigJam Project Status Template",
-          "category": "planning",
-          "source_url": "https://www.figma.com/templates/project-status-report-template/",
-          "signal": "상태, 범위, 리스크, 타임라인을 한 템플릿에서 짧고 공유 가능하게 정리한다.",
-          "lessons": [
-            "planner는 긴 문서보다 한 화면에서 수정 가능한 status canvas를 제공해야 한다.",
-            "리스크, 범위, 다음 단계는 독립 문단이 아니라 같은 planning surface에 있어야 한다."
-          ],
-          "adopted_into": [
-            "Planning Studio",
-            "launch brief",
-            "log-to-plan review"
-          ]
-        }
-      ],
-      "score": 6,
-      "reasons": [
-        "plan-and-learn 목표에 직접 맞는 focus입니다.",
-        "직전 packet이 completed 상태라 다음 계획 선택과 launch brief 고도화에 바로 이어지기 좋습니다."
-      ]
-    },
     {
       "id": "minimum-context-routing-performance",
       "title": "최소 문맥 라우팅 성능 강화",
@@ -221,7 +117,7 @@
       ],
       "score": 6,
       "reasons": [
-        "plan-and-learn 목표에 직접 맞는 focus입니다.",
+        "stateful-ops 목표에 직접 맞는 focus입니다.",
         "운영/검증형 current-wp에서 context lock과 reread 흐름의 ROI가 특히 큽니다."
       ]
     },
@@ -325,41 +221,121 @@
       ],
       "score": 5,
       "reasons": [
-        "plan-and-learn 목표에 직접 맞는 focus입니다."
+        "stateful-ops 목표에 직접 맞는 focus입니다."
+      ]
+    },
+    {
+      "id": "master-planning-truth-surface",
+      "title": "마스터 UI 기획 진실면 강화",
+      "outcome": "새 프로젝트 시작 전, planner 한 화면에서 질문지·추천 조합·launch brief·planning mode를 쉽게 고르고 바로 수정한다.",
+      "preserve_essence": "마스터 OS 코어는 건드리지 않고, 시작 전 기획 truth surface만 더 강하게 만든다.",
+      "delivered_by": [
+        "확장된 Project Intake Canvas로 core policy, 학습 surface, context budget 우선순위를 시작점에서 고른다.",
+        "Benchmark Action Pack은 항상 이 축을 포함한 필수 개선 3종을 먼저 제안한다.",
+        "Project Status가 planner truth surface 준비도를 별도 readiness로 요약한다."
+      ],
+      "why_now": [
+        "프로젝트 시작 전 최고의 기획 툴이라는 본질을 첫 화면에서 더 분명하게 만들어야 한다.",
+        "질문지, planning mode, launch brief가 같은 결정 흐름으로 이어져야 사용자가 배우면서 선택할 수 있다."
+      ],
+      "related_focuses": [
+        {
+          "id": "project-intake-launch-brief",
+          "title": "프로젝트 시작 추천을 실행 브리프로 승격"
+        },
+        {
+          "id": "seed-tuning-scorecard-and-blueprint-launch",
+          "title": "seed 튜닝 + apply 성과 점수표 + blueprint launch deck"
+        },
+        {
+          "id": "launch-autopilot-routing-ledger-and-kickoff-gate",
+          "title": "launch autopilot + routing learning ledger + kickoff ready gate"
+        }
+      ],
+      "benchmark_signals": [
+        {
+          "id": "figjam-strategy-planning",
+          "region": "global",
+          "product": "Figma FigJam",
+          "category": "planning",
+          "source_url": "https://www.figma.com/figjam/",
+          "signal": "전략 수립, 브레인스토밍, 다이어그램, 액션 정렬을 한 화면에서 연결한다.",
+          "lessons": [
+            "질문지와 starter sequence를 한 흐름으로 보여줘야 한다.",
+            "아이디어를 즉시 실행 항목으로 환원하는 planner가 필요하다."
+          ],
+          "adopted_into": [
+            "프로젝트 시작 질문지",
+            "블루프린트 starter sequence",
+            "planner requirements 탭"
+          ]
+        },
+        {
+          "id": "jira-product-discovery",
+          "region": "global",
+          "product": "Jira Product Discovery",
+          "category": "planning",
+          "source_url": "https://www.atlassian.com/software/jira/product-discovery/guides/getting-started/introduction",
+          "signal": "idea, insight, priority, roadmap를 연결해 기획의 왜와 실행의 무엇을 같이 관리한다.",
+          "lessons": [
+            "planner는 단순 task list가 아니라 why, impact, priority를 함께 담아야 한다.",
+            "기획 surface가 실행 packet 생성의 상위 truth surface가 되어야 한다."
+          ],
+          "adopted_into": [
+            "Planning Studio",
+            "Execution Packet Draft",
+            "launch brief"
+          ]
+        },
+        {
+          "id": "linear-focus-priority",
+          "region": "global",
+          "product": "Linear",
+          "category": "execution",
+          "source_url": "https://linear.app/docs/my-issues",
+          "signal": "가장 중요한 작업을 큐레이션된 우선순위로 보여주고 다음 행동을 빠르게 결정하게 만든다.",
+          "lessons": [
+            "추천 결과는 하나의 top choice와 이유를 먼저 보여줘야 한다.",
+            "현재 focus와 next action을 짧고 선명하게 노출해야 한다."
+          ],
+          "adopted_into": [
+            "추천 조합 상단 요약",
+            "launch brief",
+            "work packet focus 표현"
+          ]
+        },
+        {
+          "id": "figjam-project-status-template",
+          "region": "global",
+          "product": "FigJam Project Status Template",
+          "category": "planning",
+          "source_url": "https://www.figma.com/templates/project-status-report-template/",
+          "signal": "상태, 범위, 리스크, 타임라인을 한 템플릿에서 짧고 공유 가능하게 정리한다.",
+          "lessons": [
+            "planner는 긴 문서보다 한 화면에서 수정 가능한 status canvas를 제공해야 한다.",
+            "리스크, 범위, 다음 단계는 독립 문단이 아니라 같은 planning surface에 있어야 한다."
+          ],
+          "adopted_into": [
+            "Planning Studio",
+            "launch brief",
+            "log-to-plan review"
+          ]
+        }
+      ],
+      "score": 5,
+      "reasons": [
+        "stateful-ops 목표에 직접 맞는 focus입니다.",
+        "직전 packet이 completed 상태라 다음 계획 선택과 launch brief 고도화에 바로 이어지기 좋습니다."
       ]
     }
   ],
   "commands": {
-    "benchmark_pack_json": "python3 scripts/generate_benchmark_pack.py --goal plan-and-learn --json",
-    "check_fit_json": "python3 scripts/check_planning_fit.py --goal plan-and-learn --json",
-    "context_lock_json": "python3 scripts/export_context_lock.py --goal plan-and-learn --json",
-    "promote_json": "python3 scripts/promote_packet.py --goal plan-and-learn --json"
+    "benchmark_pack_json": "python3 scripts/generate_benchmark_pack.py --goal stateful-ops --json",
+    "check_fit_json": "python3 scripts/check_planning_fit.py --goal stateful-ops --json",
+    "context_lock_json": "python3 scripts/export_context_lock.py --goal stateful-ops --json",
+    "promote_json": "python3 scripts/promote_packet.py --goal stateful-ops --json"
   },
   "benchmark_sources": [
-    {
-      "id": "figjam-strategy-planning",
-      "product": "Figma FigJam",
-      "region": "global",
-      "source_url": "https://www.figma.com/figjam/"
-    },
-    {
-      "id": "jira-product-discovery",
-      "product": "Jira Product Discovery",
-      "region": "global",
-      "source_url": "https://www.atlassian.com/software/jira/product-discovery/guides/getting-started/introduction"
-    },
-    {
-      "id": "linear-focus-priority",
-      "product": "Linear",
-      "region": "global",
-      "source_url": "https://linear.app/docs/my-issues"
-    },
-    {
-      "id": "figjam-project-status-template",
-      "product": "FigJam Project Status Template",
-      "region": "global",
-      "source_url": "https://www.figma.com/templates/project-status-report-template/"
-    },
     {
       "id": "openai-file-search-context",
       "product": "OpenAI File Search",
@@ -407,6 +383,30 @@
       "product": "NAVER CLOVA",
       "region": "korea",
       "source_url": "https://clova.ai/en/ai-research"
+    },
+    {
+      "id": "figjam-strategy-planning",
+      "product": "Figma FigJam",
+      "region": "global",
+      "source_url": "https://www.figma.com/figjam/"
+    },
+    {
+      "id": "jira-product-discovery",
+      "product": "Jira Product Discovery",
+      "region": "global",
+      "source_url": "https://www.atlassian.com/software/jira/product-discovery/guides/getting-started/introduction"
+    },
+    {
+      "id": "linear-focus-priority",
+      "product": "Linear",
+      "region": "global",
+      "source_url": "https://linear.app/docs/my-issues"
+    },
+    {
+      "id": "figjam-project-status-template",
+      "product": "FigJam Project Status Template",
+      "region": "global",
+      "source_url": "https://www.figma.com/templates/project-status-report-template/"
     }
   ]
 }
