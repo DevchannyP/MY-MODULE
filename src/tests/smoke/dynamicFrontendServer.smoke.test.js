@@ -63,6 +63,12 @@ test('[dynamic frontend server smoke] node server renders dynamic frontend surfa
     assert.match(home.text, /live-loop-next/, 'home must have live-loop-next element');
     assert.match(home.text, /live-loop-primary-link/, 'home must have live-loop-primary-link element');
     assert.match(home.text, /live-loop-secondary-link/, 'home must have live-loop-secondary-link element');
+    assert.match(home.text, /간단 실행 마스터 패널/);
+    assert.match(home.text, /master-quick-grid/);
+    assert.match(home.text, /side-item-action/);
+    assert.match(home.text, /hero-master-panel/);
+    assert.match(home.text, /runHomeMasterPanelAction/);
+    assert.match(home.text, /window\.__HOME_MASTER_PANEL_BLUEPRINTS__/);
     assert.match(home.text, /최근 자동 실행 기록/);
     assert.match(home.text, /최근 실행 출처/);
     assert.match(home.text, /flow-source-summary/);

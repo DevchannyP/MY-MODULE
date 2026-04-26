@@ -1,11 +1,11 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-26T14:16:26.609254+00:00",
+  "generated_at": "2026-04-26T14:53:12.004214+00:00",
   "goal": "stateful-ops",
   "profile_id": "stateful-ops-routing",
   "current_wp": {
     "id": "MPO-COMPLETE",
-    "goal": "MPO session mpo-01a7bad9-7357-46ae-9742-74a530f9664d completed",
+    "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
     "type": "infra",
     "stage": "complete"
   },
@@ -58,7 +58,7 @@
         "exists": true,
         "bytes": 3282,
         "estimated_tokens": 1094,
-        "sha256": "bf6557c2534094f752b97f293233186331443f57f55b7479711bea9b06ac24d9"
+        "sha256": "658c48c34e46f94ba776234e9385b74baccef13c8f78adbb0af8d0618551063d"
       },
       {
         "requested_path": "master-shell/observability/config.yaml",
@@ -148,9 +148,9 @@
         "path": "artifacts/promotion-pipeline/latest/handoff-bundle.json",
         "tier": "secondary",
         "exists": true,
-        "bytes": 22893,
+        "bytes": 22892,
         "estimated_tokens": 7631,
-        "sha256": "7a765cf198b73bbe5aa714ba62e8c174fb099536c3057ebbd66de804ed454018"
+        "sha256": "bd4ce175ac43fee06571329f8e1c1bee8e2ebbb40dbb29a85f27b8ec89ba39d5"
       }
     ]
   },
@@ -162,12 +162,12 @@
     },
     "secondary": {
       "file_count": 4,
-      "total_bytes": 25696,
+      "total_bytes": 25695,
       "estimated_tokens": 8565
     },
     "total": {
       "file_count": 12,
-      "total_bytes": 62669,
+      "total_bytes": 62668,
       "estimated_tokens": 20890
     }
   },

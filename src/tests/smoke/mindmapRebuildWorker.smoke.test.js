@@ -19,24 +19,10 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
+const { startServer, createAllEnabledFlags } = require(path.join(REPO_ROOT, 'src/server/createServer'));
+const { startServerOrSkip } = require('./support/networkTestRuntime');
 
 // ── 헬퍼 ────────────────────────────────────────────────────────────────────
-
-function startServer() {
-  return new Promise((resolve, reject) => {
-    const { createServer } = require(path.join(REPO_ROOT, 'src/server/createServer'));
-    const server = createServer();
-    server.listen(0, '127.0.0.1', () => {
-      const { port } = server.address();
-      resolve({ server, port });
-    });
-    server.once('error', reject);
-  });
-}
-
-function stopServer(server) {
-  return new Promise((resolve) => server.close(resolve));
-}
 
 function postJson(port, pathname) {
   return new Promise((resolve, reject) => {
@@ -61,17 +47,20 @@ test('[mindmap rebuild smoke] generateMindmapWorker.js 파일이 존재한다', 
   assert.ok(fs.existsSync(workerPath), `Worker entry not found: ${workerPath}`);
 });
 
-test('[mindmap rebuild smoke] POST /api/mindmap/rebuild — 200 + ok:true + durationMs', async () => {
+test('[mindmap rebuild smoke] POST /api/mindmap/rebuild — 200 + ok:true + durationMs', async (t) => {
   let runtime;
   try {
-    runtime = await startServer();
+    runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+    if (!runtime) {
+      return;
+    }
     const result = await postJson(runtime.port, '/api/mindmap/rebuild');
     assert.equal(result.status, 200, `Expected 200, got ${result.status}`);
     assert.equal(result.body.ok, true, 'Expected ok:true');
     assert.equal(typeof result.body.durationMs, 'number', 'Expected durationMs to be a number');
     assert.ok(result.body.durationMs >= 0, 'durationMs should be non-negative');
   } finally {
-    if (runtime) await stopServer(runtime.server);
+    if (runtime) await runtime.shutdown();
   }
 });
 

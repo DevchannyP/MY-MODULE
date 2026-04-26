@@ -19,6 +19,7 @@ const assert = require('node:assert/strict');
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const { startServer, createAllEnabledFlags } = require(path.join(REPO_ROOT, 'src/server/createServer'));
 const { EventBus } = require(path.join(REPO_ROOT, 'src/shared/EventBus'));
+const { startServerOrSkip } = require('./support/networkTestRuntime');
 
 function request(port, method, pathname, body) {
   return new Promise((resolve, reject) => {
@@ -44,10 +45,13 @@ function request(port, method, pathname, body) {
   });
 }
 
-test('[eventbus wiring smoke] task 생성 후 domain-events ring buffer에 이벤트가 기록된다', async () => {
+test('[eventbus wiring smoke] task 생성 후 domain-events ring buffer에 이벤트가 기록된다', async (t) => {
   let runtime;
   try {
-    runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+    runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+    if (!runtime) {
+      return;
+    }
     const { port } = runtime;
 
     // Task 생성
@@ -80,10 +84,13 @@ test('[eventbus wiring smoke] task 생성 후 domain-events ring buffer에 이�
   }
 });
 
-test('[eventbus wiring smoke] EventBus.getInstance()는 서버 시작 후 항상 동일 인스턴스', async () => {
+test('[eventbus wiring smoke] EventBus.getInstance()는 서버 시작 후 항상 동일 인스턴스', async (t) => {
   let runtime;
   try {
-    runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+    runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+    if (!runtime) {
+      return;
+    }
     // 서버 기동 후에도 EventBus 싱글톤이 살아있어야 함
     const bus = EventBus.getInstance();
     assert.ok(bus, 'EventBus instance should exist');

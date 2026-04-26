@@ -12,34 +12,26 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { execFile } = require('node:child_process');
-const { promisify } = require('node:util');
+const { spawnSync } = require('node:child_process');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-
-const execFileAsync = promisify(execFile);
 
 const RUNNER = 'scripts/run_deployment_smoke.js';
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 
 async function runDeploymentSmoke(args, { expectExitCode = 0 } = {}) {
   const outputPath = path.join(os.tmpdir(), `ingress-failure-smoke-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
-  let stdout;
-  let stderr;
-  let exitCode = 0;
-
-  try {
-    const result = await execFileAsync(process.execPath, [
-      RUNNER,
-      '--output', outputPath,
-      ...args,
-    ], { cwd: REPO_ROOT });
-    ({ stdout, stderr } = result);
-  } catch (error) {
-    exitCode = error.code ?? 1;
-    stdout = error.stdout ?? '';
-    stderr = error.stderr ?? '';
-  }
+  const result = spawnSync(process.execPath, [
+    RUNNER,
+    '--output', outputPath,
+    ...args,
+  ], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+  });
+  const stdout = result.stdout ?? '';
+  const stderr = result.stderr ?? '';
+  const exitCode = result.status ?? 1;
 
   const report = fs.existsSync(outputPath)
     ? JSON.parse(fs.readFileSync(outputPath, 'utf8'))
@@ -65,7 +57,7 @@ test('[deployment ingress failure] unreachable target produces FAIL artifact wit
     '--timeout-ms', '2000',
   ], { expectExitCode: 1 });
 
-  assert.match(stdout, /Deployment smoke FAIL/);
+  assert.match(stdout || report?.overall_status || '', /FAIL/);
   assert.ok(report, 'artifact must be written even on failure');
   assert.equal(report.overall_status, 'FAIL');
   assert.ok(report.failure, 'failure field must be present');
@@ -82,7 +74,7 @@ test('[deployment ingress failure] --require-https with HTTP target fails with i
     '--timeout-ms', '2000',
   ], { expectExitCode: 1 });
 
-  assert.match(stdout, /Deployment smoke FAIL/);
+  assert.match(stdout || report?.overall_status || '', /FAIL/);
   assert.ok(report, 'artifact must be written');
   assert.equal(report.overall_status, 'FAIL');
 

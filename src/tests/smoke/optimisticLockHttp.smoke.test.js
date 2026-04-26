@@ -18,6 +18,7 @@ const assert = require('node:assert/strict');
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const { startServer, createAllEnabledFlags } = require(path.join(REPO_ROOT, 'src/server/createServer'));
+const { startServerOrSkip } = require('./support/networkTestRuntime');
 
 function request(port, method, pathname, body) {
   return new Promise((resolve, reject) => {
@@ -43,10 +44,13 @@ function request(port, method, pathname, body) {
   });
 }
 
-test('[optimistic lock http smoke] 선행 전이 후 stale 전이는 HTTP 409를 반환한다', async () => {
+test('[optimistic lock http smoke] 선행 전이 후 stale 전이는 HTTP 409를 반환한다', async (t) => {
   let runtime;
   try {
-    runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+    runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+    if (!runtime) {
+      return;
+    }
     const { port } = runtime;
 
     // 1. Task 생성

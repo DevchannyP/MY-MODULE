@@ -1,22 +1,18 @@
 'use strict';
 
 const path = require('node:path');
-const { execFile } = require('node:child_process');
-const { promisify } = require('node:util');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-
-const execFileAsync = promisify(execFile);
 
 const EXPECTED_DOMAINS = ['billing', 'productivity/task-tracking', 'video'];
 
 test('[architecture fitness smoke] boundary guardrails pass for current domains', async () => {
   const repoRoot = path.resolve(__dirname, '../../..');
-  const { stdout, stderr } = await execFileAsync('node', ['scripts/architecture-fitness.js'], {
-    cwd: repoRoot,
-  });
+  const { runArchitectureFitness } = require(path.join(repoRoot, 'scripts/architecture-fitness.js'));
+  const { totalFails, domainCount, output: stdout, missingTarget } = runArchitectureFitness();
 
-  assert.equal(stderr, '');
+  assert.equal(missingTarget, false);
+  assert.equal(totalFails, 0, stdout);
 
   // 위반 건수 0 확인
   const totalMatch = stdout.match(/위반:\s*(\d+)건/);
@@ -27,8 +23,8 @@ test('[architecture fitness smoke] boundary guardrails pass for current domains'
   const domainMatch = stdout.match(/총\s*(\d+)개 도메인/);
   assert.ok(domainMatch, `도메인 수 줄 missing in stdout: ${stdout}`);
   assert.ok(
-    Number(domainMatch[1]) >= EXPECTED_DOMAINS.length,
-    `expected at least ${EXPECTED_DOMAINS.length} domains, got ${domainMatch[1]}`,
+    domainCount >= EXPECTED_DOMAINS.length,
+    `expected at least ${EXPECTED_DOMAINS.length} domains, got ${domainCount}`,
   );
 
   // 각 도메인이 PASS로 마킹됐는지 확인

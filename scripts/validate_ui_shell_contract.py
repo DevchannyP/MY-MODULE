@@ -115,7 +115,10 @@ def collect_ui_operations(source: str) -> set[tuple[str, str]]:
     for path, method in re.findall(r"callJson\('(/api/pty[^']+)'\s*,\s*\{\s*method:\s*'([A-Z]+)'", source):
         operations.add((method.upper(), path.split("?", 1)[0].removeprefix("/api")))
 
-    for path in re.findall(r"fetch\('(/api/pty[^']+)'", source):
+    for path, method in re.findall(r"fetch\('(/api/pty[^']+)'\s*,\s*\{[^}]*method:\s*'([A-Z]+)'", source):
+        operations.add((method.upper(), path.split("?", 1)[0].removeprefix("/api")))
+
+    for path in re.findall(r"fetch\('(/api/pty[^']+)'\s*\)", source):
         operations.add(("GET", path.split("?", 1)[0].removeprefix("/api")))
 
     # fetchJson('/api/pty/...') with no second argument → GET

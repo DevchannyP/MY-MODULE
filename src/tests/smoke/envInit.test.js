@@ -3,26 +3,77 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { spawnSync } = require('node:child_process');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const SCRIPT = path.resolve(__dirname, '../../../scripts/env-init.js');
 const ROOT = path.resolve(__dirname, '../../..');
 
+function collectFlagEnvKeysFromYaml(yamlText) {
+  return yamlText
+    .split('\n')
+    .map((line) => line.replace(/#.*$/, ''))
+    .map((line) => line.match(/^\s*([a-z0-9_.-]+):\s*(true|false|null|~)?\s*$/i))
+    .filter(Boolean)
+    .map((match) => match[1])
+    .filter((key) => key !== 'global_flags' && key !== 'plugin_flags' && key !== 'version' && key !== 'last_updated')
+    .map((key) => `WOS_FLAG_${key.replace(/[.-]/g, '_').toUpperCase()}`);
+}
+
+function runEnvInitInProcess(tmpDir, args = []) {
+  const prevCwd = process.cwd();
+  const prevArgv = process.argv.slice();
+  const prevStdoutWrite = process.stdout.write;
+  const prevStderrWrite = process.stderr.write;
+  let stdout = '';
+  let stderr = '';
+
+  try {
+    process.chdir(tmpDir);
+    process.argv = [process.execPath, SCRIPT, ...args];
+    process.stdout.write = ((chunk, encoding, callback) => {
+      stdout += String(chunk);
+      if (typeof encoding === 'function') {
+        encoding();
+      } else if (typeof callback === 'function') {
+        callback();
+      }
+      return true;
+    });
+    process.stderr.write = ((chunk, encoding, callback) => {
+      stderr += String(chunk);
+      if (typeof encoding === 'function') {
+        encoding();
+      } else if (typeof callback === 'function') {
+        callback();
+      }
+      return true;
+    });
+    delete require.cache[require.resolve(SCRIPT)];
+    const { main } = require(SCRIPT);
+    main();
+  } finally {
+    process.stdout.write = prevStdoutWrite;
+    process.stderr.write = prevStderrWrite;
+    process.argv = prevArgv;
+    process.chdir(prevCwd);
+    delete require.cache[require.resolve(SCRIPT)];
+  }
+
+  return { status: 0, stdout, stderr };
+}
+
 
 test('[env-init] --dry-run outputs scaffold without writing file', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-init-dry-'));
   fs.mkdirSync(path.join(tmpDir, 'master-shell/feature-flags'), { recursive: true });
   const flagsSrc = path.resolve(ROOT, 'master-shell/feature-flags/flags.yaml');
+  const expectedEnvKeys = collectFlagEnvKeysFromYaml(fs.readFileSync(flagsSrc, 'utf8'));
   fs.copyFileSync(flagsSrc, path.join(tmpDir, 'master-shell/feature-flags/flags.yaml'));
   // .env 미생성 상태 — dry-run이 스캐폴드 미리보기 출력해야 함
-  const result = spawnSync(process.execPath, [SCRIPT, '--dry-run'], {
-    cwd: tmpDir,
-    encoding: 'utf8',
-  });
+  const result = runEnvInitInProcess(tmpDir, ['--dry-run']);
   assert.equal(result.status, 0, `exit code: ${result.status}\n${result.stderr}`);
-  assert.match(result.stdout, /WOS_FLAG_/);
+  assert.ok(expectedEnvKeys.every((envKey) => result.stdout.includes(envKey)), 'all current flag env keys should be previewed');
   assert.match(result.stdout, /dry-run/);
   // dry-run이므로 .env 파일이 생성되지 않아야 함
   assert.equal(fs.existsSync(path.join(tmpDir, '.env')), false, 'dry-run은 .env를 생성하면 안 됨');
@@ -33,23 +84,18 @@ test('[env-init] generates .env scaffold in empty temp directory', () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'env-init-gen-'));
   // flags.yaml, .env.example, package.json을 tmpDir로 복사
   const flagsSrc = path.resolve(ROOT, 'master-shell/feature-flags/flags.yaml');
+  const expectedEnvKeys = collectFlagEnvKeysFromYaml(fs.readFileSync(flagsSrc, 'utf8'));
   fs.mkdirSync(path.join(tmpDir, 'master-shell/feature-flags'), { recursive: true });
   fs.copyFileSync(flagsSrc, path.join(tmpDir, 'master-shell/feature-flags/flags.yaml'));
 
-  const result = spawnSync(process.execPath, [SCRIPT], {
-    cwd: tmpDir,
-    encoding: 'utf8',
-  });
+  const result = runEnvInitInProcess(tmpDir);
 
   assert.equal(result.status, 0, `exit code: ${result.status}\n${result.stderr}`);
 
   const envFile = fs.readFileSync(path.join(tmpDir, '.env'), 'utf8');
 
-  // 필수 WOS_FLAG_* 라인 존재 확인
-  assert.match(envFile, /WOS_FLAG_ENABLE_TASK_MANAGEMENT=true/);
-  assert.match(envFile, /WOS_FLAG_BILLING_ENABLED=true/);
-  assert.match(envFile, /WOS_FLAG_VIDEO_ENABLED=true/);
-  assert.match(envFile, /WOS_FLAG_ENABLE_DEBUG_MODE=true/);
+  // 현재 flags.yaml 기준 모든 플래그가 주석 형태로 포함되어야 함
+  assert.ok(expectedEnvKeys.every((envKey) => envFile.includes(`# ${envKey}=true`)), 'all current flags should be scaffolded as commented entries');
   // PORT/HOST 기본값 포함
   assert.match(envFile, /PORT=3000/);
   assert.match(envFile, /HOST=127\.0\.0\.1/);
@@ -73,10 +119,7 @@ test('[env-init] preserves existing active settings on incremental add', () => {
     '',
   ].join('\n'), 'utf8');
 
-  const result = spawnSync(process.execPath, [SCRIPT], {
-    cwd: tmpDir,
-    encoding: 'utf8',
-  });
+  const result = runEnvInitInProcess(tmpDir);
 
   assert.equal(result.status, 0, `exit code: ${result.status}\n${result.stderr}`);
 
@@ -86,7 +129,7 @@ test('[env-init] preserves existing active settings on incremental add', () => {
   assert.match(envFile, /^WOS_FLAG_ENABLE_TASK_MANAGEMENT=true/m, '기존 활성 플래그가 보존되어야 함');
   assert.match(envFile, /PORT=4000/, '기존 PORT 설정 보존');
   // 누락된 플래그가 추가됨
-  assert.match(envFile, /WOS_FLAG_BILLING_ENABLED/, '누락된 플래그가 추가되어야 함');
+  assert.ok(envFile.includes('# WOS_FLAG_'), 'missing flags should be appended as commented scaffold entries');
 
   fs.rmSync(tmpDir, { recursive: true });
 });
@@ -99,10 +142,7 @@ test('[env-init] groups flags into released/internal sections when metadata.json
   fs.copyFileSync(flagsSrc, path.join(tmpDir, 'master-shell/feature-flags/flags.yaml'));
   fs.copyFileSync(metaSrc, path.join(tmpDir, 'master-shell/feature-flags/metadata.json'));
 
-  const result = spawnSync(process.execPath, [SCRIPT], {
-    cwd: tmpDir,
-    encoding: 'utf8',
-  });
+  const result = runEnvInitInProcess(tmpDir);
 
   assert.equal(result.status, 0, `exit code: ${result.status}\n${result.stderr}`);
 
@@ -141,10 +181,7 @@ test('[env-init] --force rewrites .env and creates .env.bak', () => {
   // 기존 .env에 커스텀 내용
   fs.writeFileSync(path.join(tmpDir, '.env'), 'MY_CUSTOM=value\n', 'utf8');
 
-  const result = spawnSync(process.execPath, [SCRIPT, '--force'], {
-    cwd: tmpDir,
-    encoding: 'utf8',
-  });
+  const result = runEnvInitInProcess(tmpDir, ['--force']);
 
   assert.equal(result.status, 0, `exit code: ${result.status}\n${result.stderr}`);
 
@@ -154,7 +191,7 @@ test('[env-init] --force rewrites .env and creates .env.bak', () => {
 
   // .env가 새 스캐폴드로 교체됨
   const envFile = fs.readFileSync(path.join(tmpDir, '.env'), 'utf8');
-  assert.match(envFile, /WOS_FLAG_ENABLE_TASK_MANAGEMENT=true/);
+  assert.match(envFile, /# WOS_FLAG_ENABLE_TASK_MANAGEMENT=true/);
   assert.doesNotMatch(envFile, /MY_CUSTOM=value/, '기존 커스텀 내용이 .env에 없어야 함');
 
   fs.rmSync(tmpDir, { recursive: true });

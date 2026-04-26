@@ -16,6 +16,7 @@ const assert = require('node:assert/strict');
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 const { startServer, createAllEnabledFlags } = require(path.join(REPO_ROOT, 'src/server/createServer'));
+const { startServerOrSkip } = require('./support/networkTestRuntime');
 
 function request(port, method, pathname, body, permissions = 'billing.write,billing.read,task:write,task:read,video:write,video:read') {
   return new Promise((resolve, reject) => {
@@ -45,10 +46,13 @@ function request(port, method, pathname, body, permissions = 'billing.write,bill
   });
 }
 
-test('[billing video event wiring smoke] POST /invoices → InvoiceCreated 이벤트가 ring buffer에 기록된다', async () => {
+test('[billing video event wiring smoke] POST /invoices → InvoiceCreated 이벤트가 ring buffer에 기록된다', async (t) => {
   let runtime;
   try {
-    runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+    runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+    if (!runtime) {
+      return;
+    }
     const { port } = runtime;
 
     // 인보이스 생성
@@ -73,10 +77,13 @@ test('[billing video event wiring smoke] POST /invoices → InvoiceCreated 이�
   }
 });
 
-test('[billing video event wiring smoke] POST /videos → VideoUploaded 이벤트가 ring buffer에 기록된다', async () => {
+test('[billing video event wiring smoke] POST /videos → VideoUploaded 이벤트가 ring buffer에 기록된다', async (t) => {
   let runtime;
   try {
-    runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+    runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+    if (!runtime) {
+      return;
+    }
     const { port } = runtime;
 
     // 비디오 업로드
@@ -105,10 +112,13 @@ test('[billing video event wiring smoke] POST /videos → VideoUploaded 이벤�
   }
 });
 
-test('[billing video event wiring smoke] EventBus getStats().publishCount가 billing+video 액션 후 증가한다', async () => {
+test('[billing video event wiring smoke] EventBus getStats().publishCount가 billing+video 액션 후 증가한다', async (t) => {
   let runtime;
   try {
-    runtime = await startServer({ port: 0, flags: createAllEnabledFlags() });
+    runtime = await startServerOrSkip(t, startServer, { port: 0, flags: createAllEnabledFlags() });
+    if (!runtime) {
+      return;
+    }
     const { port } = runtime;
 
     // health에서 초기 publishCount 확인

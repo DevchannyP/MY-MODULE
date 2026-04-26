@@ -67,7 +67,7 @@ function buildMpoPanel() {
       <button id="mpo-approve-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#2c7be5;color:#fff;font-weight:700;cursor:pointer;" disabled>승인 후 실행</button>
     </div>
 
-    <div id="mpo-term-bar" style="display:none;margin-top:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);font-size:11px;display:flex;align-items:center;gap:6px;">
+    <div id="mpo-term-bar" style="display:none;margin-top:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);font-size:11px;align-items:center;gap:6px;">
       <span style="opacity:0.6;">터미널</span>
       <span id="mpo-term-pts" style="font-family:monospace;color:#7dd3fc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
       <span id="mpo-term-badge" style="padding:2px 6px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25);">미탐색</span>
@@ -225,10 +225,12 @@ function buildMpoPanel() {
     termPtsEl.textContent = pts || '—';
     termBadgeEl.textContent = badge || '미탐색';
     termBadgeEl.style.color = color || '#4ade80';
-    termBadgeEl.style.borderColor = (color || '#4ade80').replace('80', '25');
-    termBadgeEl.style.background = (color || '#4ade80').replace('80', '12').replace('#', 'rgba(').replace(/(..)(..)(..)/, function(_, r, g, b) {
-      return parseInt(r,16)+','+parseInt(g,16)+','+parseInt(b,16);
-    }) + ',0.12)';
+    var hexColor = (color || '#4ade80').replace(/^#/, '');
+    var hr = parseInt(hexColor.slice(0, 2), 16);
+    var hg = parseInt(hexColor.slice(2, 4), 16);
+    var hb = parseInt(hexColor.slice(4, 6), 16);
+    termBadgeEl.style.borderColor = 'rgba(' + hr + ',' + hg + ',' + hb + ',0.25)';
+    termBadgeEl.style.background = 'rgba(' + hr + ',' + hg + ',' + hb + ',0.12)';
   }
 
   /* ── 계획 만들기 ── */
@@ -758,7 +760,7 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
           <code id="flow-chain-spotlight-command">${esc(spotlightItem.command || '')}</code>
           <div class="flow-chain-spotlight-links">
             <button type="button" class="flow-chain-link is-button" id="flow-chain-spotlight-copy" data-command="${esc(spotlightItem.command || '')}">명령 복사</button>
-            <a class="flow-chain-link" id="flow-chain-spotlight-fill" href="${esc(spotlightExecutionMeta?.href || 'mindmap/index.html#execution-console')}">실행 화면에 넣기</a>
+            <a class="flow-chain-link" id="flow-chain-spotlight-fill" href="${esc(spotlightExecutionMeta?.href || 'mindmap/index.html#execution-console')}" data-command="${esc(spotlightItem.command || '')}" data-chain-id="${esc(spotlightItem.id || '')}" data-label="${esc(spotlightItem.label || spotlightItem.id || '')}">실행 화면에 넣기</a>
             <a class="flow-chain-link" id="flow-chain-spotlight-link" href="${esc(spotlightMeta?.href || 'mindmap/index.html')}">바로 열기</a>
           </div>
         </div>
@@ -919,12 +921,270 @@ function buildHandoffLaneData({ report, nextActions, bootstrap, operatorCockpit 
   };
 }
 
+function buildHomeMasterPanelBlueprints({ report, nextActions, bootstrap, operatorCockpit }) {
+  const driftStatus = String(report?.promotion_pipeline?.drift_status || 'unknown').trim();
+  const validationCommand = String(
+    operatorCockpit?.next_validation_command
+    || bootstrap?.validation_profile?.primary_command
+    || (Array.isArray(bootstrap?.validation_profile?.commands) ? bootstrap.validation_profile.commands[0] : '')
+    || 'npm run validate:requirements'
+  ).trim();
+  const branchCommand = String(operatorCockpit?.branch?.create_command || 'npm run branch:bootstrap').trim();
+  const currentWp = String(report?.current_wp || bootstrap?.current_wp?.id || 'NONE').trim();
+  const nextWp = String(report?.next_wp || nextActions?.next_wp || 'NONE').trim();
+  const stage = String(report?.requirements_stage || bootstrap?.current_wp?.stage || '—').trim();
+  const recentAction = String(operatorCockpit?.commit_guard?.next_action || '최근 실행 기록 없음').trim();
+  const driftHref = buildStaticControlCenterHref('execution-failure', 'execution-console', {
+    reason: '배포 준비 상태 점검',
+    command: validationCommand,
+    label: '배포 준비 상태',
+    source: 'home-master-panel',
+  });
+  const guardHref = buildStaticControlCenterHref('guard', 'plan-board', {
+    reason: '검사 상태 점검',
+    command: validationCommand,
+    label: '검사 상태',
+    source: 'home-master-panel',
+  });
+  const summaryHref = buildStaticControlCenterHref('operator-summary', 'master-status', {
+    reason: '전체 실행 상태 확인',
+    command: 'npm run operator:cockpit',
+    label: '전체 상황',
+    source: 'home-master-panel',
+  });
+
+  return {
+    stage: {
+      label: '현재 진행 단계',
+      current_value: stage,
+      summary: '지금 작업이 전체 흐름에서 어느 단계에 있는지 보여줍니다.',
+      detail: '단계를 알면 지금 해야 할 일이 분석인지, 구현인지, 검증인지 바로 구분할 수 있습니다.',
+      help: '단계가 애매하면 계획 화면에서 현재 작업 카드를 먼저 확인하세요.',
+      href: 'master-planner/index.html',
+      href_label: '계획 화면 열기',
+      command: 'npm run project:status',
+    },
+    'current-wp': {
+      label: '지금 작업 카드',
+      current_value: currentWp,
+      summary: '지금 가장 먼저 보고 있는 작업 카드입니다.',
+      detail: '현재 작업 카드에는 목표, 진행 상태, 다음 검사가 함께 연결됩니다.',
+      help: '지금 무엇을 만들고 있는지 헷갈리면 이 카드부터 보세요.',
+      href: 'master-planner/index.html',
+      href_label: '현재 작업 열기',
+      command: 'npm run project:status',
+    },
+    'next-wp': {
+      label: '다음 작업 카드',
+      current_value: nextWp,
+      summary: '지금 작업이 끝나면 이어서 진행할 다음 카드입니다.',
+      detail: '다음 작업을 먼저 알고 있으면 현재 작업 범위를 넘겨잡는 일을 줄일 수 있습니다.',
+      help: '다음 카드 확인 후 지금 작업 범위를 좁혀서 진행하세요.',
+      href: 'master-planner/index.html',
+      href_label: '다음 작업 보기',
+      command: 'npm run wp:next',
+    },
+    drift: {
+      label: '배포 준비 상태',
+      current_value: driftStatus,
+      summary: '지금 변경을 반영할 준비가 되었는지 보는 신호입니다.',
+      detail: 'drifted면 현재 상태와 기대 상태 사이에 어긋남이 있어 먼저 원인을 확인해야 합니다.',
+      help: '문제가 있으면 검사 명령부터 다시 돌리고 실패 원인을 해결하세요.',
+      href: driftHref,
+      href_label: '문제 해결 화면 열기',
+      command: validationCommand,
+    },
+    autosend: {
+      label: '자동 실행',
+      current_value: '상태 확인 중',
+      summary: '도구가 일정한 간격으로 자동 입력을 보내는 기능입니다.',
+      detail: '켜져 있으면 반복 작업을 줄일 수 있지만, 의도하지 않은 입력이 없는지 함께 확인해야 합니다.',
+      help: '필요하면 바로 켜거나 끌 수 있습니다.',
+      href: '#automation-bridge',
+      href_label: '자동 실행 연결 보기',
+      extra_label: '자동 실행 켜기/끄기',
+      extra_action: 'toggle-autosend',
+    },
+    branch: {
+      label: '현재 브랜치',
+      current_value: String(bootstrap?.git?.branch || 'unknown').trim(),
+      summary: '지금 수정하고 있는 코드 브랜치입니다.',
+      detail: '권장 브랜치와 다르면 잘못된 위치를 수정할 수 있어 먼저 확인하는 편이 안전합니다.',
+      help: '브랜치가 의심되면 브랜치 준비 명령을 먼저 실행하세요.',
+      href: summaryHref,
+      href_label: '전체 상황 열기',
+      command: branchCommand,
+    },
+    terminals: {
+      label: '연결된 터미널',
+      current_value: '상태 확인 중',
+      summary: '지금 이 화면에서 명령을 보낼 수 있는 터미널 수입니다.',
+      detail: '터미널이 있어야 아래의 바로 실행 버튼이 실제로 동작합니다.',
+      help: '터미널이 없으면 자동 실행 연결 영역에서 먼저 세션을 선택하세요.',
+      href: '#automation-bridge',
+      href_label: '터미널 연결 열기',
+      extra_label: '터미널 탭으로 이동',
+      extra_action: 'open-terminal-tab',
+    },
+    scheduler: {
+      label: '자동 스케줄',
+      current_value: '상태 확인 중',
+      summary: '자동 실행 스케줄이 실제로 돌고 있는지 보여줍니다.',
+      detail: '중지됨이면 자동 입력이 멈춘 상태이고, 실행 중이면 정해진 주기로 입력을 보냅니다.',
+      help: '터미널 연결 탭에서 상태를 보고 바로 조정할 수 있습니다.',
+      href: '#automation-bridge',
+      href_label: '자동 실행 연결 열기',
+      extra_label: '터미널 탭으로 이동',
+      extra_action: 'open-terminal-tab',
+    },
+    flags: {
+      label: '켜진 기능 스위치',
+      current_value: '상태 확인 중',
+      summary: '지금 켜져 있는 기능 스위치 수입니다.',
+      detail: '특정 기능이 왜 보이거나 안 보이는지 확인할 때 가장 먼저 보는 영역입니다.',
+      help: '기능이 이상하게 보이면 기능 스위치부터 확인하세요.',
+      href: 'flags/index.html',
+      href_label: '기능 스위치 열기',
+      extra_label: '새 창으로 보기',
+      extra_action: 'open-flags',
+    },
+    env: {
+      label: '환경값 덮어쓰기',
+      current_value: '상태 확인 중',
+      summary: '환경값으로 기본 설정을 덮어쓴 항목 수입니다.',
+      detail: '환경값이 적용되면 화면이나 실행 결과가 예상과 다르게 보일 수 있습니다.',
+      help: '설정이 이상하면 기능 스위치와 환경값 적용 여부를 같이 보세요.',
+      href: 'flags/index.html',
+      href_label: '기능 스위치 열기',
+      extra_label: '새 창으로 보기',
+      extra_action: 'open-flags',
+    },
+    'recent-action': {
+      label: '최근 실행 기록',
+      current_value: '기록 없음',
+      summary: '마지막으로 어떤 명령이나 액션이 준비되었는지 보여줍니다.',
+      detail: '최근 기록이 있으면 방금 무엇을 하려 했는지 빠르게 복기할 수 있습니다.',
+      help: '기록이 없으면 전체 상황부터 다시 읽는 편이 빠릅니다.',
+      href: summaryHref,
+      href_label: '전체 상황 열기',
+      command: 'npm run operator:cockpit',
+    },
+    handoff: {
+      label: '다음 작업 준비 상태',
+      current_value: nextWp,
+      summary: '지금 작업이 끝난 뒤 다음 카드로 넘어갈 준비가 되었는지 보여줍니다.',
+      detail: '검사 상태, 증거 상태, 다음 명령을 같이 보면 어디에서 막히는지 빠르게 찾을 수 있습니다.',
+      help: '검사 상태가 막혀 있으면 다음 명령부터 실행해 확인하세요.',
+      href: guardHref,
+      href_label: '검사 보드 열기',
+      command: validationCommand,
+    },
+    loop: {
+      label: '최근 자동 실행 기록',
+      current_value: recentAction,
+      summary: '최근 자동 실행 흐름에서 어떤 상태였는지 보여줍니다.',
+      detail: '실패한 흔적이 있으면 문제 해결 화면에서 원인부터 보는 것이 가장 빠릅니다.',
+      help: '최근 기록이 비어 있으면 전체 상황과 터미널 연결부터 다시 확인하세요.',
+      href: summaryHref,
+      href_label: '전체 상황 열기',
+      command: 'npm run operator:cockpit',
+    },
+  };
+}
+
+function buildHomeMasterPanelSection({ report, nextActions, bootstrap, operatorCockpit }) {
+  const blueprints = buildHomeMasterPanelBlueprints({ report, nextActions, bootstrap, operatorCockpit });
+  const initialKey = report?.promotion_pipeline?.drift_status && String(report.promotion_pipeline.drift_status).trim() !== 'clean'
+    ? 'drift'
+    : 'current-wp';
+  const initialPanel = blueprints[initialKey] || blueprints['current-wp'];
+  return {
+    blueprints,
+    initialKey,
+    html: `
+      <div class="master-quick-grid" aria-label="빠른 실행">
+        <button type="button" class="master-quick-btn is-primary" data-master-key="drift" onclick="openHomeMasterPanel('drift', true)">
+          <span>문제 먼저 보기</span>
+          <strong>배포 준비 상태</strong>
+        </button>
+        <button type="button" class="master-quick-btn" data-master-key="current-wp" onclick="openHomeMasterPanel('current-wp', true)">
+          <span>지금 작업 확인</span>
+          <strong>${esc(report?.current_wp || bootstrap?.current_wp?.id || 'NONE')}</strong>
+        </button>
+        <button type="button" class="master-quick-btn" data-master-key="next-wp" onclick="openHomeMasterPanel('next-wp', true)">
+          <span>다음 작업 확인</span>
+          <strong>${esc(report?.next_wp || nextActions?.next_wp || 'NONE')}</strong>
+        </button>
+        <button type="button" class="master-quick-btn" data-master-key="terminals" onclick="openHomeMasterPanel('terminals', true)">
+          <span>바로 실행 준비</span>
+          <strong>터미널 연결</strong>
+        </button>
+      </div>
+      <div class="side-list">
+        <button type="button" class="side-item side-item-action" data-master-key="stage" onclick="openHomeMasterPanel('stage', false)"><span class="muted">현재 진행 단계</span><strong>${esc(report.requirements_stage || '—')}</strong><em>눌러서 설명 보기</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="current-wp" onclick="openHomeMasterPanel('current-wp', false)"><span class="muted">지금 작업 카드</span><strong id="live-current-wp">${esc(report.current_wp || 'NONE')}</strong><em>눌러서 열기</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="next-wp" onclick="openHomeMasterPanel('next-wp', false)"><span class="muted">다음 작업 카드</span><strong id="live-next-wp">${esc(report.next_wp || 'NONE')}</strong><em>다음 순서 확인</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="drift" onclick="openHomeMasterPanel('drift', false)"><span class="muted">배포 준비 상태</span><strong id="live-drift-status">${esc(report.promotion_pipeline?.drift_status || '—')}</strong><em>문제 원인 보기</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="autosend" onclick="openHomeMasterPanel('autosend', false)"><span class="muted">자동 실행</span><strong id="live-autosend-state">—</strong><em>바로 켜고 끄기</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="branch" onclick="openHomeMasterPanel('branch', false)"><span class="muted">현재 브랜치</span><strong id="live-branch-status">—</strong><em>브랜치 점검</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="terminals" onclick="openHomeMasterPanel('terminals', false)"><span class="muted">연결된 터미널</span><strong id="live-pty-sessions">—</strong><em>바로 실행 준비</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="scheduler" onclick="openHomeMasterPanel('scheduler', false)"><span class="muted">자동 스케줄</span><strong id="live-pty-scheduler">—</strong><em>실행 상태 보기</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="flags" onclick="openHomeMasterPanel('flags', false)"><span class="muted">켜진 기능 스위치</span><strong id="live-active-flags">—</strong><em>설정 열기</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="env" onclick="openHomeMasterPanel('env', false)"><span class="muted">환경값 덮어쓰기</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong><em>환경 영향 보기</em></button>
+        <button type="button" class="side-item side-item-action" data-master-key="recent-action" onclick="openHomeMasterPanel('recent-action', false)"><span class="muted">최근 실행 기록</span><strong id="live-operator-action">—</strong><em>최근 흐름 보기</em></button>
+      </div>
+      <section class="hero-master-panel" id="hero-master-panel" aria-live="polite" data-master-selected-key="${esc(initialKey)}">
+        <div class="hero-master-panel-head">
+          <div>
+            <h3>간단 실행 마스터 패널</h3>
+            <p>위 카드를 누르면 쉬운 설명과 함께 관련 화면 열기, 명령 넣기, 바로 실행까지 한 번에 할 수 있습니다.</p>
+          </div>
+          <span class="hero-master-pill">선택 영역 <strong id="hero-master-label">${esc(initialPanel.label)}</strong></span>
+        </div>
+        <div class="hero-master-body">
+          <div class="hero-master-copy">
+            <span class="hero-master-kicker">이 영역은 무엇인가</span>
+            <strong id="hero-master-title">${esc(initialPanel.label)}</strong>
+            <p id="hero-master-summary">${esc(initialPanel.summary)}</p>
+          </div>
+          <div class="hero-master-current">
+            <span>현재 값</span>
+            <strong id="hero-master-current-value">${esc(initialPanel.current_value)}</strong>
+          </div>
+        </div>
+        <div class="hero-master-guide-grid">
+          <article class="hero-master-guide-card">
+            <span>왜 중요하나</span>
+            <strong id="hero-master-detail">${esc(initialPanel.detail)}</strong>
+          </article>
+          <article class="hero-master-guide-card">
+            <span>어떻게 보면 되나</span>
+            <strong id="hero-master-help">${esc(initialPanel.help)}</strong>
+          </article>
+        </div>
+        <div class="hero-master-actions">
+          <button type="button" class="hero-master-action primary" onclick="runHomeMasterPanelAction('open')">관련 화면 열기</button>
+          <button type="button" class="hero-master-action secondary" id="hero-master-fill-btn" onclick="runHomeMasterPanelAction('fill')">명령 넣기</button>
+          <button type="button" class="hero-master-action secondary" id="hero-master-run-btn" onclick="runHomeMasterPanelAction('run')">바로 실행</button>
+          <button type="button" class="hero-master-action ghost" id="hero-master-extra-btn" onclick="runHomeMasterPanelAction('extra')">추가 기능</button>
+        </div>
+        <div class="hero-master-command-box" id="hero-master-command-box">
+          <span>실행할 명령</span>
+          <code id="hero-master-command">${esc(initialPanel.command || '없음')}</code>
+        </div>
+        <p class="hero-master-note" id="hero-master-note">관련 화면을 먼저 열어 보고, 필요하면 아래 명령을 바로 실행하세요.</p>
+      </section>
+    `,
+  };
+}
+
 function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit,
                      sysHealth = null, sysFlags = null, sysCatalog = null, sysQg = null }) {
   const improvements = Array.isArray(report.essential_improvements) ? report.essential_improvements : [];
   const issues = Array.isArray(report.known_issues) ? report.known_issues : [];
   const capabilities = Array.isArray(currentState?.working_capabilities) ? currentState.working_capabilities : [];
   const stageSummary = Array.isArray(report.stage_summary) ? report.stage_summary : [];
+  const heroMasterPanel = buildHomeMasterPanelSection({ report, nextActions, bootstrap, operatorCockpit });
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -1177,6 +1437,52 @@ function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, boo
     gap: 10px;
   }
 
+  .master-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .master-quick-btn {
+    appearance: none;
+    border: 1px solid rgba(220, 207, 186, 0.78);
+    background: rgba(255, 248, 238, 0.95);
+    border-radius: 16px;
+    padding: 14px;
+    text-align: left;
+    cursor: pointer;
+    display: grid;
+    gap: 6px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+
+  .master-quick-btn span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .master-quick-btn strong {
+    font-size: 15px;
+    letter-spacing: -0.02em;
+  }
+
+  .master-quick-btn.is-primary {
+    background: linear-gradient(135deg, rgba(15,118,110,0.14), rgba(29,78,216,0.10));
+    border-color: rgba(15,118,110,0.26);
+  }
+
+  .master-quick-btn:hover,
+  .side-item-action:hover,
+  .hero-master-inline-btn:hover,
+  .clickable-summary-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(15, 118, 110, 0.12);
+  }
+
   .side-item {
     display: flex;
     justify-content: space-between;
@@ -1190,6 +1496,222 @@ function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, boo
 
   .side-item strong {
     font-weight: 700;
+  }
+
+  .side-item-action {
+    width: 100%;
+    appearance: none;
+    cursor: pointer;
+    align-items: center;
+    text-align: left;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    background: rgba(255, 248, 238, 0.95);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+
+  .side-item-action span {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .side-item-action strong {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .side-item-action em {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    justify-self: end;
+    color: var(--accent);
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .side-item-action.is-active {
+    border-color: rgba(15,118,110,0.36);
+    background: linear-gradient(135deg, rgba(15,118,110,0.10), rgba(29,78,216,0.06));
+  }
+
+  .hero-master-panel {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(29,78,216,0.05));
+    border: 1px solid rgba(15,118,110,0.2);
+    display: grid;
+    gap: 12px;
+  }
+
+  .hero-master-panel-head,
+  .hero-master-body {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .hero-master-panel-head h3 {
+    margin: 0;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-master-panel-head p,
+  .hero-master-copy p,
+  .hero-master-note {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .hero-master-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.76);
+    border: 1px solid rgba(220,207,186,0.84);
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .hero-master-pill strong {
+    margin-left: 6px;
+    color: var(--accent);
+  }
+
+  .hero-master-copy {
+    display: grid;
+    gap: 6px;
+  }
+
+  .hero-master-kicker {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .hero-master-copy strong {
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-master-current {
+    min-width: 180px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.76);
+    border: 1px solid rgba(220,207,186,0.82);
+    display: grid;
+    gap: 6px;
+  }
+
+  .hero-master-current span,
+  .hero-master-guide-card span,
+  .hero-master-command-box span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .hero-master-current strong,
+  .hero-master-guide-card strong {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .hero-master-guide-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .hero-master-guide-card {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.76);
+    border: 1px solid rgba(220,207,186,0.82);
+    display: grid;
+    gap: 6px;
+  }
+
+  .hero-master-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hero-master-action,
+  .hero-master-inline-btn {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+
+  .hero-master-action.primary {
+    background: linear-gradient(135deg, #0f766e, #1d4ed8);
+    color: white;
+  }
+
+  .hero-master-action.secondary {
+    background: white;
+    color: var(--text);
+    border: 1px solid rgba(220,207,186,0.88);
+  }
+
+  .hero-master-action.ghost,
+  .hero-master-inline-btn {
+    background: rgba(255,255,255,0.72);
+    color: var(--accent);
+    border: 1px dashed rgba(15,118,110,0.28);
+  }
+
+  .hero-master-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .hero-master-command-box {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.76);
+    border: 1px solid rgba(220,207,186,0.82);
+    display: grid;
+    gap: 8px;
+  }
+
+  .hero-master-command-box code {
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .hero-master-inline-btn {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .clickable-summary-card {
+    margin-top: 12px;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   }
 
   .handoff-lane {
@@ -1495,6 +2017,21 @@ function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, boo
       grid-template-columns: 1fr;
     }
 
+    .master-quick-grid,
+    .hero-master-guide-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-master-panel-head,
+    .hero-master-body {
+      flex-direction: column;
+    }
+
+    .hero-master-current {
+      min-width: 0;
+      width: 100%;
+    }
+
     .topbar {
       border-radius: 28px;
       align-items: stretch;
@@ -1556,20 +2093,10 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
       </div>
       <aside class="hero-side">
         <h2>핵심 상태 요약</h2>
-        <div class="side-list">
-          <div class="side-item"><span class="muted">현재 진행 단계</span><strong>${esc(report.requirements_stage || '—')}</strong></div>
-          <div class="side-item"><span class="muted">지금 작업 카드</span><strong id="live-current-wp">${esc(report.current_wp || 'NONE')}</strong></div>
-          <div class="side-item"><span class="muted">다음 작업 카드</span><strong>${esc(report.next_wp || 'NONE')}</strong></div>
-          <div class="side-item"><span class="muted">배포 준비 상태</span><strong>${esc(report.promotion_pipeline?.drift_status || '—')}</strong></div>
-          <div class="side-item"><span class="muted">자동 실행</span><strong id="live-autosend-state">—</strong></div>
-          <div class="side-item"><span class="muted">현재 브랜치</span><strong id="live-branch-status">—</strong></div>
-          <div class="side-item"><span class="muted">연결된 터미널</span><strong id="live-pty-sessions">—</strong></div>
-          <div class="side-item"><span class="muted">자동 스케줄</span><strong id="live-pty-scheduler">—</strong></div>
-          <div class="side-item"><span class="muted">켜진 기능 스위치</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
-          <div class="side-item"><span class="muted">환경값 덮어쓰기</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
-          <div class="side-item"><span class="muted">최근 실행 기록</span><strong id="live-operator-action">—</strong></div>
+        ${heroMasterPanel.html}
+        <div class="clickable-summary-card" onclick="openHomeMasterPanel('handoff', false)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHomeMasterPanel('handoff', false);}">
+          ${buildHandoffLane({ report, nextActions, bootstrap, operatorCockpit })}
         </div>
-        ${buildHandoffLane({ report, nextActions, bootstrap, operatorCockpit })}
         <div class="loop-card">
           <h3>최근 자동 실행 기록</h3>
         <div class="loop-list">
@@ -1582,9 +2109,13 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
             <a id="live-loop-secondary-link" class="page-link" href="mindmap/index.html?focus=guard&reason=%EC%BB%A4%EB%B0%8B%20%EA%B0%80%EB%93%9C%20%ED%99%95%EC%9D%B8%20%ED%95%84%EC%9A%94&command=npm%20run%20commit%3Aguard&source=home-loop#plan-board">검사 보드 열기</a>
             <a id="live-loop-summary-link" class="page-link" href="mindmap/index.html?focus=operator-summary&reason=operator%20%EC%83%81%ED%83%9C%20%EC%A0%84%EC%B2%B4%20%ED%99%95%EC%9D%B8&command=npm%20run%20operator%3Acockpit&source=home-loop#master-status" style="display:none">전체 상황 열기</a>
         </div>
+        <button type="button" class="hero-master-inline-btn" onclick="openHomeMasterPanel('loop', false)">이 영역 설명과 실행 보기</button>
       </div>
     </aside>
     </section>
+    <script>
+      window.__HOME_MASTER_PANEL_BLUEPRINTS__ = ${serializeForInlineScript(heroMasterPanel.blueprints)};
+    </script>
 
     <section class="stats" id="home-stat-detail">
       <article class="stat-card">
@@ -1801,8 +2332,12 @@ var HOME_INITIAL_OPERATOR_CHAIN = Array.isArray(window.__HOME_INITIAL_OPERATOR_C
   ? window.__HOME_INITIAL_OPERATOR_CHAIN__
   : [];
 var HOME_OPERATOR_CHAIN_BLUEPRINTS = window.__HOME_OPERATOR_CHAIN_BLUEPRINTS__ || {};
+var HOME_MASTER_PANEL_BLUEPRINTS = window.__HOME_MASTER_PANEL_BLUEPRINTS__ || {};
 var latestHomeOperatorCockpit = {
   operatorChain: HOME_INITIAL_OPERATOR_CHAIN,
+};
+var latestHomeAutomationConfig = {
+  enabled: false,
 };
 function homeEscHtml(value) {
   return String(value == null ? '' : value)
@@ -1820,6 +2355,190 @@ function homeStatusClass(value) {
     return 'tone-amber';
   }
   return 'tone-slate';
+}
+function homeText(id, fallback) {
+  var element = document.getElementById(id);
+  var value = element ? String(element.textContent || '').trim() : '';
+  return value || String(fallback || '').trim();
+}
+function scrollToAutomationBridge() {
+  var section = document.getElementById('automation-bridge');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+function switchAutomationBridgeTab(tabId) {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.ab-tab'));
+  var target = tabs.find(function(button) {
+    return String(button.getAttribute('onclick') || '').indexOf("'" + tabId + "'") >= 0;
+  });
+  if (target) {
+    target.click();
+  }
+}
+function currentHomeMasterPanelKey() {
+  var panel = document.getElementById('hero-master-panel');
+  return panel ? String(panel.dataset.masterSelectedKey || '').trim() : '';
+}
+function homeMasterPanelBlueprint(key) {
+  return HOME_MASTER_PANEL_BLUEPRINTS[String(key || '').trim()] || null;
+}
+function homeMasterPanelCurrentValue(key, fallback) {
+  if (key === 'stage') {
+    var stageStrong = document.querySelector('.side-item-action[data-master-key="stage"] strong');
+    return String(stageStrong && stageStrong.textContent || fallback || '').trim();
+  }
+  if (key === 'current-wp') return homeText('live-current-wp', fallback);
+  if (key === 'next-wp') return homeText('live-next-wp', fallback);
+  if (key === 'drift') return homeText('live-drift-status', fallback);
+  if (key === 'autosend') return homeText('live-autosend-state', latestHomeAutomationConfig.enabled ? 'ON' : 'OFF');
+  if (key === 'branch') return homeText('live-branch-status', fallback);
+  if (key === 'terminals') return homeText('live-pty-sessions', fallback);
+  if (key === 'scheduler') return homeText('live-pty-scheduler', fallback);
+  if (key === 'flags') return homeText('live-active-flags', fallback);
+  if (key === 'env') return homeText('live-env-overrides', fallback);
+  if (key === 'recent-action') return homeText('live-operator-action', fallback);
+  if (key === 'handoff') return homeText('handoff-next-wp', fallback);
+  if (key === 'loop') return homeText('live-loop-status', fallback);
+  return String(fallback || '').trim();
+}
+function homeMasterPanelConfig(key) {
+  var blueprint = homeMasterPanelBlueprint(key);
+  if (!blueprint) {
+    return null;
+  }
+  return {
+    key: key,
+    label: String(blueprint.label || key || '영역'),
+    current_value: homeMasterPanelCurrentValue(key, blueprint.current_value || ''),
+    summary: String(blueprint.summary || '').trim(),
+    detail: String(blueprint.detail || '').trim(),
+    help: String(blueprint.help || '').trim(),
+    href: String(blueprint.href || '').trim(),
+    href_label: String(blueprint.href_label || '관련 화면 열기').trim(),
+    command: String(blueprint.command || '').trim(),
+    extra_label: String(blueprint.extra_label || '').trim(),
+    extra_action: String(blueprint.extra_action || '').trim(),
+  };
+}
+function refreshHomeMasterPanelUi(config) {
+  if (!config) {
+    return;
+  }
+  var panel = document.getElementById('hero-master-panel');
+  if (panel) {
+    panel.dataset.masterSelectedKey = config.key;
+  }
+  var labelEl = document.getElementById('hero-master-label');
+  var titleEl = document.getElementById('hero-master-title');
+  var summaryEl = document.getElementById('hero-master-summary');
+  var currentEl = document.getElementById('hero-master-current-value');
+  var detailEl = document.getElementById('hero-master-detail');
+  var helpEl = document.getElementById('hero-master-help');
+  var noteEl = document.getElementById('hero-master-note');
+  var commandEl = document.getElementById('hero-master-command');
+  var commandBoxEl = document.getElementById('hero-master-command-box');
+  var fillBtn = document.getElementById('hero-master-fill-btn');
+  var runBtn = document.getElementById('hero-master-run-btn');
+  var extraBtn = document.getElementById('hero-master-extra-btn');
+  if (labelEl) labelEl.textContent = config.label;
+  if (titleEl) titleEl.textContent = config.label;
+  if (summaryEl) summaryEl.textContent = config.summary;
+  if (currentEl) currentEl.textContent = config.current_value || '없음';
+  if (detailEl) detailEl.textContent = config.detail;
+  if (helpEl) helpEl.textContent = config.help;
+  if (noteEl) {
+    noteEl.textContent = config.command
+      ? '관련 화면을 먼저 열어 보고, 필요하면 아래 명령을 바로 실행하세요.'
+      : '이 영역은 관련 화면을 열거나 추가 기능 버튼으로 바로 이동할 수 있습니다.';
+  }
+  if (commandEl) commandEl.textContent = config.command || '없음';
+  if (commandBoxEl) commandBoxEl.style.display = config.command ? '' : 'none';
+  if (fillBtn) fillBtn.disabled = !config.command;
+  if (runBtn) runBtn.disabled = !config.command;
+  if (extraBtn) {
+    extraBtn.disabled = !config.extra_action;
+    extraBtn.textContent = config.extra_label || '추가 기능';
+    extraBtn.style.display = config.extra_action ? '' : 'none';
+  }
+  document.querySelectorAll('.side-item-action[data-master-key], .master-quick-btn[data-master-key]').forEach(function(button) {
+    button.classList.toggle('is-active', String(button.dataset.masterKey || '') === config.key);
+  });
+}
+window.openHomeMasterPanel = function(key, shouldScroll) {
+  var config = homeMasterPanelConfig(key);
+  if (!config) {
+    return;
+  }
+  refreshHomeMasterPanelUi(config);
+  if (shouldScroll) {
+    var panel = document.getElementById('hero-master-panel');
+    if (panel) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+};
+window.runHomeMasterPanelAction = function(kind) {
+  var key = currentHomeMasterPanelKey();
+  var config = homeMasterPanelConfig(key);
+  if (!config) {
+    return;
+  }
+  if (kind === 'open') {
+    if (!config.href) {
+      return;
+    }
+    if (config.href.charAt(0) === '#') {
+      var target = document.querySelector(config.href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
+    window.location.href = config.href;
+    return;
+  }
+  if (kind === 'fill') {
+    if (!config.command) {
+      return;
+    }
+    scrollToAutomationBridge();
+    switchAutomationBridgeTab('terminal');
+    if (typeof window.abFillCmd === 'function') {
+      window.abFillCmd(config.command);
+    }
+    return;
+  }
+  if (kind === 'run') {
+    if (!config.command) {
+      return;
+    }
+    scrollToAutomationBridge();
+    switchAutomationBridgeTab('terminal');
+    if (typeof window.abSendCmd2 === 'function') {
+      window.abSendCmd2(config.command);
+    }
+    return;
+  }
+  if (kind === 'extra') {
+    if (config.extra_action === 'toggle-autosend') {
+      var toggle = document.getElementById('btn-autosend-toggle');
+      if (toggle) toggle.click();
+      return;
+    }
+    if (config.extra_action === 'open-terminal-tab') {
+      scrollToAutomationBridge();
+      switchAutomationBridgeTab('terminal');
+      return;
+    }
+    if (config.extra_action === 'open-flags') {
+      window.open('/flags', '_blank');
+    }
+  }
+};
+function refreshSelectedHomeMasterPanel() {
+  var selectedKey = currentHomeMasterPanelKey() || 'drift';
+  window.openHomeMasterPanel(selectedKey, false);
 }
 function homeOperatorChainItems() {
   if (latestHomeOperatorCockpit) {
@@ -2164,6 +2883,9 @@ function updateHomeOperatorChainDeliveries(operatorCockpit, recentAction) {
   }
 }
 function updateAutosendUi(autoSend) {
+  latestHomeAutomationConfig = autoSend && typeof autoSend === 'object'
+    ? autoSend
+    : { enabled: false };
   const badge = document.getElementById('live-autosend-badge');
   const stateEl = document.getElementById('live-autosend-state');
   const toggleBtn = document.getElementById('btn-autosend-toggle');
@@ -2175,9 +2897,11 @@ function updateAutosendUi(autoSend) {
   }
   if (stateEl) stateEl.textContent = autoSend.enabled ? 'ON' : 'OFF';
   if (toggleBtn) toggleBtn.style.display = 'inline-block';
+  refreshSelectedHomeMasterPanel();
 }
 document.addEventListener('DOMContentLoaded', async () => {
   bindHomeOperatorChainInteractions();
+  openHomeMasterPanel('drift', false);
   var initialChainId = document.getElementById('flow-chain-spotlight')
     ? document.getElementById('flow-chain-spotlight').dataset.chainId
     : '';
@@ -2492,6 +3216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     recentLoopSecondaryLinkEl.textContent = guardBlocked ? '검사 보드 열기' : '실행 화면 열기';
   }
+  refreshSelectedHomeMasterPanel();
 });
 </script>
 ${buildMpoPanel()}

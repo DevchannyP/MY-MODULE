@@ -24,6 +24,14 @@ test('[static ui home] artifacts root home is generated with core navigation lin
   assert.match(html, /계획 화면/);
   assert.match(html, /기능 목록/);
   assert.match(html, /학습 자료/);
+  assert.match(html, /간단 실행 마스터 패널/);
+  assert.match(html, /master-quick-grid/);
+  assert.match(html, /side-item-action/);
+  assert.match(html, /hero-master-panel/);
+  assert.match(html, /hero-master-command/);
+  assert.match(html, /runHomeMasterPanelAction/);
+  assert.match(html, /openHomeMasterPanel\('drift'/);
+  assert.match(html, /window\.__HOME_MASTER_PANEL_BLUEPRINTS__/);
   assert.match(html, /지금 해야 할 일 안내 바/);
   assert.match(html, /흐름 유지/);
   assert.match(html, /문제 해결 순서/);

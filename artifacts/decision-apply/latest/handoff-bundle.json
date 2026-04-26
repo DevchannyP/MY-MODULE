@@ -1,9 +1,9 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-26T14:16:26.743182+00:00",
+  "generated_at": "2026-04-26T14:53:12.130836+00:00",
   "goal": "stateful-ops",
   "intake_packet": {
-    "goal": "MPO session mpo-01a7bad9-7357-46ae-9742-74a530f9664d completed",
+    "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
     "context": [
       "scripts/generate_replay_packet.py",
       "scripts/generate_routing_learning_ledger.py",
@@ -32,7 +32,7 @@
   },
   "current_packet": {
     "id": "MPO-COMPLETE",
-    "goal": "MPO session mpo-01a7bad9-7357-46ae-9742-74a530f9664d completed",
+    "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
     "type": "infra",
     "stage": "complete",
     "status": "completed"
@@ -80,7 +80,7 @@
     "profile_objective": "운영 안전장치, 로그, smoke 기준을 우선 읽고 구현 세부는 나중에 읽는다.",
     "current_wp": {
       "id": "MPO-COMPLETE",
-      "goal": "MPO session mpo-01a7bad9-7357-46ae-9742-74a530f9664d completed",
+      "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
       "type": "infra",
       "stage": "complete"
     },
@@ -128,7 +128,7 @@
           "path": "worklog/reports/",
           "approval_required": true,
           "reason_required": true,
-          "estimated_tokens": 321920,
+          "estimated_tokens": 321919,
           "file_count": 61,
           "guidance": "read_later는 active context에서 제외한다. 필요한 경우 특정 path와 reason을 적어 승인 후 재읽기한다."
         },
@@ -172,17 +172,17 @@
       },
       "secondary": {
         "file_count": 4,
-        "total_bytes": 25696,
+        "total_bytes": 25695,
         "estimated_tokens": 8565
       },
       "deferred": {
         "file_count": 211,
-        "total_bytes": 1632110,
-        "estimated_tokens": 544037
+        "total_bytes": 1632108,
+        "estimated_tokens": 544036
       },
       "active_estimated_tokens": 20890,
       "deferred_excluded_by_default": true,
-      "total_estimated_tokens": 564927
+      "total_estimated_tokens": 564926
     },
     "budget_risk": {
       "status": "risk",
@@ -191,7 +191,7 @@
       "deferred_status": "risk",
       "primary_estimated_tokens": 12325,
       "active_estimated_tokens": 20890,
-      "deferred_excluded_tokens": 544037,
+      "deferred_excluded_tokens": 544036,
       "thresholds": {
         "primary_token_limit": 6000,
         "active_token_limit": 18000,
@@ -283,7 +283,7 @@
           "path": "artifacts/promotion-pipeline/latest/handoff-bundle.json",
           "exists": true,
           "file_count": 1,
-          "total_bytes": 22893,
+          "total_bytes": 22892,
           "estimated_tokens": 7631
         }
       ],
@@ -299,8 +299,8 @@
           "path": "worklog/reports/",
           "exists": true,
           "file_count": 61,
-          "total_bytes": 965759,
-          "estimated_tokens": 321920
+          "total_bytes": 965757,
+          "estimated_tokens": 321919
         },
         {
           "path": "artifacts/catalog-site/index.html",
@@ -333,7 +333,7 @@
     "routing_profile_id": "stateful-ops-routing",
     "current_wp": {
       "id": "MPO-COMPLETE",
-      "goal": "MPO session mpo-01a7bad9-7357-46ae-9742-74a530f9664d completed",
+      "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
       "type": "infra",
       "stage": "complete",
       "status": "completed"
@@ -367,7 +367,7 @@
         "id": "token-budget",
         "label": "토큰 예산 적합성",
         "status": "risk",
-        "detail": "primary 12325 tok / active 20890 tok / deferred excluded 544037 tok"
+        "detail": "primary 12325 tok / active 20890 tok / deferred excluded 544036 tok"
       },
       {
         "id": "read-later-exception-policy",
@@ -395,17 +395,17 @@
       },
       "secondary": {
         "file_count": 4,
-        "total_bytes": 25696,
+        "total_bytes": 25695,
         "estimated_tokens": 8565
       },
       "deferred": {
         "file_count": 211,
-        "total_bytes": 1632110,
-        "estimated_tokens": 544037
+        "total_bytes": 1632108,
+        "estimated_tokens": 544036
       },
       "active_estimated_tokens": 20890,
       "deferred_excluded_by_default": true,
-      "total_estimated_tokens": 564927
+      "total_estimated_tokens": 564926
     },
     "budget_risk": {
       "status": "risk",
@@ -414,7 +414,7 @@
       "deferred_status": "risk",
       "primary_estimated_tokens": 12325,
       "active_estimated_tokens": 20890,
-      "deferred_excluded_tokens": 544037,
+      "deferred_excluded_tokens": 544036,
       "thresholds": {
         "primary_token_limit": 6000,
         "active_token_limit": 18000,
@@ -440,11 +440,11 @@
       "repository-sqlite"
     ],
     "selected_adapters": [
+      "repository-sqlite",
+      "repository-inmemory",
       "http-problem-details",
       "observability-otel",
-      "repository-sqlite",
       "master-ui-plugin-shell",
-      "repository-inmemory",
       "feature-flag-provider"
     ],
     "hard_constraints": [
@@ -551,7 +551,7 @@
   },
   "replay_next_packet": {
     "schema_version": "1",
-    "generated_at": "2026-04-26T14:16:26.735833+00:00",
+    "generated_at": "2026-04-26T14:53:12.124070+00:00",
     "goal": "최근 audit 시그널 기반으로 zone-feature-flags 후속 packet을 정리한다",
     "type": "infra",
     "stage": "complete",
@@ -576,9 +576,9 @@
     "validation": [],
     "audit_signals": [
       {
-        "timestamp": "2026-04-23 00:23:54 +0900",
+        "timestamp": "2026-04-26 23:32:54 +0900",
         "title": "git commit",
-        "detail": "feat(evals): add safety/red-team golden set + update eval runner",
+        "detail": "feat(ui): kanban board collapsible section + per-lane paging",
         "tag": "git"
       },
       {
@@ -607,14 +607,14 @@
       }
     ],
     "replay_next_packet": {
-      "id": "WP-HO-011",
-      "goal": "replay packet 품질 개선 — 불완전한 다음 WP 추천 문구 제거와 audit signal 정규화",
-      "type": "infra",
+      "id": "WP-HO-012",
+      "goal": "promotion pipeline과 handoff bundle 연결 — promotion 결과가 handoff bundle path와 evidence status를 포함",
+      "type": "governance",
       "stage": "A",
       "validation": [
-        "npm run wp:replay-packet -- --json",
-        "npm run wp:handoff-bundle -- --json",
-        "npm run test:e2e-smoke"
+        "npm run wp:promote-pipeline",
+        "npm run wp:promotion-decision",
+        "npm run project:status"
       ],
       "rationale": "next-actions.yaml priority 1 WP — DAG 준비 완료 상태"
     },
@@ -682,9 +682,9 @@
         "track_title": "모듈 확장 실습",
         "matched": [
           {
-            "timestamp": "2026-04-23 00:23:54 +0900",
+            "timestamp": "2026-04-26 23:32:54 +0900",
             "title": "git commit",
-            "detail": "feat(evals): add safety/red-team golden set + update eval runner",
+            "detail": "feat(ui): kanban board collapsible section + per-lane paging",
             "tag": "git"
           }
         ]
