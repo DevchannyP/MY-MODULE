@@ -20,4 +20,8 @@ test('[planning fit] constraint and adapter fit report is generated from current
   assert.equal(typeof report.counts.pass, 'number');
   assert.ok(Array.isArray(report.checks));
   assert.ok(report.checks.some((item) => item.id === 'token-budget'));
+  assert.ok(report.checks.some((item) => item.id === 'read-later-exception-policy'));
+  assert.equal(typeof report.budget_risk.status, 'string');
+  assert.equal(report.read_later_policy.default, 'excluded_from_active_context');
+  assert.equal(typeof report.read_later_policy.exception_count, 'number');
 });

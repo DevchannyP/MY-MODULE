@@ -21,7 +21,10 @@ test('[verified auto commit guard smoke] dry-run summary exposes commit candidat
   assert.ok(Array.isArray(summary.validation_profile.commands));
   assert.ok(summary.validation_profile.commands.includes('npm run validate:requirements'));
   assert.ok(Array.isArray(summary.guard.reasons));
-  assert.equal(summary.next_action, 'verify 모드로 검증 실행');
+  assert.ok(Array.isArray(summary.preflight_warnings));
+  assert.ok(summary.preflight_warnings.length >= 1);
+  assert.ok(summary.preflight_warnings[0].preflight_command);
+  assert.equal(summary.next_action, 'preflight warning 확인 후 검증 실행');
 });
 
 test('[verified auto commit guard smoke] guard blocks protected branches and failed validation', async () => {

@@ -24,6 +24,49 @@ function writeYamlAtomic(root, relativePath, value, validator) {
   return validator;
 }
 
+function snapshotFiles(root, relativePaths) {
+  return relativePaths.map((relativePath) => {
+    const absolute = path.join(root, relativePath);
+    if (!fs.existsSync(absolute)) {
+      return { relativePath, existed: false, content: null };
+    }
+    return {
+      relativePath,
+      existed: true,
+      content: fs.readFileSync(absolute),
+    };
+  });
+}
+
+function rollbackFiles(root, snapshots) {
+  snapshots.slice().reverse().forEach((snapshot) => {
+    const absolute = path.join(root, snapshot.relativePath);
+    if (snapshot.existed) {
+      fs.mkdirSync(path.dirname(absolute), { recursive: true });
+      fs.writeFileSync(absolute, snapshot.content);
+      return;
+    }
+    if (fs.existsSync(absolute)) {
+      fs.rmSync(absolute, { force: true });
+    }
+  });
+}
+
+function writeYamlTransaction(root, writes, validator) {
+  const snapshots = snapshotFiles(root, writes.map((entry) => entry.relativePath));
+  try {
+    writes.forEach((entry) => {
+      writeYamlAtomic(root, entry.relativePath, entry.value, validator);
+    });
+  } catch (error) {
+    rollbackFiles(root, snapshots);
+    throw Object.assign(error, {
+      code: error.code || 'MPO_MEMORY_TRANSACTION_FAILED',
+      mpo_transaction_rolled_back: true,
+    });
+  }
+}
+
 function updateWpQueue(queueDoc = {}, sessionId, wpId, reportPath) {
   const nextDoc = { ...queueDoc };
   const mpoSessions = Array.isArray(nextDoc.mpo_sessions) ? nextDoc.mpo_sessions.slice() : [];
@@ -64,6 +107,11 @@ function completeWorkPacket(
   } = {},
 ) {
   validator.validateInput('contracts/harness/output.schema.json', report, 'VerifiedWPResult');
+  if (report.verification_status !== 'PASS') {
+    throw Object.assign(new Error(`M11 requires a PASS verified report before memory reconcile: ${wp?.id || 'unknown-wp'}`), {
+      code: 'MPO_MEMORY_RECONCILE_REJECTED',
+    });
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const reportRelativePath = `worklog/reports/${today}_${wp.id}.yaml`;
@@ -108,11 +156,13 @@ function completeWorkPacket(
 
   const updatedQueue = updateWpQueue(wpQueue, sessionId, wp.id, reportRelativePath);
 
-  writeYamlAtomic(root, reportRelativePath, report, validator);
-  writeYamlAtomic(root, 'memory/current-state.yaml', updatedState, validator);
-  writeYamlAtomic(root, 'memory/current-wp.yaml', updatedCurrentWp, validator);
-  writeYamlAtomic(root, 'memory/L0-hot/next-actions.yaml', updatedNextActions, validator);
-  writeYamlAtomic(root, 'memory/wp-queue.yaml', updatedQueue, validator);
+  writeYamlTransaction(root, [
+    { relativePath: reportRelativePath, value: report },
+    { relativePath: 'memory/current-state.yaml', value: updatedState },
+    { relativePath: 'memory/current-wp.yaml', value: updatedCurrentWp },
+    { relativePath: 'memory/L0-hot/next-actions.yaml', value: updatedNextActions },
+    { relativePath: 'memory/wp-queue.yaml', value: updatedQueue },
+  ], validator);
 
   const guardSummary = buildAutoCommitGuardSummary({ mode: 'apply' });
   let commitResult = null;
@@ -144,4 +194,5 @@ if (require.main === module) {
 
 module.exports = {
   completeWorkPacket,
+  writeYamlTransaction,
 };

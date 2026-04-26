@@ -27,6 +27,8 @@ context_budget:
     - "worklog/contract-matrix.md"
   context_reads:
     - "master-shell/catalog/adapter-registry.yaml"
+  read_later:
+    - "artifacts/index.html"
 `, 'utf8');
 
   const { stdout } = await execFileAsync('python3', [
@@ -44,9 +46,16 @@ context_budget:
   assert.match(report.current_wp.id, /WP-CONTEXT-001/);
   assert.ok(report.read_first.includes('requirements/requirements.yaml'));
   assert.ok(report.read_next.includes('master-shell/catalog/adapter-registry.yaml'));
+  assert.ok(report.read_later.includes('artifacts/index.html'));
   assert.ok(report.protected_core.includes('system OS core'));
   assert.equal(typeof report.budget.total_estimated_tokens, 'number');
   assert.ok(report.budget.total_estimated_tokens >= 1);
+  assert.equal(typeof report.budget.active_estimated_tokens, 'number');
+  assert.equal(report.budget.deferred_excluded_by_default, true);
+  assert.equal(report.read_later_policy.default, 'excluded_from_active_context');
+  assert.ok(Array.isArray(report.read_later_policy.exceptions));
+  assert.equal(typeof report.budget_risk.status, 'string');
+  assert.equal(typeof report.budget_risk.active_estimated_tokens, 'number');
 
   fs.rmSync(tempDir, { recursive: true, force: true });
 });

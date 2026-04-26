@@ -19,6 +19,13 @@ test('[session bootstrap smoke] bootstrap summary narrows session reads, command
   assert.equal(typeof summary.current_lane_hint, 'string');
   assert.ok(Array.isArray(summary.intake_packet_fields));
   assert.deepEqual(summary.intake_packet_fields, ['goal', 'context', 'constraints', 'done_when', 'work_mode', 'verification']);
+  assert.equal(typeof summary.intake_packet.goal, 'string');
+  assert.ok(Array.isArray(summary.intake_packet.context));
+  assert.ok(Array.isArray(summary.intake_packet.constraints));
+  assert.ok(Array.isArray(summary.intake_packet.done_when));
+  assert.ok(Array.isArray(summary.intake_packet.work_mode));
+  assert.ok(Array.isArray(summary.intake_packet.verification));
+  assert.ok(summary.intake_packet.verification.length >= 1);
   assert.ok(Array.isArray(summary.recommended_reads));
   assert.ok(summary.recommended_reads.includes('memory/current-state.yaml'));
   assert.ok(summary.recommended_reads.includes('memory/current-wp.yaml'));
@@ -33,6 +40,13 @@ test('[session bootstrap smoke] bootstrap summary narrows session reads, command
   assert.ok(Array.isArray(summary.validation_profile.commands));
   assert.ok(summary.validation_profile.commands.includes('npm run validate:requirements'));
   assert.equal(typeof summary.validation_profile.primary_command, 'string');
+  assert.equal(typeof summary.handoff_summary.current_wp, 'string');
+  assert.equal(typeof summary.handoff_summary.next_wp, 'string');
+  assert.equal(typeof summary.handoff_summary.drift_status, 'string');
+  assert.equal(typeof summary.handoff_summary.validation_state, 'string');
+  assert.equal(typeof summary.handoff_summary.next_command, 'string');
+  assert.equal(summary.handoff_summary.current_wp, summary.current_wp.id);
+  assert.equal(summary.handoff_summary.next_wp, summary.next_wp);
   assert.ok(Array.isArray(summary.operator_focus));
   assert.ok(summary.operator_focus.length >= 3);
   assert.equal(typeof summary.git.branch, 'string');

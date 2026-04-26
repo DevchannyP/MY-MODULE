@@ -25,6 +25,17 @@ AI_LEARNING_MAP_PATH = ROOT / "master-shell" / "catalog" / "ai-learning-map.yaml
 TIMELINE_PATH = ROOT / "master-shell" / "observability" / "timeline.jsonl"
 AUDIT_CHAIN_PATH = ROOT / "worklog" / "audit-chain.json"
 REFLECTION_LOG_PATH = ROOT / "memory" / "L0-hot" / "reflection-log.yaml"
+NEXT_ACTIONS_PATH = ROOT / "memory" / "next-actions.yaml"
+WP_QUEUE_PATH = ROOT / "memory" / "wp-queue.yaml"
+
+# Patterns that indicate an incomplete/technical title unsuitable for a goal string
+import re
+_TECHNICAL_TITLE_RE = re.compile(
+    r"(actor=|hash=[0-9a-f]{6,}|^[a-f0-9]{8,}$"
+    r"|spiral\d+/WP-|^WP-[A-Z]+-\d+$"
+    r"|^[A-E]/|^[A-E]_)",  # Stage-prefixed audit actions: D/zone-*, C/core, etc.
+    re.IGNORECASE,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -96,7 +107,7 @@ def build_live_feed() -> list[dict]:
         {
             "timestamp": item.get("timestamp", ""),
             "title": item.get("action", "audit"),
-            "detail": f"{item.get('actor', 'actor?')} {item.get('hash', '')[:12]}".strip(),
+            "detail": build_audit_detail(item),
             "tag": "audit",
         }
         for item in audit_chain[:6]
@@ -142,6 +153,103 @@ def build_live_feed() -> list[dict]:
     return sorted(unique.values(), key=lambda item: str(item.get("timestamp", "")), reverse=True)[:10]
 
 
+def build_audit_detail(item: dict) -> str:
+    # Prefer the human-readable 'details' field if present
+    human = str(item.get("details") or "").strip()
+    if human:
+        return human
+    action = str(item.get("action") or "audit").strip()
+    return action
+
+
+def _clean_signal_title(title: str, tag: str) -> str:
+    """Return a human-readable phrase from a raw signal title.
+
+    Strips actor/hash fragments and technical path-like identifiers so they
+    never leak into generated goal strings.
+    """
+    if not title:
+        return ""
+    # Remove explicit actor= / hash= fragments
+    cleaned = re.sub(r"\s*/?\s*(actor|hash)=[^\s/]+", "", title).strip(" /")
+    # If the cleaned title still looks like a raw WP-ID or spiral/path, fall back
+    if _TECHNICAL_TITLE_RE.search(cleaned):
+        # Extract the last human-readable segment after the final slash
+        parts = [p.strip() for p in cleaned.split("/") if p.strip()]
+        # Prefer the last segment that is not a raw WP-ID or hash
+        for segment in reversed(parts):
+            if not _TECHNICAL_TITLE_RE.search(segment):
+                return segment
+        return ""
+    return cleaned
+
+
+def replay_goal_from_signal(signal: dict) -> str:
+    tag = str(signal.get("tag") or "log").strip()
+    raw_title = str(signal.get("title") or "").strip()
+    title = _clean_signal_title(raw_title, tag)
+    if tag == "audit":
+        label = title or "운영 증적"
+        return f"최근 audit 시그널 기반으로 {label} 후속 packet을 정리한다"
+    if tag == "reflection":
+        label = title or "개선 메모"
+        return f"최근 reflection 기반으로 {label} 후속 packet을 정리한다"
+    if tag == "report":
+        label = title or "학습 보고서"
+        return f"최근 report 기반으로 {label} 후속 packet을 정리한다"
+    if tag == "git":
+        label = title or "최신 커밋"
+        return f"최근 git 변경({label})을 기준으로 다음 packet 초안을 만든다"
+    if title:
+        return f"최근 {tag} 시그널 기반으로 {title} 후속 packet을 만든다"
+    return "최근 로그와 replay lens를 기준으로 다음 packet 초안을 만든다"
+
+
+def _find_wp_in_queue(wp_id: str) -> dict:
+    """Return the queue entry for *wp_id*, searching through all capability groups.
+
+    Queue structure: capabilities[].work_packets[] (no spirals nesting).
+    """
+    if not wp_id:
+        return {}
+    queue_data = load_yaml(WP_QUEUE_PATH)
+    for cap in queue_data.get("capabilities", []):
+        for wp in cap.get("work_packets", []):
+            if isinstance(wp, dict) and wp.get("id") == wp_id:
+                return wp
+    return {}
+
+
+def build_replay_next_packet() -> dict:
+    """Build an actionable next-WP recommendation from next-actions.yaml + wp-queue."""
+    next_actions = load_yaml(NEXT_ACTIONS_PATH)
+    next_wp_id = next_actions.get("next_wp", "")
+    if not next_wp_id:
+        queue = next_actions.get("queue", [])
+        if isinstance(queue, list) and queue:
+            next_wp_id = queue[0].get("id", "") if isinstance(queue[0], dict) else ""
+
+    if not next_wp_id:
+        return {}
+
+    wp = _find_wp_in_queue(next_wp_id)
+    if not wp:
+        return {"id": next_wp_id, "goal": "", "type": "infra", "stage": "A", "validation": []}
+
+    validation = wp.get("validation", [])
+    if not isinstance(validation, list):
+        validation = []
+
+    return {
+        "id": next_wp_id,
+        "goal": str(wp.get("goal", "")).strip(),
+        "type": str(wp.get("tier", "infra")).strip(),
+        "stage": "A",
+        "validation": validation[:3],
+        "rationale": "next-actions.yaml priority 1 WP — DAG 준비 완료 상태",
+    }
+
+
 def build_replay_packet(current_wp: dict) -> dict:
     live_feed = build_live_feed()
     lenses = load_yaml(LEARNING_REPLAY_PATH).get("lenses", [])
@@ -170,12 +278,10 @@ def build_replay_packet(current_wp: dict) -> dict:
     rationale = [f"{lens.get('title')}: {lens.get('teaches')}" for lens in matched_lenses[:3]]
     focus_tracks = [lens.get("track", {}).get("title") or lens.get("track", {}).get("id") or lens.get("title") for lens in matched_lenses[:3]]
     first_matched = matched_lenses[0]["matched"][0] if matched_lenses else {}
-    goal = (
-        f"최근 {first_matched.get('tag', 'log')} 시그널을 기준으로 {first_matched.get('detail', '다음 packet을 정리한다')}"
-        if matched_lenses else
-        "최근 로그와 replay lens를 기준으로 다음 packet 초안을 만든다"
-    )
+    goal = replay_goal_from_signal(first_matched) if matched_lenses else "최근 로그와 replay lens를 기준으로 다음 packet 초안을 만든다"
     validation = current_wp.get("validation", []) if isinstance(current_wp.get("validation", []), list) else []
+    audit_signals = [s for s in live_feed if s.get("tag") in ("audit", "git")][:5]
+    replay_next_packet = build_replay_next_packet()
     return {
         "schema_version": "1",
         "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
@@ -186,6 +292,8 @@ def build_replay_packet(current_wp: dict) -> dict:
         "rationale": rationale,
         "read_first": reads,
         "validation": validation[:3],
+        "audit_signals": audit_signals,
+        "replay_next_packet": replay_next_packet,
         "matched_lenses": [
             {
                 "id": lens.get("id", ""),

@@ -20,6 +20,7 @@
     "risks",
     "next_action",
     "changed_files",
+    "read_files",
     "evidence",
     "provider",
     "token_usage",
@@ -267,6 +268,12 @@
       "$ref": "#/$defs/nonEmptyString"
     },
     "changed_files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/filePath"
+      }
+    },
+    "read_files": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/filePath"

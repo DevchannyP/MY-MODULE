@@ -54,6 +54,7 @@ function baseReport(root, overrides = {}) {
     evidence_status: 'observed',
     summary: 'security test',
     changed_files: [],
+    read_files: [],
     evidence: [{ type: 'command', path: evidencePath }],
     provider: {
       provider_id: 'null-harness-provider',
@@ -142,6 +143,7 @@ test('[security eval] V3 — evidence fabrication: PASS claim with empty evidenc
     evidence_status: 'observed',
     summary: 'test',
     changed_files: [],
+    read_files: [],
     evidence: [],  // EMPTY — must violate output schema
     provider: {
       provider_id: 'null-harness-provider',

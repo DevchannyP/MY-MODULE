@@ -1,4 +1,11 @@
-as_of: "2026-04-16"
-selection_policy: "define a new work packet from the highest-ROI uncovered need when the queue is empty"
-next_wp: null
-queue: []
+as_of: '2026-04-26'
+selection_policy: 'handoff-perfect-loop-first: context drift와 dirty baseline을 보호한
+  뒤 실행 가능한 SPIRAL-20 handoff 체인을 진행한다'
+next_wp: WP-HO-012
+queue:
+- id: WP-HO-012
+  priority: P1
+  status: blocked
+  blocked_by:
+  - WP-HO-011
+  reason: promotion pipeline과 handoff bundle 연결

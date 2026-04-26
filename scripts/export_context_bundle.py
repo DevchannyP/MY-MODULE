@@ -29,6 +29,19 @@ GOAL_TO_PROFILE = {
     "stateful-ops": "stateful-ops-routing",
 }
 
+DEFAULT_BUDGET_POLICY = {
+    "primary_token_limit": 6000,
+    "active_token_limit": 18000,
+    "deferred_token_limit": 12000,
+    "read_later_default": "excluded_from_active_context",
+    "read_later_exception_requires": [
+        "operator approval",
+        "specific path",
+        "reason",
+        "expected command or file to inspect",
+    ],
+}
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Export Workflow OS context bundle")
@@ -122,6 +135,68 @@ def summarize_metrics(paths: list[str]) -> dict:
     }
 
 
+def budget_policy(routing_catalog: dict, profile: dict) -> dict:
+    catalog_policy = routing_catalog.get("budget_policy") if isinstance(routing_catalog.get("budget_policy"), dict) else {}
+    profile_policy = profile.get("budget_policy") if isinstance(profile.get("budget_policy"), dict) else {}
+    merged = {**DEFAULT_BUDGET_POLICY, **catalog_policy, **profile_policy}
+    return {
+        "primary_token_limit": int(merged.get("primary_token_limit") or DEFAULT_BUDGET_POLICY["primary_token_limit"]),
+        "active_token_limit": int(merged.get("active_token_limit") or DEFAULT_BUDGET_POLICY["active_token_limit"]),
+        "deferred_token_limit": int(merged.get("deferred_token_limit") or DEFAULT_BUDGET_POLICY["deferred_token_limit"]),
+        "read_later_default": str(merged.get("read_later_default") or DEFAULT_BUDGET_POLICY["read_later_default"]),
+        "read_later_exception_requires": ensure_list(merged.get("read_later_exception_requires")) or DEFAULT_BUDGET_POLICY["read_later_exception_requires"],
+    }
+
+
+def risk_status(value: int, limit: int) -> str:
+    if limit <= 0:
+        return "unknown"
+    if value <= limit:
+        return "pass"
+    if value <= limit * 1.5:
+        return "warn"
+    return "risk"
+
+
+def build_budget_risk(first_summary: dict, next_summary: dict, later_summary: dict, policy: dict) -> dict:
+    primary_tokens = first_summary["estimated_tokens"]
+    active_tokens = first_summary["estimated_tokens"] + next_summary["estimated_tokens"]
+    deferred_tokens = later_summary["estimated_tokens"]
+    primary_status = risk_status(primary_tokens, policy["primary_token_limit"])
+    active_status = risk_status(active_tokens, policy["active_token_limit"])
+    deferred_status = risk_status(deferred_tokens, policy["deferred_token_limit"])
+    statuses = [primary_status, active_status, deferred_status]
+    overall = "risk" if "risk" in statuses else "warn" if "warn" in statuses else "pass"
+    return {
+        "status": overall,
+        "primary_status": primary_status,
+        "active_status": active_status,
+        "deferred_status": deferred_status,
+        "primary_estimated_tokens": primary_tokens,
+        "active_estimated_tokens": active_tokens,
+        "deferred_excluded_tokens": deferred_tokens,
+        "thresholds": {
+            "primary_token_limit": policy["primary_token_limit"],
+            "active_token_limit": policy["active_token_limit"],
+            "deferred_token_limit": policy["deferred_token_limit"],
+        },
+    }
+
+
+def build_read_later_exceptions(later_summary: dict) -> list[dict]:
+    exceptions: list[dict] = []
+    for item in later_summary["paths"]:
+        exceptions.append({
+            "path": item["path"],
+            "approval_required": True,
+            "reason_required": True,
+            "estimated_tokens": item["estimated_tokens"],
+            "file_count": item["file_count"],
+            "guidance": "read_later는 active context에서 제외한다. 필요한 경우 특정 path와 reason을 적어 승인 후 재읽기한다.",
+        })
+    return exceptions
+
+
 def infer_goal_from_current_wp(current_wp: dict, requested_goal: str) -> str:
     if requested_goal:
         return requested_goal
@@ -145,10 +220,11 @@ def routing_profile(goal: str, routing_catalog: dict) -> dict:
 
 def build_bundle(goal: str, current_wp: dict, routing_catalog: dict, constraints: dict) -> dict:
     profile = routing_profile(goal, routing_catalog)
+    policy = budget_policy(routing_catalog, profile)
     context_budget = current_wp.get("context_budget", {}) if isinstance(current_wp.get("context_budget", {}), dict) else {}
     read_first = dedupe_strings(ensure_list(profile.get("must_read")) + ensure_list(context_budget.get("tier_reads")))
     read_next = dedupe_strings(ensure_list(profile.get("expand_if_needed")) + ensure_list(context_budget.get("context_reads")))
-    read_later = dedupe_strings(ensure_list(profile.get("defer_until_execution")))
+    read_later = dedupe_strings(ensure_list(profile.get("defer_until_execution")) + ensure_list(context_budget.get("read_later")))
     protected_core = dedupe_strings(ensure_list(current_wp.get("scope_out")))
     hard_constraints = [
         item.get("rule", "")
@@ -163,6 +239,7 @@ def build_bundle(goal: str, current_wp: dict, routing_catalog: dict, constraints
     first_summary = summarize_metrics(read_first)
     next_summary = summarize_metrics(read_next)
     later_summary = summarize_metrics(read_later)
+    budget_risk = build_budget_risk(first_summary, next_summary, later_summary, policy)
 
     return {
         "schema_version": "1",
@@ -178,14 +255,22 @@ def build_bundle(goal: str, current_wp: dict, routing_catalog: dict, constraints
         "read_first": read_first,
         "read_next": read_next,
         "read_later": read_later,
+        "read_later_policy": {
+            "default": policy["read_later_default"],
+            "exception_requires": policy["read_later_exception_requires"],
+            "exceptions": build_read_later_exceptions(later_summary),
+        },
         "protected_core": protected_core,
         "core_guardrails": core_guardrails,
         "budget": {
             "primary": {k: v for k, v in first_summary.items() if k != "paths"},
             "secondary": {k: v for k, v in next_summary.items() if k != "paths"},
             "deferred": {k: v for k, v in later_summary.items() if k != "paths"},
+            "active_estimated_tokens": first_summary["estimated_tokens"] + next_summary["estimated_tokens"],
+            "deferred_excluded_by_default": True,
             "total_estimated_tokens": first_summary["estimated_tokens"] + next_summary["estimated_tokens"] + later_summary["estimated_tokens"],
         },
+        "budget_risk": budget_risk,
         "path_metrics": {
             "read_first": first_summary["paths"],
             "read_next": next_summary["paths"],

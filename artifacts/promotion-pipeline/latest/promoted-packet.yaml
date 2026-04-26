@@ -1,5 +1,5 @@
-id: WP-PROMOTE-2026-04-22-PLAN
-goal: 최근 audit 시그널을 기준으로 actor? 9543a440d4e4
+id: WP-PROMOTE-2026-04-26-PLAN
+goal: 최근 audit 시그널 기반으로 zone-feature-flags 후속 packet을 정리한다
 type: planning
 stage: A
 status: in_progress
@@ -9,11 +9,15 @@ scope_in:
 - requirements/requirements.yaml
 - requirements/constraints.yaml
 - master-shell/catalog/project-intake-canvas.yaml
+- scripts/generate_replay_packet.py
+- scripts/generate_routing_learning_ledger.py
 - master-shell/catalog/project-blueprints.yaml
 - master-shell/catalog/planning-studio-modes.yaml
 - master-shell/catalog/ai-learning-map.yaml
 scope_out:
 - domains/
+- src/infrastructure/ai/
+- artifacts/master-planner/index.html
 - system OS core
 - unrelated domains
 constraints:
@@ -22,7 +26,7 @@ constraints:
 - primary/secondary context lock이 예산 안에 있는 packet만 승격한다
 done_when:
 - replay에서 제안된 goal이 evidence와 함께 정리된다
-- primary read bundle 5개만으로 1차 구현/검증을 끝낸다
+- primary read bundle 7개만으로 1차 구현/검증을 끝낸다
 - python3 scripts/validate_master_shell.py 통과
 - python3 scripts/generate-master-planner.py --silent 통과
 fail_if:
@@ -48,17 +52,20 @@ context_budget:
   - requirements/requirements.yaml
   - requirements/constraints.yaml
   - master-shell/catalog/project-intake-canvas.yaml
+  - scripts/generate_replay_packet.py
+  - scripts/generate_routing_learning_ledger.py
   context_reads:
   - master-shell/catalog/project-blueprints.yaml
   - master-shell/catalog/planning-studio-modes.yaml
   - master-shell/catalog/ai-learning-map.yaml
   - master-shell/catalog/master-os-relations.yaml
+  - artifacts/promotion-pipeline/latest/handoff-bundle.json
   estimated_turns: 3
   max_new_files: 3
   max_modified_files: 6
-  budget_primary_tokens: 4931
-  budget_total_tokens: 543108
+  budget_primary_tokens: 11076
+  budget_total_tokens: 565165
 template_id: planner-implementation
 planning_mode: ''
-generated_at: '2026-04-22T14:43:55.751152+00:00'
-applied_at: '2026-04-22T14:43:55.751172+00:00'
+generated_at: '2026-04-26T14:16:32.231419+00:00'
+applied_at: '2026-04-26T14:16:32.231436+00:00'

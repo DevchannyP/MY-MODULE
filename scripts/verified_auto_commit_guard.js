@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const { resolveValidationProfile } = require('./resolve_validation_profile');
 const { buildBranchBootstrapSummary } = require('./branch_bootstrap');
+const { buildActionableFailureSummary } = require('./harness-dashboard');
 
 const ROOT = path.resolve(__dirname, '..');
 const PROTECTED_BRANCHES = new Set(['main', 'develop']);
@@ -118,6 +119,8 @@ function buildAutoCommitGuardSummary({
     : validationProfile.commands.map((command) => runner(command));
 
   const guard = buildGuardConditions(branchSummary, gitState, verificationResults, mode);
+  const failureSummary = buildActionableFailureSummary(ROOT);
+  const preflightWarnings = failureSummary.warnings;
 
   const commitParts = splitCommitSubject(branchSummary.commit_template.subject);
 
@@ -129,6 +132,7 @@ function buildAutoCommitGuardSummary({
     current_wp: branchSummary.current_wp,
     validation_profile: validationProfile,
     verification_results: verificationResults,
+    preflight_warnings: preflightWarnings,
     commit_candidate: {
       branch: branchSummary.recommended_branch,
       subject: branchSummary.commit_template.subject,
@@ -141,9 +145,11 @@ function buildAutoCommitGuardSummary({
     guard,
     next_action: guard.can_apply
       ? 'apply 가능'
-      : mode === 'dry-run'
-        ? 'verify 모드로 검증 실행'
-        : '실패 원인 해소 후 재검증',
+      : preflightWarnings.length > 0
+        ? 'preflight warning 확인 후 검증 실행'
+        : mode === 'dry-run'
+          ? 'verify 모드로 검증 실행'
+          : '실패 원인 해소 후 재검증',
   };
 }
 
@@ -185,6 +191,14 @@ function printHuman(summary) {
     '[Validation Commands]',
     ...summary.validation_profile.commands.map((item) => `- ${item}`),
   ];
+
+  if (summary.preflight_warnings.length > 0) {
+    lines.push('', '[Preflight Warnings]');
+    summary.preflight_warnings.forEach((warning) => {
+      lines.push(`- ${warning.severity.toUpperCase()} ${warning.id}: ${warning.message}`);
+      lines.push(`  preflight: ${warning.preflight_command}`);
+    });
+  }
 
   if (summary.mode !== 'dry-run') {
     lines.push('', '[Verification Results]');

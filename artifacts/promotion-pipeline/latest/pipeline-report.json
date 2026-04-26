@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
   "goal": "plan-and-learn",
-  "promotion_ready": true,
+  "promotion_ready": false,
   "artifacts": {
     "context_lock": "/root/workspace/my-module/artifacts/promotion-pipeline/latest/context-lock.json",
     "handoff_bundle": "/root/workspace/my-module/artifacts/promotion-pipeline/latest/handoff-bundle.json",
@@ -10,14 +10,14 @@
     "pipeline_report": "/root/workspace/my-module/artifacts/promotion-pipeline/latest/pipeline-report.json"
   },
   "fit_counts": {
-    "pass": 3,
+    "pass": 4,
     "warn": 2,
     "risk": 1
   },
   "locked_context_budget": {
-    "primary_estimated_tokens": 4931,
-    "secondary_estimated_tokens": 5501,
-    "locked_total_estimated_tokens": 10432
+    "primary_estimated_tokens": 11076,
+    "secondary_estimated_tokens": 13132,
+    "locked_total_estimated_tokens": 24208
   },
   "commands": {
     "context_drift_json": "python3 scripts/check_context_drift.py --input /root/workspace/my-module/artifacts/promotion-pipeline/latest/context-lock.json --json",

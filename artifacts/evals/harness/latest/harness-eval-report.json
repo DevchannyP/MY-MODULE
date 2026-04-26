@@ -1,25 +1,25 @@
 {
-  "eval_run_id": "66111c78-4fd0-433a-b36f-3f1849691aa3",
-  "generated_at_utc": "2026-04-22T15:23:25.629Z",
+  "eval_run_id": "1084f7bc-ac22-4b2e-88c7-e8962bd47afa",
+  "generated_at_utc": "2026-04-26T14:16:24.189Z",
   "repository": "my-module",
   "suite": "harness-core-offline",
   "baseline_id": "harness-spiral19-baseline-2026-04-18",
   "prompt_version": "phase0-baseline-candidate",
   "status": "PASS",
   "summary": {
-    "golden_case_count": 10,
+    "golden_case_count": 11,
     "safety_case_count": 5,
     "baseline_case_count": 10,
-    "case_count_delta": 0,
+    "case_count_delta": 1,
     "modes": {
       "Research": 2,
-      "Build": 2,
+      "Build": 3,
       "Debug": 2,
       "Operate": 2,
       "Policy": 2
     },
     "packet_types": {
-      "arch": 3,
+      "arch": 4,
       "governance": 3,
       "meta": 2,
       "shell": 1,
@@ -123,5 +123,73 @@
   "next_steps": [
     "모델 호출 기반 grader를 추가한다",
     "baseline 대비 schema_violation_rate와 retry_rate를 측정한다"
-  ]
+  ],
+  "provider_invocations": [
+    {
+      "generated_at_utc": "2026-04-26T14:16:35.460Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-medium",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-9b960387-8606-41a4-b406-d9c6233db33f",
+      "wp_id": "WP-AUTO-001",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:16:30.847Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-1f63a8ad-2f87-48a1-96b8-fda7428b3c15",
+      "wp_id": "WP-AUTO-004",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:16:29.655Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-1f63a8ad-2f87-48a1-96b8-fda7428b3c15",
+      "wp_id": "WP-AUTO-003",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:16:28.434Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-1f63a8ad-2f87-48a1-96b8-fda7428b3c15",
+      "wp_id": "WP-AUTO-002",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:16:27.115Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-1f63a8ad-2f87-48a1-96b8-fda7428b3c15",
+      "wp_id": "WP-AUTO-001",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    }
+  ],
+  "last_provider_invocation": {
+    "generated_at_utc": "2026-04-26T14:16:35.460Z",
+    "provider_id": "null-harness-provider",
+    "route_id": "mini-build-medium",
+    "selected_model_tier": "mini",
+    "session_id": "mpo-9b960387-8606-41a4-b406-d9c6233db33f",
+    "wp_id": "WP-AUTO-001",
+    "schema_valid": true,
+    "fallback_applied": false,
+    "latency_ms": 0
+  }
 }

@@ -7,7 +7,10 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { ContractValidator } = require('../../infrastructure/mpo/ContractValidator');
-const { validateCompletionReport } = require('../../../scripts/validate-completion-report');
+const {
+  validateCompletionReport,
+  validateCompletionReportInput,
+} = require('../../../scripts/validate-completion-report');
 const { completeWorkPacket } = require('../../../scripts/wp-complete');
 const { createMpoPipeline } = require('../../../scripts/mpo-pipeline');
 const { HarnessProviderAdapter } = require('../../infrastructure/ai/HarnessProviderAdapter');
@@ -109,6 +112,7 @@ function createReport(root, overrides = {}) {
     ],
     next_action: 'advance to next wp',
     changed_files: ['src/server/routes/mpo.js'],
+    read_files: [],
     evidence: [
       {
         type: 'command',
@@ -194,6 +198,122 @@ test('[mpo execution] truthfulness gate rejects changed files outside allowed bo
   assert.match(result.violations.join('\n'), /forbidden_paths/);
 });
 
+test('[mpo execution] truthfulness gate rejects read files outside context envelope', () => {
+  const root = createTempRoot();
+  const validator = new ContractValidator({ root: REPO_ROOT });
+  fs.mkdirSync(path.join(root, 'contracts/harness'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'memory'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'contracts/harness/output.schema.json'), '{}\n', 'utf8');
+  fs.writeFileSync(path.join(root, 'memory/secret.yaml'), 'secret: true\n', 'utf8');
+  const report = createReport(root, {
+    changed_files: [],
+    read_files: [
+      'contracts/harness/output.schema.json',
+      'memory/secret.yaml',
+    ],
+  });
+
+  const result = validateCompletionReport(report, {
+    root,
+    validator,
+    wp: {
+      context_envelope: {
+        canonical_files: ['contracts/harness/output.schema.json'],
+        partial_files: [],
+      },
+      forbidden_paths: ['memory/**'],
+    },
+    commandResults: [
+      {
+        command: 'npm test',
+        status: 'PASS',
+      },
+    ],
+  });
+
+  assert.equal(result.verified, false);
+  assert.match(result.violations.join('\n'), /read file outside context_envelope/);
+  assert.match(result.violations.join('\n'), /read file in forbidden_paths/);
+});
+
+test('[mpo execution] truthfulness gate rejects invalid read file path shapes', () => {
+  const root = createTempRoot();
+  const validator = new ContractValidator({ root: REPO_ROOT });
+  fs.mkdirSync(path.join(root, 'contracts/harness'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'contracts/harness/output.schema.json'), '{}\n', 'utf8');
+  const report = createReport(root, {
+    changed_files: [],
+    read_files: [
+      'contracts/harness/output.schema.json',
+      'contracts/harness/output.schema.json',
+      '/etc/passwd',
+      '../outside.yaml',
+    ],
+  });
+
+  const result = validateCompletionReport(report, {
+    root,
+    validator,
+    wp: {
+      context_envelope: {
+        canonical_files: ['contracts/harness/output.schema.json'],
+        partial_files: [],
+      },
+    },
+    commandResults: [
+      {
+        command: 'npm test',
+        status: 'PASS',
+      },
+    ],
+  });
+
+  assert.equal(result.verified, false);
+  assert.match(result.violations.join('\n'), /duplicate read file path/);
+  assert.match(result.violations.join('\n'), /absolute or contains traversal/);
+});
+
+test('[mpo execution] validate-completion-report CLI input rejects invalid read_files', () => {
+  const root = createTempRoot();
+  fs.mkdirSync(path.join(root, 'contracts/harness'), { recursive: true });
+  fs.copyFileSync(
+    path.join(REPO_ROOT, 'contracts/harness/output.schema.json'),
+    path.join(root, 'contracts/harness/output.schema.json'),
+  );
+  fs.copyFileSync(
+    path.join(REPO_ROOT, 'contracts/harness/completion-report.schema.json'),
+    path.join(root, 'contracts/harness/completion-report.schema.json'),
+  );
+  const report = createReport(root, {
+    changed_files: [],
+    read_files: [
+      'contracts/harness/output.schema.json',
+      '/etc/passwd',
+    ],
+  });
+  const input = {
+    report,
+    root,
+    wp: {
+      context_envelope: {
+        canonical_files: ['contracts/harness/output.schema.json'],
+        partial_files: [],
+      },
+    },
+    commandResults: [
+      {
+        command: 'npm test',
+        status: 'PASS',
+      },
+    ],
+  };
+
+  const result = validateCompletionReportInput(input);
+
+  assert.equal(result.verified, false);
+  assert.ok(result.violations.some((entry) => /absolute or contains traversal/.test(entry)));
+});
+
 test('[mpo execution] completeWorkPacket updates memory and report atomically-shaped outputs', () => {
   const root = createTempRoot();
   const validator = new ContractValidator({ root: REPO_ROOT });
@@ -232,6 +352,79 @@ test('[mpo execution] completeWorkPacket updates memory and report atomically-sh
   assert.match(nextActionsText, /next_wp: "WP-TEST-002"/);
   assert.match(queueText, /session_id: "mpo-session-test"/);
   assert.match(queueText, /wp_id: "WP-TEST-001"/);
+});
+
+test('[mpo execution] completeWorkPacket rolls back memory transaction on write failure', () => {
+  const root = createTempRoot();
+  const validator = new ContractValidator({ root: REPO_ROOT });
+  const report = createReport(root, {
+    changed_files: [],
+  });
+  const wp = {
+    id: 'WP-TEST-001',
+  };
+  const originalState = fs.readFileSync(path.join(root, 'memory/current-state.yaml'), 'utf8');
+  const originalCurrentWp = fs.readFileSync(path.join(root, 'memory/current-wp.yaml'), 'utf8');
+  const originalRenameSync = fs.renameSync;
+  let renameCount = 0;
+
+  fs.renameSync = function patchedRenameSync(source, target) {
+    renameCount += 1;
+    if (renameCount === 3 && String(target).endsWith('memory/current-wp.yaml')) {
+      throw Object.assign(new Error('injected write failure'), { code: 'EINJECTED' });
+    }
+    return originalRenameSync.call(fs, source, target);
+  };
+
+  try {
+    assert.throws(
+      () => completeWorkPacket(
+        {
+          sessionId: 'mpo-session-test',
+          wp,
+          report,
+          nextWpId: 'WP-TEST-002',
+        },
+        {
+          root,
+          validator,
+        },
+      ),
+      /injected write failure/,
+    );
+  } finally {
+    fs.renameSync = originalRenameSync;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  assert.equal(fs.existsSync(path.join(root, `worklog/reports/${today}_WP-TEST-001.yaml`)), false);
+  assert.equal(fs.readFileSync(path.join(root, 'memory/current-state.yaml'), 'utf8'), originalState);
+  assert.equal(fs.readFileSync(path.join(root, 'memory/current-wp.yaml'), 'utf8'), originalCurrentWp);
+});
+
+test('[mpo execution] completeWorkPacket rejects unverified non-PASS reports', () => {
+  const root = createTempRoot();
+  const validator = new ContractValidator({ root: REPO_ROOT });
+  const report = createReport(root, {
+    verification_status: 'FAIL',
+    verification: [{ name: 'npm test', status: 'FAIL', note: 'failed' }],
+  });
+
+  assert.throws(
+    () => completeWorkPacket(
+      {
+        sessionId: 'mpo-session-test',
+        wp: { id: 'WP-TEST-001' },
+        report,
+        nextWpId: 'WP-TEST-002',
+      },
+      {
+        root,
+        validator,
+      },
+    ),
+    /M11 requires a PASS verified report/,
+  );
 });
 
 test('[mpo execution] HarnessProviderAdapter executeWorkPacket falls back to null provider', async () => {
@@ -287,6 +480,7 @@ test('[mpo execution] pipeline merges provider summary and evidence into complet
         session_id: sessionId,
         wp_id: wp.id,
         changed_files: [],
+        read_files: [],
         summary: 'provider merged summary',
         analysis: ['provider-analysis=observed'],
         change_points: [
@@ -335,4 +529,51 @@ test('[mpo execution] pipeline merges provider summary and evidence into complet
   assert.ok(report.evidence.some((entry) => entry.type === 'log' && entry.path === 'artifacts/provider/live-evidence.txt'));
   assert.ok(report.artifacts.includes('artifacts/provider/live-evidence.txt'));
   assert.equal(report.change_points[0].target, 'src/server/routes/mpo.js');
+});
+
+test('[mpo execution] truthfulness gate rejects PASS with empty tests_run', () => {
+  const root = createTempRoot();
+  const validator = new ContractValidator({ root: REPO_ROOT });
+  const report = createReport(root, {
+    tests_run: [],
+  });
+
+  const result = validateCompletionReport(report, {
+    root,
+    validator,
+    wp: {},
+    commandResults: [],
+  });
+
+  assert.equal(result.verified, false);
+  assert.ok(
+    result.violations.some((v) => /tests_run is empty or missing/.test(v)),
+    `Expected violation about empty tests_run, got: ${result.violations.join(', ')}`,
+  );
+});
+
+test('[mpo execution] truthfulness gate rejects NOT_RUN in tests_run', () => {
+  // output.schema.json rejects NOT_RUN before the runtime truthfulness check is reached.
+  const root = createTempRoot();
+  const validator = new ContractValidator({ root: REPO_ROOT });
+  const report = createReport(root, {
+    tests_run: [
+      { name: 'unit tests', status: 'PASS' },
+      { name: 'integration check', status: 'NOT_RUN' },
+    ],
+  });
+
+  assert.throws(
+    () => validateCompletionReport(report, {
+      root,
+      validator,
+      wp: {},
+      commandResults: [],
+    }),
+    (err) => {
+      const msg = String(err.message || err);
+      return /CONTRACT_VALIDATION_FAILED|CONTRACT-INV|NOT_RUN|tests_run/.test(msg);
+    },
+    'Expected contract or truthfulness error rejecting NOT_RUN in tests_run',
+  );
 });

@@ -9,7 +9,13 @@ const { spawnSync } = require('node:child_process');
 const { ContractValidator, readYaml } = require('../src/infrastructure/mpo/ContractValidator');
 const { createModuleRegistry } = require('../src/infrastructure/mpo/ModuleRegistry');
 const { resolveHarnessRuntimeRoute } = require('../src/infrastructure/HarnessRuntimeRouter');
-const { validateCompletionReport, matchesPattern } = require('./validate-completion-report');
+const {
+  validateCompletionReport,
+  matchesPattern,
+  isReadAllowedByEnvelope,
+  normalizePath,
+  isAbsoluteOrTraversalPath,
+} = require('./validate-completion-report');
 const { completeWorkPacket } = require('./wp-complete');
 const { recordFailurePattern } = require('./check-failure-patterns');
 
@@ -105,6 +111,45 @@ function normalizeProviderEvidence(entry) {
   };
 }
 
+function hasTrustedContext(wp = {}) {
+  const canonical = ensureArray(wp.context_envelope?.canonical_files);
+  const partial = ensureArray(wp.context_envelope?.partial_files);
+  return canonical.length + partial.length > 0;
+}
+
+function providerRequiresReadFiles(providerExecution = {}, wp = {}) {
+  const providerId = String(providerExecution.provider?.provider_id || '').trim();
+  return providerId !== 'null-harness-provider' && hasTrustedContext(wp);
+}
+
+function normalizeReportedReadFiles(readFiles = []) {
+  const seen = new Set();
+  const normalized = [];
+  const violations = [];
+  ensureArray(readFiles).forEach((entry) => {
+    const raw = String(entry || '');
+    const relativePath = normalizePath(raw);
+    if (!relativePath) {
+      violations.push('read file path is empty');
+      return;
+    }
+    if (isAbsoluteOrTraversalPath(raw)) {
+      violations.push(`read file path is absolute or contains traversal: ${raw}`);
+      return;
+    }
+    if (seen.has(relativePath)) {
+      violations.push(`duplicate read file path: ${relativePath}`);
+      return;
+    }
+    seen.add(relativePath);
+    normalized.push(relativePath);
+  });
+  return {
+    read_files: normalized,
+    violations,
+  };
+}
+
 function updateRoutingLearningSnapshot(root, sessionId, intakePacket) {
   const logPath = path.join(root, 'artifacts/evals/harness/invocation-log.jsonl');
   const targetPath = path.join(root, 'artifacts/evals/harness/latest/mpo-routing-learning.json');
@@ -154,6 +199,7 @@ function buildMpoWorkPacketResult({
 }) {
   const verificationStatus = commandResults.every((entry) => entry.status === 'PASS') ? 'PASS' : 'FAIL';
   const evidence = [];
+  const readFiles = ensureArray(providerExecution.read_files).map((entry) => String(entry || '').trim()).filter(Boolean);
   const providerEvidence = ensureArray(providerExecution.evidence)
     .map(normalizeProviderEvidence)
     .filter(Boolean);
@@ -241,6 +287,7 @@ function buildMpoWorkPacketResult({
       ? 'Advance to next work packet.'
       : 'Stop and inspect failure evidence.',
     changed_files: ensureArray(changedFiles),
+    read_files: readFiles,
     evidence: mergedEvidence,
     provider,
     token_usage: {
@@ -278,6 +325,7 @@ function buildFailureWorkPacketResult({
       summary: `${wp.id} failed ${String(reason || 'execution')} and requires auto-replan.`,
       next_action: 'Execute auto-replanned packet within the same boundary.',
       changed_files: ensureArray(changedFiles).length > 0 ? ensureArray(changedFiles) : ensureArray(baseReport.changed_files),
+      read_files: ensureArray(baseReport.read_files),
       verification: ensureArray(baseReport.verification).concat({
         name: String(reason || 'failure'),
         status: 'FAIL',
@@ -349,6 +397,7 @@ function buildFailureWorkPacketResult({
     ],
     next_action: 'Execute auto-replanned packet within the same boundary.',
     changed_files: ensureArray(changedFiles),
+    read_files: [],
     evidence: [evidenceEntry],
     provider,
     token_usage: {
@@ -560,6 +609,153 @@ async function executeDag(
       });
 
       const changedFiles = ensureArray(providerExecution.changed_files || []);
+      if (providerRequiresReadFiles(providerExecution, wp) && !Array.isArray(providerExecution.read_files)) {
+        const failureDetail = 'provider omitted required read_files array';
+        const failureReport = buildFailureWorkPacketResult({
+          sessionId: session.session_id,
+          wp,
+          route,
+          root,
+          provider: providerExecution.provider,
+          reason: 'read_files_missing',
+          detail: failureDetail,
+          changedFiles,
+        });
+        emitEvent('mpo.wp.failed', {
+          session_id: session.session_id,
+          wp_id: wp.id,
+          reason: 'read_files_missing',
+          detail: failureDetail,
+        });
+        recordFailurePattern({
+          rootCauseCategory: 'read-files-missing',
+          message: failureDetail,
+          wpId: wp.id,
+          sessionId: session.session_id,
+        }, { root, validator });
+        results.push({ wp, report: failureReport });
+        completed.add(wp.id);
+        if (replanned || isAutoReplanWorkPacket(wp)) {
+          throw new Error(`Provider omitted read_files for ${wp.id}`);
+        }
+        const replannedWp = createAutoReplannedPacket({
+          session,
+          failedWp: wp,
+          detail: failureDetail,
+        });
+        wpList.push(replannedWp);
+        wireAutoReplannedPacket(session, wp, replannedWp);
+        replannedWpIds.push(replannedWp.id);
+        replanned = true;
+        emitEvent('mpo.plan.replanned', {
+          session_id: session.session_id,
+          failed_wp_id: wp.id,
+          replanned_wp_id: replannedWp.id,
+          reason: 'read_files_missing',
+        });
+        break;
+      }
+      const normalizedReadFiles = normalizeReportedReadFiles(providerExecution.read_files || []);
+      if (normalizedReadFiles.violations.length > 0) {
+        const failureDetail = normalizedReadFiles.violations.join('; ');
+        const failureReport = buildFailureWorkPacketResult({
+          sessionId: session.session_id,
+          wp,
+          route,
+          root,
+          provider: providerExecution.provider,
+          reason: 'read_files_invalid',
+          detail: failureDetail,
+          changedFiles,
+        });
+        failureReport.read_files = normalizedReadFiles.read_files;
+        emitEvent('mpo.wp.failed', {
+          session_id: session.session_id,
+          wp_id: wp.id,
+          reason: 'read_files_invalid',
+          violations: normalizedReadFiles.violations,
+        });
+        recordFailurePattern({
+          rootCauseCategory: 'read-files-invalid',
+          message: failureDetail,
+          wpId: wp.id,
+          sessionId: session.session_id,
+        }, { root, validator });
+        results.push({ wp, report: failureReport });
+        completed.add(wp.id);
+        if (replanned || isAutoReplanWorkPacket(wp)) {
+          throw new Error(`Provider reported invalid read_files for ${wp.id}`);
+        }
+        const replannedWp = createAutoReplannedPacket({
+          session,
+          failedWp: wp,
+          detail: failureDetail,
+        });
+        wpList.push(replannedWp);
+        wireAutoReplannedPacket(session, wp, replannedWp);
+        replannedWpIds.push(replannedWp.id);
+        replanned = true;
+        emitEvent('mpo.plan.replanned', {
+          session_id: session.session_id,
+          failed_wp_id: wp.id,
+          replanned_wp_id: replannedWp.id,
+          reason: 'read_files_invalid',
+        });
+        break;
+      }
+      const readFiles = normalizedReadFiles.read_files;
+      const readOutsideEnvelope = readFiles.find((relativePath) => {
+        const outsideEnvelope = !isReadAllowedByEnvelope(relativePath, wp);
+        const forbidden = ensureArray(wp.forbidden_paths).some((pattern) => matchesPattern(relativePath, pattern));
+        return outsideEnvelope || forbidden;
+      });
+      if (readOutsideEnvelope) {
+        const failureDetail = `read file outside declared context envelope: ${readOutsideEnvelope}`;
+        const failureReport = buildFailureWorkPacketResult({
+          sessionId: session.session_id,
+          wp,
+          route,
+          root,
+          provider: providerExecution.provider,
+          reason: 'context_envelope_violation',
+          detail: failureDetail,
+          changedFiles,
+        });
+        failureReport.read_files = readFiles;
+        emitEvent('mpo.wp.failed', {
+          session_id: session.session_id,
+          wp_id: wp.id,
+          reason: 'context_envelope_violation',
+          detail: readOutsideEnvelope,
+        });
+        recordFailurePattern({
+          rootCauseCategory: 'context-envelope-violation',
+          message: failureDetail,
+          wpId: wp.id,
+          sessionId: session.session_id,
+        }, { root, validator });
+        results.push({ wp, report: failureReport });
+        completed.add(wp.id);
+        if (replanned || isAutoReplanWorkPacket(wp)) {
+          throw new Error(`Context envelope violation detected for ${wp.id}: ${readOutsideEnvelope}`);
+        }
+        const replannedWp = createAutoReplannedPacket({
+          session,
+          failedWp: wp,
+          detail: failureDetail,
+        });
+        wpList.push(replannedWp);
+        wireAutoReplannedPacket(session, wp, replannedWp);
+        replannedWpIds.push(replannedWp.id);
+        replanned = true;
+        emitEvent('mpo.plan.replanned', {
+          session_id: session.session_id,
+          failed_wp_id: wp.id,
+          replanned_wp_id: replannedWp.id,
+          reason: 'context_envelope_violation',
+        });
+        break;
+      }
       const changedOutsideBoundary = changedFiles.find((relativePath) => {
         const outsideAllowed = ensureArray(wp.allowed_paths).length > 0
           && !ensureArray(wp.allowed_paths).some((pattern) => matchesPattern(relativePath, pattern));
@@ -812,4 +1008,5 @@ module.exports = {
   createMpoPipeline,
   buildRawIntent,
   updateRoutingLearningSnapshot,
+  normalizeReportedReadFiles,
 };

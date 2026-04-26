@@ -199,6 +199,7 @@ test('[mpo runtime smoke] auto-replanned execution surfaces completed_with_repla
               session_id: sessionId,
               wp_id: wp.id,
               changed_files: ['node_modules/blocked.js'],
+              read_files: [],
               provider: {
                 provider_id: 'smoke-provider',
                 route_id: String(route.route_id || 'smoke-route'),
@@ -213,6 +214,7 @@ test('[mpo runtime smoke] auto-replanned execution surfaces completed_with_repla
             session_id: sessionId,
             wp_id: wp.id,
             changed_files: [],
+            read_files: [],
             provider: {
               provider_id: 'smoke-provider',
               route_id: String(route.route_id || 'smoke-route'),
@@ -227,6 +229,7 @@ test('[mpo runtime smoke] auto-replanned execution surfaces completed_with_repla
           session_id: sessionId,
           wp_id: wp.id,
           changed_files: [],
+          read_files: [],
           provider: {
             provider_id: 'smoke-provider',
             route_id: String(route.route_id || 'smoke-route'),

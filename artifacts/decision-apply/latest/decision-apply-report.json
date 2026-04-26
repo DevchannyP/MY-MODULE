@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "recorded_at": "2026-04-22T14:43:48.721263+00:00",
+  "recorded_at": "2026-04-26T14:16:26.974712+00:00",
   "goal": "stateful-ops",
   "decision_gate": "blocked",
   "ready_to_apply": false,
@@ -10,7 +10,7 @@
     "execution_template_id": "ops-hardening-packet",
     "blueprint_id": "stateful-workflow-service"
   },
-  "recommended_next_command": "python3 scripts/run_promotion_pipeline.py --goal stateful-ops --json",
+  "recommended_next_command": "python3 scripts/generate_reread_queue.py --json",
   "artifacts": {
     "context_lock": "/root/workspace/my-module/artifacts/decision-apply/latest/context-lock.json",
     "handoff_bundle": "/root/workspace/my-module/artifacts/decision-apply/latest/handoff-bundle.json",

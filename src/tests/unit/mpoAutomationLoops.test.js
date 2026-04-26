@@ -106,6 +106,7 @@ test('[mpo automation] pipeline auto-replans after boundary violation and comple
             session_id: sessionId,
             wp_id: wp.id,
             changed_files: ['node_modules/blocked.js'],
+            read_files: [],
             provider: {
               provider_id: 'test-provider',
               route_id: String(route.route_id || 'test-route'),
@@ -120,6 +121,7 @@ test('[mpo automation] pipeline auto-replans after boundary violation and comple
           session_id: sessionId,
           wp_id: wp.id,
           changed_files: [],
+          read_files: [],
           provider: {
             provider_id: 'test-provider',
             route_id: String(route.route_id || 'test-route'),
@@ -134,6 +136,7 @@ test('[mpo automation] pipeline auto-replans after boundary violation and comple
         session_id: sessionId,
         wp_id: wp.id,
         changed_files: [],
+        read_files: [],
         provider: {
           provider_id: 'test-provider',
           route_id: String(route.route_id || 'test-route'),
@@ -173,4 +176,250 @@ test('[mpo automation] pipeline auto-replans after boundary violation and comple
   assert.equal(execution.results[execution.results.length - 1].wp.id, 'WP-AUTO-004');
   assert.ok(events.some((entry) => entry.type === 'mpo.plan.replanned'));
   assert.ok(fs.existsSync(path.join(root, execution.reconcile.report_path)));
+});
+
+test('[mpo automation] pipeline auto-replans after context envelope read violation', async () => {
+  const root = createRuntimeRoot();
+  const validator = new ContractValidator({ root });
+  const events = [];
+  let injectedFailure = false;
+  const adapter = {
+    async executeWorkPacket({ route = {}, sessionId = '', wp = {} } = {}) {
+      if (!wp.execution_result || wp.execution_result.auto_replan !== true) {
+        if (!injectedFailure) {
+          injectedFailure = true;
+          return {
+            session_id: sessionId,
+            wp_id: wp.id,
+            changed_files: [],
+            read_files: ['node_modules/private-package/index.js'],
+            provider: {
+              provider_id: 'test-provider',
+              route_id: String(route.route_id || 'test-route'),
+              selected_model_tier: String(route.selected_model_tier || 'mini'),
+              reasoning_effort: String(route.reasoning_effort || 'medium'),
+              fallback_applied: false,
+              model: 'test-mini',
+            },
+          };
+        }
+        return {
+          session_id: sessionId,
+          wp_id: wp.id,
+          changed_files: [],
+          read_files: [],
+          provider: {
+            provider_id: 'test-provider',
+            route_id: String(route.route_id || 'test-route'),
+            selected_model_tier: String(route.selected_model_tier || 'mini'),
+            reasoning_effort: String(route.reasoning_effort || 'medium'),
+            fallback_applied: false,
+            model: 'test-mini',
+          },
+        };
+      }
+      return {
+        session_id: sessionId,
+        wp_id: wp.id,
+        changed_files: [],
+        read_files: [],
+        provider: {
+          provider_id: 'test-provider',
+          route_id: String(route.route_id || 'test-route'),
+          selected_model_tier: String(route.selected_model_tier || 'standard'),
+          reasoning_effort: String(route.reasoning_effort || 'medium'),
+          fallback_applied: false,
+          model: 'test-standard',
+        },
+      };
+    },
+  };
+
+  const pipeline = createMpoPipeline({
+    root,
+    validator,
+    harnessProviderAdapter: adapter,
+    emitEvent(type, payload) {
+      events.push({ type, payload });
+    },
+  });
+
+  const session = await pipeline.createPlan({
+    goal: '문서 정리와 MPO dry-run 검증 경로를 확인해줘',
+    approvalRequested: false,
+  });
+  const execution = await pipeline.execute(session);
+
+  assert.equal(execution.replanned, true);
+  assert.equal(execution.results[0].report.verification_status, 'FAIL');
+  assert.deepEqual(execution.results[0].report.read_files, ['node_modules/private-package/index.js']);
+  assert.ok(events.some((entry) =>
+    entry.type === 'mpo.plan.replanned'
+    && entry.payload.reason === 'context_envelope_violation'
+  ));
+  assert.ok(execution.results.some((entry) => /-REPLAN$/.test(entry.wp.id)));
+});
+
+test('[mpo automation] pipeline auto-replans when live provider omits required read_files', async () => {
+  const root = createRuntimeRoot();
+  const validator = new ContractValidator({ root });
+  const events = [];
+  let injectedFailure = false;
+  const adapter = {
+    async executeWorkPacket({ route = {}, sessionId = '', wp = {} } = {}) {
+      if (!wp.execution_result || wp.execution_result.auto_replan !== true) {
+        if (!injectedFailure) {
+          injectedFailure = true;
+          return {
+            session_id: sessionId,
+            wp_id: wp.id,
+            changed_files: [],
+            provider: {
+              provider_id: 'test-provider',
+              route_id: String(route.route_id || 'test-route'),
+              selected_model_tier: String(route.selected_model_tier || 'mini'),
+              reasoning_effort: String(route.reasoning_effort || 'medium'),
+              fallback_applied: false,
+              model: 'test-mini',
+            },
+          };
+        }
+        return {
+          session_id: sessionId,
+          wp_id: wp.id,
+          changed_files: [],
+          read_files: [],
+          provider: {
+            provider_id: 'test-provider',
+            route_id: String(route.route_id || 'test-route'),
+            selected_model_tier: String(route.selected_model_tier || 'mini'),
+            reasoning_effort: String(route.reasoning_effort || 'medium'),
+            fallback_applied: false,
+            model: 'test-mini',
+          },
+        };
+      }
+      return {
+        session_id: sessionId,
+        wp_id: wp.id,
+        changed_files: [],
+        read_files: [],
+        provider: {
+          provider_id: 'test-provider',
+          route_id: String(route.route_id || 'test-route'),
+          selected_model_tier: String(route.selected_model_tier || 'standard'),
+          reasoning_effort: String(route.reasoning_effort || 'medium'),
+          fallback_applied: false,
+          model: 'test-standard',
+        },
+      };
+    },
+  };
+
+  const pipeline = createMpoPipeline({
+    root,
+    validator,
+    harnessProviderAdapter: adapter,
+    emitEvent(type, payload) {
+      events.push({ type, payload });
+    },
+  });
+
+  const session = await pipeline.createPlan({
+    goal: '문서 정리와 MPO dry-run 검증 경로를 확인해줘',
+    approvalRequested: false,
+  });
+  const execution = await pipeline.execute(session);
+
+  assert.equal(execution.replanned, true);
+  assert.equal(execution.results[0].report.verification_status, 'FAIL');
+  assert.ok(events.some((entry) =>
+    entry.type === 'mpo.plan.replanned'
+    && entry.payload.reason === 'read_files_missing'
+  ));
+  assert.ok(execution.results.some((entry) => /-REPLAN$/.test(entry.wp.id)));
+});
+
+test('[mpo automation] pipeline auto-replans when live provider reports invalid read_files', async () => {
+  const root = createRuntimeRoot();
+  const validator = new ContractValidator({ root });
+  const events = [];
+  let injectedFailure = false;
+  const adapter = {
+    async executeWorkPacket({ route = {}, sessionId = '', wp = {} } = {}) {
+      if (!wp.execution_result || wp.execution_result.auto_replan !== true) {
+        if (!injectedFailure) {
+          injectedFailure = true;
+          return {
+            session_id: sessionId,
+            wp_id: wp.id,
+            changed_files: [],
+            read_files: [
+              '/etc/passwd',
+              '../outside.yaml',
+            ],
+            provider: {
+              provider_id: 'test-provider',
+              route_id: String(route.route_id || 'test-route'),
+              selected_model_tier: String(route.selected_model_tier || 'mini'),
+              reasoning_effort: String(route.reasoning_effort || 'medium'),
+              fallback_applied: false,
+              model: 'test-mini',
+            },
+          };
+        }
+        return {
+          session_id: sessionId,
+          wp_id: wp.id,
+          changed_files: [],
+          read_files: [],
+          provider: {
+            provider_id: 'test-provider',
+            route_id: String(route.route_id || 'test-route'),
+            selected_model_tier: String(route.selected_model_tier || 'mini'),
+            reasoning_effort: String(route.reasoning_effort || 'medium'),
+            fallback_applied: false,
+            model: 'test-mini',
+          },
+        };
+      }
+      return {
+        session_id: sessionId,
+        wp_id: wp.id,
+        changed_files: [],
+        read_files: [],
+        provider: {
+          provider_id: 'test-provider',
+          route_id: String(route.route_id || 'test-route'),
+          selected_model_tier: String(route.selected_model_tier || 'standard'),
+          reasoning_effort: String(route.reasoning_effort || 'medium'),
+          fallback_applied: false,
+          model: 'test-standard',
+        },
+      };
+    },
+  };
+
+  const pipeline = createMpoPipeline({
+    root,
+    validator,
+    harnessProviderAdapter: adapter,
+    emitEvent(type, payload) {
+      events.push({ type, payload });
+    },
+  });
+
+  const session = await pipeline.createPlan({
+    goal: '문서 정리와 MPO dry-run 검증 경로를 확인해줘',
+    approvalRequested: false,
+  });
+  const execution = await pipeline.execute(session);
+
+  assert.equal(execution.replanned, true);
+  assert.equal(execution.results[0].report.verification_status, 'FAIL');
+  assert.ok(events.some((entry) =>
+    entry.type === 'mpo.plan.replanned'
+    && entry.payload.reason === 'read_files_invalid'
+  ));
+  assert.ok(execution.results.some((entry) => /-REPLAN$/.test(entry.wp.id)));
 });

@@ -183,7 +183,15 @@
       "details": "VS Code 터미널 브리지 + 전체 사용법 가이드 + 명령 팔레트 + 파일 탐색 5탭 추가",
       "prev_hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681",
       "hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a"
+    },
+    {
+      "seq": 24,
+      "timestamp": "2026-04-26T14:17:45.541Z",
+      "action": "WP-HO-011/replay-packet-quality",
+      "details": "replay_next_packet 생성, actor/hash 문구 제거, audit_signals 노출, lint 0 warnings — 188/194 PASS",
+      "prev_hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a",
+      "hash": "05b231566fcb9649a84c6226457b095f2c73289d7e9b5515ddc82dd6b29e7036"
     }
   ],
-  "last_hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a"
+  "last_hash": "05b231566fcb9649a84c6226457b095f2c73289d7e9b5515ddc82dd6b29e7036"
 }

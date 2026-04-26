@@ -52,30 +52,49 @@ function statusClass(value) {
 function buildMpoPanel() {
   return `
 <section id="mpo-panel" style="position:fixed;right:20px;bottom:20px;z-index:50;width:min(420px,calc(100vw - 32px));background:rgba(10,19,25,0.94);color:#f5f7f9;border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,0.35);backdrop-filter:blur(14px);font-family:'IBM Plex Sans','Pretendard',sans-serif;">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
-    <strong style="font-size:15px;letter-spacing:0.02em;">MPO v1.0</strong>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:0;">
+    <strong style="font-size:15px;letter-spacing:0.02em;flex:1;">MPO v1.0</strong>
     <span id="mpo-status-chip" style="font-size:12px;padding:4px 8px;border-radius:999px;background:#1d3a2b;color:#b8ffd1;">idle</span>
+    <button id="mpo-collapse-btn" title="접기 / 펼치기" style="border:none;background:rgba(255,255,255,0.08);color:#f5f7f9;border-radius:8px;padding:4px 8px;cursor:pointer;font-size:14px;line-height:1;transition:background .15s;">▾</button>
   </div>
-  <label for="mpo-goal-input" style="display:block;font-size:12px;opacity:0.8;margin-bottom:6px;">목표 한 줄</label>
-  <textarea id="mpo-goal-input" rows="3" style="width:100%;resize:vertical;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#081016;color:#f5f7f9;padding:10px 12px;font:inherit;">문서 정리와 MPO dry-run 검증 경로를 확인해줘</textarea>
-  <div style="display:flex;gap:8px;margin-top:10px;">
-    <button id="mpo-plan-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#f2c14e;color:#1f2022;font-weight:700;cursor:pointer;">계획 만들기</button>
-    <button id="mpo-approve-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#2c7be5;color:#fff;font-weight:700;cursor:pointer;" disabled>승인 후 실행</button>
+
+  <div id="mpo-body" style="margin-top:10px;">
+    <label for="mpo-goal-input" style="display:block;font-size:12px;opacity:0.8;margin-bottom:6px;">목표 한 줄</label>
+    <textarea id="mpo-goal-input" rows="3" style="width:100%;resize:vertical;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#081016;color:#f5f7f9;padding:10px 12px;font:inherit;box-sizing:border-box;">문서 정리와 MPO dry-run 검증 경로를 확인해줘</textarea>
+
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="mpo-plan-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#f2c14e;color:#1f2022;font-weight:700;cursor:pointer;">계획 만들기</button>
+      <button id="mpo-approve-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#2c7be5;color:#fff;font-weight:700;cursor:pointer;" disabled>승인 후 실행</button>
+    </div>
+
+    <div id="mpo-term-bar" style="display:none;margin-top:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);font-size:11px;display:flex;align-items:center;gap:6px;">
+      <span style="opacity:0.6;">터미널</span>
+      <span id="mpo-term-pts" style="font-family:monospace;color:#7dd3fc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+      <span id="mpo-term-badge" style="padding:2px 6px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25);">미탐색</span>
+    </div>
+
+    <div id="mpo-summary" style="margin-top:10px;font-size:12px;line-height:1.5;opacity:0.85;">세션 없음</div>
+    <div id="mpo-plan-list" style="margin-top:10px;max-height:220px;overflow:auto;display:grid;gap:8px;"></div>
+    <div id="mpo-events" style="margin-top:10px;max-height:180px;overflow:auto;background:#0f1a21;border-radius:12px;padding:10px;font-size:11px;line-height:1.5;"></div>
   </div>
-  <div id="mpo-summary" style="margin-top:12px;font-size:12px;line-height:1.5;opacity:0.85;">세션 없음</div>
-  <div id="mpo-plan-list" style="margin-top:10px;max-height:220px;overflow:auto;display:grid;gap:8px;"></div>
-  <div id="mpo-events" style="margin-top:10px;max-height:180px;overflow:auto;background:#0f1a21;border-radius:12px;padding:10px;font-size:11px;line-height:1.5;"></div>
 </section>
 <script>
 (function() {
   var statusChip = document.getElementById('mpo-status-chip');
+  var collapseBtn = document.getElementById('mpo-collapse-btn');
+  var bodyEl = document.getElementById('mpo-body');
   var planButton = document.getElementById('mpo-plan-button');
   var approveButton = document.getElementById('mpo-approve-button');
   var goalInput = document.getElementById('mpo-goal-input');
   var summaryEl = document.getElementById('mpo-summary');
   var planListEl = document.getElementById('mpo-plan-list');
   var eventsEl = document.getElementById('mpo-events');
+  var termBarEl = document.getElementById('mpo-term-bar');
+  var termPtsEl = document.getElementById('mpo-term-pts');
+  var termBadgeEl = document.getElementById('mpo-term-badge');
   var currentSessionId = null;
+  var collapsed = false;
+
   var STATUS_STYLES = {
     idle: { background: '#334155', color: '#e2e8f0' },
     planning: { background: '#713f12', color: '#fde68a' },
@@ -88,6 +107,14 @@ function buildMpoPanel() {
     error: { background: '#7f1d1d', color: '#fecaca' }
   };
 
+  /* ── 접기 / 펼치기 ── */
+  collapseBtn.addEventListener('click', function() {
+    collapsed = !collapsed;
+    bodyEl.style.display = collapsed ? 'none' : '';
+    collapseBtn.textContent = collapsed ? '▸' : '▾';
+    collapseBtn.title = collapsed ? '펼치기' : '접기';
+  });
+
   function setStatus(value) {
     var normalized = String(value || 'idle');
     var style = STATUS_STYLES[normalized] || STATUS_STYLES.idle;
@@ -97,9 +124,11 @@ function buildMpoPanel() {
   }
 
   function appendEvent(line) {
+    var ts = new Date().toTimeString().slice(0, 8);
     var item = document.createElement('div');
-    item.textContent = line;
+    item.textContent = '[' + ts + '] ' + line;
     eventsEl.prepend(item);
+    if (eventsEl.children.length > 80) eventsEl.removeChild(eventsEl.lastChild);
   }
 
   function renderPlan(session) {
@@ -109,20 +138,17 @@ function buildMpoPanel() {
     var replannedCount = 0;
     wpList.forEach(function(wp) {
       var isReplan = Boolean(wp && wp.execution_result && wp.execution_result.auto_replan === true);
-      if (isReplan) {
-        replannedCount += 1;
-      }
+      if (isReplan) replannedCount += 1;
       var meta = [wp.domain, wp.layer, wp.provider_tier || 'unrouted'];
       if (isReplan && wp.execution_result && wp.execution_result.replan_of) {
         meta.push('replan of ' + wp.execution_result.replan_of);
       }
       var card = document.createElement('div');
-      card.style.padding = '10px';
-      card.style.borderRadius = '12px';
-      card.style.background = isReplan ? 'rgba(245, 158, 11, 0.14)' : 'rgba(255,255,255,0.06)';
-      card.style.border = isReplan ? '1px solid rgba(245,158,11,0.35)' : '1px solid rgba(255,255,255,0.04)';
+      card.style.cssText = 'padding:10px;border-radius:12px;background:' +
+        (isReplan ? 'rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.04)');
       card.innerHTML =
-        '<strong style="display:block;font-size:12px;">' + wp.id + (isReplan ? ' <span style="font-size:10px;padding:2px 6px;border-radius:999px;background:#92400e;color:#fde68a;">AUTO-REPLAN</span>' : '') + '</strong>' +
+        '<strong style="display:block;font-size:12px;">' + wp.id +
+        (isReplan ? ' <span style="font-size:10px;padding:2px 6px;border-radius:999px;background:#92400e;color:#fde68a;">AUTO-REPLAN</span>' : '') + '</strong>' +
         '<div style="font-size:12px;margin-top:4px;">' + wp.title + '</div>' +
         '<div style="font-size:11px;opacity:0.75;margin-top:4px;">' + meta.join(' · ') + '</div>';
       planListEl.appendChild(card);
@@ -133,9 +159,7 @@ function buildMpoPanel() {
         '예상 토큰 ' + session.dag.plan_summary.total_estimated_tokens,
         '상태 ' + session.status
       ];
-      if (replannedCount > 0) {
-        parts.push('자동 재계획 ' + replannedCount + '회');
-      }
+      if (replannedCount > 0) parts.push('자동 재계획 ' + replannedCount + '회');
       summaryEl.textContent = parts.join(' · ');
     } else {
       summaryEl.textContent = '세션 없음';
@@ -144,55 +168,106 @@ function buildMpoPanel() {
   }
 
   function describeEvent(eventName, payload) {
-    if (eventName === 'mpo.plan.replanned') {
-      return eventName + ': ' + (payload.failed_wp_id || '') + ' -> ' + (payload.replanned_wp_id || '');
-    }
-    if (eventName === 'mpo.wp.failed') {
-      return eventName + ': ' + (payload.wp_id || '') + ' / ' + (payload.reason || 'unknown');
-    }
-    if (eventName === 'mpo.plan.completed') {
-      return eventName + ': ' + (payload.session_id || '') + ' / completed';
-    }
+    if (eventName === 'mpo.plan.replanned') return eventName + ': ' + (payload.failed_wp_id || '') + ' -> ' + (payload.replanned_wp_id || '');
+    if (eventName === 'mpo.wp.failed') return eventName + ': ' + (payload.wp_id || '') + ' / ' + (payload.reason || 'unknown');
+    if (eventName === 'mpo.plan.completed') return eventName + ': ' + (payload.session_id || '') + ' / completed';
     return eventName + ': ' + (payload.wp_id || payload.session_id || '');
   }
 
   async function requestJson(url, options) {
-    var response = await fetch(url, Object.assign({
-      headers: {
-        'content-type': 'application/json',
-      }
-    }, options || {}));
+    var response = await fetch(url, Object.assign({ headers: { 'content-type': 'application/json' } }, options || {}));
     var body = await response.json();
-    if (!response.ok) {
-      throw new Error(body.detail || body.title || ('HTTP ' + response.status));
-    }
+    if (!response.ok) throw new Error(body.detail || body.title || ('HTTP ' + response.status));
     return body;
   }
 
+  /* ── 터미널 자동 탐색 ── */
+  var AI_PROCS = ['claude', 'codex', 'aider', 'gemini', 'amp'];
+  var SHELL_PROCS = ['bash', 'zsh', 'fish', 'sh'];
+
+  function scoreSession(s) {
+    var procs = Array.isArray(s.processes) ? s.processes : [];
+    var names = procs.map(function(p) { return String(p.comm || '').toLowerCase(); });
+    if (AI_PROCS.some(function(n) { return names.some(function(c) { return c.includes(n); }); })) return 3;
+    if (SHELL_PROCS.some(function(n) { return names.includes(n); })) return 2;
+    return 1;
+  }
+
+  async function autoDetectTerminal() {
+    try {
+      var res = await fetch('/api/pty/sessions');
+      if (!res.ok) return null;
+      var data = await res.json();
+      var sessions = Array.isArray(data.sessions) ? data.sessions : [];
+      if (!sessions.length) return null;
+      sessions = sessions.slice().sort(function(a, b) { return scoreSession(b) - scoreSession(a); });
+      return sessions[0];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function sendToTerminal(pts, text) {
+    try {
+      var res = await fetch('/api/pty/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pts: pts, text: text + '\\r', action: 'prompt', name: 'mpo-agent' })
+      });
+      return res.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function showTermBar(pts, badge, color) {
+    termBarEl.style.display = 'flex';
+    termPtsEl.textContent = pts || '—';
+    termBadgeEl.textContent = badge || '미탐색';
+    termBadgeEl.style.color = color || '#4ade80';
+    termBadgeEl.style.borderColor = (color || '#4ade80').replace('80', '25');
+    termBadgeEl.style.background = (color || '#4ade80').replace('80', '12').replace('#', 'rgba(').replace(/(..)(..)(..)/, function(_, r, g, b) {
+      return parseInt(r,16)+','+parseInt(g,16)+','+parseInt(b,16);
+    }) + ',0.12)';
+  }
+
+  /* ── 계획 만들기 ── */
   planButton.addEventListener('click', async function() {
     try {
       setStatus('planning');
+      planButton.disabled = true;
       var session = await requestJson('/api/v1/mpo/plan', {
         method: 'POST',
-        body: JSON.stringify({
-          goal: goalInput.value,
-        }),
+        body: JSON.stringify({ goal: goalInput.value }),
       });
       renderPlan(session);
       setStatus(session.status || 'planned');
       appendEvent('plan created: ' + session.session_id);
+      /* 계획 완료 시 터미널 선제 탐색 */
+      autoDetectTerminal().then(function(s) {
+        if (!s) return;
+        var procs = (s.processes || []).map(function(p) { return p.comm; }).filter(Boolean);
+        var isAi = AI_PROCS.some(function(n) { return procs.some(function(c) { return c.includes(n); }); });
+        showTermBar(String(s.pts || ''), isAi ? procs[0] : (procs[0] || 'shell'), isAi ? '#7dd3fc' : '#a3a3a3');
+        appendEvent('터미널 선제 탐색: ' + String(s.pts || '') + ' (' + procs.slice(0,2).join(', ') + ')');
+        if (typeof window.abSelectSession === 'function') window.abSelectSession(String(s.pts || ''));
+      });
     } catch (error) {
       setStatus('error');
       appendEvent('plan failed: ' + error.message);
+    } finally {
+      planButton.disabled = false;
     }
   });
 
+  /* ── 승인 후 실행 (터미널 자동 탐색 + 에이전트 전송) ── */
   approveButton.addEventListener('click', async function() {
-    if (!currentSessionId) {
-      return;
-    }
+    if (!currentSessionId) return;
     try {
       setStatus('queued');
+      approveButton.disabled = true;
+
+      /* 1. API 승인 */
       var session = await requestJson('/api/v1/mpo/session/' + currentSessionId + '/approve', {
         method: 'POST',
         body: JSON.stringify({}),
@@ -200,16 +275,50 @@ function buildMpoPanel() {
       renderPlan(session);
       setStatus(session.status || 'queued');
       appendEvent('approved: ' + currentSessionId);
+
+      /* 2. 터미널 자동 탐색 */
+      appendEvent('터미널 자동 탐색 중...');
+      var best = await autoDetectTerminal();
+
+      if (!best) {
+        appendEvent('경고: 사용 가능한 터미널 없음 — 터미널 브리지 탭에서 세션 선택 후 수동 전송하세요');
+        showTermBar('없음', '미발견', '#f87171');
+        return;
+      }
+
+      var pts = String(best.pts || '');
+      var procs = (best.processes || []).map(function(p) { return p.comm; }).filter(Boolean);
+      var isAi = AI_PROCS.some(function(n) { return procs.some(function(c) { return c.includes(n); }); });
+      var isShell = !isAi && SHELL_PROCS.some(function(n) { return procs.includes(n); });
+
+      showTermBar(pts, isAi ? procs[0] : (procs[0] || 'shell'), isAi ? '#7dd3fc' : '#4ade80');
+      appendEvent('터미널 선택: ' + pts + ' [' + procs.slice(0,3).join(', ') + ']' + (isAi ? ' (AI CLI)' : isShell ? ' (shell)' : ''));
+
+      /* 터미널 브리지와 세션 동기화 */
+      if (typeof window.abSelectSession === 'function') window.abSelectSession(pts);
+
+      /* 3. 에이전트 목표 전송 */
+      var goal = (goalInput.value || '').trim();
+      if (!goal) {
+        appendEvent('경고: 목표가 비어 있어 터미널 전송을 건너뜁니다');
+        return;
+      }
+      var sent = await sendToTerminal(pts, goal);
+      if (sent) {
+        appendEvent('에이전트 전송 완료 → ' + pts + ': ' + goal.slice(0, 50) + (goal.length > 50 ? '…' : ''));
+      } else {
+        appendEvent('터미널 전송 실패 (' + pts + ') — 서버가 실행 중인지 확인하세요');
+      }
     } catch (error) {
       setStatus('error');
       appendEvent('approve failed: ' + error.message);
     }
   });
 
-  var source = new EventSource('/api/v1/system/events');
-  source.addEventListener('mpo.connected', function() {
-    appendEvent('sse connected');
-  });
+  /* ── SSE 연결 ── */
+  var sseSource = new EventSource('/api/v1/system/events');
+  sseSource.addEventListener('mpo.connected', function() { appendEvent('sse connected'); });
+  sseSource.onerror = function() { appendEvent('sse 연결 끊김 — 재연결 시도 중'); };
   [
     'mpo.intake.normalized',
     'mpo.decomposition.ready',
@@ -221,7 +330,7 @@ function buildMpoPanel() {
     'mpo.memory.reconciled',
     'mpo.plan.completed'
   ].forEach(function(eventName) {
-    source.addEventListener(eventName, async function(event) {
+    sseSource.addEventListener(eventName, async function(event) {
       var payload = JSON.parse(event.data);
       appendEvent(describeEvent(eventName, payload));
       if (payload.session_id && currentSessionId === payload.session_id) {
@@ -319,6 +428,297 @@ function buildOperatorChainExecutionMeta(item) {
   return { href };
 }
 
+function serializeForInlineScript(value) {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
+  const branch = operatorCockpit?.branch || {};
+  const commitGuard = operatorCockpit?.commit_guard || {};
+  const evidence = operatorCockpit?.promotion_evidence || {};
+  const validationProfile = operatorCockpit?.validation_profile || bootstrap?.validation_profile || {};
+  const validationCommands = Array.isArray(validationProfile.commands)
+    ? validationProfile.commands.filter(Boolean)
+    : [];
+  const recommendedReads = Array.isArray(bootstrap?.recommended_reads)
+    ? bootstrap.recommended_reads.filter(Boolean)
+    : [];
+  const currentWpId = String(bootstrap?.current_wp?.id || operatorCockpit?.current_wp?.id || 'current-wp').trim();
+  const currentLaneHint = String(bootstrap?.current_lane_hint || operatorCockpit?.current_lane?.label || 'lane').trim();
+  const nextWp = String(bootstrap?.next_wp || operatorCockpit?.next_wp || 'NONE').trim();
+  const currentBranch = String(branch.current_branch || bootstrap?.git?.branch || '').trim();
+  const recommendedBranch = String(branch.recommended_branch || '').trim();
+  const dirtySummary = bootstrap?.git?.dirty
+    ? `dirty ${String(bootstrap.git.dirty_count || 0)}건`
+    : 'dirty 없음';
+  const primaryValidationCommand = String(validationProfile.primary_command || validationCommands[0] || 'npm run ui:build').trim();
+  const guardReason = Array.isArray(commitGuard.guard?.reasons) && commitGuard.guard.reasons[0]
+    ? String(commitGuard.guard.reasons[0]).trim()
+    : String(commitGuard.next_action || 'guard 상태 확인').trim();
+  const evidenceGeneratedAt = String(evidence.generated_at_utc || '').trim();
+  const evidenceQuality = String(evidence.quality_gate_result || 'UNKNOWN').trim();
+
+  return {
+    bootstrap: {
+      owner: 'Planner',
+      summary: '현재 Work Packet, 레인, 우선 읽을 문서를 다시 고정해 반복 실행 중에도 기준이 흔들리지 않게 만드는 단계입니다.',
+      why: `${currentWpId} 기준으로 세션을 다시 맞춰야 이후 브랜치, 검증, evidence 판단이 같은 축에서 이어집니다.`,
+      references: recommendedReads.length > 0
+        ? recommendedReads.slice(0, 3)
+        : ['memory/current-wp.yaml', 'memory/next-actions.yaml'],
+      mapSteps: [
+        {
+          title: '시작 지점',
+          detail: `${currentWpId} / lane ${currentLaneHint} / next ${nextWp}`,
+          hrefLabel: '통합 상태 열기',
+          href: buildStaticControlCenterHref('operator-summary', 'master-status', {
+            reason: 'session bootstrap 기준 확인',
+            command: 'npm run session:bootstrap',
+            label: 'Session Bootstrap',
+            source: 'home-map',
+          }),
+        },
+        {
+          title: '먼저 읽기',
+          detail: recommendedReads.length > 0
+            ? recommendedReads.slice(0, 2).join(' / ')
+            : 'recommended reads가 없으면 current-wp와 next-actions부터 확인',
+        },
+        {
+          title: '수정 포인트',
+          detail: '현재 packet 목표와 다음 packet이 어긋나면 세션 요약과 plan 흐름부터 다시 동기화합니다.',
+        },
+        {
+          title: '검증 루프',
+          detail: 'npm run session:bootstrap',
+        },
+      ],
+    },
+    branch: {
+      owner: 'Builder',
+      summary: '현재 브랜치가 권장 브랜치와 일치하는지, 수정 가능한 작업 트리인지 먼저 정리하는 단계입니다.',
+      why: recommendedBranch
+        ? `현재 ${currentBranch || 'unknown'} / 권장 ${recommendedBranch} 상태를 먼저 맞춰야 잘못된 위치에서 수정하는 일을 줄일 수 있습니다.`
+        : '권장 브랜치 정보가 비어 있으면 branch bootstrap부터 다시 확인해야 합니다.',
+      references: [currentBranch || '현재 브랜치 미확인', recommendedBranch || '권장 브랜치 미확인', dirtySummary],
+      mapSteps: [
+        {
+          title: '시작 지점',
+          detail: `현재 ${currentBranch || 'unknown'} / 권장 ${recommendedBranch || '없음'}`,
+        },
+        {
+          title: '오염도 확인',
+          detail: dirtySummary,
+        },
+        {
+          title: '수정 포인트',
+          detail: '브랜치가 다르면 branch bootstrap 또는 권장 브랜치 생성 명령부터 수행합니다.',
+          hrefLabel: 'Operator Summary로 이동',
+          href: buildStaticControlCenterHref('operator-summary', 'master-status', {
+            reason: 'branch bootstrap 점검',
+            command: String(branch.create_command || '').trim(),
+            label: 'Branch Bootstrap',
+            source: 'home-map',
+          }),
+        },
+        {
+          title: '검증 루프',
+          detail: String(branch.create_command || 'npm run branch:bootstrap').trim() || 'npm run branch:bootstrap',
+        },
+      ],
+    },
+    verify: {
+      owner: 'Reviewer',
+      summary: '현재 packet에 연결된 검증 명령 세트를 기준으로 어떤 실패를 먼저 고칠지 좁히는 단계입니다.',
+      why: `${validationCommands.length}개 검증 명령이 연결되어 있으면 가장 앞선 실패를 기준으로 수정 루프를 돌리는 것이 안전합니다.`,
+      references: validationCommands.length > 0
+        ? validationCommands.slice(0, 3)
+        : ['검증 명령 없음'],
+      mapSteps: [
+        {
+          title: '시작 지점',
+          detail: primaryValidationCommand || 'primary validation command 없음',
+        },
+        {
+          title: '무엇을 본다',
+          detail: `${String(validationProfile.packet_type || bootstrap?.validation_profile?.packet_type || 'UNKNOWN')} / Stage ${String(validationProfile.stage || bootstrap?.current_wp?.stage || 'UNKNOWN')}`,
+        },
+        {
+          title: '수정 포인트',
+          detail: 'plan board에서 검증 루프와 guard 상태를 같이 보면서 가장 앞선 실패를 먼저 해소합니다.',
+          hrefLabel: 'Plan Board 열기',
+          href: buildStaticControlCenterHref('guard', 'plan-board', {
+            reason: 'validation profile 기준 점검',
+            command: primaryValidationCommand,
+            label: 'Validation Profile',
+            source: 'home-map',
+          }),
+        },
+        {
+          title: '검증 루프',
+          detail: primaryValidationCommand || '검증 명령 없음',
+        },
+      ],
+    },
+    'commit-guard': {
+      owner: 'Reviewer',
+      summary: '적용 가능한 변경인지, dirty 상태와 validation 통과 여부가 조건을 만족하는지 차단 규칙으로 판정하는 단계입니다.',
+      why: guardReason || 'guard 이유를 먼저 해소해야 apply 또는 다음 packet 이동이 가능합니다.',
+      references: Array.isArray(commitGuard.guard?.reasons) && commitGuard.guard.reasons.length > 0
+        ? commitGuard.guard.reasons.slice(0, 3).map(String)
+        : ['guard reason 없음'],
+      mapSteps: [
+        {
+          title: '시작 지점',
+          detail: guardReason || 'guard next action 없음',
+        },
+        {
+          title: '차단 조건',
+          detail: [
+            commitGuard.guard?.has_dirty_changes ? 'dirty 있음' : 'dirty 없음',
+            commitGuard.guard?.validations_passed ? 'validation 통과' : 'validation 미통과',
+            commitGuard.guard?.can_apply ? 'apply 가능' : 'apply 차단',
+          ].join(' / '),
+        },
+        {
+          title: '수정 포인트',
+          detail: 'plan board에서 validation과 commit guard를 같이 확인한 뒤 차단 사유를 하나씩 제거합니다.',
+          hrefLabel: 'Guard 보드 열기',
+          href: buildStaticControlCenterHref('guard', 'plan-board', {
+            reason: guardReason || 'commit guard 차단 확인',
+            command: commitGuard.guard?.can_apply ? 'npm run commit:guard -- --apply' : 'npm run commit:guard:verify',
+            label: 'Commit Guard',
+            source: 'home-map',
+          }),
+        },
+        {
+          title: '검증 루프',
+          detail: commitGuard.guard?.can_apply ? 'npm run commit:guard -- --apply' : 'npm run commit:guard:verify',
+        },
+      ],
+    },
+    'release-evidence': {
+      owner: 'Reporter',
+      summary: 'quality gate와 stage-run 증거를 배포/반영 가능한 evidence artifact로 묶어 최종 판정을 내리는 단계입니다.',
+      why: evidenceQuality === 'PASS'
+        ? '현재 quality gate가 PASS라면 evidence를 최종 결론으로 정리하면 됩니다.'
+        : 'quality gate 또는 stage-run evidence가 비어 있으면 최종 반영 전에 증거를 먼저 복구해야 합니다.',
+      references: [
+        String(evidence.path || 'artifacts/release-evidence/release-evidence.json').trim(),
+        `quality gate ${evidenceQuality}`,
+        evidenceGeneratedAt ? `generated ${evidenceGeneratedAt}` : 'generated 시각 없음',
+      ],
+      mapSteps: [
+        {
+          title: '시작 지점',
+          detail: `${String(evidence.path || 'artifacts/release-evidence/release-evidence.json').trim()} / ${evidenceQuality}`,
+        },
+        {
+          title: '무엇을 본다',
+          detail: `${String(evidence.artifact_count || 0)}개 artifact / next ${String(evidence.next_action?.id || 'NONE')}`,
+        },
+        {
+          title: '수정 포인트',
+          detail: '실행 콘솔에서 release evidence 생성 명령을 다시 준비하고 blocker를 만든 선행 실패부터 해소합니다.',
+          hrefLabel: 'Execution Console 열기',
+          href: buildStaticControlCenterHref('execution-failure', 'execution-console', {
+            reason: evidenceQuality === 'PASS' ? 'release evidence 최종 확인' : 'release evidence blocker 해소',
+            command: 'python3 scripts/generate_release_evidence.py',
+            label: 'Release Evidence',
+            source: 'home-map',
+          }),
+        },
+        {
+          title: '검증 루프',
+          detail: 'python3 scripts/generate_release_evidence.py',
+        },
+      ],
+    },
+  };
+}
+
+function buildHomeOperatorChainMapPanel(item, blueprints) {
+  if (!item || typeof item !== 'object') {
+    return `
+    <section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite">
+      <div class="flow-map-empty">operator chain을 선택하면 상세 설명과 수정 맵이 여기에 표시됩니다.</div>
+    </section>`;
+  }
+
+  const itemId = String(item.id || '').trim();
+  const blueprint = blueprints[itemId] || {
+    owner: 'Operator',
+    summary: '현재 operator chain 단계 설명이 아직 정의되지 않았습니다.',
+    why: 'reason 값을 기준으로 control center에서 우선 확인하세요.',
+    references: ['추가 기준 없음'],
+    mapSteps: [
+      { title: '시작 지점', detail: String(item.reason || 'reason 없음') },
+      { title: '수정 포인트', detail: 'control center에서 현재 단계와 연결된 화면을 먼저 확인합니다.' },
+      { title: '검증 루프', detail: String(item.command || '명령 없음') },
+    ],
+  };
+  const mapSteps = Array.isArray(blueprint.mapSteps) ? blueprint.mapSteps : [];
+  const references = Array.isArray(blueprint.references) ? blueprint.references.filter(Boolean) : [];
+
+  return `
+    <section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite" data-selected-chain-id="${esc(itemId || 'step')}">
+      <div class="flow-map-head">
+        <div>
+          <h3>상세 설명 + 수정 맵</h3>
+          <p>오퍼레이터 바 카드를 클릭하면 어디서 확인하고 어디부터 고칠지 맵 형식으로 바로 안내합니다.</p>
+        </div>
+        <div class="flow-pill">선택 단계 <strong id="flow-map-selected-label">${esc(item.label || item.id || 'step')}</strong></div>
+      </div>
+      <div class="flow-map-hero">
+        <div class="flow-map-copy">
+          <span class="flow-kicker">무슨 단계인가</span>
+          <strong id="flow-map-title">${esc(item.label || item.id || 'step')}</strong>
+          <p id="flow-map-summary">${esc(blueprint.summary || '설명 없음')}</p>
+        </div>
+        <div class="flow-map-status">
+          <span class="tag ${statusClass(item.status || 'pending')}" id="flow-map-status">${esc(item.status || 'pending')}</span>
+          <code id="flow-map-command">${esc(item.command || '명령 없음')}</code>
+        </div>
+      </div>
+      <div class="flow-map-summary-grid">
+        <article class="flow-map-summary-card">
+          <span>왜 지금 필요한가</span>
+          <strong id="flow-map-why">${esc(blueprint.why || '설명 없음')}</strong>
+        </article>
+        <article class="flow-map-summary-card">
+          <span>현재 시그널</span>
+          <strong id="flow-map-reason">${esc(item.reason || 'reason 없음')}</strong>
+        </article>
+        <article class="flow-map-summary-card">
+          <span>담당 레인</span>
+          <strong id="flow-map-owner">${esc(blueprint.owner || 'Operator')}</strong>
+        </article>
+      </div>
+      <div class="flow-map-route">
+        ${mapSteps.map((step, index) => `
+        <article class="flow-map-step">
+          <div class="flow-map-step-index">${index + 1}</div>
+          <div class="flow-map-step-copy">
+            <span>${esc(step.title || `단계 ${index + 1}`)}</span>
+            <strong>${esc(step.detail || '')}</strong>
+            ${step.href && step.hrefLabel ? `<a class="flow-chain-link" href="${esc(step.href)}">${esc(step.hrefLabel)}</a>` : ''}
+          </div>
+        </article>`).join('')}
+      </div>
+      <div class="flow-map-references">
+        <span>바로 볼 기준</span>
+        <div class="flow-map-reference-list">
+          ${references.map((reference) => `<code>${esc(reference)}</code>`).join('')}
+        </div>
+      </div>
+    </section>`;
+}
+
 function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, operatorCockpit }) {
   const focusPacket = buildFocusPacket({ report, nextActions, currentWp: bootstrap?.current_wp });
   const currentLaneId = inferLaneId({
@@ -343,13 +743,15 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
   const spotlightItem = selectPreferredOperatorChainItem(operatorChain);
   const spotlightMeta = spotlightItem ? buildOperatorChainFocusMeta(spotlightItem) : null;
   const spotlightExecutionMeta = spotlightItem ? buildOperatorChainExecutionMeta(spotlightItem) : null;
+  const chainBlueprints = buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit });
   const spotlightHtml = spotlightItem
     ? `
-      <article class="flow-chain-spotlight" id="flow-chain-spotlight" data-chain-id="${esc(spotlightItem.id || 'step')}">
+      <article class="flow-chain-spotlight" id="flow-chain-spotlight" data-chain-id="${esc(spotlightItem.id || 'step')}" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <div class="flow-chain-spotlight-copy">
           <span class="flow-kicker">지금 실행할 카드</span>
           <strong id="flow-chain-spotlight-title">${esc(spotlightItem.label || spotlightItem.id || 'step')}</strong>
           <p id="flow-chain-spotlight-reason">${esc(spotlightItem.reason || '다음 operator action 설명 없음')}</p>
+          <span class="flow-chain-hint">카드를 클릭하면 상세 설명과 수정 맵이 아래에 열립니다.</span>
         </div>
         <div class="flow-chain-spotlight-actions">
           <span class="tag ${statusClass(spotlightItem.status || 'pending')}" id="flow-chain-spotlight-status">${esc(spotlightItem.status || 'pending')}</span>
@@ -370,20 +772,26 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
       const deliveryId = `flow-chain-delivery-${deliveryToken}`;
       const deliveryMetaId = `flow-chain-delivery-meta-${deliveryToken}`;
       const focusMeta = buildOperatorChainFocusMeta(item);
+      const blueprint = chainBlueprints[itemId] || {};
       return `
-      <div class="flow-chain-item${spotlightItem && spotlightItem.id === itemId ? ' is-active' : ''}" data-chain-id="${esc(itemId || 'step')}" data-chain-scope="${esc(scope)}" data-chain-command="${esc(item.command || '')}">
+      <article class="flow-chain-item${spotlightItem && spotlightItem.id === itemId ? ' is-active' : ''}" data-chain-id="${esc(itemId || 'step')}" data-chain-scope="${esc(scope)}" data-chain-command="${esc(item.command || '')}" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <span class="flow-chain-label">${esc(item.label || item.id || 'step')}</span>
         <span class="tag ${statusClass(item.status || 'pending')}">${esc(item.status || 'pending')}</span>
+        <p class="flow-chain-summary">${esc(blueprint.summary || item.reason || '다음 operator action 설명 없음')}</p>
         <code>${esc(item.command || '')}</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="${esc(deliveryId)}" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="${esc(deliveryMetaId)}">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="${esc(focusMeta.href)}">control center에서 이어서 보기</a>
-      </div>`;
+        <div class="flow-chain-actions">
+          <span class="flow-chain-hint">클릭해서 수정 맵 보기</span>
+          <a class="flow-chain-link" href="${esc(focusMeta.href)}">control center에서 이어서 보기</a>
+        </div>
+      </article>`;
     }).join('')
     : '<div class="flow-chain-empty">operator chain 정보 없음</div>';
   const releaseEvidence = operatorCockpit?.promotion_evidence || {};
+  const flowMapHtml = buildHomeOperatorChainMapPanel(spotlightItem, chainBlueprints);
 
   return `
     <div class="section-head" style="margin-top:36px">
@@ -461,7 +869,54 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
       <div class="flow-chain-grid">
         ${operatorChainHtml}
       </div>
-    </section>`;
+    </section>
+
+    ${flowMapHtml}
+
+    <script>
+      window.__HOME_INITIAL_OPERATOR_CHAIN__ = ${serializeForInlineScript(operatorChain)};
+      window.__HOME_OPERATOR_CHAIN_BLUEPRINTS__ = ${serializeForInlineScript(chainBlueprints)};
+    </script>`;
+}
+
+function buildHandoffLane({ report, nextActions, bootstrap, operatorCockpit }) {
+  const lane = buildHandoffLaneData({ report, nextActions, bootstrap, operatorCockpit });
+
+  return `
+        <div class="handoff-lane" id="home-handoff-lane" aria-label="Handoff Lane">
+          <div class="handoff-lane-head">
+            <span>Handoff Lane</span>
+            <strong class="tag ${statusClass(lane.drift_status)}" id="handoff-drift-status">${esc(lane.drift_status)}</strong>
+          </div>
+          <div class="handoff-lane-grid">
+            <div><span>Current WP</span><strong id="handoff-current-wp">${esc(lane.current_wp)}</strong></div>
+            <div><span>Next WP</span><strong id="handoff-next-wp">${esc(lane.next_wp)}</strong></div>
+            <div><span>Validation</span><strong id="handoff-validation-state">${esc(lane.validation_state)}</strong></div>
+            <div><span>Evidence</span><strong id="handoff-evidence-state">${esc(lane.evidence_state)}</strong></div>
+          </div>
+          <div class="handoff-next-command">
+            <span>Next command</span>
+            <code id="handoff-next-command">${esc(lane.next_command)}</code>
+          </div>
+          <p>${esc(lane.warning)}</p>
+        </div>`;
+}
+
+function buildHandoffLaneData({ report, nextActions, bootstrap, operatorCockpit }) {
+  return {
+    current_wp: report.current_wp || bootstrap?.current_wp?.id || 'NONE',
+    next_wp: report.next_wp || nextActions?.next_wp || 'NONE',
+    drift_status: report.promotion_pipeline?.drift_status || 'unknown',
+    validation_state: operatorCockpit?.commit_guard?.status
+      || (report.promotion_pipeline?.promotion_ready ? 'ready' : 'review'),
+    evidence_state: operatorCockpit?.promotion_evidence?.quality_gate_result
+      || report.promotion_pipeline?.drift_status
+      || 'UNKNOWN',
+    next_command: operatorCockpit?.next_validation_command
+      || (Array.isArray(bootstrap?.validation_profile?.commands) ? bootstrap.validation_profile.commands[0] : '')
+      || 'npm run project:status',
+    warning: operatorCockpit?.commit_guard?.next_action || 'handoff 상태 확인',
+  };
 }
 
 function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, bootstrap, operatorCockpit,
@@ -735,6 +1190,72 @@ function buildHtml({ report, navSummary, currentState, wpQueue, nextActions, boo
 
   .side-item strong {
     font-weight: 700;
+  }
+
+  .handoff-lane {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    background: rgba(255,255,255,0.78);
+    border: 1px solid rgba(15,118,110,0.24);
+  }
+
+  .handoff-lane-head,
+  .handoff-next-command {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .handoff-lane-head span,
+  .handoff-next-command span,
+  .handoff-lane-grid span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .handoff-lane-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .handoff-lane-grid div {
+    min-width: 0;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 248, 238, 0.88);
+    border: 1px solid rgba(220, 207, 186, 0.68);
+  }
+
+  .handoff-lane-grid strong,
+  .handoff-next-command code {
+    display: block;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+
+  .handoff-next-command {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: rgba(15,118,110,0.07);
+    border: 1px solid rgba(15,118,110,0.18);
+  }
+
+  .handoff-next-command code {
+    text-align: right;
+  }
+
+  .handoff-lane p {
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
   }
 
   .muted { color: var(--muted); }
@@ -1044,6 +1565,7 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
           <div class="side-item"><span class="muted">ENV 오버라이드</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
           <div class="side-item"><span class="muted">최근 operator action</span><strong id="live-operator-action">—</strong></div>
         </div>
+        ${buildHandoffLane({ report, nextActions, bootstrap, operatorCockpit })}
         <div class="loop-card">
           <h3>최근 Operator Loop</h3>
         <div class="loop-list">
@@ -1271,6 +1793,168 @@ function updateHomeActionSourceSummary(entries) {
   }
   summaryEl.textContent = summarizeHomeActionSources(entries);
 }
+var HOME_INITIAL_OPERATOR_CHAIN = Array.isArray(window.__HOME_INITIAL_OPERATOR_CHAIN__)
+  ? window.__HOME_INITIAL_OPERATOR_CHAIN__
+  : [];
+var HOME_OPERATOR_CHAIN_BLUEPRINTS = window.__HOME_OPERATOR_CHAIN_BLUEPRINTS__ || {};
+var latestHomeOperatorCockpit = {
+  operatorChain: HOME_INITIAL_OPERATOR_CHAIN,
+};
+function homeEscHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function homeStatusClass(value) {
+  var normalized = String(value || '').toLowerCase();
+  if (['pass', 'ready', 'active', 'clean', 'true', 'completed'].includes(normalized)) {
+    return 'tone-green';
+  }
+  if (['blocked', 'fail', 'error'].includes(normalized)) {
+    return 'tone-amber';
+  }
+  return 'tone-slate';
+}
+function homeOperatorChainItems() {
+  if (latestHomeOperatorCockpit) {
+    if (Array.isArray(latestHomeOperatorCockpit.operatorChain)) {
+      return latestHomeOperatorCockpit.operatorChain;
+    }
+    if (Array.isArray(latestHomeOperatorCockpit.operator_chain)) {
+      return latestHomeOperatorCockpit.operator_chain;
+    }
+  }
+  return HOME_INITIAL_OPERATOR_CHAIN;
+}
+function homeOperatorChainBlueprint(itemId) {
+  if (!itemId) {
+    return null;
+  }
+  return HOME_OPERATOR_CHAIN_BLUEPRINTS[String(itemId)] || null;
+}
+function homeOperatorChainMapHtml(item) {
+  if (!item || typeof item !== 'object') {
+    return '<section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite">' +
+      '<div class="flow-map-empty">operator chain을 선택하면 상세 설명과 수정 맵이 여기에 표시됩니다.</div>' +
+    '</section>';
+  }
+  var blueprint = homeOperatorChainBlueprint(item.id) || {
+    owner: 'Operator',
+    summary: '현재 operator chain 단계 설명이 아직 정의되지 않았습니다.',
+    why: 'reason 값을 기준으로 control center에서 우선 확인하세요.',
+    references: ['추가 기준 없음'],
+    mapSteps: [
+      { title: '시작 지점', detail: String(item.reason || 'reason 없음') },
+      { title: '수정 포인트', detail: 'control center에서 현재 단계와 연결된 화면을 먼저 확인합니다.' },
+      { title: '검증 루프', detail: String(item.command || '명령 없음') },
+    ],
+  };
+  var mapSteps = Array.isArray(blueprint.mapSteps) ? blueprint.mapSteps : [];
+  var references = Array.isArray(blueprint.references) ? blueprint.references.filter(Boolean) : [];
+  return '<section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite" data-selected-chain-id="' + homeEscHtml(item.id || 'step') + '">' +
+    '<div class="flow-map-head">' +
+      '<div>' +
+        '<h3>상세 설명 + 수정 맵</h3>' +
+        '<p>오퍼레이터 바 카드를 클릭하면 어디서 확인하고 어디부터 고칠지 맵 형식으로 바로 안내합니다.</p>' +
+      '</div>' +
+      '<div class="flow-pill">선택 단계 <strong id="flow-map-selected-label">' + homeEscHtml(item.label || item.id || 'step') + '</strong></div>' +
+    '</div>' +
+    '<div class="flow-map-hero">' +
+      '<div class="flow-map-copy">' +
+        '<span class="flow-kicker">무슨 단계인가</span>' +
+        '<strong id="flow-map-title">' + homeEscHtml(item.label || item.id || 'step') + '</strong>' +
+        '<p id="flow-map-summary">' + homeEscHtml(blueprint.summary || '설명 없음') + '</p>' +
+      '</div>' +
+      '<div class="flow-map-status">' +
+        '<span class="tag ' + homeStatusClass(String(item.status || 'pending')) + '" id="flow-map-status">' + homeEscHtml(item.status || 'pending') + '</span>' +
+        '<code id="flow-map-command">' + homeEscHtml(item.command || '명령 없음') + '</code>' +
+      '</div>' +
+    '</div>' +
+    '<div class="flow-map-summary-grid">' +
+      '<article class="flow-map-summary-card">' +
+        '<span>왜 지금 필요한가</span>' +
+        '<strong id="flow-map-why">' + homeEscHtml(blueprint.why || '설명 없음') + '</strong>' +
+      '</article>' +
+      '<article class="flow-map-summary-card">' +
+        '<span>현재 시그널</span>' +
+        '<strong id="flow-map-reason">' + homeEscHtml(item.reason || 'reason 없음') + '</strong>' +
+      '</article>' +
+      '<article class="flow-map-summary-card">' +
+        '<span>담당 레인</span>' +
+        '<strong id="flow-map-owner">' + homeEscHtml(blueprint.owner || 'Operator') + '</strong>' +
+      '</article>' +
+    '</div>' +
+    '<div class="flow-map-route">' +
+      mapSteps.map(function(step, index) {
+        var href = String(step && step.href || '').trim();
+        var hrefLabel = String(step && step.hrefLabel || '').trim();
+        return '<article class="flow-map-step">' +
+          '<div class="flow-map-step-index">' + String(index + 1) + '</div>' +
+          '<div class="flow-map-step-copy">' +
+            '<span>' + homeEscHtml(step && step.title || ('단계 ' + String(index + 1))) + '</span>' +
+            '<strong>' + homeEscHtml(step && step.detail || '') + '</strong>' +
+            (href && hrefLabel ? '<a class="flow-chain-link" href="' + homeEscHtml(href) + '">' + homeEscHtml(hrefLabel) + '</a>' : '') +
+          '</div>' +
+        '</article>';
+      }).join('') +
+    '</div>' +
+    '<div class="flow-map-references">' +
+      '<span>바로 볼 기준</span>' +
+      '<div class="flow-map-reference-list">' +
+        references.map(function(reference) {
+          return '<code>' + homeEscHtml(reference) + '</code>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+  '</section>';
+}
+function updateHomeOperatorChainMap(item) {
+  var panel = document.getElementById('flow-chain-map-panel');
+  if (!panel) {
+    return;
+  }
+  panel.outerHTML = homeOperatorChainMapHtml(item);
+}
+function focusHomeOperatorChainDetails(itemId, shouldScroll) {
+  var chain = homeOperatorChainItems();
+  var selectedItem = chain.find(function(entry) {
+    return String(entry && entry.id || '').trim() === String(itemId || '').trim();
+  });
+  if (!selectedItem) {
+    return;
+  }
+  updateHomeOperatorChainSpotlight(selectedItem);
+  if (shouldScroll) {
+    var panel = document.getElementById('flow-chain-map-panel');
+    if (panel) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+function bindHomeOperatorChainInteractions() {
+  var selectors = ['#flow-chain-spotlight[data-chain-id]', '.flow-chain-item[data-chain-id]'];
+  document.querySelectorAll(selectors.join(',')).forEach(function(element) {
+    if (element.dataset.homeChainBound === 'true') {
+      return;
+    }
+    element.dataset.homeChainBound = 'true';
+    element.addEventListener('click', function(event) {
+      if (event.target && typeof event.target.closest === 'function' && event.target.closest('a,button')) {
+        return;
+      }
+      focusHomeOperatorChainDetails(element.dataset.chainId || '', true);
+    });
+    element.addEventListener('keydown', function(event) {
+      if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+      event.preventDefault();
+      focusHomeOperatorChainDetails(element.dataset.chainId || '', true);
+    });
+  });
+}
 function createHomeOperatorActionId(scope) {
   if (window.crypto && typeof window.crypto.randomUUID === 'function') {
     return String(scope || 'home-action') + ':' + window.crypto.randomUUID();
@@ -1380,6 +2064,7 @@ function updateHomeOperatorChainSpotlight(item) {
   for (var i = 0; i < cards.length; i += 1) {
     cards[i].classList.remove('is-active');
   }
+  updateHomeOperatorChainMap(item);
   if (!spotlight || !titleEl || !reasonEl || !statusEl || !commandEl || !copyBtn || !fillEl || !linkEl || !item) {
     return;
   }
@@ -1390,7 +2075,7 @@ function updateHomeOperatorChainSpotlight(item) {
   titleEl.textContent = String(item.label || item.id || 'step');
   reasonEl.textContent = String(item.reason || '다음 operator action 설명 없음');
   statusEl.textContent = String(item.status || 'pending');
-  statusEl.className = 'tag ' + statusClass(String(item.status || 'pending'));
+  statusEl.className = 'tag ' + homeStatusClass(String(item.status || 'pending'));
   commandEl.textContent = String(item.command || '');
   copyBtn.dataset.command = String(item.command || '');
   copyBtn.dataset.label = String(item.label || item.id || 'step');
@@ -1488,6 +2173,14 @@ function updateAutosendUi(autoSend) {
   if (toggleBtn) toggleBtn.style.display = 'inline-block';
 }
 document.addEventListener('DOMContentLoaded', async () => {
+  bindHomeOperatorChainInteractions();
+  var initialChainId = document.getElementById('flow-chain-spotlight')
+    ? document.getElementById('flow-chain-spotlight').dataset.chainId
+    : '';
+  var initialItem = homeOperatorChainItems().find(function(entry) {
+    return String(entry && entry.id || '').trim() === String(initialChainId || '').trim();
+  }) || HOME_INITIAL_OPERATOR_CHAIN[0] || null;
+  updateHomeOperatorChainMap(initialItem);
   const result = await callPlanningApi('snapshot');
   if (!result || !result.ok) {
     const badge = document.getElementById('live-autosend-badge');
@@ -1602,6 +2295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const operatorCockpit = homeRuntime && homeRuntime.runtime_state
     ? homeRuntime.runtime_state.operator_cockpit
     : null;
+  latestHomeOperatorCockpit = operatorCockpit || latestHomeOperatorCockpit;
   var latestHomeRecentAction = recentAction;
   var runtimeActionHistory = homeRuntime && homeRuntime.runtime_state && Array.isArray(homeRuntime.runtime_state.recent_operator_actions)
     ? homeRuntime.runtime_state.recent_operator_actions
@@ -1688,6 +2382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncHomeOperatorAction(nextAction, { keepalive: true });
     });
   }
+  bindHomeOperatorChainInteractions();
   applyHomeRecentActionUi(recentAction);
   if (recentLoopStatusEl) {
     if (recentOperatorActionEl && latestHomeRecentAction) {
@@ -2029,6 +2724,7 @@ const KANBAN_CSS = `
     border-radius: 16px;
     padding: 14px 16px;
     margin-bottom: 12px;
+    cursor: pointer;
   }
   .flow-chain-spotlight-copy {
     display: grid;
@@ -2042,6 +2738,11 @@ const KANBAN_CSS = `
     margin: 0;
     color: var(--muted);
     font-size: 13px;
+  }
+  .flow-chain-hint {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
   }
   .flow-chain-spotlight-actions {
     display: grid;
@@ -2069,6 +2770,7 @@ const KANBAN_CSS = `
     border-radius: 12px;
     padding: 12px;
     transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    cursor: pointer;
   }
   .flow-chain-item.is-active {
     border-color: rgba(15,118,110,0.42);
@@ -2086,6 +2788,19 @@ const KANBAN_CSS = `
     background: rgba(255,255,255,0.7);
     border: 1px solid rgba(220,207,186,0.85);
     word-break: break-word;
+  }
+  .flow-chain-summary {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .flow-chain-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
   .flow-chain-link {
     font-size: 12px;
@@ -2145,6 +2860,154 @@ const KANBAN_CSS = `
   .flow-chain-empty {
     color: var(--muted);
     font-size: 13px;
+  }
+  .flow-map-panel {
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.92);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .flow-map-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .flow-map-head h3 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+  .flow-map-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .flow-map-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    border-radius: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(29,78,216,0.06));
+    border: 1px solid rgba(15,118,110,0.16);
+  }
+  .flow-map-copy {
+    display: grid;
+    gap: 6px;
+  }
+  .flow-map-copy strong {
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+  .flow-map-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .flow-map-status {
+    min-width: min(100%, 340px);
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+  }
+  .flow-map-status code {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(220,207,186,0.9);
+    font-size: 11px;
+    text-align: right;
+    word-break: break-word;
+  }
+  .flow-map-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .flow-map-summary-card {
+    padding: 14px;
+    border-radius: 14px;
+    background: #fbf7ef;
+    border: 1px solid rgba(220,207,186,0.76);
+    display: grid;
+    gap: 6px;
+  }
+  .flow-map-summary-card span,
+  .flow-map-step-copy span,
+  .flow-map-references span {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .flow-map-summary-card strong,
+  .flow-map-step-copy strong {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .flow-map-route {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .flow-map-step {
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--surface-strong);
+    border: 1px solid rgba(220,207,186,0.82);
+    display: grid;
+    gap: 10px;
+  }
+  .flow-map-step-index {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(15,118,110,0.12);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .flow-map-step-copy {
+    display: grid;
+    gap: 8px;
+  }
+  .flow-map-references {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255,248,238,0.92);
+    border: 1px solid rgba(220,207,186,0.78);
+  }
+  .flow-map-reference-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .flow-map-reference-list code {
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(220,207,186,0.9);
+  }
+  .flow-map-empty {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
   }
   /* ── Kanban Board ─────────────────────────── */
   .kb-board {
@@ -2303,11 +3166,29 @@ const KANBAN_CSS = `
     }
     .flow-chain-spotlight-actions { justify-items: flex-start; }
     .flow-chain-spotlight-links { justify-content: flex-start; }
+    .flow-map-head,
+    .flow-map-hero {
+      flex-direction: column;
+    }
+    .flow-map-status {
+      width: 100%;
+      justify-items: flex-start;
+    }
+    .flow-map-status code {
+      text-align: left;
+    }
+    .flow-map-summary-grid {
+      grid-template-columns: 1fr;
+    }
+    .flow-map-route {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
     .flow-chain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .kb-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 600px) {
     .flow-strip { grid-template-columns: 1fr; }
+    .flow-map-route { grid-template-columns: 1fr; }
     .flow-chain-grid { grid-template-columns: 1fr; }
     .kb-board { grid-template-columns: 1fr; }
     .spiral-row { gap: 2px; }
@@ -2339,7 +3220,14 @@ function buildHomeData() {
 function buildHomeRuntime() {
   const data = buildHomeData();
   const html = buildHtml(data);
-  return { html, homeData: { report: data.report, generatedAt: new Date().toISOString() } };
+  return {
+    html,
+    homeData: {
+      report: data.report,
+      handoff_lane: buildHandoffLaneData(data),
+      generatedAt: new Date().toISOString(),
+    },
+  };
 }
 
 function main() {

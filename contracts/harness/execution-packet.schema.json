@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/contracts/harness/execution-packet.schema.json",
+  "title": "Workflow OS Execution Packet Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "goal",
+    "mode",
+    "packet_type",
+    "intake_packet",
+    "scope",
+    "context_lock",
+    "validation_profile",
+    "rollback_plan",
+    "evidence_policy"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "packet_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "Research",
+        "Build",
+        "Debug",
+        "Operate",
+        "Policy"
+      ]
+    },
+    "packet_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intake_packet": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "goal",
+        "context",
+        "constraints",
+        "done_when",
+        "work_mode",
+        "verification"
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope_in",
+        "scope_out"
+      ],
+      "properties": {
+        "scope_in": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "scope_out": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "protected_core": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "context_lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "drift_status"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "drift_status": {
+          "type": "string",
+          "enum": [
+            "clean",
+            "drifted",
+            "not_observed"
+          ]
+        },
+        "locked_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "locked_tokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "validation_profile": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "packet_type",
+        "stage",
+        "required"
+      ]
+    },
+    "rollback_plan": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pass_requires_observed_evidence",
+        "missing_evidence_status"
+      ],
+      "properties": {
+        "pass_requires_observed_evidence": {
+          "type": "boolean"
+        },
+        "missing_evidence_status": {
+          "type": "string",
+          "enum": [
+            "planned",
+            "not_observed"
+          ]
+        }
+      }
+    },
+    "next_action": {
+      "type": "string"
+    }
+  }
+}

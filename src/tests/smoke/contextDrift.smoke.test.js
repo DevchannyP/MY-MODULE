@@ -66,3 +66,17 @@ test('[context drift] changed and missing files are surfaced from a lock manifes
 
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
+
+test('[context drift] defaults to the latest promotion context lock', async () => {
+  const { stdout } = await execFileAsync('python3', [
+    'scripts/check_context_drift.py',
+    '--json',
+  ], {
+    cwd: path.resolve(__dirname, '../../..'),
+  });
+
+  const report = JSON.parse(stdout);
+  assert.equal(report.schema_version, '1');
+  assert.ok(['clean', 'drifted'].includes(report.drift_status));
+  assert.equal(typeof report.counts.locked, 'number');
+});

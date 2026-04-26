@@ -18,6 +18,8 @@ const DEFAULT_EVAL_ARTIFACT_PATH = path.resolve(
   __dirname,
   '../../../artifacts/evals/harness/latest/harness-eval-report.json',
 );
+const MAX_CONTEXT_FILE_BYTES = 24_000;
+const MAX_CONTEXT_FILES = 16;
 
 function ensureDir(directory) {
   fs.mkdirSync(directory, { recursive: true });
@@ -77,6 +79,105 @@ function createRouteAttributes(route = {}) {
     'harness.route.mode': String(route.mode || ''),
     'harness.route.tier': String(route.selected_model_tier || ''),
   };
+}
+
+function normalizeRelativePath(value) {
+  return String(value || '').replace(/\\/g, '/').replace(/^\/+/, '').trim();
+}
+
+function matchesPathPattern(relativePath, pattern) {
+  const normalizedPath = normalizeRelativePath(relativePath);
+  const normalizedPattern = normalizeRelativePath(pattern);
+  if (!normalizedPath || !normalizedPattern) {
+    return false;
+  }
+  if (normalizedPattern.endsWith('/**')) {
+    return normalizedPath.startsWith(normalizedPattern.slice(0, -3));
+  }
+  return normalizedPath === normalizedPattern;
+}
+
+function readTextSlice(filePath, { lineStart = null, lineEnd = null, line_start: lineStartSnake = null, line_end: lineEndSnake = null } = {}) {
+  const text = fs.readFileSync(filePath, 'utf8');
+  const startLine = Number.isInteger(lineStart) ? lineStart : lineStartSnake;
+  const endLine = Number.isInteger(lineEnd) ? lineEnd : lineEndSnake;
+  if (!Number.isInteger(endLine)) {
+    return text.slice(0, MAX_CONTEXT_FILE_BYTES);
+  }
+  const lines = text.split('\n');
+  const start = Math.max(1, Number(startLine || 1)) - 1;
+  const end = Math.max(start + 1, Number(endLine || lines.length));
+  return lines.slice(start, end).join('\n').slice(0, MAX_CONTEXT_FILE_BYTES);
+}
+
+function buildTrustedContextFromEnvelope(wp = {}, root = path.resolve(__dirname, '../../..')) {
+  const envelope = wp.context_envelope && typeof wp.context_envelope === 'object'
+    ? wp.context_envelope
+    : {};
+  const canonicalFiles = Array.isArray(envelope.canonical_files) ? envelope.canonical_files : [];
+  const partialFiles = Array.isArray(envelope.partial_files) ? envelope.partial_files : [];
+  const plannedEntries = canonicalFiles.map((entry) => ({
+    path: normalizeRelativePath(entry),
+    scope: 'full',
+  })).concat(partialFiles.map((entry) => ({
+    path: normalizeRelativePath(entry && entry.path),
+    scope: 'partial',
+    line_start: Number(entry && entry.line_start) || 1,
+    line_end: Number(entry && entry.line_end) || null,
+  }))).filter((entry) => entry.path).slice(0, MAX_CONTEXT_FILES);
+
+  const trustedFiles = [];
+  const omittedFiles = [];
+  const forbiddenPatterns = [
+    ...(Array.isArray(wp.forbidden_paths) ? wp.forbidden_paths : []),
+    'node_modules/**',
+    '.git/**',
+  ];
+  plannedEntries.forEach((entry) => {
+    if (forbiddenPatterns.some((pattern) => matchesPathPattern(entry.path, pattern))) {
+      omittedFiles.push({ path: entry.path, reason: 'forbidden_path' });
+      return;
+    }
+    const absolutePath = path.resolve(root, entry.path);
+    const relative = path.relative(root, absolutePath).replace(/\\/g, '/');
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      omittedFiles.push({ path: entry.path, reason: 'outside_runtime_root' });
+      return;
+    }
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+      omittedFiles.push({ path: entry.path, reason: 'missing_or_not_file' });
+      return;
+    }
+    trustedFiles.push({
+      path: entry.path,
+      scope: entry.scope,
+      line_start: entry.line_start,
+      line_end: entry.line_end,
+      content: readTextSlice(absolutePath, entry),
+    });
+  });
+
+  return {
+    trusted_context: trustedFiles,
+    omitted_context: omittedFiles,
+    expected_read_files: trustedFiles.map((entry) => entry.path),
+  };
+}
+
+function buildProviderWorkPacket(wp = {}, root = path.resolve(__dirname, '../../..')) {
+  const executionContext = buildTrustedContextFromEnvelope(wp, root);
+  return {
+    ...wp,
+    execution_context: executionContext,
+  };
+}
+
+function providerRequiresReadFiles(providerId, providerWp = {}) {
+  if (String(providerId || '') === 'null-harness-provider') {
+    return false;
+  }
+  return Array.isArray(providerWp.execution_context?.trusted_context)
+    && providerWp.execution_context.trusted_context.length > 0;
 }
 
 function buildProviderResult({ result = {}, providerId = '', route = {}, fallbackApplied = false } = {}) {
@@ -153,6 +254,7 @@ class HarnessProviderAdapter {
     this.nullProvider = nullProvider;
     this.openAiProvider = openAiProvider;
     this.evalArtifactPath = evalArtifactPath;
+    this.root = root;
     this.contractValidator = new ContractValidator({ root });
   }
 
@@ -305,19 +407,26 @@ class HarnessProviderAdapter {
             code: 'PROVIDER_UNAVAILABLE',
           });
         }
+        const providerWp = buildProviderWorkPacket(wp, this.root);
         const result = await provider.generateWorkPacketResult({
           route,
           sessionId,
-          wp,
+          wp: providerWp,
           correlationId,
           requestId,
         });
+        if (providerRequiresReadFiles(providerId, providerWp) && !Array.isArray(result.read_files)) {
+          throw Object.assign(new Error(`Provider ${providerId} omitted required read_files array`), {
+            code: 'PROVIDER_SCHEMA_MISMATCH',
+          });
+        }
         const providerMeta = result.provider || this.resolveProviderResult(route);
         const normalized = {
           ...result,
           session_id: String(result.session_id || sessionId),
           wp_id: String(result.wp_id || wp.id || ''),
           changed_files: Array.isArray(result.changed_files) ? result.changed_files : [],
+          read_files: Array.isArray(result.read_files) ? result.read_files : [],
           provider: {
             ...providerMeta,
             provider_id: String(providerMeta.provider_id || providerId),
@@ -359,6 +468,10 @@ module.exports = {
   appendEvalArtifact,
   buildProviderResult,
   buildEvalArtifactEntry,
+  buildProviderWorkPacket,
+  buildTrustedContextFromEnvelope,
+  matchesPathPattern,
+  providerRequiresReadFiles,
   createRouteAttributes,
   logProviderSuccess,
   recordProviderMetrics,

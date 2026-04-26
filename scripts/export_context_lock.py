@@ -164,13 +164,15 @@ def main() -> None:
     goal = infer_goal_from_current_wp(current_wp, args.goal)
     report = build_context_lock(goal, current_wp, routing_catalog, constraints)
 
-    if args.json:
+    output_path = Path(args.output).resolve() if args.output else None
+    render_as_json = args.json or (output_path is not None and output_path.suffix.lower() == ".json")
+
+    if render_as_json:
         rendered = json.dumps(report, indent=2, ensure_ascii=False)
     else:
         rendered = yaml.dump(report, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
-    if args.output:
-        output_path = Path(args.output).resolve()
+    if output_path:
         output_path.write_text(rendered, encoding="utf-8")
         print(str(output_path))
         return

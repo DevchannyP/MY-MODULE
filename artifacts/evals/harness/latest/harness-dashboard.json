@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-21T13:33:07.624Z",
+  "generated_at_utc": "2026-04-23T13:45:50.207Z",
   "schema_version": "1.0",
   "data_sources": {
     "invocation_log": "artifacts/evals/harness/invocation-log.jsonl",
@@ -17,7 +17,7 @@
     {
       "key": "avg_token_per_wp",
       "label": "WP 평균 토큰 ≤ 15k",
-      "value": 2000,
+      "value": 2333,
       "target": 15000,
       "direction": "lte",
       "status": "PASS",
@@ -35,16 +35,16 @@
     {
       "key": "gate_first_pass_rate",
       "label": "게이트 첫 통과율 ≥ 80%",
-      "value": 1,
+      "value": 0.6667,
       "target": 0.8,
       "direction": "gte",
-      "status": "PASS",
-      "meets_target": true
+      "status": "FAIL",
+      "meets_target": false
     },
     {
       "key": "auto_approve_rate",
       "label": "자동 승인 비율 ≥ 30%",
-      "value": 1,
+      "value": 1.1667,
       "target": 0.3,
       "direction": "gte",
       "status": "PASS",
@@ -69,11 +69,88 @@
       "meets_target": true
     }
   ],
+  "failure_summary": {
+    "source": "memory/L0-hot/failure-patterns.yaml",
+    "pattern_count": 3,
+    "top_patterns": [
+      {
+        "id": "gate-e2e-core-baseline",
+        "gate": "npm run test:e2e-smoke",
+        "severity": "high",
+        "occurrences": 2,
+        "root_cause_category": "gate-first-pass/core-baseline",
+        "failing_tests": [
+          "src/tests/smoke/architectureFitness.smoke.test.js",
+          "src/tests/smoke/envInit.test.js",
+          "src/tests/smoke/harnessEvals.smoke.test.js"
+        ],
+        "preflight_command": "npm run validate:fitness && node scripts/run-harness-evals.js && npm run env:check",
+        "expected_signal": "architecture/env/harness eval baseline이 먼저 PASS해야 full e2e smoke 재시도가 의미 있다.",
+        "handoff_warning": "core baseline smoke가 반복 실패 중이므로 full e2e 전에 architecture/env/harness eval을 먼저 분리 실행한다.",
+        "last_seen": "2026-04-23"
+      },
+      {
+        "id": "gate-e2e-cross-domain-wiring",
+        "gate": "npm run test:e2e-smoke",
+        "severity": "high",
+        "occurrences": 2,
+        "root_cause_category": "gate-first-pass/cross-domain-wiring",
+        "failing_tests": [
+          "src/tests/smoke/billingVideoEventWiring.smoke.test.js",
+          "src/tests/smoke/eventBusWiring.smoke.test.js",
+          "src/tests/smoke/outboxPollerWiring.smoke.test.js"
+        ],
+        "preflight_command": "node --test src/tests/smoke/billingVideoEventWiring.smoke.test.js src/tests/smoke/eventBusWiring.smoke.test.js src/tests/smoke/outboxPollerWiring.smoke.test.js",
+        "expected_signal": "event bus/outbox 연결 smoke가 먼저 PASS해야 domain wiring gate가 신뢰 가능하다.",
+        "handoff_warning": "cross-domain wiring smoke가 반복 실패 중이므로 event bus와 outbox 연결을 먼저 확인한다.",
+        "last_seen": "2026-04-23"
+      },
+      {
+        "id": "gate-e2e-runtime-edge",
+        "gate": "npm run test:e2e-smoke",
+        "severity": "medium",
+        "occurrences": 2,
+        "root_cause_category": "gate-first-pass/runtime-edge",
+        "failing_tests": [
+          "src/tests/smoke/deploymentIngressFailure.smoke.test.js",
+          "src/tests/smoke/mindmapRebuildWorker.smoke.test.js",
+          "src/tests/smoke/optimisticLockHttp.smoke.test.js"
+        ],
+        "preflight_command": "node --test src/tests/smoke/deploymentIngressFailure.smoke.test.js src/tests/smoke/mindmapRebuildWorker.smoke.test.js src/tests/smoke/optimisticLockHttp.smoke.test.js",
+        "expected_signal": "runtime edge smoke가 먼저 PASS해야 full e2e smoke의 remaining failures를 좁힐 수 있다.",
+        "handoff_warning": "runtime edge smoke가 반복 실패 중이므로 ingress, worker, optimistic lock을 full e2e 전에 분리 확인한다.",
+        "last_seen": "2026-04-23"
+      }
+    ],
+    "warnings": [
+      {
+        "id": "gate-e2e-core-baseline",
+        "severity": "high",
+        "message": "core baseline smoke가 반복 실패 중이므로 full e2e 전에 architecture/env/harness eval을 먼저 분리 실행한다.",
+        "preflight_command": "npm run validate:fitness && node scripts/run-harness-evals.js && npm run env:check",
+        "expected_signal": "architecture/env/harness eval baseline이 먼저 PASS해야 full e2e smoke 재시도가 의미 있다."
+      },
+      {
+        "id": "gate-e2e-cross-domain-wiring",
+        "severity": "high",
+        "message": "cross-domain wiring smoke가 반복 실패 중이므로 event bus와 outbox 연결을 먼저 확인한다.",
+        "preflight_command": "node --test src/tests/smoke/billingVideoEventWiring.smoke.test.js src/tests/smoke/eventBusWiring.smoke.test.js src/tests/smoke/outboxPollerWiring.smoke.test.js",
+        "expected_signal": "event bus/outbox 연결 smoke가 먼저 PASS해야 domain wiring gate가 신뢰 가능하다."
+      },
+      {
+        "id": "gate-e2e-runtime-edge",
+        "severity": "medium",
+        "message": "runtime edge smoke가 반복 실패 중이므로 ingress, worker, optimistic lock을 full e2e 전에 분리 확인한다.",
+        "preflight_command": "node --test src/tests/smoke/deploymentIngressFailure.smoke.test.js src/tests/smoke/mindmapRebuildWorker.smoke.test.js src/tests/smoke/optimisticLockHttp.smoke.test.js",
+        "expected_signal": "runtime edge smoke가 먼저 PASS해야 full e2e smoke의 remaining failures를 좁힐 수 있다."
+      }
+    ]
+  },
   "summary": {
     "total_kpis": 6,
-    "pass": 6,
-    "fail": 0,
+    "pass": 5,
+    "fail": 1,
     "no_data": 0,
-    "overall_status": "PASS"
+    "overall_status": "FAIL"
   }
 }

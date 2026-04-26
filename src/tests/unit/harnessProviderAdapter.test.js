@@ -11,6 +11,7 @@ const {
   appendEvalArtifact,
   buildProviderResult,
   buildEvalArtifactEntry,
+  buildTrustedContextFromEnvelope,
   createRouteAttributes,
   shouldFallback,
 } = require('../../infrastructure/ai/HarnessProviderAdapter');
@@ -40,6 +41,18 @@ function createIntakePacket() {
 
 function createEvalArtifactPath() {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'harness-provider-')), 'eval.json');
+}
+
+function createContextRoot() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-provider-context-'));
+  fs.mkdirSync(path.join(root, 'contracts/harness'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'memory'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'node_modules/private-package'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'contracts/harness/output.schema.json'), '{"schema": true}\n', 'utf8');
+  fs.writeFileSync(path.join(root, 'memory/current-state.yaml'), 'a: 1\nb: 2\nc: 3\n', 'utf8');
+  fs.writeFileSync(path.join(root, 'memory/not-in-envelope.yaml'), 'secret: true\n', 'utf8');
+  fs.writeFileSync(path.join(root, 'node_modules/private-package/index.js'), 'module.exports = "secret";\n', 'utf8');
+  return root;
 }
 
 // ── shouldFallback — 6 fallback codes ────────────────────────────────────────
@@ -158,6 +171,57 @@ test('[harness provider adapter] createRouteAttributes returns empty strings for
   assert.equal(attrs['harness.route.id'], '');
   assert.equal(attrs['harness.route.mode'], '');
   assert.equal(attrs['harness.route.tier'], '');
+});
+
+test('[harness provider adapter] buildTrustedContextFromEnvelope reads only declared envelope files', () => {
+  const root = createContextRoot();
+  const context = buildTrustedContextFromEnvelope({
+    context_envelope: {
+      canonical_files: ['contracts/harness/output.schema.json'],
+      partial_files: [
+        {
+          path: 'memory/current-state.yaml',
+          line_start: 2,
+          line_end: 3,
+        },
+      ],
+    },
+  }, root);
+
+  assert.deepEqual(context.expected_read_files, [
+    'contracts/harness/output.schema.json',
+    'memory/current-state.yaml',
+  ]);
+  assert.equal(context.trusted_context.length, 2);
+  assert.match(context.trusted_context[0].content, /"schema": true/);
+  assert.equal(context.trusted_context[1].content, 'b: 2\nc: 3');
+  assert.equal(context.trusted_context.some((entry) => entry.path === 'memory/not-in-envelope.yaml'), false);
+});
+
+test('[harness provider adapter] buildTrustedContextFromEnvelope omits forbidden envelope entries before provider payload', () => {
+  const root = createContextRoot();
+  const context = buildTrustedContextFromEnvelope({
+    forbidden_paths: ['memory/**'],
+    context_envelope: {
+      canonical_files: [
+        'contracts/harness/output.schema.json',
+        'memory/current-state.yaml',
+        'node_modules/private-package/index.js',
+      ],
+      partial_files: [],
+    },
+  }, root);
+
+  assert.deepEqual(context.expected_read_files, ['contracts/harness/output.schema.json']);
+  assert.equal(context.trusted_context.length, 1);
+  assert.ok(context.omitted_context.some((entry) =>
+    entry.path === 'memory/current-state.yaml'
+    && entry.reason === 'forbidden_path'
+  ));
+  assert.ok(context.omitted_context.some((entry) =>
+    entry.path === 'node_modules/private-package/index.js'
+    && entry.reason === 'forbidden_path'
+  ));
 });
 
 // ── appendEvalArtifact ────────────────────────────────────────────────────────
@@ -454,6 +518,8 @@ test('[harness provider adapter] both providers fail — throws primary error wi
 
 test('[harness provider adapter] executeWorkPacket uses openai provider result and appends eval artifact', async () => {
   const evalArtifactPath = createEvalArtifactPath();
+  const root = createContextRoot();
+  let capturedWp = null;
   const adapter = new HarnessProviderAdapter({
     preferredProvider: 'openai',
     openAiProvider: {
@@ -461,11 +527,13 @@ test('[harness provider adapter] executeWorkPacket uses openai provider result a
       isConfigured() {
         return true;
       },
-      async generateWorkPacketResult() {
+      async generateWorkPacketResult({ wp }) {
+        capturedWp = wp;
         return {
           session_id: 'mpo-session-test',
           wp_id: 'WP-TEST-001',
           changed_files: ['src/server/routes/mpo.js'],
+          read_files: ['contracts/harness/output.schema.json'],
           summary: 'provider executed packet',
           provider: {
             provider_id: 'openai-responses',
@@ -481,6 +549,7 @@ test('[harness provider adapter] executeWorkPacket uses openai provider result a
     },
     nullProvider: new NullHarnessProvider(),
     evalArtifactPath,
+    root,
   });
 
   const result = await adapter.executeWorkPacket({
@@ -488,6 +557,10 @@ test('[harness provider adapter] executeWorkPacket uses openai provider result a
     sessionId: 'mpo-session-test',
     wp: {
       id: 'WP-TEST-001',
+      context_envelope: {
+        canonical_files: ['contracts/harness/output.schema.json'],
+        partial_files: [],
+      },
     },
     correlationId: 'corr-exec-1',
     requestId: 'req-exec-1',
@@ -496,13 +569,87 @@ test('[harness provider adapter] executeWorkPacket uses openai provider result a
   assert.equal(result.session_id, 'mpo-session-test');
   assert.equal(result.wp_id, 'WP-TEST-001');
   assert.deepEqual(result.changed_files, ['src/server/routes/mpo.js']);
+  assert.deepEqual(result.read_files, ['contracts/harness/output.schema.json']);
   assert.equal(result.provider.provider_id, 'openai-responses');
   assert.equal(result.provider.fallback_applied, false);
+  assert.equal(capturedWp.execution_context.trusted_context.length, 1);
+  assert.equal(capturedWp.execution_context.expected_read_files[0], 'contracts/harness/output.schema.json');
 
   const artifact = JSON.parse(fs.readFileSync(evalArtifactPath, 'utf8'));
   assert.equal(artifact.last_provider_invocation.provider_id, 'openai-responses');
   assert.equal(artifact.last_provider_invocation.wp_id, 'WP-TEST-001');
   assert.equal(artifact.last_provider_invocation.fallback_applied, false);
+});
+
+test('[harness provider adapter] executeWorkPacket rejects live provider result without read_files when context is present', async () => {
+  const evalArtifactPath = createEvalArtifactPath();
+  const root = createContextRoot();
+  let nullCalls = 0;
+  const adapter = new HarnessProviderAdapter({
+    preferredProvider: 'openai',
+    openAiProvider: {
+      providerId: 'openai-responses',
+      isConfigured() {
+        return true;
+      },
+      async generateWorkPacketResult() {
+        return {
+          session_id: 'mpo-session-test',
+          wp_id: 'WP-TEST-001',
+          changed_files: [],
+          provider: {
+            provider_id: 'openai-responses',
+            route_id: 'standard-build',
+            selected_model_tier: 'standard',
+            fallback_applied: false,
+          },
+        };
+      },
+    },
+    nullProvider: {
+      providerId: 'null-harness-provider',
+      isConfigured() {
+        return true;
+      },
+      async generateWorkPacketResult() {
+        nullCalls += 1;
+        return {
+          session_id: 'should-not-run',
+          wp_id: 'should-not-run',
+          changed_files: [],
+          read_files: [],
+          provider: {
+            provider_id: 'null-harness-provider',
+            route_id: 'null-route',
+            selected_model_tier: 'mini',
+            fallback_applied: true,
+          },
+        };
+      },
+    },
+    evalArtifactPath,
+    root,
+  });
+
+  await assert.rejects(
+    () => adapter.executeWorkPacket({
+      route: createRoute(),
+      sessionId: 'mpo-session-test',
+      wp: {
+        id: 'WP-TEST-001',
+        context_envelope: {
+          canonical_files: ['contracts/harness/output.schema.json'],
+          partial_files: [],
+        },
+      },
+    }),
+    (error) => {
+      assert.equal(error.code, 'PROVIDER_SCHEMA_MISMATCH');
+      assert.match(error.message, /read_files/);
+      return true;
+    },
+  );
+  assert.equal(nullCalls, 0);
 });
 
 test('[harness provider adapter] executeWorkPacket schema mismatch does not fall back to null provider', async () => {

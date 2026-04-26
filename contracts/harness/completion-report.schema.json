@@ -10,7 +10,16 @@
     "verification_status",
     "evidence_status",
     "summary",
+    "analysis",
+    "change_points",
+    "verification",
+    "risks",
+    "next_action",
+    "rollback_plan",
+    "tests_run",
+    "tests_planned",
     "changed_files",
+    "read_files",
     "evidence",
     "provider",
     "token_usage",
@@ -69,31 +78,128 @@
     "change_points": {
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "target",
+          "intent"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "intent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string"
+          }
+        }
       }
     },
     "tests_run": {
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "PARTIAL_PASS",
+              "FAIL"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
       }
     },
     "tests_planned": {
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected_result": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "verification": {
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "PARTIAL_PASS",
+              "FAIL",
+              "PLANNED",
+              "NOT_RUN"
+            ]
+          },
+          "note": {
+            "type": "string"
+          }
+        }
       }
     },
     "risks": {
       "type": "array",
       "items": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "level",
+          "description"
+        ],
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mitigation": {
+            "type": "string"
+          }
+        }
       }
     },
     "next_action": {
@@ -103,6 +209,13 @@
       "type": "string"
     },
     "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "read_files": {
       "type": "array",
       "items": {
         "type": "string",

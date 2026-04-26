@@ -38,6 +38,17 @@ function unique(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
+function buildHandoffContract(profileDoc = {}) {
+  const contract = profileDoc.handoff_contract || {};
+  return {
+    schema_version: String(contract.schema_version || '1'),
+    required_fields: ensureList(contract.required_fields),
+    merge_order: ensureList(contract.merge_order),
+    pass_criteria_default: String(contract.pass_criteria_default || 'exit code 0'),
+    notes: ensureList(contract.notes),
+  };
+}
+
 function normalizePacketType(packetType, aliases = {}) {
   const requested = String(packetType || 'planning').trim().toLowerCase() || 'planning';
   const canonical = String(aliases[requested] || requested).trim().toLowerCase() || 'planning';
@@ -65,9 +76,11 @@ function deriveProfileType(currentWp = {}, options = {}, aliases = {}) {
 }
 
 function buildVerificationBundle(profileCommands, currentWp = {}, _profileDoc = {}, stage = '') {
+  const handoffContract = buildHandoffContract(_profileDoc);
+  const passCriteria = handoffContract.pass_criteria_default || 'exit code 0';
   const required = unique(profileCommands).map((command) => ({
     command,
-    pass_criteria: 'exit code 0',
+    pass_criteria: passCriteria,
   }));
   const optional = [];
 
@@ -117,6 +130,7 @@ function resolveValidationProfile(currentWp = {}, options = {}) {
     commands,
     required: bundle.required,
     optional: bundle.optional,
+    handoff_contract: buildHandoffContract(profileDoc),
     source_breakdown: {
       defaults,
       profile: profileCommands,

@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { buildBootstrapSummary } = require('./session_bootstrap');
+const { buildBootstrapSummary, buildHandoffSummary } = require('./session_bootstrap');
 const { buildBranchBootstrapSummary } = require('./branch_bootstrap');
 const { buildAutoCommitGuardSummary } = require('./verified_auto_commit_guard');
 const { laneMeta } = require('./packet_flow');
@@ -123,9 +123,16 @@ function buildOperatorCockpitSummary() {
       label: lane.label,
     },
     git: bootstrap.git,
+    intake_packet: bootstrap.intake_packet,
     intake_packet_fields: bootstrap.intake_packet_fields,
     recommended_reads: bootstrap.recommended_reads,
     validation_profile: bootstrap.validation_profile,
+    handoff_summary: buildHandoffSummary({
+      bootstrap,
+      git: bootstrap.git,
+      commitGuard,
+      promotionEvidence,
+    }),
     branch,
     promotion_evidence: promotionEvidence,
     commit_guard: {
@@ -163,10 +170,25 @@ function printHuman(summary) {
     '[Read First]',
     ...summary.recommended_reads.map((item) => `- ${item}`),
     '',
+    '[Intake Packet]',
+    ...summary.intake_packet_fields.map((item) => {
+      const value = summary.intake_packet?.[item];
+      const count = Array.isArray(value) ? value.length : (value ? 1 : 0);
+      return `- ${item}: ${count}`;
+    }),
+    '',
     '[Validation Profile]',
     `- ${summary.validation_profile.packet_type} / ${summary.validation_profile.stage || 'UNKNOWN'}`,
     `- next command: ${summary.next_validation_command || 'n/a'}`,
     ...summary.validation_profile.commands.map((item) => `- ${item}`),
+    '',
+    '[Handoff Summary]',
+    `- current: ${summary.handoff_summary.current_wp}`,
+    `- next: ${summary.handoff_summary.next_wp}`,
+    `- drift: ${summary.handoff_summary.drift_status}`,
+    `- validation: ${summary.handoff_summary.validation_state}`,
+    `- evidence: ${summary.handoff_summary.evidence_state}`,
+    `- next command: ${summary.handoff_summary.next_command}`,
     '',
     '[Branch]',
     `- ${summary.branch.recommended_branch}`,

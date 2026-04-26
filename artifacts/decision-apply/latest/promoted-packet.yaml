@@ -1,5 +1,5 @@
-id: WP-PROMOTE-2026-04-22-OPS
-goal: 최근 audit 시그널을 기준으로 actor? 9543a440d4e4
+id: WP-PROMOTE-2026-04-26-OPS
+goal: 최근 audit 시그널 기반으로 zone-feature-flags 후속 packet을 정리한다
 type: governance
 stage: D
 status: in_progress
@@ -10,11 +10,15 @@ scope_in:
 - master-shell/operations/rollback-playbook.yaml
 - master-shell/catalog/execution-packet-templates.yaml
 - master-shell/catalog/context-routing-profiles.yaml
+- scripts/generate_replay_packet.py
+- scripts/generate_routing_learning_ledger.py
 - master-shell/observability/health-scores.yaml
 - master-shell/operations/deployment-environments.yaml
 - artifacts/deployment-smoke/target-resolution.json
 scope_out:
 - domains/
+- src/infrastructure/ai/
+- artifacts/master-planner/index.html
 - system OS core
 - unrelated domains
 constraints:
@@ -23,7 +27,7 @@ constraints:
 - primary/secondary context lock이 예산 안에 있는 packet만 승격한다
 done_when:
 - replay에서 제안된 goal이 evidence와 함께 정리된다
-- primary read bundle 6개만으로 1차 구현/검증을 끝낸다
+- primary read bundle 8개만으로 1차 구현/검증을 끝낸다
 - npm run check:observability 통과
 - npm run smoke:deployment 통과
 fail_if:
@@ -50,16 +54,19 @@ context_budget:
   - master-shell/operations/rollback-playbook.yaml
   - master-shell/catalog/execution-packet-templates.yaml
   - master-shell/catalog/context-routing-profiles.yaml
+  - scripts/generate_replay_packet.py
+  - scripts/generate_routing_learning_ledger.py
   context_reads:
   - master-shell/observability/health-scores.yaml
   - master-shell/operations/deployment-environments.yaml
   - artifacts/deployment-smoke/target-resolution.json
+  - artifacts/promotion-pipeline/latest/handoff-bundle.json
   estimated_turns: 3
   max_new_files: 2
   max_modified_files: 6
-  budget_primary_tokens: 6081
-  budget_total_tokens: 542771
+  budget_primary_tokens: 12325
+  budget_total_tokens: 564927
 template_id: ops-hardening-packet
 planning_mode: ''
-generated_at: '2026-04-22T14:43:48.715185+00:00'
-applied_at: '2026-04-22T14:43:48.715204+00:00'
+generated_at: '2026-04-26T14:16:26.970349+00:00'
+applied_at: '2026-04-26T14:16:26.970365+00:00'

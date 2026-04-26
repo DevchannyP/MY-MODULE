@@ -264,6 +264,72 @@
     font-weight: 700;
   }
 
+  .handoff-lane {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    background: rgba(255,255,255,0.78);
+    border: 1px solid rgba(15,118,110,0.24);
+  }
+
+  .handoff-lane-head,
+  .handoff-next-command {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .handoff-lane-head span,
+  .handoff-next-command span,
+  .handoff-lane-grid span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .handoff-lane-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .handoff-lane-grid div {
+    min-width: 0;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 248, 238, 0.88);
+    border: 1px solid rgba(220, 207, 186, 0.68);
+  }
+
+  .handoff-lane-grid strong,
+  .handoff-next-command code {
+    display: block;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+
+  .handoff-next-command {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: rgba(15,118,110,0.07);
+    border: 1px solid rgba(15,118,110,0.18);
+  }
+
+  .handoff-next-command code {
+    text-align: right;
+  }
+
+  .handoff-lane p {
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
   .muted { color: var(--muted); }
 
   .stats,
@@ -631,6 +697,7 @@
     border-radius: 16px;
     padding: 14px 16px;
     margin-bottom: 12px;
+    cursor: pointer;
   }
   .flow-chain-spotlight-copy {
     display: grid;
@@ -644,6 +711,11 @@
     margin: 0;
     color: var(--muted);
     font-size: 13px;
+  }
+  .flow-chain-hint {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
   }
   .flow-chain-spotlight-actions {
     display: grid;
@@ -671,6 +743,7 @@
     border-radius: 12px;
     padding: 12px;
     transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    cursor: pointer;
   }
   .flow-chain-item.is-active {
     border-color: rgba(15,118,110,0.42);
@@ -688,6 +761,19 @@
     background: rgba(255,255,255,0.7);
     border: 1px solid rgba(220,207,186,0.85);
     word-break: break-word;
+  }
+  .flow-chain-summary {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .flow-chain-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
   .flow-chain-link {
     font-size: 12px;
@@ -747,6 +833,154 @@
   .flow-chain-empty {
     color: var(--muted);
     font-size: 13px;
+  }
+  .flow-map-panel {
+    background: var(--surface);
+    border: 1px solid rgba(220,207,186,0.92);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .flow-map-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .flow-map-head h3 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+  .flow-map-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .flow-map-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    border-radius: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(29,78,216,0.06));
+    border: 1px solid rgba(15,118,110,0.16);
+  }
+  .flow-map-copy {
+    display: grid;
+    gap: 6px;
+  }
+  .flow-map-copy strong {
+    font-size: 18px;
+    letter-spacing: -0.03em;
+  }
+  .flow-map-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .flow-map-status {
+    min-width: min(100%, 340px);
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+  }
+  .flow-map-status code {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(220,207,186,0.9);
+    font-size: 11px;
+    text-align: right;
+    word-break: break-word;
+  }
+  .flow-map-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .flow-map-summary-card {
+    padding: 14px;
+    border-radius: 14px;
+    background: #fbf7ef;
+    border: 1px solid rgba(220,207,186,0.76);
+    display: grid;
+    gap: 6px;
+  }
+  .flow-map-summary-card span,
+  .flow-map-step-copy span,
+  .flow-map-references span {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .flow-map-summary-card strong,
+  .flow-map-step-copy strong {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .flow-map-route {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .flow-map-step {
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--surface-strong);
+    border: 1px solid rgba(220,207,186,0.82);
+    display: grid;
+    gap: 10px;
+  }
+  .flow-map-step-index {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(15,118,110,0.12);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+  }
+  .flow-map-step-copy {
+    display: grid;
+    gap: 8px;
+  }
+  .flow-map-references {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255,248,238,0.92);
+    border: 1px solid rgba(220,207,186,0.78);
+  }
+  .flow-map-reference-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .flow-map-reference-list code {
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.82);
+    border: 1px solid rgba(220,207,186,0.9);
+  }
+  .flow-map-empty {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
   }
   /* ── Kanban Board ─────────────────────────── */
   .kb-board {
@@ -905,11 +1139,29 @@
     }
     .flow-chain-spotlight-actions { justify-items: flex-start; }
     .flow-chain-spotlight-links { justify-content: flex-start; }
+    .flow-map-head,
+    .flow-map-hero {
+      flex-direction: column;
+    }
+    .flow-map-status {
+      width: 100%;
+      justify-items: flex-start;
+    }
+    .flow-map-status code {
+      text-align: left;
+    }
+    .flow-map-summary-grid {
+      grid-template-columns: 1fr;
+    }
+    .flow-map-route {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
     .flow-chain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .kb-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 600px) {
     .flow-strip { grid-template-columns: 1fr; }
+    .flow-map-route { grid-template-columns: 1fr; }
     .flow-chain-grid { grid-template-columns: 1fr; }
     .kb-board { grid-template-columns: 1fr; }
     .spiral-row { gap: 2px; }
@@ -939,7 +1191,7 @@
     <div class="wfos-stat"><span class="wfos-stat__label">도메인</span><span class="wfos-stat__value">3</span></div>
     <div class="wfos-stat"><span class="wfos-stat__label">활성 플래그</span><span class="wfos-stat__value">0 / 20</span></div>
     <div class="wfos-stat"><span class="wfos-stat__label">품질 게이트</span><span class="wfos-stat__value" style="color:#22c55e;">8/8 PASS</span></div>
-    <div class="wfos-stat"><span class="wfos-stat__label">마지막 게이트</span><span class="wfos-stat__value" style="font-size:.8rem;">2026. 4. 22. 23시 43분 54초</span></div>
+    <div class="wfos-stat"><span class="wfos-stat__label">마지막 게이트</span><span class="wfos-stat__value" style="font-size:.8rem;">2026. 4. 26. 23시 16분 31초</span></div>
     <div style="flex:1;"></div>
     <div style="display:flex;align-items:center;gap:.4rem;">
       <span class="wf-sse-indicator wf-sse-indicator--offline" data-sse-indicator title="실시간 연결 상태">●</span>
@@ -1039,8 +1291,8 @@
         <div class="side-list">
           <div class="side-item"><span class="muted">요구사항 Stage</span><strong>D</strong></div>
           <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">MPO-COMPLETE</strong></div>
-          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>NONE</strong></div>
-          <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>clean</strong></div>
+          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>WP-HO-011</strong></div>
+          <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>drifted</strong></div>
           <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
           <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
           <div class="side-item"><span class="muted">터미널 세션</span><strong id="live-pty-sessions">—</strong></div>
@@ -1048,6 +1300,24 @@
           <div class="side-item"><span class="muted">활성 플래그</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
           <div class="side-item"><span class="muted">ENV 오버라이드</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
           <div class="side-item"><span class="muted">최근 operator action</span><strong id="live-operator-action">—</strong></div>
+        </div>
+        
+        <div class="handoff-lane" id="home-handoff-lane" aria-label="Handoff Lane">
+          <div class="handoff-lane-head">
+            <span>Handoff Lane</span>
+            <strong class="tag tone-slate" id="handoff-drift-status">drifted</strong>
+          </div>
+          <div class="handoff-lane-grid">
+            <div><span>Current WP</span><strong id="handoff-current-wp">MPO-COMPLETE</strong></div>
+            <div><span>Next WP</span><strong id="handoff-next-wp">WP-HO-011</strong></div>
+            <div><span>Validation</span><strong id="handoff-validation-state">blocked</strong></div>
+            <div><span>Evidence</span><strong id="handoff-evidence-state">PASS</strong></div>
+          </div>
+          <div class="handoff-next-command">
+            <span>Next command</span>
+            <code id="handoff-next-command">npm run validate:requirements</code>
+          </div>
+          <p>preflight warning 확인 후 검증 실행</p>
         </div>
         <div class="loop-card">
           <h3>최근 Operator Loop</h3>
@@ -1078,7 +1348,7 @@
       </article>
       <article class="stat-card">
         <div class="stat-label">잠금 토큰</div>
-        <div class="stat-value">10432</div>
+        <div class="stat-value">24208</div>
         <div class="stat-note">프로모션 파이프라인 context lock 기준</div>
       </article>
       <article class="stat-card">
@@ -1101,26 +1371,26 @@
       <article class="flow-card flow-card-primary">
         <div class="flow-card-head">
           <span class="flow-kicker">Current Lane</span>
-          <span class="tag tone-green">Done</span>
+          <span class="tag tone-green">Backlog</span>
         </div>
-        <h3>MPO-COMPLETE</h3>
-        <p>MPO session mpo-258dbd06-7612-41b6-aec8-1129f9e6554f completed</p>
+        <h3>WP-HO-011</h3>
+        <p>진행 중 작업</p>
         <div class="flow-meta">
           <span>stage complete</span>
-          <span>status completed</span>
+          <span>status ready</span>
         </div>
       </article>
 
       <article class="flow-card">
         <div class="flow-card-head">
           <span class="flow-kicker">Next Action</span>
-          <span class="tag tone-amber">NONE</span>
+          <span class="tag tone-amber">WP-HO-011</span>
         </div>
         <h3>다음 한 단계</h3>
-        <p>NONE</p>
+        <p>WP-HO-011 · 진행 중 작업</p>
         <div class="flow-meta">
           <span>branch chore/core-git-governance-activation...origin/chore/core-git-governance-activation</span>
-          <span>dirty 29건</span>
+          <span>dirty 123건</span>
         </div>
       </article>
 
@@ -1130,9 +1400,9 @@
           <span class="tag tone-green">PASS</span>
         </div>
         <h3>검증 루프</h3>
-        <p>5개 명령이 현재 packet 프로파일에 연결돼 있습니다.</p>
+        <p>4개 명령이 현재 packet 프로파일에 연결돼 있습니다.</p>
         <div class="flow-code-list">
-          <code>npm run validate:requirements</code><code>npm run lint</code><code>npm run validate:composition</code>
+          <code>npm run validate:requirements</code><code>npm run lint</code><code>npm run type-check</code>
         </div>
       </article>
 
@@ -1161,76 +1431,179 @@
         </div>
       </div>
       
-      <article class="flow-chain-spotlight" id="flow-chain-spotlight" data-chain-id="commit-guard">
+      <article class="flow-chain-spotlight" id="flow-chain-spotlight" data-chain-id="commit-guard" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <div class="flow-chain-spotlight-copy">
           <span class="flow-kicker">지금 실행할 카드</span>
           <strong id="flow-chain-spotlight-title">Commit Guard</strong>
-          <p id="flow-chain-spotlight-reason">verify 모드로 검증 실행</p>
+          <p id="flow-chain-spotlight-reason">preflight warning 확인 후 검증 실행</p>
+          <span class="flow-chain-hint">카드를 클릭하면 상세 설명과 수정 맵이 아래에 열립니다.</span>
         </div>
         <div class="flow-chain-spotlight-actions">
           <span class="tag tone-slate" id="flow-chain-spotlight-status">blocked</span>
           <code id="flow-chain-spotlight-command">npm run commit:guard:verify</code>
           <div class="flow-chain-spotlight-links">
             <button type="button" class="flow-chain-link is-button" id="flow-chain-spotlight-copy" data-command="npm run commit:guard:verify">명령 복사</button>
-            <a class="flow-chain-link" id="flow-chain-spotlight-fill" href="mindmap/index.html?focus=execution-failure&amp;reason=verify+%EB%AA%A8%EB%93%9C%EB%A1%9C+%EA%B2%80%EC%A6%9D+%EC%8B%A4%ED%96%89&amp;command=npm+run+commit%3Aguard%3Averify&amp;label=Commit+Guard&amp;source=home-spotlight#execution-console">실행 패널에 채우기</a>
-            <a class="flow-chain-link" id="flow-chain-spotlight-link" href="mindmap/index.html?focus=guard&amp;reason=verify+%EB%AA%A8%EB%93%9C%EB%A1%9C+%EA%B2%80%EC%A6%9D+%EC%8B%A4%ED%96%89&amp;command=npm+run+commit%3Aguard%3Averify&amp;label=Commit+Guard&amp;source=home-chain#plan-board">바로 열기</a>
+            <a class="flow-chain-link" id="flow-chain-spotlight-fill" href="mindmap/index.html?focus=execution-failure&amp;reason=preflight+warning+%ED%99%95%EC%9D%B8+%ED%9B%84+%EA%B2%80%EC%A6%9D+%EC%8B%A4%ED%96%89&amp;command=npm+run+commit%3Aguard%3Averify&amp;label=Commit+Guard&amp;source=home-spotlight#execution-console">실행 패널에 채우기</a>
+            <a class="flow-chain-link" id="flow-chain-spotlight-link" href="mindmap/index.html?focus=guard&amp;reason=preflight+warning+%ED%99%95%EC%9D%B8+%ED%9B%84+%EA%B2%80%EC%A6%9D+%EC%8B%A4%ED%96%89&amp;command=npm+run+commit%3Aguard%3Averify&amp;label=Commit+Guard&amp;source=home-chain#plan-board">바로 열기</a>
           </div>
         </div>
       </article>
       <div class="flow-chain-grid">
         
-      <div class="flow-chain-item" data-chain-id="bootstrap" data-chain-scope="chain:bootstrap" data-chain-command="npm run session:bootstrap">
+      <article class="flow-chain-item" data-chain-id="bootstrap" data-chain-scope="chain:bootstrap" data-chain-command="npm run session:bootstrap" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <span class="flow-chain-label">Session Bootstrap</span>
         <span class="tag tone-green">ready</span>
+        <p class="flow-chain-summary">현재 Work Packet, 레인, 우선 읽을 문서를 다시 고정해 반복 실행 중에도 기준이 흔들리지 않게 만드는 단계입니다.</p>
         <code>npm run session:bootstrap</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-bootstrap" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-bootstrap">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=MPO-COMPLETE+%2F+lane+done&amp;command=npm+run+session%3Abootstrap&amp;label=Session+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
-      </div>
-      <div class="flow-chain-item" data-chain-id="branch" data-chain-scope="chain:branch" data-chain-command="git checkout -b chore/core-mpo-session-mpo-258dbd06-7612-41b6-aec8-">
+        <div class="flow-chain-actions">
+          <span class="flow-chain-hint">클릭해서 수정 맵 보기</span>
+          <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=MPO-COMPLETE+%2F+lane+backlog&amp;command=npm+run+session%3Abootstrap&amp;label=Session+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
+        </div>
+      </article>
+      <article class="flow-chain-item" data-chain-id="branch" data-chain-scope="chain:branch" data-chain-command="git checkout -b chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742-" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <span class="flow-chain-label">Branch Bootstrap</span>
         <span class="tag tone-green">ready</span>
-        <code>git checkout -b chore/core-mpo-session-mpo-258dbd06-7612-41b6-aec8-</code>
+        <p class="flow-chain-summary">현재 브랜치가 권장 브랜치와 일치하는지, 수정 가능한 작업 트리인지 먼저 정리하는 단계입니다.</p>
+        <code>git checkout -b chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742-</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-branch" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-branch">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=%EA%B6%8C%EC%9E%A5+%EB%B8%8C%EB%9E%9C%EC%B9%98+chore%2Fcore-mpo-session-mpo-258dbd06-7612-41b6-aec8-&amp;command=git+checkout+-b+chore%2Fcore-mpo-session-mpo-258dbd06-7612-41b6-aec8-&amp;label=Branch+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
-      </div>
-      <div class="flow-chain-item" data-chain-id="verify" data-chain-scope="chain:verify" data-chain-command="npm run validate:requirements">
+        <div class="flow-chain-actions">
+          <span class="flow-chain-hint">클릭해서 수정 맵 보기</span>
+          <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=%EA%B6%8C%EC%9E%A5+%EB%B8%8C%EB%9E%9C%EC%B9%98+chore%2Fcore-mpo-session-mpo-01a7bad9-7357-46ae-9742-&amp;command=git+checkout+-b+chore%2Fcore-mpo-session-mpo-01a7bad9-7357-46ae-9742-&amp;label=Branch+Bootstrap&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
+        </div>
+      </article>
+      <article class="flow-chain-item" data-chain-id="verify" data-chain-scope="chain:verify" data-chain-command="npm run validate:requirements" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <span class="flow-chain-label">Validation Profile</span>
         <span class="tag tone-slate">pending</span>
+        <p class="flow-chain-summary">현재 packet에 연결된 검증 명령 세트를 기준으로 어떤 실패를 먼저 고칠지 좁히는 단계입니다.</p>
         <code>npm run validate:requirements</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-verify" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-verify">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=guard&amp;reason=5%EA%B0%9C+%EA%B2%80%EC%A6%9D+%EB%AA%85%EB%A0%B9+%2F+governance&amp;command=npm+run+validate%3Arequirements&amp;label=Validation+Profile&amp;source=home-chain#plan-board">control center에서 이어서 보기</a>
-      </div>
-      <div class="flow-chain-item is-active" data-chain-id="commit-guard" data-chain-scope="chain:commit-guard" data-chain-command="npm run commit:guard:verify">
+        <div class="flow-chain-actions">
+          <span class="flow-chain-hint">클릭해서 수정 맵 보기</span>
+          <a class="flow-chain-link" href="mindmap/index.html?focus=guard&amp;reason=4%EA%B0%9C+%EA%B2%80%EC%A6%9D+%EB%AA%85%EB%A0%B9+%2F+infra&amp;command=npm+run+validate%3Arequirements&amp;label=Validation+Profile&amp;source=home-chain#plan-board">control center에서 이어서 보기</a>
+        </div>
+      </article>
+      <article class="flow-chain-item is-active" data-chain-id="commit-guard" data-chain-scope="chain:commit-guard" data-chain-command="npm run commit:guard:verify" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <span class="flow-chain-label">Commit Guard</span>
         <span class="tag tone-slate">blocked</span>
+        <p class="flow-chain-summary">적용 가능한 변경인지, dirty 상태와 validation 통과 여부가 조건을 만족하는지 차단 규칙으로 판정하는 단계입니다.</p>
         <code>npm run commit:guard:verify</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-commit-guard" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-commit-guard">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=guard&amp;reason=verify+%EB%AA%A8%EB%93%9C%EB%A1%9C+%EA%B2%80%EC%A6%9D+%EC%8B%A4%ED%96%89&amp;command=npm+run+commit%3Aguard%3Averify&amp;label=Commit+Guard&amp;source=home-chain#plan-board">control center에서 이어서 보기</a>
-      </div>
-      <div class="flow-chain-item" data-chain-id="release-evidence" data-chain-scope="chain:release-evidence" data-chain-command="python3 scripts/generate_release_evidence.py">
+        <div class="flow-chain-actions">
+          <span class="flow-chain-hint">클릭해서 수정 맵 보기</span>
+          <a class="flow-chain-link" href="mindmap/index.html?focus=guard&amp;reason=preflight+warning+%ED%99%95%EC%9D%B8+%ED%9B%84+%EA%B2%80%EC%A6%9D+%EC%8B%A4%ED%96%89&amp;command=npm+run+commit%3Aguard%3Averify&amp;label=Commit+Guard&amp;source=home-chain#plan-board">control center에서 이어서 보기</a>
+        </div>
+      </article>
+      <article class="flow-chain-item" data-chain-id="release-evidence" data-chain-scope="chain:release-evidence" data-chain-command="python3 scripts/generate_release_evidence.py" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <span class="flow-chain-label">Release Evidence</span>
         <span class="tag tone-green">ready</span>
+        <p class="flow-chain-summary">quality gate와 stage-run 증거를 배포/반영 가능한 evidence artifact로 묶어 최종 판정을 내리는 단계입니다.</p>
         <code>python3 scripts/generate_release_evidence.py</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="flow-chain-delivery-release-evidence" data-delivery-status="none">최근 전달 없음</span>
           <span class="flow-chain-delivery-meta" id="flow-chain-delivery-meta-release-evidence">실행 이력 없음</span>
         </div>
-        <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=quality+gate+PASS&amp;command=python3+scripts%2Fgenerate_release_evidence.py&amp;label=Release+Evidence&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
-      </div>
+        <div class="flow-chain-actions">
+          <span class="flow-chain-hint">클릭해서 수정 맵 보기</span>
+          <a class="flow-chain-link" href="mindmap/index.html?focus=operator-summary&amp;reason=quality+gate+PASS&amp;command=python3+scripts%2Fgenerate_release_evidence.py&amp;label=Release+Evidence&amp;source=home-chain#master-status">control center에서 이어서 보기</a>
+        </div>
+      </article>
       </div>
     </section>
+
+    
+    <section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite" data-selected-chain-id="commit-guard">
+      <div class="flow-map-head">
+        <div>
+          <h3>상세 설명 + 수정 맵</h3>
+          <p>오퍼레이터 바 카드를 클릭하면 어디서 확인하고 어디부터 고칠지 맵 형식으로 바로 안내합니다.</p>
+        </div>
+        <div class="flow-pill">선택 단계 <strong id="flow-map-selected-label">Commit Guard</strong></div>
+      </div>
+      <div class="flow-map-hero">
+        <div class="flow-map-copy">
+          <span class="flow-kicker">무슨 단계인가</span>
+          <strong id="flow-map-title">Commit Guard</strong>
+          <p id="flow-map-summary">적용 가능한 변경인지, dirty 상태와 validation 통과 여부가 조건을 만족하는지 차단 규칙으로 판정하는 단계입니다.</p>
+        </div>
+        <div class="flow-map-status">
+          <span class="tag tone-slate" id="flow-map-status">blocked</span>
+          <code id="flow-map-command">npm run commit:guard:verify</code>
+        </div>
+      </div>
+      <div class="flow-map-summary-grid">
+        <article class="flow-map-summary-card">
+          <span>왜 지금 필요한가</span>
+          <strong id="flow-map-why">protected branch 아님</strong>
+        </article>
+        <article class="flow-map-summary-card">
+          <span>현재 시그널</span>
+          <strong id="flow-map-reason">preflight warning 확인 후 검증 실행</strong>
+        </article>
+        <article class="flow-map-summary-card">
+          <span>담당 레인</span>
+          <strong id="flow-map-owner">Reviewer</strong>
+        </article>
+      </div>
+      <div class="flow-map-route">
+        
+        <article class="flow-map-step">
+          <div class="flow-map-step-index">1</div>
+          <div class="flow-map-step-copy">
+            <span>시작 지점</span>
+            <strong>protected branch 아님</strong>
+            
+          </div>
+        </article>
+        <article class="flow-map-step">
+          <div class="flow-map-step-index">2</div>
+          <div class="flow-map-step-copy">
+            <span>차단 조건</span>
+            <strong>dirty 있음 / validation 미통과 / apply 차단</strong>
+            
+          </div>
+        </article>
+        <article class="flow-map-step">
+          <div class="flow-map-step-index">3</div>
+          <div class="flow-map-step-copy">
+            <span>수정 포인트</span>
+            <strong>plan board에서 validation과 commit guard를 같이 확인한 뒤 차단 사유를 하나씩 제거합니다.</strong>
+            <a class="flow-chain-link" href="mindmap/index.html?focus=guard&amp;reason=protected+branch+%EC%95%84%EB%8B%98&amp;command=npm+run+commit%3Aguard%3Averify&amp;label=Commit+Guard&amp;source=home-map#plan-board">Guard 보드 열기</a>
+          </div>
+        </article>
+        <article class="flow-map-step">
+          <div class="flow-map-step-index">4</div>
+          <div class="flow-map-step-copy">
+            <span>검증 루프</span>
+            <strong>npm run commit:guard:verify</strong>
+            
+          </div>
+        </article>
+      </div>
+      <div class="flow-map-references">
+        <span>바로 볼 기준</span>
+        <div class="flow-map-reference-list">
+          <code>protected branch 아님</code><code>커밋할 변경 존재</code><code>검증 프로파일 FAIL</code>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      window.__HOME_INITIAL_OPERATOR_CHAIN__ = [{"id":"bootstrap","label":"Session Bootstrap","status":"ready","command":"npm run session:bootstrap","reason":"MPO-COMPLETE / lane backlog"},{"id":"branch","label":"Branch Bootstrap","status":"ready","command":"git checkout -b chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742-","reason":"권장 브랜치 chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742-"},{"id":"verify","label":"Validation Profile","status":"pending","command":"npm run validate:requirements","reason":"4개 검증 명령 / infra"},{"id":"commit-guard","label":"Commit Guard","status":"blocked","command":"npm run commit:guard:verify","reason":"preflight warning 확인 후 검증 실행"},{"id":"release-evidence","label":"Release Evidence","status":"ready","command":"python3 scripts/generate_release_evidence.py","reason":"quality gate PASS"}];
+      window.__HOME_OPERATOR_CHAIN_BLUEPRINTS__ = {"bootstrap":{"owner":"Planner","summary":"현재 Work Packet, 레인, 우선 읽을 문서를 다시 고정해 반복 실행 중에도 기준이 흔들리지 않게 만드는 단계입니다.","why":"MPO-COMPLETE 기준으로 세션을 다시 맞춰야 이후 브랜치, 검증, evidence 판단이 같은 축에서 이어집니다.","references":["requirements/harness-engineering.yaml","docs/explanation/ai-harness-upgrade-plan.md","memory/checkpoint.yaml"],"mapSteps":[{"title":"시작 지점","detail":"MPO-COMPLETE / lane backlog / next WP-HO-011","hrefLabel":"통합 상태 열기","href":"mindmap/index.html?focus=operator-summary\u0026reason=session+bootstrap+%EA%B8%B0%EC%A4%80+%ED%99%95%EC%9D%B8\u0026command=npm+run+session%3Abootstrap\u0026label=Session+Bootstrap\u0026source=home-map#master-status"},{"title":"먼저 읽기","detail":"requirements/harness-engineering.yaml / docs/explanation/ai-harness-upgrade-plan.md"},{"title":"수정 포인트","detail":"현재 packet 목표와 다음 packet이 어긋나면 세션 요약과 plan 흐름부터 다시 동기화합니다."},{"title":"검증 루프","detail":"npm run session:bootstrap"}]},"branch":{"owner":"Builder","summary":"현재 브랜치가 권장 브랜치와 일치하는지, 수정 가능한 작업 트리인지 먼저 정리하는 단계입니다.","why":"현재 chore/core-git-governance-activation / 권장 chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742- 상태를 먼저 맞춰야 잘못된 위치에서 수정하는 일을 줄일 수 있습니다.","references":["chore/core-git-governance-activation","chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742-","dirty 123건"],"mapSteps":[{"title":"시작 지점","detail":"현재 chore/core-git-governance-activation / 권장 chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742-"},{"title":"오염도 확인","detail":"dirty 123건"},{"title":"수정 포인트","detail":"브랜치가 다르면 branch bootstrap 또는 권장 브랜치 생성 명령부터 수행합니다.","hrefLabel":"Operator Summary로 이동","href":"mindmap/index.html?focus=operator-summary\u0026reason=branch+bootstrap+%EC%A0%90%EA%B2%80\u0026command=git+checkout+-b+chore%2Fcore-mpo-session-mpo-01a7bad9-7357-46ae-9742-\u0026label=Branch+Bootstrap\u0026source=home-map#master-status"},{"title":"검증 루프","detail":"git checkout -b chore/core-mpo-session-mpo-01a7bad9-7357-46ae-9742-"}]},"verify":{"owner":"Reviewer","summary":"현재 packet에 연결된 검증 명령 세트를 기준으로 어떤 실패를 먼저 고칠지 좁히는 단계입니다.","why":"4개 검증 명령이 연결되어 있으면 가장 앞선 실패를 기준으로 수정 루프를 돌리는 것이 안전합니다.","references":["npm run validate:requirements","npm run lint","npm run type-check"],"mapSteps":[{"title":"시작 지점","detail":"npm run validate:requirements"},{"title":"무엇을 본다","detail":"infra / Stage COMPLETE"},{"title":"수정 포인트","detail":"plan board에서 검증 루프와 guard 상태를 같이 보면서 가장 앞선 실패를 먼저 해소합니다.","hrefLabel":"Plan Board 열기","href":"mindmap/index.html?focus=guard\u0026reason=validation+profile+%EA%B8%B0%EC%A4%80+%EC%A0%90%EA%B2%80\u0026command=npm+run+validate%3Arequirements\u0026label=Validation+Profile\u0026source=home-map#plan-board"},{"title":"검증 루프","detail":"npm run validate:requirements"}]},"commit-guard":{"owner":"Reviewer","summary":"적용 가능한 변경인지, dirty 상태와 validation 통과 여부가 조건을 만족하는지 차단 규칙으로 판정하는 단계입니다.","why":"protected branch 아님","references":["protected branch 아님","커밋할 변경 존재","검증 프로파일 FAIL"],"mapSteps":[{"title":"시작 지점","detail":"protected branch 아님"},{"title":"차단 조건","detail":"dirty 있음 / validation 미통과 / apply 차단"},{"title":"수정 포인트","detail":"plan board에서 validation과 commit guard를 같이 확인한 뒤 차단 사유를 하나씩 제거합니다.","hrefLabel":"Guard 보드 열기","href":"mindmap/index.html?focus=guard\u0026reason=protected+branch+%EC%95%84%EB%8B%98\u0026command=npm+run+commit%3Aguard%3Averify\u0026label=Commit+Guard\u0026source=home-map#plan-board"},{"title":"검증 루프","detail":"npm run commit:guard:verify"}]},"release-evidence":{"owner":"Reporter","summary":"quality gate와 stage-run 증거를 배포/반영 가능한 evidence artifact로 묶어 최종 판정을 내리는 단계입니다.","why":"현재 quality gate가 PASS라면 evidence를 최종 결론으로 정리하면 됩니다.","references":["artifacts/release-evidence/release-evidence.json","quality gate PASS","generated 2026-04-26T14:16:28.071124+00:00"],"mapSteps":[{"title":"시작 지점","detail":"artifacts/release-evidence/release-evidence.json / PASS"},{"title":"무엇을 본다","detail":"3개 artifact / next WP-HO-011"},{"title":"수정 포인트","detail":"실행 콘솔에서 release evidence 생성 명령을 다시 준비하고 blocker를 만든 선행 실패부터 해소합니다.","hrefLabel":"Execution Console 열기","href":"mindmap/index.html?focus=execution-failure\u0026reason=release+evidence+%EC%B5%9C%EC%A2%85+%ED%99%95%EC%9D%B8\u0026command=python3+scripts%2Fgenerate_release_evidence.py\u0026label=Release+Evidence\u0026source=home-map#execution-console"},{"title":"검증 루프","detail":"python3 scripts/generate_release_evidence.py"}]}};
+    </script>
 
     
     <div class="section-head" style="margin-top:40px">
@@ -1238,7 +1611,7 @@
         <h2>칸반 보드 · 작업 흐름</h2>
         <p>Work Packet 상태를 레인별로 시각화합니다. 각 카드의 A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
       </div>
-      <div class="spiral-iteration">반복 <strong>#36</strong> / 36 능력</div>
+      <div class="spiral-iteration">반복 <strong>#36</strong> / 37 능력</div>
     </div>
 
     <div class="spiral-row">
@@ -1283,9 +1656,89 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #475569">
           <span class="kb-lane-label">Backlog</span>
-          <span class="kb-lane-count">0</span>
+          <span class="kb-lane-count">10</span>
         </div>
-        <div class="kb-cards"><div class="kb-empty">없음</div></div>
+        <div class="kb-cards">
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-011</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">replay packet 품질 개선 — 불완전한 다음 WP 추천 문구 제거와 audit signal 정규화</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-012</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">promotion pipeline과 handoff bundle 연결 — promotion 결과가 handoff bundle path와 evidence status를 포함</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-013</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">memory 원자 갱신 보장 — current-state/current-wp/next-actions가 같은 완료 시점으로 갱신</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-014</span>
+            <span class="kb-tier" style="background:#b4530922;color:#b45309;border-color:#b4530944;">meta</span>
+          </div>
+          <div class="kb-goal">Worklog 증적 템플릿 통합 — 모든 WP 완료 기록이 같은 evidence 필드를 사용</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-015</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">보안/권한 handoff gate — tool abuse, prompt injection, data exfiltration 체크를 handoff에 포함</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-016</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">AI provider handoff 표준화 — provider/model/mode/fallback/token 사용량을 completion report에 고정</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-017</span>
+            <span class="kb-tier" style="background:#0f766e22;color:#0f766e;border-color:#0f766e44;">domain</span>
+          </div>
+          <div class="kb-goal">도메인 작업용 handoff preset — billing/video/task 작업이 같은 domain handoff 형식을 사용</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-018</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">배포/운영 handoff preset — 원격 증적과 operator-collected 항목을 명시적으로 분리</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-019</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">최종 release evidence 생성 — handoff v1.0 기준선 artifact와 provenance 생성</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-020</span>
+            <span class="kb-tier" style="background:#b4530922;color:#b45309;border-color:#b4530944;">meta</span>
+          </div>
+          <div class="kb-goal">SPIRAL-20 closure — handoff loop 검증, memory/worklog 정리, 다음 Spiral 후보 산출</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div></div>
       </div>
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #1d4ed8">
@@ -1311,7 +1764,7 @@
       <div class="kb-lane">
         <div class="kb-lane-head" style="border-top:3px solid #0f766e">
           <span class="kb-lane-label">Done</span>
-          <span class="kb-lane-count">83</span>
+          <span class="kb-lane-count">94</span>
         </div>
         <div class="kb-cards">
         <div class="kb-card">
@@ -1976,6 +2429,94 @@
             <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
           </div>
           <div class="kb-goal">npm start 로컬 서버 기동 + .env 운영 가이드 확정</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-000</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">SPIRAL-20 handoff 기준선 고정 — 기존 dirty 변경 보호선과 실행 가능한 handoff WP 체인 시작</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-001</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">context drift 복구 자동화 — wp:context-drift 기본 입력 결함 수정과 최신 context lock 재생성</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-002</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">표준 handoff bundle 계약 강화 — intake, scope, validation, rollback, next packet을 단일 bundle에 포함</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-003</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">Intake Packet 강제 진입점 정렬 — 모든 운영 surface가 6필드 intake를 같은 이름으로 표시</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-004</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">Execution Packet 스키마 분리 — 실행 전 payload를 기계 검증 가능한 계약으로 고정</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-005</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">Completion Report truthfulness 강화 — evidence 없는 PASS와 미실행 테스트 PASS 표기 차단</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-006</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">validation profile을 handoff 필수 필드로 연결 — WP type/stage별 검증 묶음이 bundle에 포함</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-007</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">gate first pass rate 개선 — 실패 원인 top 3를 사전 체크와 handoff 경고로 이동</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-008</span>
+            <span class="kb-tier" style="background:#47556922;color:#475569;border-color:#47556944;">infra</span>
+          </div>
+          <div class="kb-goal">context budget 과다 방지 — read_later 대용량 문맥을 기본 제외하고 예외 승인 경로로 분리</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-009</span>
+            <span class="kb-tier" style="background:#1d4ed822;color:#1d4ed8;border-color:#1d4ed844;">arch</span>
+          </div>
+          <div class="kb-goal">Master UI handoff lane 추가 — 현재 WP, drift, next action, evidence 상태를 첫 화면에 표시</div>
+          <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
+        </div>
+        <div class="kb-card">
+          <div class="kb-card-head">
+            <span class="kb-id">WP-HO-010</span>
+            <span class="kb-tier" style="background:#7e22ce22;color:#7e22ce;border-color:#7e22ce44;">governance</span>
+          </div>
+          <div class="kb-goal">Operator Cockpit을 handoff 관제면으로 승격 — bootstrap/status/drift/guard 결과를 한 번에 표시</div>
           <div class="kb-stages"><span class="kb-stage ">A</span><span class="kb-stage ">B</span><span class="kb-stage ">C</span><span class="kb-stage ">D</span><span class="kb-stage ">E</span></div>
         </div></div>
       </div>
@@ -3237,6 +3778,168 @@ function updateHomeActionSourceSummary(entries) {
   }
   summaryEl.textContent = summarizeHomeActionSources(entries);
 }
+var HOME_INITIAL_OPERATOR_CHAIN = Array.isArray(window.__HOME_INITIAL_OPERATOR_CHAIN__)
+  ? window.__HOME_INITIAL_OPERATOR_CHAIN__
+  : [];
+var HOME_OPERATOR_CHAIN_BLUEPRINTS = window.__HOME_OPERATOR_CHAIN_BLUEPRINTS__ || {};
+var latestHomeOperatorCockpit = {
+  operatorChain: HOME_INITIAL_OPERATOR_CHAIN,
+};
+function homeEscHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function homeStatusClass(value) {
+  var normalized = String(value || '').toLowerCase();
+  if (['pass', 'ready', 'active', 'clean', 'true', 'completed'].includes(normalized)) {
+    return 'tone-green';
+  }
+  if (['blocked', 'fail', 'error'].includes(normalized)) {
+    return 'tone-amber';
+  }
+  return 'tone-slate';
+}
+function homeOperatorChainItems() {
+  if (latestHomeOperatorCockpit) {
+    if (Array.isArray(latestHomeOperatorCockpit.operatorChain)) {
+      return latestHomeOperatorCockpit.operatorChain;
+    }
+    if (Array.isArray(latestHomeOperatorCockpit.operator_chain)) {
+      return latestHomeOperatorCockpit.operator_chain;
+    }
+  }
+  return HOME_INITIAL_OPERATOR_CHAIN;
+}
+function homeOperatorChainBlueprint(itemId) {
+  if (!itemId) {
+    return null;
+  }
+  return HOME_OPERATOR_CHAIN_BLUEPRINTS[String(itemId)] || null;
+}
+function homeOperatorChainMapHtml(item) {
+  if (!item || typeof item !== 'object') {
+    return '<section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite">' +
+      '<div class="flow-map-empty">operator chain을 선택하면 상세 설명과 수정 맵이 여기에 표시됩니다.</div>' +
+    '</section>';
+  }
+  var blueprint = homeOperatorChainBlueprint(item.id) || {
+    owner: 'Operator',
+    summary: '현재 operator chain 단계 설명이 아직 정의되지 않았습니다.',
+    why: 'reason 값을 기준으로 control center에서 우선 확인하세요.',
+    references: ['추가 기준 없음'],
+    mapSteps: [
+      { title: '시작 지점', detail: String(item.reason || 'reason 없음') },
+      { title: '수정 포인트', detail: 'control center에서 현재 단계와 연결된 화면을 먼저 확인합니다.' },
+      { title: '검증 루프', detail: String(item.command || '명령 없음') },
+    ],
+  };
+  var mapSteps = Array.isArray(blueprint.mapSteps) ? blueprint.mapSteps : [];
+  var references = Array.isArray(blueprint.references) ? blueprint.references.filter(Boolean) : [];
+  return '<section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite" data-selected-chain-id="' + homeEscHtml(item.id || 'step') + '">' +
+    '<div class="flow-map-head">' +
+      '<div>' +
+        '<h3>상세 설명 + 수정 맵</h3>' +
+        '<p>오퍼레이터 바 카드를 클릭하면 어디서 확인하고 어디부터 고칠지 맵 형식으로 바로 안내합니다.</p>' +
+      '</div>' +
+      '<div class="flow-pill">선택 단계 <strong id="flow-map-selected-label">' + homeEscHtml(item.label || item.id || 'step') + '</strong></div>' +
+    '</div>' +
+    '<div class="flow-map-hero">' +
+      '<div class="flow-map-copy">' +
+        '<span class="flow-kicker">무슨 단계인가</span>' +
+        '<strong id="flow-map-title">' + homeEscHtml(item.label || item.id || 'step') + '</strong>' +
+        '<p id="flow-map-summary">' + homeEscHtml(blueprint.summary || '설명 없음') + '</p>' +
+      '</div>' +
+      '<div class="flow-map-status">' +
+        '<span class="tag ' + homeStatusClass(String(item.status || 'pending')) + '" id="flow-map-status">' + homeEscHtml(item.status || 'pending') + '</span>' +
+        '<code id="flow-map-command">' + homeEscHtml(item.command || '명령 없음') + '</code>' +
+      '</div>' +
+    '</div>' +
+    '<div class="flow-map-summary-grid">' +
+      '<article class="flow-map-summary-card">' +
+        '<span>왜 지금 필요한가</span>' +
+        '<strong id="flow-map-why">' + homeEscHtml(blueprint.why || '설명 없음') + '</strong>' +
+      '</article>' +
+      '<article class="flow-map-summary-card">' +
+        '<span>현재 시그널</span>' +
+        '<strong id="flow-map-reason">' + homeEscHtml(item.reason || 'reason 없음') + '</strong>' +
+      '</article>' +
+      '<article class="flow-map-summary-card">' +
+        '<span>담당 레인</span>' +
+        '<strong id="flow-map-owner">' + homeEscHtml(blueprint.owner || 'Operator') + '</strong>' +
+      '</article>' +
+    '</div>' +
+    '<div class="flow-map-route">' +
+      mapSteps.map(function(step, index) {
+        var href = String(step && step.href || '').trim();
+        var hrefLabel = String(step && step.hrefLabel || '').trim();
+        return '<article class="flow-map-step">' +
+          '<div class="flow-map-step-index">' + String(index + 1) + '</div>' +
+          '<div class="flow-map-step-copy">' +
+            '<span>' + homeEscHtml(step && step.title || ('단계 ' + String(index + 1))) + '</span>' +
+            '<strong>' + homeEscHtml(step && step.detail || '') + '</strong>' +
+            (href && hrefLabel ? '<a class="flow-chain-link" href="' + homeEscHtml(href) + '">' + homeEscHtml(hrefLabel) + '</a>' : '') +
+          '</div>' +
+        '</article>';
+      }).join('') +
+    '</div>' +
+    '<div class="flow-map-references">' +
+      '<span>바로 볼 기준</span>' +
+      '<div class="flow-map-reference-list">' +
+        references.map(function(reference) {
+          return '<code>' + homeEscHtml(reference) + '</code>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+  '</section>';
+}
+function updateHomeOperatorChainMap(item) {
+  var panel = document.getElementById('flow-chain-map-panel');
+  if (!panel) {
+    return;
+  }
+  panel.outerHTML = homeOperatorChainMapHtml(item);
+}
+function focusHomeOperatorChainDetails(itemId, shouldScroll) {
+  var chain = homeOperatorChainItems();
+  var selectedItem = chain.find(function(entry) {
+    return String(entry && entry.id || '').trim() === String(itemId || '').trim();
+  });
+  if (!selectedItem) {
+    return;
+  }
+  updateHomeOperatorChainSpotlight(selectedItem);
+  if (shouldScroll) {
+    var panel = document.getElementById('flow-chain-map-panel');
+    if (panel) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+function bindHomeOperatorChainInteractions() {
+  var selectors = ['#flow-chain-spotlight[data-chain-id]', '.flow-chain-item[data-chain-id]'];
+  document.querySelectorAll(selectors.join(',')).forEach(function(element) {
+    if (element.dataset.homeChainBound === 'true') {
+      return;
+    }
+    element.dataset.homeChainBound = 'true';
+    element.addEventListener('click', function(event) {
+      if (event.target && typeof event.target.closest === 'function' && event.target.closest('a,button')) {
+        return;
+      }
+      focusHomeOperatorChainDetails(element.dataset.chainId || '', true);
+    });
+    element.addEventListener('keydown', function(event) {
+      if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+      event.preventDefault();
+      focusHomeOperatorChainDetails(element.dataset.chainId || '', true);
+    });
+  });
+}
 function createHomeOperatorActionId(scope) {
   if (window.crypto && typeof window.crypto.randomUUID === 'function') {
     return String(scope || 'home-action') + ':' + window.crypto.randomUUID();
@@ -3346,6 +4049,7 @@ function updateHomeOperatorChainSpotlight(item) {
   for (var i = 0; i < cards.length; i += 1) {
     cards[i].classList.remove('is-active');
   }
+  updateHomeOperatorChainMap(item);
   if (!spotlight || !titleEl || !reasonEl || !statusEl || !commandEl || !copyBtn || !fillEl || !linkEl || !item) {
     return;
   }
@@ -3356,7 +4060,7 @@ function updateHomeOperatorChainSpotlight(item) {
   titleEl.textContent = String(item.label || item.id || 'step');
   reasonEl.textContent = String(item.reason || '다음 operator action 설명 없음');
   statusEl.textContent = String(item.status || 'pending');
-  statusEl.className = 'tag ' + statusClass(String(item.status || 'pending'));
+  statusEl.className = 'tag ' + homeStatusClass(String(item.status || 'pending'));
   commandEl.textContent = String(item.command || '');
   copyBtn.dataset.command = String(item.command || '');
   copyBtn.dataset.label = String(item.label || item.id || 'step');
@@ -3454,6 +4158,14 @@ function updateAutosendUi(autoSend) {
   if (toggleBtn) toggleBtn.style.display = 'inline-block';
 }
 document.addEventListener('DOMContentLoaded', async () => {
+  bindHomeOperatorChainInteractions();
+  var initialChainId = document.getElementById('flow-chain-spotlight')
+    ? document.getElementById('flow-chain-spotlight').dataset.chainId
+    : '';
+  var initialItem = homeOperatorChainItems().find(function(entry) {
+    return String(entry && entry.id || '').trim() === String(initialChainId || '').trim();
+  }) || HOME_INITIAL_OPERATOR_CHAIN[0] || null;
+  updateHomeOperatorChainMap(initialItem);
   const result = await callPlanningApi('snapshot');
   if (!result || !result.ok) {
     const badge = document.getElementById('live-autosend-badge');
@@ -3568,6 +4280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const operatorCockpit = homeRuntime && homeRuntime.runtime_state
     ? homeRuntime.runtime_state.operator_cockpit
     : null;
+  latestHomeOperatorCockpit = operatorCockpit || latestHomeOperatorCockpit;
   var latestHomeRecentAction = recentAction;
   var runtimeActionHistory = homeRuntime && homeRuntime.runtime_state && Array.isArray(homeRuntime.runtime_state.recent_operator_actions)
     ? homeRuntime.runtime_state.recent_operator_actions
@@ -3654,6 +4367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       syncHomeOperatorAction(nextAction, { keepalive: true });
     });
   }
+  bindHomeOperatorChainInteractions();
   applyHomeRecentActionUi(recentAction);
   if (recentLoopStatusEl) {
     if (recentOperatorActionEl && latestHomeRecentAction) {
@@ -3763,30 +4477,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 </script>
 
 <section id="mpo-panel" style="position:fixed;right:20px;bottom:20px;z-index:50;width:min(420px,calc(100vw - 32px));background:rgba(10,19,25,0.94);color:#f5f7f9;border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,0.35);backdrop-filter:blur(14px);font-family:'IBM Plex Sans','Pretendard',sans-serif;">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
-    <strong style="font-size:15px;letter-spacing:0.02em;">MPO v1.0</strong>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:0;">
+    <strong style="font-size:15px;letter-spacing:0.02em;flex:1;">MPO v1.0</strong>
     <span id="mpo-status-chip" style="font-size:12px;padding:4px 8px;border-radius:999px;background:#1d3a2b;color:#b8ffd1;">idle</span>
+    <button id="mpo-collapse-btn" title="접기 / 펼치기" style="border:none;background:rgba(255,255,255,0.08);color:#f5f7f9;border-radius:8px;padding:4px 8px;cursor:pointer;font-size:14px;line-height:1;transition:background .15s;">▾</button>
   </div>
-  <label for="mpo-goal-input" style="display:block;font-size:12px;opacity:0.8;margin-bottom:6px;">목표 한 줄</label>
-  <textarea id="mpo-goal-input" rows="3" style="width:100%;resize:vertical;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#081016;color:#f5f7f9;padding:10px 12px;font:inherit;">문서 정리와 MPO dry-run 검증 경로를 확인해줘</textarea>
-  <div style="display:flex;gap:8px;margin-top:10px;">
-    <button id="mpo-plan-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#f2c14e;color:#1f2022;font-weight:700;cursor:pointer;">계획 만들기</button>
-    <button id="mpo-approve-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#2c7be5;color:#fff;font-weight:700;cursor:pointer;" disabled>승인 후 실행</button>
+
+  <div id="mpo-body" style="margin-top:10px;">
+    <label for="mpo-goal-input" style="display:block;font-size:12px;opacity:0.8;margin-bottom:6px;">목표 한 줄</label>
+    <textarea id="mpo-goal-input" rows="3" style="width:100%;resize:vertical;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#081016;color:#f5f7f9;padding:10px 12px;font:inherit;box-sizing:border-box;">문서 정리와 MPO dry-run 검증 경로를 확인해줘</textarea>
+
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button id="mpo-plan-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#f2c14e;color:#1f2022;font-weight:700;cursor:pointer;">계획 만들기</button>
+      <button id="mpo-approve-button" style="flex:1;border:none;border-radius:12px;padding:10px 12px;background:#2c7be5;color:#fff;font-weight:700;cursor:pointer;" disabled>승인 후 실행</button>
+    </div>
+
+    <div id="mpo-term-bar" style="display:none;margin-top:10px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);font-size:11px;display:flex;align-items:center;gap:6px;">
+      <span style="opacity:0.6;">터미널</span>
+      <span id="mpo-term-pts" style="font-family:monospace;color:#7dd3fc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
+      <span id="mpo-term-badge" style="padding:2px 6px;border-radius:99px;font-size:10px;font-weight:700;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25);">미탐색</span>
+    </div>
+
+    <div id="mpo-summary" style="margin-top:10px;font-size:12px;line-height:1.5;opacity:0.85;">세션 없음</div>
+    <div id="mpo-plan-list" style="margin-top:10px;max-height:220px;overflow:auto;display:grid;gap:8px;"></div>
+    <div id="mpo-events" style="margin-top:10px;max-height:180px;overflow:auto;background:#0f1a21;border-radius:12px;padding:10px;font-size:11px;line-height:1.5;"></div>
   </div>
-  <div id="mpo-summary" style="margin-top:12px;font-size:12px;line-height:1.5;opacity:0.85;">세션 없음</div>
-  <div id="mpo-plan-list" style="margin-top:10px;max-height:220px;overflow:auto;display:grid;gap:8px;"></div>
-  <div id="mpo-events" style="margin-top:10px;max-height:180px;overflow:auto;background:#0f1a21;border-radius:12px;padding:10px;font-size:11px;line-height:1.5;"></div>
 </section>
 <script>
 (function() {
   var statusChip = document.getElementById('mpo-status-chip');
+  var collapseBtn = document.getElementById('mpo-collapse-btn');
+  var bodyEl = document.getElementById('mpo-body');
   var planButton = document.getElementById('mpo-plan-button');
   var approveButton = document.getElementById('mpo-approve-button');
   var goalInput = document.getElementById('mpo-goal-input');
   var summaryEl = document.getElementById('mpo-summary');
   var planListEl = document.getElementById('mpo-plan-list');
   var eventsEl = document.getElementById('mpo-events');
+  var termBarEl = document.getElementById('mpo-term-bar');
+  var termPtsEl = document.getElementById('mpo-term-pts');
+  var termBadgeEl = document.getElementById('mpo-term-badge');
   var currentSessionId = null;
+  var collapsed = false;
+
   var STATUS_STYLES = {
     idle: { background: '#334155', color: '#e2e8f0' },
     planning: { background: '#713f12', color: '#fde68a' },
@@ -3799,6 +4532,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     error: { background: '#7f1d1d', color: '#fecaca' }
   };
 
+  /* ── 접기 / 펼치기 ── */
+  collapseBtn.addEventListener('click', function() {
+    collapsed = !collapsed;
+    bodyEl.style.display = collapsed ? 'none' : '';
+    collapseBtn.textContent = collapsed ? '▸' : '▾';
+    collapseBtn.title = collapsed ? '펼치기' : '접기';
+  });
+
   function setStatus(value) {
     var normalized = String(value || 'idle');
     var style = STATUS_STYLES[normalized] || STATUS_STYLES.idle;
@@ -3808,9 +4549,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function appendEvent(line) {
+    var ts = new Date().toTimeString().slice(0, 8);
     var item = document.createElement('div');
-    item.textContent = line;
+    item.textContent = '[' + ts + '] ' + line;
     eventsEl.prepend(item);
+    if (eventsEl.children.length > 80) eventsEl.removeChild(eventsEl.lastChild);
   }
 
   function renderPlan(session) {
@@ -3820,20 +4563,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     var replannedCount = 0;
     wpList.forEach(function(wp) {
       var isReplan = Boolean(wp && wp.execution_result && wp.execution_result.auto_replan === true);
-      if (isReplan) {
-        replannedCount += 1;
-      }
+      if (isReplan) replannedCount += 1;
       var meta = [wp.domain, wp.layer, wp.provider_tier || 'unrouted'];
       if (isReplan && wp.execution_result && wp.execution_result.replan_of) {
         meta.push('replan of ' + wp.execution_result.replan_of);
       }
       var card = document.createElement('div');
-      card.style.padding = '10px';
-      card.style.borderRadius = '12px';
-      card.style.background = isReplan ? 'rgba(245, 158, 11, 0.14)' : 'rgba(255,255,255,0.06)';
-      card.style.border = isReplan ? '1px solid rgba(245,158,11,0.35)' : '1px solid rgba(255,255,255,0.04)';
+      card.style.cssText = 'padding:10px;border-radius:12px;background:' +
+        (isReplan ? 'rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.04)');
       card.innerHTML =
-        '<strong style="display:block;font-size:12px;">' + wp.id + (isReplan ? ' <span style="font-size:10px;padding:2px 6px;border-radius:999px;background:#92400e;color:#fde68a;">AUTO-REPLAN</span>' : '') + '</strong>' +
+        '<strong style="display:block;font-size:12px;">' + wp.id +
+        (isReplan ? ' <span style="font-size:10px;padding:2px 6px;border-radius:999px;background:#92400e;color:#fde68a;">AUTO-REPLAN</span>' : '') + '</strong>' +
         '<div style="font-size:12px;margin-top:4px;">' + wp.title + '</div>' +
         '<div style="font-size:11px;opacity:0.75;margin-top:4px;">' + meta.join(' · ') + '</div>';
       planListEl.appendChild(card);
@@ -3844,9 +4584,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         '예상 토큰 ' + session.dag.plan_summary.total_estimated_tokens,
         '상태 ' + session.status
       ];
-      if (replannedCount > 0) {
-        parts.push('자동 재계획 ' + replannedCount + '회');
-      }
+      if (replannedCount > 0) parts.push('자동 재계획 ' + replannedCount + '회');
       summaryEl.textContent = parts.join(' · ');
     } else {
       summaryEl.textContent = '세션 없음';
@@ -3855,55 +4593,106 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function describeEvent(eventName, payload) {
-    if (eventName === 'mpo.plan.replanned') {
-      return eventName + ': ' + (payload.failed_wp_id || '') + ' -> ' + (payload.replanned_wp_id || '');
-    }
-    if (eventName === 'mpo.wp.failed') {
-      return eventName + ': ' + (payload.wp_id || '') + ' / ' + (payload.reason || 'unknown');
-    }
-    if (eventName === 'mpo.plan.completed') {
-      return eventName + ': ' + (payload.session_id || '') + ' / completed';
-    }
+    if (eventName === 'mpo.plan.replanned') return eventName + ': ' + (payload.failed_wp_id || '') + ' -> ' + (payload.replanned_wp_id || '');
+    if (eventName === 'mpo.wp.failed') return eventName + ': ' + (payload.wp_id || '') + ' / ' + (payload.reason || 'unknown');
+    if (eventName === 'mpo.plan.completed') return eventName + ': ' + (payload.session_id || '') + ' / completed';
     return eventName + ': ' + (payload.wp_id || payload.session_id || '');
   }
 
   async function requestJson(url, options) {
-    var response = await fetch(url, Object.assign({
-      headers: {
-        'content-type': 'application/json',
-      }
-    }, options || {}));
+    var response = await fetch(url, Object.assign({ headers: { 'content-type': 'application/json' } }, options || {}));
     var body = await response.json();
-    if (!response.ok) {
-      throw new Error(body.detail || body.title || ('HTTP ' + response.status));
-    }
+    if (!response.ok) throw new Error(body.detail || body.title || ('HTTP ' + response.status));
     return body;
   }
 
+  /* ── 터미널 자동 탐색 ── */
+  var AI_PROCS = ['claude', 'codex', 'aider', 'gemini', 'amp'];
+  var SHELL_PROCS = ['bash', 'zsh', 'fish', 'sh'];
+
+  function scoreSession(s) {
+    var procs = Array.isArray(s.processes) ? s.processes : [];
+    var names = procs.map(function(p) { return String(p.comm || '').toLowerCase(); });
+    if (AI_PROCS.some(function(n) { return names.some(function(c) { return c.includes(n); }); })) return 3;
+    if (SHELL_PROCS.some(function(n) { return names.includes(n); })) return 2;
+    return 1;
+  }
+
+  async function autoDetectTerminal() {
+    try {
+      var res = await fetch('/api/pty/sessions');
+      if (!res.ok) return null;
+      var data = await res.json();
+      var sessions = Array.isArray(data.sessions) ? data.sessions : [];
+      if (!sessions.length) return null;
+      sessions = sessions.slice().sort(function(a, b) { return scoreSession(b) - scoreSession(a); });
+      return sessions[0];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function sendToTerminal(pts, text) {
+    try {
+      var res = await fetch('/api/pty/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pts: pts, text: text + '\r', action: 'prompt', name: 'mpo-agent' })
+      });
+      return res.ok;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function showTermBar(pts, badge, color) {
+    termBarEl.style.display = 'flex';
+    termPtsEl.textContent = pts || '—';
+    termBadgeEl.textContent = badge || '미탐색';
+    termBadgeEl.style.color = color || '#4ade80';
+    termBadgeEl.style.borderColor = (color || '#4ade80').replace('80', '25');
+    termBadgeEl.style.background = (color || '#4ade80').replace('80', '12').replace('#', 'rgba(').replace(/(..)(..)(..)/, function(_, r, g, b) {
+      return parseInt(r,16)+','+parseInt(g,16)+','+parseInt(b,16);
+    }) + ',0.12)';
+  }
+
+  /* ── 계획 만들기 ── */
   planButton.addEventListener('click', async function() {
     try {
       setStatus('planning');
+      planButton.disabled = true;
       var session = await requestJson('/api/v1/mpo/plan', {
         method: 'POST',
-        body: JSON.stringify({
-          goal: goalInput.value,
-        }),
+        body: JSON.stringify({ goal: goalInput.value }),
       });
       renderPlan(session);
       setStatus(session.status || 'planned');
       appendEvent('plan created: ' + session.session_id);
+      /* 계획 완료 시 터미널 선제 탐색 */
+      autoDetectTerminal().then(function(s) {
+        if (!s) return;
+        var procs = (s.processes || []).map(function(p) { return p.comm; }).filter(Boolean);
+        var isAi = AI_PROCS.some(function(n) { return procs.some(function(c) { return c.includes(n); }); });
+        showTermBar(String(s.pts || ''), isAi ? procs[0] : (procs[0] || 'shell'), isAi ? '#7dd3fc' : '#a3a3a3');
+        appendEvent('터미널 선제 탐색: ' + String(s.pts || '') + ' (' + procs.slice(0,2).join(', ') + ')');
+        if (typeof window.abSelectSession === 'function') window.abSelectSession(String(s.pts || ''));
+      });
     } catch (error) {
       setStatus('error');
       appendEvent('plan failed: ' + error.message);
+    } finally {
+      planButton.disabled = false;
     }
   });
 
+  /* ── 승인 후 실행 (터미널 자동 탐색 + 에이전트 전송) ── */
   approveButton.addEventListener('click', async function() {
-    if (!currentSessionId) {
-      return;
-    }
+    if (!currentSessionId) return;
     try {
       setStatus('queued');
+      approveButton.disabled = true;
+
+      /* 1. API 승인 */
       var session = await requestJson('/api/v1/mpo/session/' + currentSessionId + '/approve', {
         method: 'POST',
         body: JSON.stringify({}),
@@ -3911,16 +4700,50 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderPlan(session);
       setStatus(session.status || 'queued');
       appendEvent('approved: ' + currentSessionId);
+
+      /* 2. 터미널 자동 탐색 */
+      appendEvent('터미널 자동 탐색 중...');
+      var best = await autoDetectTerminal();
+
+      if (!best) {
+        appendEvent('경고: 사용 가능한 터미널 없음 — 터미널 브리지 탭에서 세션 선택 후 수동 전송하세요');
+        showTermBar('없음', '미발견', '#f87171');
+        return;
+      }
+
+      var pts = String(best.pts || '');
+      var procs = (best.processes || []).map(function(p) { return p.comm; }).filter(Boolean);
+      var isAi = AI_PROCS.some(function(n) { return procs.some(function(c) { return c.includes(n); }); });
+      var isShell = !isAi && SHELL_PROCS.some(function(n) { return procs.includes(n); });
+
+      showTermBar(pts, isAi ? procs[0] : (procs[0] || 'shell'), isAi ? '#7dd3fc' : '#4ade80');
+      appendEvent('터미널 선택: ' + pts + ' [' + procs.slice(0,3).join(', ') + ']' + (isAi ? ' (AI CLI)' : isShell ? ' (shell)' : ''));
+
+      /* 터미널 브리지와 세션 동기화 */
+      if (typeof window.abSelectSession === 'function') window.abSelectSession(pts);
+
+      /* 3. 에이전트 목표 전송 */
+      var goal = (goalInput.value || '').trim();
+      if (!goal) {
+        appendEvent('경고: 목표가 비어 있어 터미널 전송을 건너뜁니다');
+        return;
+      }
+      var sent = await sendToTerminal(pts, goal);
+      if (sent) {
+        appendEvent('에이전트 전송 완료 → ' + pts + ': ' + goal.slice(0, 50) + (goal.length > 50 ? '…' : ''));
+      } else {
+        appendEvent('터미널 전송 실패 (' + pts + ') — 서버가 실행 중인지 확인하세요');
+      }
     } catch (error) {
       setStatus('error');
       appendEvent('approve failed: ' + error.message);
     }
   });
 
-  var source = new EventSource('/api/v1/system/events');
-  source.addEventListener('mpo.connected', function() {
-    appendEvent('sse connected');
-  });
+  /* ── SSE 연결 ── */
+  var sseSource = new EventSource('/api/v1/system/events');
+  sseSource.addEventListener('mpo.connected', function() { appendEvent('sse connected'); });
+  sseSource.onerror = function() { appendEvent('sse 연결 끊김 — 재연결 시도 중'); };
   [
     'mpo.intake.normalized',
     'mpo.decomposition.ready',
@@ -3932,7 +4755,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     'mpo.memory.reconciled',
     'mpo.plan.completed'
   ].forEach(function(eventName) {
-    source.addEventListener(eventName, async function(event) {
+    sseSource.addEventListener(eventName, async function(event) {
       var payload = JSON.parse(event.data);
       appendEvent(describeEvent(eventName, payload));
       if (payload.session_id && currentSessionId === payload.session_id) {

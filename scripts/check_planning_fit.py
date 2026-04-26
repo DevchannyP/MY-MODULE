@@ -80,7 +80,10 @@ def build_fit_report(goal: str, current_wp: dict, routing_catalog: dict, constra
     ]
 
     primary_tokens = bundle["budget"]["primary"]["estimated_tokens"]
-    total_tokens = bundle["budget"]["total_estimated_tokens"]
+    active_tokens = bundle["budget"].get("active_estimated_tokens", primary_tokens)
+    budget_risk = bundle.get("budget_risk", {})
+    read_later_policy = bundle.get("read_later_policy", {})
+    read_later_exceptions = read_later_policy.get("exceptions", []) if isinstance(read_later_policy.get("exceptions", []), list) else []
     scope_out = current_wp.get("scope_out", []) if isinstance(current_wp.get("scope_out", []), list) else []
 
     checks = [
@@ -111,8 +114,14 @@ def build_fit_report(goal: str, current_wp: dict, routing_catalog: dict, constra
         {
             "id": "token-budget",
             "label": "토큰 예산 적합성",
-            "status": "pass" if primary_tokens <= 6000 and total_tokens <= 18000 else ("warn" if total_tokens <= 30000 else "risk"),
-            "detail": f"primary {primary_tokens} tok / total {total_tokens} tok",
+            "status": budget_risk.get("status") or ("pass" if primary_tokens <= 6000 and active_tokens <= 18000 else ("warn" if active_tokens <= 30000 else "risk")),
+            "detail": f"primary {primary_tokens} tok / active {active_tokens} tok / deferred excluded {bundle['budget']['deferred']['estimated_tokens']} tok",
+        },
+        {
+            "id": "read-later-exception-policy",
+            "label": "read_later 예외 승인 경로",
+            "status": "pass" if read_later_policy.get("default") == "excluded_from_active_context" else "warn",
+            "detail": f"{len(read_later_exceptions)} deferred paths require explicit approval before reread",
         },
         {
             "id": "completed-packet",
@@ -141,6 +150,12 @@ def build_fit_report(goal: str, current_wp: dict, routing_catalog: dict, constra
         "checks": checks,
         "counts": counts,
         "bundle_budget": bundle["budget"],
+        "budget_risk": budget_risk,
+        "read_later_policy": {
+            "default": read_later_policy.get("default", ""),
+            "exception_requires": read_later_policy.get("exception_requires", []),
+            "exception_count": len(read_later_exceptions),
+        },
         "required_adapters": required,
         "selected_adapters": dedupe_strings(list(selected_adapters)),
         "hard_constraints": hard_constraint_summary,

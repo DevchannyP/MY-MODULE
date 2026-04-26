@@ -1,4 +1,49 @@
-# 품질 게이트 실패 패턴 레지스트리
-# 같은 도메인+게이트 조합이 반복되면 occurrences++
-# 3회 반복 시 멈추고 사용자에게 보고
-patterns: []
+schema_version: "1"
+last_updated: "2026-04-23"
+source: "WP-HO-007 gate-first-pass residual scan"
+policy:
+  stop_after_repeated_occurrences: 3
+  handoff_warning_threshold: 1
+patterns:
+  - id: "gate-e2e-core-baseline"
+    gate: "npm run test:e2e-smoke"
+    root_cause_category: "gate-first-pass/core-baseline"
+    severity: "high"
+    occurrences: 2
+    last_seen: "2026-04-23"
+    failing_tests:
+      - "src/tests/smoke/architectureFitness.smoke.test.js"
+      - "src/tests/smoke/envInit.test.js"
+      - "src/tests/smoke/harnessEvals.smoke.test.js"
+    preflight:
+      command: "npm run validate:fitness && node scripts/run-harness-evals.js && npm run env:check"
+      expected_signal: "architecture/env/harness eval baseline이 먼저 PASS해야 full e2e smoke 재시도가 의미 있다."
+    handoff_warning: "core baseline smoke가 반복 실패 중이므로 full e2e 전에 architecture/env/harness eval을 먼저 분리 실행한다."
+  - id: "gate-e2e-cross-domain-wiring"
+    gate: "npm run test:e2e-smoke"
+    root_cause_category: "gate-first-pass/cross-domain-wiring"
+    severity: "high"
+    occurrences: 2
+    last_seen: "2026-04-23"
+    failing_tests:
+      - "src/tests/smoke/billingVideoEventWiring.smoke.test.js"
+      - "src/tests/smoke/eventBusWiring.smoke.test.js"
+      - "src/tests/smoke/outboxPollerWiring.smoke.test.js"
+    preflight:
+      command: "node --test src/tests/smoke/billingVideoEventWiring.smoke.test.js src/tests/smoke/eventBusWiring.smoke.test.js src/tests/smoke/outboxPollerWiring.smoke.test.js"
+      expected_signal: "event bus/outbox 연결 smoke가 먼저 PASS해야 domain wiring gate가 신뢰 가능하다."
+    handoff_warning: "cross-domain wiring smoke가 반복 실패 중이므로 event bus와 outbox 연결을 먼저 확인한다."
+  - id: "gate-e2e-runtime-edge"
+    gate: "npm run test:e2e-smoke"
+    root_cause_category: "gate-first-pass/runtime-edge"
+    severity: "medium"
+    occurrences: 2
+    last_seen: "2026-04-23"
+    failing_tests:
+      - "src/tests/smoke/deploymentIngressFailure.smoke.test.js"
+      - "src/tests/smoke/mindmapRebuildWorker.smoke.test.js"
+      - "src/tests/smoke/optimisticLockHttp.smoke.test.js"
+    preflight:
+      command: "node --test src/tests/smoke/deploymentIngressFailure.smoke.test.js src/tests/smoke/mindmapRebuildWorker.smoke.test.js src/tests/smoke/optimisticLockHttp.smoke.test.js"
+      expected_signal: "runtime edge smoke가 먼저 PASS해야 full e2e smoke의 remaining failures를 좁힐 수 있다."
+    handoff_warning: "runtime edge smoke가 반복 실패 중이므로 ingress, worker, optimistic lock을 full e2e 전에 분리 확인한다."

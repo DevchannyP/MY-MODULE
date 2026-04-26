@@ -4,7 +4,11 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-const { computeMetrics, evaluateMetric } = require('../../../scripts/harness-dashboard');
+const {
+  buildActionableFailureSummary,
+  computeMetrics,
+  evaluateMetric,
+} = require('../../../scripts/harness-dashboard');
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
 
@@ -63,4 +67,14 @@ test('[harness dashboard] avg_token_per_wp is below MPO v1.0 target of 15000', (
   if (metrics.avg_token_per_wp !== null) {
     assert.ok(metrics.avg_token_per_wp <= 15000, `avg_token_per_wp ${metrics.avg_token_per_wp} exceeds target 15000`);
   }
+});
+
+test('[harness dashboard] failure summary exposes top actionable preflight warnings', () => {
+  const summary = buildActionableFailureSummary(REPO_ROOT);
+
+  assert.equal(summary.source, 'memory/L0-hot/failure-patterns.yaml');
+  assert.ok(summary.pattern_count >= 3);
+  assert.ok(summary.warnings.length >= 1);
+  assert.ok(summary.warnings[0].preflight_command.includes('npm run'));
+  assert.equal(typeof summary.warnings[0].message, 'string');
 });

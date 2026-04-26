@@ -115,6 +115,78 @@ function buildRecommendedCommands(report, gitStatus) {
   return commands;
 }
 
+function ensureList(value) {
+  return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
+}
+
+function dedupe(values) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function buildIntakePacket(currentWp, validationProfile) {
+  const contextBudget = currentWp.context_budget && typeof currentWp.context_budget === 'object'
+    ? currentWp.context_budget
+    : {};
+  return {
+    goal: String(currentWp.goal || ''),
+    context: dedupe([
+      ...ensureList(contextBudget.tier_reads),
+      ...ensureList(contextBudget.context_reads),
+    ]),
+    constraints: ensureList(currentWp.constraints),
+    done_when: ensureList(currentWp.done_when || currentWp.success_criteria),
+    work_mode: [
+      '먼저 현재 packet과 context drift를 확인한다',
+      'change point를 scope_in 내부로 제한한다',
+      '작은 change set 뒤 validation_profile.required를 실행한다',
+    ],
+    verification: ensureList(currentWp.verification).length > 0
+      ? ensureList(currentWp.verification)
+      : ensureList(validationProfile.commands),
+  };
+}
+
+function buildHandoffSummary({
+  report = {},
+  bootstrap = {},
+  currentWp = {},
+  nextActions = {},
+  git = {},
+  validationProfile = {},
+  commitGuard = null,
+  promotionEvidence = null,
+} = {}) {
+  const current = bootstrap.current_wp || {
+    id: String(report.current_wp || currentWp.id || 'UNKNOWN'),
+    goal: String(report.current_wp_goal || currentWp.goal || 'UNKNOWN'),
+    stage: String(report.current_wp_stage || currentWp.stage || 'UNKNOWN'),
+    type: String(report.current_wp_type || currentWp.type || 'UNKNOWN'),
+  };
+  const profile = bootstrap.validation_profile || validationProfile || {};
+  const commands = Array.isArray(profile.commands) ? profile.commands : [];
+  const driftStatus = report.promotion_pipeline?.drift_status
+    || bootstrap.handoff_summary?.drift_status
+    || bootstrap.drift_status
+    || 'unknown';
+  const guard = commitGuard?.guard || null;
+
+  return {
+    current_wp: current.id || 'UNKNOWN',
+    next_wp: String(bootstrap.next_wp || report.next_wp || nextActions.next_wp || 'NONE'),
+    drift_status: driftStatus,
+    validation_state: guard
+      ? (guard.can_apply ? 'ready' : 'blocked')
+      : (commands.length > 0 ? 'profile-ready' : 'missing-profile'),
+    evidence_state: promotionEvidence
+      ? (promotionEvidence.exists ? promotionEvidence.quality_gate_result : 'missing')
+      : 'not-checked',
+    guard_next_action: commitGuard?.next_action || 'run commit guard',
+    next_command: bootstrap.next_validation_command || profile.primary_command || commands[0] || 'npm run project:status',
+    validation_bundle_size: commands.length,
+    dirty_count: typeof git.dirty_count === 'number' ? git.dirty_count : (bootstrap.git?.dirty_count || 0),
+  };
+}
+
 function buildBootstrapSummary() {
   const report = buildReport();
   const currentWp = readYaml('memory/current-wp.yaml');
@@ -148,6 +220,14 @@ function buildBootstrapSummary() {
     }),
     git: gitStatus,
     validation_profile: validationProfile,
+    handoff_summary: buildHandoffSummary({
+      report,
+      currentWp,
+      nextActions,
+      git: gitStatus,
+      validationProfile,
+    }),
+    intake_packet: buildIntakePacket(currentWp, validationProfile),
     intake_packet_fields: Array.isArray(harnessContract.intake_packet?.required_fields)
       ? harnessContract.intake_packet.required_fields
       : ['goal', 'context', 'constraints', 'done_when', 'work_mode', 'verification'],
@@ -183,11 +263,22 @@ function printHuman(summary) {
     `- ${summary.validation_profile.packet_type} / ${summary.validation_profile.stage || 'UNKNOWN'}`,
     ...summary.validation_profile.commands.map((item) => `- ${item}`),
     '',
+    '[Handoff Summary]',
+    `- current: ${summary.handoff_summary.current_wp}`,
+    `- next: ${summary.handoff_summary.next_wp}`,
+    `- drift: ${summary.handoff_summary.drift_status}`,
+    `- validation: ${summary.handoff_summary.validation_state}`,
+    `- next command: ${summary.handoff_summary.next_command}`,
+    '',
     '[Prompt Seed]',
     `- ${summary.prompt_seed_path}`,
     '',
     '[Intake Packet]',
-    ...summary.intake_packet_fields.map((item) => `- ${item}`),
+    ...summary.intake_packet_fields.map((item) => {
+      const value = summary.intake_packet?.[item];
+      const count = Array.isArray(value) ? value.length : (value ? 1 : 0);
+      return `- ${item}: ${count}`;
+    }),
   ];
 
   process.stdout.write(`${lines.join('\n')}\n`);
@@ -209,4 +300,5 @@ if (require.main === module) {
 
 module.exports = {
   buildBootstrapSummary,
+  buildHandoffSummary,
 };

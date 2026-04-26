@@ -3,6 +3,17 @@
 version: "0.1.0"
 last_updated: "2026-03-24"
 
+budget_policy:
+  primary_token_limit: 6000
+  active_token_limit: 18000
+  deferred_token_limit: 12000
+  read_later_default: "excluded_from_active_context"
+  read_later_exception_requires:
+    - "operator approval"
+    - "specific path"
+    - "reason"
+    - "expected command or file to inspect"
+
 profiles:
   - id: "plan-and-learn-routing"
     intake_goal: "plan-and-learn"

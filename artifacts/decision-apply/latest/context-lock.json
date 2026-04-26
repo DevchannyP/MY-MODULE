@@ -1,16 +1,18 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-22T14:43:48.505847+00:00",
+  "generated_at": "2026-04-26T14:16:26.609254+00:00",
   "goal": "stateful-ops",
   "profile_id": "stateful-ops-routing",
   "current_wp": {
     "id": "MPO-COMPLETE",
-    "goal": "MPO session mpo-258dbd06-7612-41b6-aec8-1129f9e6554f completed",
-    "type": "governance",
+    "goal": "MPO session mpo-01a7bad9-7357-46ae-9742-74a530f9664d completed",
+    "type": "infra",
     "stage": "complete"
   },
   "protected_core": [
-    "domains/"
+    "domains/",
+    "src/infrastructure/ai/",
+    "artifacts/master-planner/index.html"
   ],
   "core_guardrails": [],
   "requested_paths": {
@@ -20,17 +22,22 @@
       "master-shell/observability/config.yaml",
       "master-shell/operations/rollback-playbook.yaml",
       "master-shell/catalog/execution-packet-templates.yaml",
-      "master-shell/catalog/context-routing-profiles.yaml"
+      "master-shell/catalog/context-routing-profiles.yaml",
+      "scripts/generate_replay_packet.py",
+      "scripts/generate_routing_learning_ledger.py"
     ],
     "secondary": [
       "master-shell/observability/health-scores.yaml",
       "master-shell/operations/deployment-environments.yaml",
-      "artifacts/deployment-smoke/target-resolution.json"
+      "artifacts/deployment-smoke/target-resolution.json",
+      "artifacts/promotion-pipeline/latest/handoff-bundle.json"
     ],
     "deferred": [
       "domains/",
       "worklog/reports/",
-      "artifacts/catalog-site/index.html"
+      "artifacts/catalog-site/index.html",
+      "worklog/audit-chain.jsonl",
+      "master-shell/observability/timeline.jsonl"
     ]
   },
   "locked_files": {
@@ -49,9 +56,9 @@
         "path": "memory/current-wp.yaml",
         "tier": "primary",
         "exists": true,
-        "bytes": 818,
-        "estimated_tokens": 273,
-        "sha256": "8446c0b94b3d2fca3432f8a68dee5af1bae8e1c7a58362a8d9f932b8ac4834d4"
+        "bytes": 3282,
+        "estimated_tokens": 1094,
+        "sha256": "bf6557c2534094f752b97f293233186331443f57f55b7479711bea9b06ac24d9"
       },
       {
         "requested_path": "master-shell/observability/config.yaml",
@@ -85,9 +92,27 @@
         "path": "master-shell/catalog/context-routing-profiles.yaml",
         "tier": "primary",
         "exists": true,
-        "bytes": 4084,
-        "estimated_tokens": 1361,
-        "sha256": "5f883c2dcc005e9bd1364816417f52bed85f4fce64aac2df8027ec5f1d8e1a8c"
+        "bytes": 4379,
+        "estimated_tokens": 1460,
+        "sha256": "9761ff28d86ecd4f1bec11bab3a69966e71d01b2e28a48ee46c140e8e3a97de5"
+      },
+      {
+        "requested_path": "scripts/generate_replay_packet.py",
+        "path": "scripts/generate_replay_packet.py",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 12043,
+        "estimated_tokens": 4014,
+        "sha256": "5ce6af2230f8a38c01c5d3c42245073e6eebfdd7aeb4491f09640aed04d9c68c"
+      },
+      {
+        "requested_path": "scripts/generate_routing_learning_ledger.py",
+        "path": "scripts/generate_routing_learning_ledger.py",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 3931,
+        "estimated_tokens": 1310,
+        "sha256": "ec14abf6ac2d3e552f84d8a2b63cf3695fdd8446b128ff1630f40e090108db3a"
       }
     ],
     "secondary": [
@@ -117,24 +142,33 @@
         "bytes": 437,
         "estimated_tokens": 146,
         "sha256": "4a9b1a0f5a2d4e56317c60b24a4b045823f6bcefc3c6060598fd84b62f5b7635"
+      },
+      {
+        "requested_path": "artifacts/promotion-pipeline/latest/handoff-bundle.json",
+        "path": "artifacts/promotion-pipeline/latest/handoff-bundle.json",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 22893,
+        "estimated_tokens": 7631,
+        "sha256": "7a765cf198b73bbe5aa714ba62e8c174fb099536c3057ebbd66de804ed454018"
       }
     ]
   },
   "summary": {
     "primary": {
-      "file_count": 6,
-      "total_bytes": 18240,
-      "estimated_tokens": 6081
+      "file_count": 8,
+      "total_bytes": 36973,
+      "estimated_tokens": 12325
     },
     "secondary": {
-      "file_count": 3,
-      "total_bytes": 2803,
-      "estimated_tokens": 934
+      "file_count": 4,
+      "total_bytes": 25696,
+      "estimated_tokens": 8565
     },
     "total": {
-      "file_count": 9,
-      "total_bytes": 21043,
-      "estimated_tokens": 7015
+      "file_count": 12,
+      "total_bytes": 62669,
+      "estimated_tokens": 20890
     }
   },
   "commands": {

@@ -145,6 +145,40 @@ function evaluateMetric(key, value) {
   return { status: meets ? 'PASS' : 'FAIL', meets_target: meets };
 }
 
+function buildActionableFailureSummary(root) {
+  const source = 'memory/L0-hot/failure-patterns.yaml';
+  const failurePatterns = readYaml(path.join(root, source)) || {};
+  const patterns = Array.isArray(failurePatterns.patterns) ? failurePatterns.patterns : [];
+  const normalizedPatterns = patterns
+    .map((pattern) => ({
+      id: String(pattern.id || ''),
+      gate: String(pattern.gate || ''),
+      severity: String(pattern.severity || 'medium'),
+      occurrences: Number(pattern.occurrences || 0),
+      root_cause_category: String(pattern.root_cause_category || ''),
+      failing_tests: Array.isArray(pattern.failing_tests) ? pattern.failing_tests : [],
+      preflight_command: String(pattern.preflight?.command || ''),
+      expected_signal: String(pattern.preflight?.expected_signal || ''),
+      handoff_warning: String(pattern.handoff_warning || ''),
+      last_seen: String(pattern.last_seen || ''),
+    }))
+    .filter((pattern) => pattern.id)
+    .sort((a, b) => b.occurrences - a.occurrences || a.id.localeCompare(b.id));
+
+  return {
+    source,
+    pattern_count: normalizedPatterns.length,
+    top_patterns: normalizedPatterns.slice(0, 3),
+    warnings: normalizedPatterns.slice(0, 3).map((pattern) => ({
+      id: pattern.id,
+      severity: pattern.severity,
+      message: pattern.handoff_warning,
+      preflight_command: pattern.preflight_command,
+      expected_signal: pattern.expected_signal,
+    })),
+  };
+}
+
 function formatValue(key, value) {
   if (value === null || value === undefined) return 'N/A';
   if (key === 'avg_token_per_wp') return `${value.toLocaleString()} tok`;
@@ -154,6 +188,7 @@ function formatValue(key, value) {
 function run(root, jsonOutput) {
   const metrics = computeMetrics(root);
   const perfMetrics = readJsonIfExists(path.join(root, 'artifacts/evals/harness/latest/harness-perf-metrics.json'));
+  const failureSummary = buildActionableFailureSummary(root);
 
   const dashboard = {
     generated_at_utc: new Date().toISOString(),
@@ -178,6 +213,7 @@ function run(root, jsonOutput) {
         meets_target: evaluation.meets_target,
       };
     }),
+    failure_summary: failureSummary,
   };
 
   const passCount = dashboard.kpis.filter((k) => k.status === 'PASS').length;
@@ -221,6 +257,13 @@ function run(root, jsonOutput) {
   process.stdout.write('\n');
   process.stdout.write(`Overall: ${dashboard.summary.overall_status} `
     + `(${passCount} PASS / ${failCount} FAIL / ${noDataCount} NO_DATA)\n`);
+  if (dashboard.failure_summary.warnings.length > 0) {
+    process.stdout.write('\nActionable Gate Warnings:\n');
+    dashboard.failure_summary.warnings.forEach((warning) => {
+      process.stdout.write(`- ${warning.severity.toUpperCase()} ${warning.id}: ${warning.message}\n`);
+      process.stdout.write(`  preflight: ${warning.preflight_command}\n`);
+    });
+  }
   process.stdout.write(`Output: ${outPath}\n\n`);
 
   return dashboard;
@@ -231,4 +274,9 @@ if (require.main === module) {
   run(args.root, args.json);
 }
 
-module.exports = { run, computeMetrics, evaluateMetric };
+module.exports = {
+  run,
+  computeMetrics,
+  evaluateMetric,
+  buildActionableFailureSummary,
+};

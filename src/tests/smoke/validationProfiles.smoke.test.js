@@ -27,6 +27,15 @@ test('[validation profiles smoke] packet type and stage resolve to a stable mini
   assert.ok(Array.isArray(governanceProfile.success_criteria));
   assert.equal(typeof governanceProfile.primary_command, 'string');
   assert.equal(new Set(governanceProfile.commands).size, governanceProfile.commands.length);
+  assert.equal(governanceProfile.handoff_contract.schema_version, '1');
+  assert.ok(governanceProfile.handoff_contract.required_fields.includes('required'));
+  assert.ok(governanceProfile.handoff_contract.merge_order.includes('packet_validation'));
+  assert.equal(governanceProfile.required.length, governanceProfile.commands.length);
+  assert.deepEqual(
+    governanceProfile.required.map((entry) => entry.command),
+    governanceProfile.commands,
+  );
+  assert.ok(governanceProfile.required.every((entry) => entry.pass_criteria === 'exit code 0'));
 
   const domainProfile = resolveValidationProfile({
     type: 'domain',
@@ -45,10 +54,16 @@ test('[validation profiles smoke] packet type and stage resolve to a stable mini
   const aliasProfile = resolveValidationProfile({
     type: 'bugfix',
     stage: 'D',
+    validation: ['npm run lint'],
   });
 
   assert.equal(aliasProfile.requested_packet_type, 'bugfix');
   assert.equal(aliasProfile.packet_type, 'domain');
   assert.equal(aliasProfile.resolved_from_alias, true);
   assert.ok(aliasProfile.commands.includes('npm run test:integration'));
+  assert.equal(
+    aliasProfile.commands.filter((command) => command === 'npm run lint').length,
+    1,
+    'stage override and packet.validation commands should be de-duplicated',
+  );
 });

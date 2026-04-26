@@ -17,6 +17,27 @@
 5. 원인 분석 → 변경 포인트 최소화 → 작은 change set → 검증 순서로 진행한다.
 6. 마지막에는 `원인 분석 / 변경 포인트 / 검증 결과 / 남은 리스크 / 다음 작업`만 간단히 보고한다.
 
+## Cockpit-first handoff flow
+
+handoff가 끊겼거나 후속 작업자가 이어받을 때는 먼저 아래 순서로 현재 관제면을 맞춘다.
+
+```bash
+npm run operator:cockpit -- --json
+npm run session:bootstrap -- --json
+npm run project:status
+```
+
+두 JSON 결과의 `handoff_summary`를 같은 기준으로 본다.
+
+- `current_wp`: 지금 작업할 packet
+- `next_wp`: 다음 queue 포인터
+- `drift_status`: context lock과 실제 파일 차이
+- `validation_state`: 검증/commit guard 준비 상태
+- `evidence_state`: release evidence 또는 gate evidence 상태
+- `next_command`: 가장 먼저 실행할 검증 명령
+
+`handoff_summary.validation_state`가 `blocked`이면 코딩보다 preflight warning과 guard reason을 먼저 해소한다.
+
 ## 추천 짧은 프롬프트
 
 ```text

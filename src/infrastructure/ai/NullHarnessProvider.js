@@ -58,6 +58,7 @@ class NullHarnessProvider {
       session_id: String(sessionId || ''),
       wp_id: String(wp.id || ''),
       changed_files: [],
+      read_files: [],
       summary: `null provider dry-run for ${String(wp.id || 'unknown-wp')}`,
       provider: {
         provider_id: this.providerId,

@@ -1,10 +1,10 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-22T14:43:55.710864+00:00",
+  "generated_at": "2026-04-26T14:16:32.133598+00:00",
   "goal": "plan-and-learn",
   "current_wp": {
     "id": "MPO-COMPLETE",
-    "type": "governance",
+    "type": "infra",
     "stage": "complete",
     "status": "completed"
   },
@@ -17,110 +17,6 @@
     ]
   },
   "recommended_focuses": [
-    {
-      "id": "guided-learning-live-ops-cockpit",
-      "title": "학습형 Live Ops 콕핏 강화",
-      "outcome": "GUI만 보더라도 AI 흐름, adapter 전환 근거, 실시간 로그, replay 기반 다음 packet을 학습 가능한 구조로 읽게 만든다.",
-      "preserve_essence": "모든 GUI는 다루기 쉽고 학습과 로그 관측을 함께 해야 한다는 본질을 유지한다.",
-      "delivered_by": [
-        "Live Ops Feed, Study Replay, Replay Next Packet을 같은 학습형 운영축으로 강조한다.",
-        "Project Status가 guided learning / live ops readiness를 별도 개선축으로 요약한다.",
-        "질문지에서 GUI 학습 + 실시간 로그 우선순위를 직접 선택하게 만든다."
-      ],
-      "why_now": [
-        "학습 surface와 운영 surface가 분리되면 사용자는 흐름은 이해해도 실제 시스템 상태를 따라가기 어렵다.",
-        "adapter 확장성과 운영 안전을 같이 배우게 해야 새 프로젝트를 추가해도 코어를 흔들지 않는다."
-      ],
-      "related_focuses": [
-        {
-          "id": "guided-learning-and-adapter-cockpit",
-          "title": "학습 경로 + 어댑터/컨텍스트 콕핏"
-        },
-        {
-          "id": "constraint-fit-handoff-and-replay-loop",
-          "title": "제약 적합성 + handoff bundle + replay-driven next packet"
-        },
-        {
-          "id": "launch-autopilot-routing-ledger-and-kickoff-gate",
-          "title": "launch autopilot + routing learning ledger + kickoff ready gate"
-        }
-      ],
-      "benchmark_signals": [
-        {
-          "id": "miro-ai-diagramming",
-          "region": "global",
-          "product": "Miro AI Diagramming",
-          "category": "visualization",
-          "source_url": "https://miro.com/ai/brainstorming/",
-          "signal": "브레인스토밍 결과와 기술 문서를 빠르게 시각 구조로 바꾸고 팀이 같은 화면에서 이해하게 만든다.",
-          "lessons": [
-            "문서형 구조를 바로 학습용 flow와 relation으로 번역해야 한다.",
-            "복잡한 시스템일수록 텍스트보다 guided visual path가 중요하다."
-          ],
-          "adopted_into": [
-            "AI 학습 여정",
-            "AI flow/relations 시각화",
-            "도메인/어댑터 설명"
-          ]
-        },
-        {
-          "id": "github-project-views",
-          "region": "global",
-          "product": "GitHub Projects",
-          "category": "execution",
-          "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects",
-          "signal": "table, board, roadmap, custom fields를 같은 프로젝트 안에서 유연하게 바꿔 보며 계획과 실행을 연결한다.",
-          "lessons": [
-            "planner는 하나의 truth surface를 여러 view로 읽게 해야 한다.",
-            "실행 packet과 로그 view는 같은 데이터에서 파생돼야 한다."
-          ],
-          "adopted_into": [
-            "Planning Studio",
-            "Alert Cockpit",
-            "Execution Packet Draft"
-          ]
-        },
-        {
-          "id": "openai-agentkit-observability",
-          "region": "global",
-          "product": "OpenAI AgentKit",
-          "category": "observability",
-          "source_url": "https://openai.github.io/openai-agents-js/ko/guides/tracing/",
-          "signal": "에이전트 workflow를 시각적으로 설계하고 trace grading, 최적화, 실행 흐름 개선까지 한 체계로 묶는다.",
-          "lessons": [
-            "planner는 기획 surface와 runtime/observability surface를 분리하지 말아야 한다.",
-            "최근 실행 흐름과 품질 시그널을 한 화면에서 복기할 수 있어야 학습 속도가 올라간다."
-          ],
-          "adopted_into": [
-            "Live Ops Feed",
-            "Starter Focus Cycle",
-            "어댑터/운영 학습 surface"
-          ]
-        },
-        {
-          "id": "clova-safe-ai-lifecycle",
-          "region": "korea",
-          "product": "NAVER CLOVA",
-          "category": "ai-safety",
-          "source_url": "https://clova.ai/en/ai-research",
-          "signal": "안전성, 신뢰성, 벤치마크, 에이전트 연구를 AI 시스템 생애주기와 함께 다룬다.",
-          "lessons": [
-            "학습 경로와 quality gate에 안전성과 신뢰성 관점을 함께 연결해야 한다.",
-            "AI 흐름 설명은 기능뿐 아니라 운영 안전 관점도 포함해야 한다."
-          ],
-          "adopted_into": [
-            "학습 숙련도 로드맵",
-            "quality gate narrative",
-            "guided learning path"
-          ]
-        }
-      ],
-      "score": 6,
-      "reasons": [
-        "plan-and-learn 목표에 직접 맞는 focus입니다.",
-        "코어 운영 흐름을 학습과 로그 surface로 같이 보여줄 가치가 큽니다."
-      ]
-    },
     {
       "id": "master-planning-truth-surface",
       "title": "마스터 UI 기획 진실면 강화",
@@ -328,6 +224,109 @@
         "plan-and-learn 목표에 직접 맞는 focus입니다.",
         "운영/검증형 current-wp에서 context lock과 reread 흐름의 ROI가 특히 큽니다."
       ]
+    },
+    {
+      "id": "guided-learning-live-ops-cockpit",
+      "title": "학습형 Live Ops 콕핏 강화",
+      "outcome": "GUI만 보더라도 AI 흐름, adapter 전환 근거, 실시간 로그, replay 기반 다음 packet을 학습 가능한 구조로 읽게 만든다.",
+      "preserve_essence": "모든 GUI는 다루기 쉽고 학습과 로그 관측을 함께 해야 한다는 본질을 유지한다.",
+      "delivered_by": [
+        "Live Ops Feed, Study Replay, Replay Next Packet을 같은 학습형 운영축으로 강조한다.",
+        "Project Status가 guided learning / live ops readiness를 별도 개선축으로 요약한다.",
+        "질문지에서 GUI 학습 + 실시간 로그 우선순위를 직접 선택하게 만든다."
+      ],
+      "why_now": [
+        "학습 surface와 운영 surface가 분리되면 사용자는 흐름은 이해해도 실제 시스템 상태를 따라가기 어렵다.",
+        "adapter 확장성과 운영 안전을 같이 배우게 해야 새 프로젝트를 추가해도 코어를 흔들지 않는다."
+      ],
+      "related_focuses": [
+        {
+          "id": "guided-learning-and-adapter-cockpit",
+          "title": "학습 경로 + 어댑터/컨텍스트 콕핏"
+        },
+        {
+          "id": "constraint-fit-handoff-and-replay-loop",
+          "title": "제약 적합성 + handoff bundle + replay-driven next packet"
+        },
+        {
+          "id": "launch-autopilot-routing-ledger-and-kickoff-gate",
+          "title": "launch autopilot + routing learning ledger + kickoff ready gate"
+        }
+      ],
+      "benchmark_signals": [
+        {
+          "id": "miro-ai-diagramming",
+          "region": "global",
+          "product": "Miro AI Diagramming",
+          "category": "visualization",
+          "source_url": "https://miro.com/ai/brainstorming/",
+          "signal": "브레인스토밍 결과와 기술 문서를 빠르게 시각 구조로 바꾸고 팀이 같은 화면에서 이해하게 만든다.",
+          "lessons": [
+            "문서형 구조를 바로 학습용 flow와 relation으로 번역해야 한다.",
+            "복잡한 시스템일수록 텍스트보다 guided visual path가 중요하다."
+          ],
+          "adopted_into": [
+            "AI 학습 여정",
+            "AI flow/relations 시각화",
+            "도메인/어댑터 설명"
+          ]
+        },
+        {
+          "id": "github-project-views",
+          "region": "global",
+          "product": "GitHub Projects",
+          "category": "execution",
+          "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects",
+          "signal": "table, board, roadmap, custom fields를 같은 프로젝트 안에서 유연하게 바꿔 보며 계획과 실행을 연결한다.",
+          "lessons": [
+            "planner는 하나의 truth surface를 여러 view로 읽게 해야 한다.",
+            "실행 packet과 로그 view는 같은 데이터에서 파생돼야 한다."
+          ],
+          "adopted_into": [
+            "Planning Studio",
+            "Alert Cockpit",
+            "Execution Packet Draft"
+          ]
+        },
+        {
+          "id": "openai-agentkit-observability",
+          "region": "global",
+          "product": "OpenAI AgentKit",
+          "category": "observability",
+          "source_url": "https://openai.github.io/openai-agents-js/ko/guides/tracing/",
+          "signal": "에이전트 workflow를 시각적으로 설계하고 trace grading, 최적화, 실행 흐름 개선까지 한 체계로 묶는다.",
+          "lessons": [
+            "planner는 기획 surface와 runtime/observability surface를 분리하지 말아야 한다.",
+            "최근 실행 흐름과 품질 시그널을 한 화면에서 복기할 수 있어야 학습 속도가 올라간다."
+          ],
+          "adopted_into": [
+            "Live Ops Feed",
+            "Starter Focus Cycle",
+            "어댑터/운영 학습 surface"
+          ]
+        },
+        {
+          "id": "clova-safe-ai-lifecycle",
+          "region": "korea",
+          "product": "NAVER CLOVA",
+          "category": "ai-safety",
+          "source_url": "https://clova.ai/en/ai-research",
+          "signal": "안전성, 신뢰성, 벤치마크, 에이전트 연구를 AI 시스템 생애주기와 함께 다룬다.",
+          "lessons": [
+            "학습 경로와 quality gate에 안전성과 신뢰성 관점을 함께 연결해야 한다.",
+            "AI 흐름 설명은 기능뿐 아니라 운영 안전 관점도 포함해야 한다."
+          ],
+          "adopted_into": [
+            "학습 숙련도 로드맵",
+            "quality gate narrative",
+            "guided learning path"
+          ]
+        }
+      ],
+      "score": 5,
+      "reasons": [
+        "plan-and-learn 목표에 직접 맞는 focus입니다."
+      ]
     }
   ],
   "commands": {
@@ -337,30 +336,6 @@
     "promote_json": "python3 scripts/promote_packet.py --goal plan-and-learn --json"
   },
   "benchmark_sources": [
-    {
-      "id": "miro-ai-diagramming",
-      "product": "Miro AI Diagramming",
-      "region": "global",
-      "source_url": "https://miro.com/ai/brainstorming/"
-    },
-    {
-      "id": "github-project-views",
-      "product": "GitHub Projects",
-      "region": "global",
-      "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects"
-    },
-    {
-      "id": "openai-agentkit-observability",
-      "product": "OpenAI AgentKit",
-      "region": "global",
-      "source_url": "https://openai.github.io/openai-agents-js/ko/guides/tracing/"
-    },
-    {
-      "id": "clova-safe-ai-lifecycle",
-      "product": "NAVER CLOVA",
-      "region": "korea",
-      "source_url": "https://clova.ai/en/ai-research"
-    },
     {
       "id": "figjam-strategy-planning",
       "product": "Figma FigJam",
@@ -408,6 +383,30 @@
       "product": "HyperCLOVA X",
       "region": "korea",
       "source_url": "https://clova.ai/en/tech-blog/hyperclova-x-omni-koreas-flagship-ai-on-the-road-to-omnimodality"
+    },
+    {
+      "id": "miro-ai-diagramming",
+      "product": "Miro AI Diagramming",
+      "region": "global",
+      "source_url": "https://miro.com/ai/brainstorming/"
+    },
+    {
+      "id": "github-project-views",
+      "product": "GitHub Projects",
+      "region": "global",
+      "source_url": "https://docs.github.com/en/issues/planning-and-tracking-with-projects"
+    },
+    {
+      "id": "openai-agentkit-observability",
+      "product": "OpenAI AgentKit",
+      "region": "global",
+      "source_url": "https://openai.github.io/openai-agents-js/ko/guides/tracing/"
+    },
+    {
+      "id": "clova-safe-ai-lifecycle",
+      "product": "NAVER CLOVA",
+      "region": "korea",
+      "source_url": "https://clova.ai/en/ai-research"
     }
   ]
 }

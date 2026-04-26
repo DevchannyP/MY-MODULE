@@ -1,4 +1,4 @@
-as_of: "2026-04-22"
+as_of: "2026-04-26"
 current_phase: "mpo-v1-complete"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"
 execution_policy:

@@ -9,7 +9,7 @@
       },
       "internalParameters": {
         "lockfile_sha256": "feb569fe2afa2b34670235f562a66735a2174b0bc40d5748c1351193aed075b1",
-        "package_json_sha256": "662fc79a80e5a043ed7c1b2501049625e48f37d0787387b262a48c2f472c8cba",
+        "package_json_sha256": "9ff6bd43095b0aa64d508a68907f338b32a9fd2c5b5b779adf22ab4c8dfab8d1",
         "requirements_sha256": "9664a02d9a9e1273b7542ecc119c72826503e4c6219c96af24b727ac89d7f970"
       },
       "resolvedDependencies": [
@@ -21,7 +21,7 @@
         },
         {
           "digest": {
-            "sha256": "662fc79a80e5a043ed7c1b2501049625e48f37d0787387b262a48c2f472c8cba"
+            "sha256": "9ff6bd43095b0aa64d508a68907f338b32a9fd2c5b5b779adf22ab4c8dfab8d1"
           },
           "uri": "package.json"
         },

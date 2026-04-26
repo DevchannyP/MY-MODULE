@@ -7,6 +7,7 @@ const { spawnSync } = require('node:child_process');
 const ROOT = path.resolve(__dirname, '..');
 const RAW_INTENT_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'raw-intent.schema.json');
 const INTAKE_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'intake.schema.json');
+const EXECUTION_PACKET_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'execution-packet.schema.json');
 const WP_DAG_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'wp-dag.schema.json');
 const OUTPUT_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'output.schema.json');
 const COMPLETION_REPORT_SCHEMA_PATH = path.join(ROOT, 'contracts', 'harness', 'completion-report.schema.json');
@@ -236,9 +237,95 @@ function validateGoldenSet(intakeSchema) {
   });
 }
 
+function validateExecutionPacketSchema(schema) {
+  requireRequiredFields(schema, [
+    'schema_version',
+    'packet_id',
+    'goal',
+    'mode',
+    'packet_type',
+    'intake_packet',
+    'scope',
+    'context_lock',
+    'validation_profile',
+    'rollback_plan',
+    'evidence_policy',
+  ], 'execution-packet.schema');
+  requireEnum(schema, 'mode', ['Research', 'Build', 'Debug', 'Operate', 'Policy'], 'execution-packet.schema');
+
+  const scopeRequired = schema?.properties?.scope?.required || [];
+  ['scope_in', 'scope_out'].forEach((field) => {
+    if (!scopeRequired.includes(field)) {
+      fail(`harness contract validation FAIL: execution-packet.schema.scope missing required field ${field}`);
+    }
+  });
+
+  const contextLockRequired = schema?.properties?.context_lock?.required || [];
+  ['path', 'drift_status'].forEach((field) => {
+    if (!contextLockRequired.includes(field)) {
+      fail(`harness contract validation FAIL: execution-packet.schema.context_lock missing required field ${field}`);
+    }
+  });
+
+  const evidencePolicyRequired = schema?.properties?.evidence_policy?.required || [];
+  ['pass_requires_observed_evidence', 'missing_evidence_status'].forEach((field) => {
+    if (!evidencePolicyRequired.includes(field)) {
+      fail(`harness contract validation FAIL: execution-packet.schema.evidence_policy missing required field ${field}`);
+    }
+  });
+}
+
+function validateExecutionPacketGoldenSet(executionPacketSchema) {
+  const content = fs.readFileSync(GOLDEN_SET_PATH, 'utf8')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const required = Array.isArray(executionPacketSchema.required) ? executionPacketSchema.required : [];
+  let executionPacketCount = 0;
+
+  content.forEach((line, index) => {
+    const record = JSON.parse(line);
+    if (!record.execution_packet) {
+      return;
+    }
+
+    executionPacketCount += 1;
+    const lineLabel = `golden set line ${index + 1} execution_packet`;
+    required.forEach((field) => {
+      if (!(field in record.execution_packet)) {
+        fail(`harness contract validation FAIL: ${lineLabel} missing ${field}`);
+      }
+    });
+
+    ['goal', 'context', 'constraints', 'done_when', 'work_mode', 'verification'].forEach((field) => {
+      if (!(field in record.execution_packet.intake_packet)) {
+        fail(`harness contract validation FAIL: ${lineLabel}.intake_packet missing ${field}`);
+      }
+    });
+
+    if (!Array.isArray(record.execution_packet.scope?.scope_in)) {
+      fail(`harness contract validation FAIL: ${lineLabel}.scope.scope_in must be array`);
+    }
+    if (!Array.isArray(record.execution_packet.scope?.scope_out)) {
+      fail(`harness contract validation FAIL: ${lineLabel}.scope.scope_out must be array`);
+    }
+    if (!Array.isArray(record.execution_packet.validation_profile?.required)) {
+      fail(`harness contract validation FAIL: ${lineLabel}.validation_profile.required must be array`);
+    }
+    if (record.execution_packet.evidence_policy?.pass_requires_observed_evidence !== true) {
+      fail(`harness contract validation FAIL: ${lineLabel}.evidence_policy.pass_requires_observed_evidence must be true`);
+    }
+  });
+
+  if (executionPacketCount < 1) {
+    fail('harness contract validation FAIL: golden set must contain at least one execution_packet case');
+  }
+}
+
 function main() {
   [
     INTAKE_SCHEMA_PATH,
+    EXECUTION_PACKET_SCHEMA_PATH,
     RAW_INTENT_SCHEMA_PATH,
     WP_DAG_SCHEMA_PATH,
     OUTPUT_SCHEMA_PATH,
@@ -250,6 +337,7 @@ function main() {
 
   const rawIntentSchema = readJson(RAW_INTENT_SCHEMA_PATH);
   const intakeSchema = readJson(INTAKE_SCHEMA_PATH);
+  const executionPacketSchema = readJson(EXECUTION_PACKET_SCHEMA_PATH);
   const wpDagSchema = readJson(WP_DAG_SCHEMA_PATH);
   const outputSchema = readJson(OUTPUT_SCHEMA_PATH);
   const completionReportSchema = readJson(COMPLETION_REPORT_SCHEMA_PATH);
@@ -259,6 +347,7 @@ function main() {
   requireRequiredFields(rawIntentSchema, ['raw_intent', 'goal', 'session_context'], 'raw-intent.schema');
   requireRequiredFields(intakeSchema, ['goal', 'context', 'constraints', 'done_when', 'work_mode', 'verification'], 'intake.schema');
   requireRequiredFields(intakeSchema, ['packet_type', 'risk_level', 'trust_level', 'evidence_required', 'interactive_class'], 'intake.schema');
+  validateExecutionPacketSchema(executionPacketSchema);
   requireRequiredFields(wpDagSchema, ['schema_version', 'session_id', 'intake_packet', 'wp_list', 'edges'], 'wp-dag.schema');
   requireRequiredFields(outputSchema, [
     'session_id',
@@ -290,6 +379,7 @@ function main() {
   validateHarnessYaml(harnessContract);
   validateProviderAdapterYaml(providerAdapterContract);
   validateGoldenSet(intakeSchema);
+  validateExecutionPacketGoldenSet(executionPacketSchema);
 
   process.stdout.write('harness contract validation PASS\n');
 }

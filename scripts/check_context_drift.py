@@ -4,6 +4,7 @@ Check drift for a previously exported context lock manifest.
 
 Usage:
   python3 scripts/check_context_drift.py --input context-lock.json --json
+  python3 scripts/check_context_drift.py --json
 """
 
 from __future__ import annotations
@@ -18,11 +19,16 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_CONTEXT_LOCK = ROOT / "artifacts" / "promotion-pipeline" / "latest" / "context-lock.json"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check drift against a Workflow OS context lock manifest")
-    parser.add_argument("--input", required=True, help="Path to a context lock JSON/YAML file")
+    parser.add_argument(
+        "--input",
+        default=str(DEFAULT_CONTEXT_LOCK),
+        help="Path to a context lock JSON/YAML file. Defaults to artifacts/promotion-pipeline/latest/context-lock.json",
+    )
     parser.add_argument("--json", action="store_true", help="Print JSON instead of YAML")
     parser.add_argument("--root", default=str(ROOT), help="Workspace root used to resolve locked file paths")
     return parser.parse_args()

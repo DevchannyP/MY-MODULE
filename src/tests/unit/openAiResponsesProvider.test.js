@@ -60,6 +60,16 @@ test('[openai responses provider] buildWorkPacketInput preserves route/session m
       id: 'WP-TEST-001',
       title: 'Validate provider execution',
       allowed_paths: ['src/server/routes/**'],
+      execution_context: {
+        trusted_context: [
+          {
+            path: 'contracts/harness/output.schema.json',
+            scope: 'full',
+            content: '{"type":"object"}',
+          },
+        ],
+        expected_read_files: ['contracts/harness/output.schema.json'],
+      },
       verification_bundle: {
         required: [
           {
@@ -77,6 +87,8 @@ test('[openai responses provider] buildWorkPacketInput preserves route/session m
   assert.doesNotMatch(userPayloadText, /\n/);
   assert.equal(userPayload.session_id, 'mpo-session-test');
   assert.equal(userPayload.wp.id, 'WP-TEST-001');
+  assert.equal(userPayload.wp.execution_context.trusted_context[0].path, 'contracts/harness/output.schema.json');
+  assert.deepEqual(userPayload.wp.execution_context.expected_read_files, ['contracts/harness/output.schema.json']);
   assert.equal(userPayload.route.route_id, 'mini-build');
   assert.equal(userPayload.route.prompt_version, '0.2.0');
 });
@@ -333,6 +345,7 @@ test('[openai responses provider] generateWorkPacketResult parses strict JSON pa
           session_id: 'mpo-session-test',
           wp_id: 'WP-TEST-001',
           changed_files: ['src/server/routes/mpo.js'],
+          read_files: ['contracts/harness/output.schema.json'],
           summary: 'provider executed packet',
         }),
         usage: {
@@ -357,6 +370,16 @@ test('[openai responses provider] generateWorkPacketResult parses strict JSON pa
       id: 'WP-TEST-001',
       title: 'provider execution',
       allowed_paths: ['src/server/routes/**'],
+      execution_context: {
+        trusted_context: [
+          {
+            path: 'contracts/harness/output.schema.json',
+            scope: 'full',
+            content: '{"type":"object"}',
+          },
+        ],
+        expected_read_files: ['contracts/harness/output.schema.json'],
+      },
     },
     correlationId: 'corr-work-packet-1',
     requestId: 'req-work-packet-1',
@@ -367,9 +390,11 @@ test('[openai responses provider] generateWorkPacketResult parses strict JSON pa
 
   assert.equal(userPayload.session_id, 'mpo-session-test');
   assert.equal(userPayload.wp.id, 'WP-TEST-001');
+  assert.equal(userPayload.wp.execution_context.trusted_context[0].path, 'contracts/harness/output.schema.json');
   assert.equal(result.session_id, 'mpo-session-test');
   assert.equal(result.wp_id, 'WP-TEST-001');
   assert.deepEqual(result.changed_files, ['src/server/routes/mpo.js']);
+  assert.deepEqual(result.read_files, ['contracts/harness/output.schema.json']);
   assert.equal(result.provider.provider_id, 'openai-responses');
   assert.equal(result.provider.model, 'gpt-test');
   assert.equal(result.input_tokens, 24);
@@ -391,6 +416,44 @@ test('[openai responses provider] generateWorkPacketResult throws PROVIDER_SCHEM
     }),
     (err) => {
       assert.equal(err.code, 'PROVIDER_SCHEMA_MISMATCH');
+      return true;
+    },
+  );
+});
+
+test('[openai responses provider] generateWorkPacketResult throws PROVIDER_SCHEMA_MISMATCH when read_files is omitted with trusted context', async () => {
+  const provider = new OpenAIResponsesProvider({
+    request: async () => ({
+      output_text: JSON.stringify({
+        session_id: 'mpo-session-test',
+        wp_id: 'WP-TEST-001',
+        changed_files: [],
+        summary: 'missing read files',
+      }),
+    }),
+  });
+
+  await assert.rejects(
+    () => provider.generateWorkPacketResult({
+      route: { mode: 'Build', route_id: 'standard-build', selected_model_tier: 'standard' },
+      sessionId: 'mpo-session-test',
+      wp: {
+        id: 'WP-TEST-001',
+        execution_context: {
+          trusted_context: [
+            {
+              path: 'contracts/harness/output.schema.json',
+              scope: 'full',
+              content: '{"type":"object"}',
+            },
+          ],
+          expected_read_files: ['contracts/harness/output.schema.json'],
+        },
+      },
+    }),
+    (err) => {
+      assert.equal(err.code, 'PROVIDER_SCHEMA_MISMATCH');
+      assert.match(err.message, /read_files/);
       return true;
     },
   );

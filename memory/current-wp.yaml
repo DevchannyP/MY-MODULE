@@ -1,26 +1,80 @@
 id: "MPO-COMPLETE"
-goal: "MPO session mpo-c661e92f-f43c-40d2-bf43-2b67b555b1fc completed"
-type: "governance"
+goal: "MPO session mpo-01a7bad9-7357-46ae-9742-74a530f9664d completed"
+type: "infra"
 stage: "complete"
 status: "completed"
-completed_at: "2026-04-22T14:44:22.853Z"
+spiral: 20
+created_at: "2026-04-23"
+depends_on:
+  - "WP-HO-010"
+handoff_mode: "replay-quality"
 scope_in:
-  - "src/server/createServer.js"
-  - "src/tests/smoke/harnessLiveProvider.smoke.test.js"
-  - "memory/stageD/harness-live-provider.yaml"
-  - "docs/how-to/local-server-startup.md"
-  - ".env"
-  - "memory/wp-queue.yaml"
-  - "memory/next-actions.yaml"
+  - "scripts/generate_replay_packet.py"
+  - "scripts/generate_routing_learning_ledger.py"
+  - "artifacts/promotion-pipeline/latest/handoff-bundle.json"
+  - "worklog/audit-chain.jsonl"
+  - "master-shell/observability/timeline.jsonl"
 scope_out:
   - "domains/"
+  - "src/infrastructure/ai/"
+  - "artifacts/master-planner/index.html"
+completed_before_this:
+  - id: "WP-HO-000"
+    result: "PASS — SPIRAL-20 handoff DAG와 dirty baseline 보호선 등록"
+  - id: "WP-HO-001"
+    result: "PASS — context drift 기본 실행과 lock clean 복구"
+  - id: "WP-HO-002"
+    result: "PASS_WITH_RESIDUAL — handoff bundle 필수 섹션 추가"
+  - id: "WP-HO-003"
+    result: "PASS — intake_packet 6필드 bootstrap/cockpit 노출"
+  - id: "WP-HO-004"
+    result: "PASS_WITH_RESIDUAL — execution packet schema/validator/golden 연결"
+  - id: "WP-HO-005"
+    result: "PASS — completion report truthfulness와 test:mpo residual 정리"
+  - id: "WP-HO-006"
+    result: "PASS_WITH_RESIDUAL — validation profile resolver/bundle binding 완료"
+  - id: "WP-HO-007"
+    result: "PASS — gate residual top 3 preflight warnings 노출"
+  - id: "WP-HO-008"
+    result: "PASS_WITH_RESIDUAL — context budget guard/read_later exception guidance 완료"
+  - id: "WP-HO-009"
+    result: "PASS_WITH_RESIDUAL — Master UI Handoff Lane 추가"
+  - id: "WP-HO-010"
+    result: "PASS — bootstrap/cockpit 공통 handoff_summary 추가"
+context_findings:
+  handoff_summary:
+    status: "ready"
+    sources:
+      - "npm run session:bootstrap -- --json"
+      - "npm run operator:cockpit -- --json"
+  residual_risks:
+    - "replay_next_packet.goal은 actor/hash 같은 불완전 문구가 남지 않아야 한다."
+constraints:
+  - "replay_next_packet.goal에 불완전한 actor/hash 문구를 남기지 않는다."
+  - "완료된 packet 다음 추천은 actionable WP 초안이어야 한다."
+  - "audit signal은 재사용 가능한 필드명으로 정규화한다."
+done_when:
+  - "wp:replay-packet JSON goal/type/stage가 clean하다."
+  - "handoff bundle replay_next_packet이 같은 clean replay packet을 포함한다."
+  - "routing learning ledger가 replay 품질 signal을 재사용 가능하게 제공한다."
+verification:
+  - "npm run wp:replay-packet -- --json"
+  - "npm run wp:handoff-bundle -- --json"
+  - "npm run test:e2e-smoke"
+context_budget:
+  tier_reads:
+    - "scripts/generate_replay_packet.py"
+    - "scripts/generate_routing_learning_ledger.py"
+  context_reads:
+    - "artifacts/promotion-pipeline/latest/handoff-bundle.json"
+  read_later:
+    - "worklog/audit-chain.jsonl"
+    - "master-shell/observability/timeline.jsonl"
+  estimated_turns: 3
+  max_new_files: 0
+  max_modified_files: 4
+rollback_plan: "WP-HO-011 변경은 replay packet generator, routing learning ledger signal, related handoff bundle tests만 되돌리면 된다."
+next_unlock: "WP-HO-012 promotion pipeline과 handoff bundle 연결"
+completed_at: "2026-04-26T14:14:24.747Z"
 last_completed_wp: "WP-AUTO-004"
-last_completed_at: "2026-04-22T14:44:22.853Z"
-queue_state:
-  total: 83
-  done: 83
-  ready: 0
-  blocked: 0
-next_unlock: "gh auth login → PR 생성 → CI PASS → main 머지. 또는 Spiral 20 신규 WP 정의."
-branch: "chore/core-git-governance-activation"
-branch_status: "pushed — 213 commits ahead of main"
+last_completed_at: "2026-04-26T14:14:24.747Z"
