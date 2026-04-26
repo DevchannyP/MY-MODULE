@@ -126,6 +126,50 @@
   ],
   "provider_invocations": [
     {
+      "generated_at_utc": "2026-04-26T14:28:11.906Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388",
+      "wp_id": "WP-AUTO-004",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:28:11.262Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388",
+      "wp_id": "WP-AUTO-003",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:28:10.625Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388",
+      "wp_id": "WP-AUTO-002",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:28:09.974Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388",
+      "wp_id": "WP-AUTO-001",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
       "generated_at_utc": "2026-04-26T14:16:35.460Z",
       "provider_id": "null-harness-provider",
       "route_id": "mini-build-medium",
@@ -182,12 +226,12 @@
     }
   ],
   "last_provider_invocation": {
-    "generated_at_utc": "2026-04-26T14:16:35.460Z",
+    "generated_at_utc": "2026-04-26T14:28:11.906Z",
     "provider_id": "null-harness-provider",
-    "route_id": "mini-build-medium",
+    "route_id": "mini-build-low",
     "selected_model_tier": "mini",
-    "session_id": "mpo-9b960387-8606-41a4-b406-d9c6233db33f",
-    "wp_id": "WP-AUTO-001",
+    "session_id": "mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388",
+    "wp_id": "WP-AUTO-004",
     "schema_valid": true,
     "fallback_applied": false,
     "latency_ms": 0

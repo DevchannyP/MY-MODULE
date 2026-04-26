@@ -466,16 +466,16 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
   return {
     bootstrap: {
       owner: 'Planner',
-      summary: '현재 Work Packet, 레인, 우선 읽을 문서를 다시 고정해 반복 실행 중에도 기준이 흔들리지 않게 만드는 단계입니다.',
-      why: `${currentWpId} 기준으로 세션을 다시 맞춰야 이후 브랜치, 검증, evidence 판단이 같은 축에서 이어집니다.`,
+      summary: '지금 어떤 일을 하고 있는지, 무엇을 먼저 읽어야 하는지 다시 맞추는 단계입니다.',
+      why: `${currentWpId} 기준이 흔들리면 뒤에 나오는 브랜치 점검, 검증, 배포 판단도 모두 헷갈리기 쉬워집니다.`,
       references: recommendedReads.length > 0
         ? recommendedReads.slice(0, 3)
         : ['memory/current-wp.yaml', 'memory/next-actions.yaml'],
       mapSteps: [
         {
-          title: '시작 지점',
+          title: '여기서 시작',
           detail: `${currentWpId} / lane ${currentLaneHint} / next ${nextWp}`,
-          hrefLabel: '통합 상태 열기',
+          hrefLabel: '전체 상황 보기',
           href: buildStaticControlCenterHref('operator-summary', 'master-status', {
             reason: 'session bootstrap 기준 확인',
             command: 'npm run session:bootstrap',
@@ -484,41 +484,41 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
           }),
         },
         {
-          title: '먼저 읽기',
+          title: '먼저 볼 자료',
           detail: recommendedReads.length > 0
             ? recommendedReads.slice(0, 2).join(' / ')
             : 'recommended reads가 없으면 current-wp와 next-actions부터 확인',
         },
         {
-          title: '수정 포인트',
-          detail: '현재 packet 목표와 다음 packet이 어긋나면 세션 요약과 plan 흐름부터 다시 동기화합니다.',
+          title: '어디부터 고치나',
+          detail: '현재 목표와 다음 작업이 어긋나면 세션 요약과 작업 순서부터 다시 맞춥니다.',
         },
         {
-          title: '검증 루프',
+          title: '확인 명령',
           detail: 'npm run session:bootstrap',
         },
       ],
     },
     branch: {
       owner: 'Builder',
-      summary: '현재 브랜치가 권장 브랜치와 일치하는지, 수정 가능한 작업 트리인지 먼저 정리하는 단계입니다.',
+      summary: '지금 수정해도 되는 브랜치인지 먼저 확인하는 단계입니다.',
       why: recommendedBranch
-        ? `현재 ${currentBranch || 'unknown'} / 권장 ${recommendedBranch} 상태를 먼저 맞춰야 잘못된 위치에서 수정하는 일을 줄일 수 있습니다.`
-        : '권장 브랜치 정보가 비어 있으면 branch bootstrap부터 다시 확인해야 합니다.',
+        ? `현재 ${currentBranch || 'unknown'} 브랜치가 권장 브랜치 ${recommendedBranch}와 다르면 엉뚱한 위치를 수정할 수 있습니다.`
+        : '권장 브랜치 정보가 없으면 브랜치 준비 단계부터 다시 확인하는 편이 안전합니다.',
       references: [currentBranch || '현재 브랜치 미확인', recommendedBranch || '권장 브랜치 미확인', dirtySummary],
       mapSteps: [
         {
-          title: '시작 지점',
+          title: '여기서 시작',
           detail: `현재 ${currentBranch || 'unknown'} / 권장 ${recommendedBranch || '없음'}`,
         },
         {
-          title: '오염도 확인',
+          title: '변경 상태 확인',
           detail: dirtySummary,
         },
         {
-          title: '수정 포인트',
-          detail: '브랜치가 다르면 branch bootstrap 또는 권장 브랜치 생성 명령부터 수행합니다.',
-          hrefLabel: 'Operator Summary로 이동',
+          title: '어디부터 고치나',
+          detail: '브랜치가 다르면 권장 브랜치로 이동하거나 브랜치 준비 명령부터 실행합니다.',
+          hrefLabel: '전체 상황 보기',
           href: buildStaticControlCenterHref('operator-summary', 'master-status', {
             reason: 'branch bootstrap 점검',
             command: String(branch.create_command || '').trim(),
@@ -527,31 +527,31 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
           }),
         },
         {
-          title: '검증 루프',
+          title: '확인 명령',
           detail: String(branch.create_command || 'npm run branch:bootstrap').trim() || 'npm run branch:bootstrap',
         },
       ],
     },
     verify: {
       owner: 'Reviewer',
-      summary: '현재 packet에 연결된 검증 명령 세트를 기준으로 어떤 실패를 먼저 고칠지 좁히는 단계입니다.',
-      why: `${validationCommands.length}개 검증 명령이 연결되어 있으면 가장 앞선 실패를 기준으로 수정 루프를 돌리는 것이 안전합니다.`,
+      summary: '무엇을 검사해야 하는지와 어떤 실패를 먼저 고쳐야 하는지 정하는 단계입니다.',
+      why: `${validationCommands.length}개 검사 명령이 연결되어 있으면 가장 먼저 실패한 항목부터 고치는 것이 가장 빠릅니다.`,
       references: validationCommands.length > 0
         ? validationCommands.slice(0, 3)
         : ['검증 명령 없음'],
       mapSteps: [
         {
-          title: '시작 지점',
+          title: '여기서 시작',
           detail: primaryValidationCommand || 'primary validation command 없음',
         },
         {
-          title: '무엇을 본다',
+          title: '무엇을 확인하나',
           detail: `${String(validationProfile.packet_type || bootstrap?.validation_profile?.packet_type || 'UNKNOWN')} / Stage ${String(validationProfile.stage || bootstrap?.current_wp?.stage || 'UNKNOWN')}`,
         },
         {
-          title: '수정 포인트',
-          detail: 'plan board에서 검증 루프와 guard 상태를 같이 보면서 가장 앞선 실패를 먼저 해소합니다.',
-          hrefLabel: 'Plan Board 열기',
+          title: '어디부터 고치나',
+          detail: '검사 보드에서 실패한 항목과 차단 상태를 같이 보며 가장 앞선 실패부터 해결합니다.',
+          hrefLabel: '검사 보드 열기',
           href: buildStaticControlCenterHref('guard', 'plan-board', {
             reason: 'validation profile 기준 점검',
             command: primaryValidationCommand,
@@ -560,25 +560,25 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
           }),
         },
         {
-          title: '검증 루프',
+          title: '확인 명령',
           detail: primaryValidationCommand || '검증 명령 없음',
         },
       ],
     },
     'commit-guard': {
       owner: 'Reviewer',
-      summary: '적용 가능한 변경인지, dirty 상태와 validation 통과 여부가 조건을 만족하는지 차단 규칙으로 판정하는 단계입니다.',
-      why: guardReason || 'guard 이유를 먼저 해소해야 apply 또는 다음 packet 이동이 가능합니다.',
+      summary: '지금 변경을 적용해도 되는지 최종 안전 점검을 하는 단계입니다.',
+      why: guardReason || '이 차단 이유를 먼저 풀어야 적용하거나 다음 단계로 넘어갈 수 있습니다.',
       references: Array.isArray(commitGuard.guard?.reasons) && commitGuard.guard.reasons.length > 0
         ? commitGuard.guard.reasons.slice(0, 3).map(String)
         : ['guard reason 없음'],
       mapSteps: [
         {
-          title: '시작 지점',
+          title: '여기서 시작',
           detail: guardReason || 'guard next action 없음',
         },
         {
-          title: '차단 조건',
+          title: '막히는 이유',
           detail: [
             commitGuard.guard?.has_dirty_changes ? 'dirty 있음' : 'dirty 없음',
             commitGuard.guard?.validations_passed ? 'validation 통과' : 'validation 미통과',
@@ -586,9 +586,9 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
           ].join(' / '),
         },
         {
-          title: '수정 포인트',
-          detail: 'plan board에서 validation과 commit guard를 같이 확인한 뒤 차단 사유를 하나씩 제거합니다.',
-          hrefLabel: 'Guard 보드 열기',
+          title: '어디부터 고치나',
+          detail: '검사 보드에서 검증 결과와 안전 조건을 같이 보면서 차단 이유를 하나씩 없앱니다.',
+          hrefLabel: '안전 점검 보드 열기',
           href: buildStaticControlCenterHref('guard', 'plan-board', {
             reason: guardReason || 'commit guard 차단 확인',
             command: commitGuard.guard?.can_apply ? 'npm run commit:guard -- --apply' : 'npm run commit:guard:verify',
@@ -597,17 +597,17 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
           }),
         },
         {
-          title: '검증 루프',
+          title: '확인 명령',
           detail: commitGuard.guard?.can_apply ? 'npm run commit:guard -- --apply' : 'npm run commit:guard:verify',
         },
       ],
     },
     'release-evidence': {
       owner: 'Reporter',
-      summary: 'quality gate와 stage-run 증거를 배포/반영 가능한 evidence artifact로 묶어 최종 판정을 내리는 단계입니다.',
+      summary: '배포하거나 반영해도 되는지 마지막 증거를 모아 확인하는 단계입니다.',
       why: evidenceQuality === 'PASS'
-        ? '현재 quality gate가 PASS라면 evidence를 최종 결론으로 정리하면 됩니다.'
-        : 'quality gate 또는 stage-run evidence가 비어 있으면 최종 반영 전에 증거를 먼저 복구해야 합니다.',
+        ? '검사 결과가 PASS라면 지금은 증거를 정리하고 마지막 판단만 하면 됩니다.'
+        : '검사 결과나 실행 증거가 비어 있으면 최종 반영 전에 그 부분부터 복구해야 합니다.',
       references: [
         String(evidence.path || 'artifacts/release-evidence/release-evidence.json').trim(),
         `quality gate ${evidenceQuality}`,
@@ -615,17 +615,17 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
       ],
       mapSteps: [
         {
-          title: '시작 지점',
+          title: '여기서 시작',
           detail: `${String(evidence.path || 'artifacts/release-evidence/release-evidence.json').trim()} / ${evidenceQuality}`,
         },
         {
-          title: '무엇을 본다',
+          title: '무엇을 확인하나',
           detail: `${String(evidence.artifact_count || 0)}개 artifact / next ${String(evidence.next_action?.id || 'NONE')}`,
         },
         {
-          title: '수정 포인트',
-          detail: '실행 콘솔에서 release evidence 생성 명령을 다시 준비하고 blocker를 만든 선행 실패부터 해소합니다.',
-          hrefLabel: 'Execution Console 열기',
+          title: '어디부터 고치나',
+          detail: '실행 화면에서 증거 생성 명령을 다시 준비하고, 막히게 만든 앞선 실패부터 해결합니다.',
+          hrefLabel: '실행 화면 열기',
           href: buildStaticControlCenterHref('execution-failure', 'execution-console', {
             reason: evidenceQuality === 'PASS' ? 'release evidence 최종 확인' : 'release evidence blocker 해소',
             command: 'python3 scripts/generate_release_evidence.py',
@@ -634,7 +634,7 @@ function buildHomeOperatorChainBlueprints({ bootstrap, operatorCockpit }) {
           }),
         },
         {
-          title: '검증 루프',
+          title: '확인 명령',
           detail: 'python3 scripts/generate_release_evidence.py',
         },
       ],
@@ -646,20 +646,20 @@ function buildHomeOperatorChainMapPanel(item, blueprints) {
   if (!item || typeof item !== 'object') {
     return `
     <section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite">
-      <div class="flow-map-empty">operator chain을 선택하면 상세 설명과 수정 맵이 여기에 표시됩니다.</div>
+      <div class="flow-map-empty">위 카드를 누르면 이 단계가 무슨 뜻인지, 어디부터 고치면 되는지가 여기에 표시됩니다.</div>
     </section>`;
   }
 
   const itemId = String(item.id || '').trim();
   const blueprint = blueprints[itemId] || {
     owner: 'Operator',
-    summary: '현재 operator chain 단계 설명이 아직 정의되지 않았습니다.',
-    why: 'reason 값을 기준으로 control center에서 우선 확인하세요.',
+    summary: '이 단계의 쉬운 설명이 아직 준비되지 않았습니다.',
+    why: '현재 표시된 이유를 기준으로 제어 센터에서 먼저 확인하세요.',
     references: ['추가 기준 없음'],
     mapSteps: [
-      { title: '시작 지점', detail: String(item.reason || 'reason 없음') },
-      { title: '수정 포인트', detail: 'control center에서 현재 단계와 연결된 화면을 먼저 확인합니다.' },
-      { title: '검증 루프', detail: String(item.command || '명령 없음') },
+      { title: '여기서 시작', detail: String(item.reason || 'reason 없음') },
+      { title: '어디부터 고치나', detail: '문제 해결 제어 센터에서 이 단계와 연결된 화면부터 확인합니다.' },
+      { title: '확인 명령', detail: String(item.command || '명령 없음') },
     ],
   };
   const mapSteps = Array.isArray(blueprint.mapSteps) ? blueprint.mapSteps : [];
@@ -669,14 +669,14 @@ function buildHomeOperatorChainMapPanel(item, blueprints) {
     <section class="flow-map-panel" id="flow-chain-map-panel" aria-live="polite" data-selected-chain-id="${esc(itemId || 'step')}">
       <div class="flow-map-head">
         <div>
-          <h3>상세 설명 + 수정 맵</h3>
-          <p>오퍼레이터 바 카드를 클릭하면 어디서 확인하고 어디부터 고칠지 맵 형식으로 바로 안내합니다.</p>
+          <h3>이 단계 설명과 해결 순서</h3>
+          <p>카드를 누르면 이 단계가 왜 필요한지와 어디부터 확인하면 되는지를 쉬운 순서대로 보여줍니다.</p>
         </div>
-        <div class="flow-pill">선택 단계 <strong id="flow-map-selected-label">${esc(item.label || item.id || 'step')}</strong></div>
+        <div class="flow-pill">지금 보는 단계 <strong id="flow-map-selected-label">${esc(item.label || item.id || 'step')}</strong></div>
       </div>
       <div class="flow-map-hero">
         <div class="flow-map-copy">
-          <span class="flow-kicker">무슨 단계인가</span>
+          <span class="flow-kicker">이건 무엇인가</span>
           <strong id="flow-map-title">${esc(item.label || item.id || 'step')}</strong>
           <p id="flow-map-summary">${esc(blueprint.summary || '설명 없음')}</p>
         </div>
@@ -687,15 +687,15 @@ function buildHomeOperatorChainMapPanel(item, blueprints) {
       </div>
       <div class="flow-map-summary-grid">
         <article class="flow-map-summary-card">
-          <span>왜 지금 필요한가</span>
+          <span>왜 지금 보나</span>
           <strong id="flow-map-why">${esc(blueprint.why || '설명 없음')}</strong>
         </article>
         <article class="flow-map-summary-card">
-          <span>현재 시그널</span>
+          <span>지금 보이는 이유</span>
           <strong id="flow-map-reason">${esc(item.reason || 'reason 없음')}</strong>
         </article>
         <article class="flow-map-summary-card">
-          <span>담당 레인</span>
+          <span>주로 다루는 역할</span>
           <strong id="flow-map-owner">${esc(blueprint.owner || 'Operator')}</strong>
         </article>
       </div>
@@ -711,7 +711,7 @@ function buildHomeOperatorChainMapPanel(item, blueprints) {
         </article>`).join('')}
       </div>
       <div class="flow-map-references">
-        <span>바로 볼 기준</span>
+        <span>바로 보면 좋은 기준</span>
         <div class="flow-map-reference-list">
           ${references.map((reference) => `<code>${esc(reference)}</code>`).join('')}
         </div>
@@ -750,7 +750,7 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
         <div class="flow-chain-spotlight-copy">
           <span class="flow-kicker">지금 실행할 카드</span>
           <strong id="flow-chain-spotlight-title">${esc(spotlightItem.label || spotlightItem.id || 'step')}</strong>
-          <p id="flow-chain-spotlight-reason">${esc(spotlightItem.reason || '다음 operator action 설명 없음')}</p>
+          <p id="flow-chain-spotlight-reason">${esc(spotlightItem.reason || '다음 단계 설명이 없습니다.')}</p>
           <span class="flow-chain-hint">카드를 클릭하면 상세 설명과 수정 맵이 아래에 열립니다.</span>
         </div>
         <div class="flow-chain-spotlight-actions">
@@ -758,7 +758,7 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
           <code id="flow-chain-spotlight-command">${esc(spotlightItem.command || '')}</code>
           <div class="flow-chain-spotlight-links">
             <button type="button" class="flow-chain-link is-button" id="flow-chain-spotlight-copy" data-command="${esc(spotlightItem.command || '')}">명령 복사</button>
-            <a class="flow-chain-link" id="flow-chain-spotlight-fill" href="${esc(spotlightExecutionMeta?.href || 'mindmap/index.html#execution-console')}">실행 패널에 채우기</a>
+            <a class="flow-chain-link" id="flow-chain-spotlight-fill" href="${esc(spotlightExecutionMeta?.href || 'mindmap/index.html#execution-console')}">실행 화면에 넣기</a>
             <a class="flow-chain-link" id="flow-chain-spotlight-link" href="${esc(spotlightMeta?.href || 'mindmap/index.html')}">바로 열기</a>
           </div>
         </div>
@@ -777,7 +777,7 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
       <article class="flow-chain-item${spotlightItem && spotlightItem.id === itemId ? ' is-active' : ''}" data-chain-id="${esc(itemId || 'step')}" data-chain-scope="${esc(scope)}" data-chain-command="${esc(item.command || '')}" role="button" tabindex="0" aria-controls="flow-chain-map-panel">
         <span class="flow-chain-label">${esc(item.label || item.id || 'step')}</span>
         <span class="tag ${statusClass(item.status || 'pending')}">${esc(item.status || 'pending')}</span>
-        <p class="flow-chain-summary">${esc(blueprint.summary || item.reason || '다음 operator action 설명 없음')}</p>
+        <p class="flow-chain-summary">${esc(blueprint.summary || item.reason || '다음 단계 설명이 없습니다.')}</p>
         <code>${esc(item.command || '')}</code>
         <div class="flow-chain-delivery">
           <span class="flow-chain-delivery-pill" id="${esc(deliveryId)}" data-delivery-status="none">최근 전달 없음</span>
@@ -785,7 +785,7 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
         </div>
         <div class="flow-chain-actions">
           <span class="flow-chain-hint">클릭해서 수정 맵 보기</span>
-          <a class="flow-chain-link" href="${esc(focusMeta.href)}">control center에서 이어서 보기</a>
+          <a class="flow-chain-link" href="${esc(focusMeta.href)}">제어 센터에서 자세히 보기</a>
         </div>
       </article>`;
     }).join('')
@@ -796,46 +796,46 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
   return `
     <div class="section-head" style="margin-top:36px">
       <div>
-        <h2>연속 실행 오퍼레이터 바</h2>
-        <p>같은 짧은 프롬프트를 반복해도 현재 레인, 다음 액션, 검증 루프를 같은 기준으로 이어갑니다.</p>
+        <h2>지금 해야 할 일 안내 바</h2>
+        <p>짧게 요청해도 지금 단계, 다음 할 일, 확인 순서를 같은 흐름으로 이어서 보여줍니다.</p>
       </div>
-      <div class="flow-pill">반복 프롬프트 <strong>계속</strong></div>
+      <div class="flow-pill">짧게 말해도 <strong>흐름 유지</strong></div>
     </div>
 
-    <section class="flow-strip" aria-label="연속 실행 상태">
+    <section class="flow-strip" aria-label="지금 해야 할 일 요약">
       <article class="flow-card flow-card-primary">
         <div class="flow-card-head">
-          <span class="flow-kicker">Current Lane</span>
+          <span class="flow-kicker">지금 단계</span>
           <span class="tag tone-green">${esc(currentLane.label)}</span>
         </div>
         <h3>${esc(focusPacket.id || 'NONE')}</h3>
-        <p>${esc(focusPacket.goal || '현재 focus packet 없음')}</p>
+        <p>${esc(focusPacket.goal || '지금 선택된 작업이 없습니다.')}</p>
         <div class="flow-meta">
-          <span>stage ${esc(focusPacket.stage || '—')}</span>
-          <span>status ${esc(focusPacket.status || '—')}</span>
+          <span>단계 ${esc(focusPacket.stage || '—')}</span>
+          <span>상태 ${esc(focusPacket.status || '—')}</span>
         </div>
       </article>
 
       <article class="flow-card">
         <div class="flow-card-head">
-          <span class="flow-kicker">Next Action</span>
+          <span class="flow-kicker">바로 다음 할 일</span>
           <span class="tag tone-amber">${esc(report.next_wp || nextActions?.next_wp || 'NONE')}</span>
         </div>
-        <h3>다음 한 단계</h3>
+        <h3>다음으로 할 작업</h3>
         <p>${esc(nextActionLabel)}</p>
         <div class="flow-meta">
-          <span>branch ${esc(bootstrap?.git?.branch || 'unknown')}</span>
-          <span>dirty ${bootstrap?.git?.dirty ? `${esc(bootstrap.git.dirty_count)}건` : '없음'}</span>
+          <span>브랜치 ${esc(bootstrap?.git?.branch || 'unknown')}</span>
+          <span>수정 흔적 ${bootstrap?.git?.dirty ? `${esc(bootstrap.git.dirty_count)}건` : '없음'}</span>
         </div>
       </article>
 
       <article class="flow-card">
         <div class="flow-card-head">
-          <span class="flow-kicker">Validation State</span>
+          <span class="flow-kicker">검사 상태</span>
           <span class="tag ${statusClass(qualityGateResult)}">${esc(qualityGateResult)}</span>
         </div>
-        <h3>검증 루프</h3>
-        <p>${validationCommands.length}개 명령이 현재 packet 프로파일에 연결돼 있습니다.</p>
+        <h3>지금 확인할 검사</h3>
+        <p>${validationCommands.length}개 검사 명령이 현재 작업에 연결되어 있습니다.</p>
         <div class="flow-code-list">
           ${validationCommands.slice(0, 3).map((command) => `<code>${esc(command)}</code>`).join('')}
         </div>
@@ -843,26 +843,26 @@ function buildFlowStatusSection({ report, currentState, nextActions, bootstrap, 
 
       <article class="flow-card">
         <div class="flow-card-head">
-          <span class="flow-kicker">Read First</span>
+          <span class="flow-kicker">먼저 볼 자료</span>
           <span class="tag tone-slate">${esc(bootstrap?.current_wp?.stage || '—')}</span>
         </div>
-        <h3>세션 복구</h3>
-        <p>채팅 대신 고정 파일을 먼저 읽고 차이만 처리합니다.</p>
+        <h3>상황 다시 맞추기</h3>
+        <p>대화만 믿지 말고 기준 파일부터 읽어서 현재 상황을 먼저 맞춥니다.</p>
         <div class="flow-code-list">
           ${recommendedReads.map((item) => `<code>${esc(item)}</code>`).join('')}
         </div>
       </article>
     </section>
 
-    <section class="flow-chain-panel" aria-label="operator chain">
+    <section class="flow-chain-panel" aria-label="문제 해결 순서">
       <div class="flow-chain-head">
         <div>
-          <h3>Operator Chain</h3>
-          <p>홈 화면과 control center가 같은 operator chain 상태를 공유합니다.</p>
+          <h3>문제 해결 순서</h3>
+          <p>지금 어떤 순서로 확인하면 되는지 한 장씩 따라갈 수 있게 정리한 카드입니다.</p>
         </div>
         <div class="flow-chain-head-pills">
-          <div class="flow-pill">Action Sources <strong id="flow-source-summary">source 집계 없음</strong></div>
-          <div class="flow-pill">Release Evidence <strong>${esc(releaseEvidence.quality_gate_result || 'UNKNOWN')}</strong></div>
+          <div class="flow-pill">최근 실행 출처 <strong id="flow-source-summary">아직 기록 없음</strong></div>
+          <div class="flow-pill">배포 판단 증거 <strong>${esc(releaseEvidence.quality_gate_result || 'UNKNOWN')}</strong></div>
         </div>
       </div>
       ${spotlightHtml}
@@ -883,19 +883,19 @@ function buildHandoffLane({ report, nextActions, bootstrap, operatorCockpit }) {
   const lane = buildHandoffLaneData({ report, nextActions, bootstrap, operatorCockpit });
 
   return `
-        <div class="handoff-lane" id="home-handoff-lane" aria-label="Handoff Lane">
+        <div class="handoff-lane" id="home-handoff-lane" aria-label="다음 작업 준비 상태">
           <div class="handoff-lane-head">
-            <span>Handoff Lane</span>
+            <span>다음 작업 준비 상태</span>
             <strong class="tag ${statusClass(lane.drift_status)}" id="handoff-drift-status">${esc(lane.drift_status)}</strong>
           </div>
           <div class="handoff-lane-grid">
-            <div><span>Current WP</span><strong id="handoff-current-wp">${esc(lane.current_wp)}</strong></div>
-            <div><span>Next WP</span><strong id="handoff-next-wp">${esc(lane.next_wp)}</strong></div>
-            <div><span>Validation</span><strong id="handoff-validation-state">${esc(lane.validation_state)}</strong></div>
-            <div><span>Evidence</span><strong id="handoff-evidence-state">${esc(lane.evidence_state)}</strong></div>
+            <div><span>지금 작업</span><strong id="handoff-current-wp">${esc(lane.current_wp)}</strong></div>
+            <div><span>다음 작업</span><strong id="handoff-next-wp">${esc(lane.next_wp)}</strong></div>
+            <div><span>검사 상태</span><strong id="handoff-validation-state">${esc(lane.validation_state)}</strong></div>
+            <div><span>증거 상태</span><strong id="handoff-evidence-state">${esc(lane.evidence_state)}</strong></div>
           </div>
           <div class="handoff-next-command">
-            <span>Next command</span>
+            <span>다음에 실행할 명령</span>
             <code id="handoff-next-command">${esc(lane.next_command)}</code>
           </div>
           <p>${esc(lane.warning)}</p>
@@ -1515,68 +1515,72 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
         <div class="brand-mark">WO</div>
         <div class="brand-copy">
           <strong>Workflow OS 운영 홈</strong>
-          <span>한국어 중심으로 다시 정리한 정적 포털 첫 화면</span>
+          <span>처음 보는 사람도 지금 상태와 다음 행동을 바로 이해하는 시작 화면</span>
         </div>
       </div>
-      <button class="chip-link" aria-controls="home-stat-detail" style="cursor:pointer;border:none;background:rgba(15,118,110,0.08);border:1px solid rgba(15,118,110,0.3);border-radius:999px;padding:6px 12px;font-size:12px;color:#0f766e;" onclick="document.getElementById('home-stat-detail').scrollIntoView({behavior:'smooth'})">운영 상태 보기</button>
+      <button class="chip-link" aria-controls="home-stat-detail" style="cursor:pointer;border:none;background:rgba(15,118,110,0.08);border:1px solid rgba(15,118,110,0.3);border-radius:999px;padding:6px 12px;font-size:12px;color:#0f766e;" onclick="document.getElementById('home-stat-detail').scrollIntoView({behavior:'smooth'})">핵심 상태 요약 보기</button>
       <span id="live-autosend-badge" style="display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;background:rgba(220,207,186,0.4);color:#61707f;border:1px solid rgba(220,207,186,0.6);">상태 로딩...</span>
       <button id="btn-autosend-toggle" style="display:none;padding:4px 10px;border-radius:999px;font-size:11px;background:transparent;border:1px solid rgba(15,118,110,0.4);color:#0f766e;cursor:pointer;margin-left:4px;" aria-label="자동 전송 ON/OFF 전환">전환</button>
       <nav aria-label="주요 운영 화면">
       <div class="top-actions">
-        <a class="chip-link" href="master-planner/index.html">마스터 플래너</a>
-        <a class="chip-link" href="catalog-site/index.html">도메인 카탈로그</a>
-        <a class="chip-link" href="study-guide/index.html">학습 가이드</a>
-        <a class="chip-link" href="flags/index.html">피처 플래그</a>
-        <a class="chip-link" href="audit/index.html">감사 로그</a>
-        <a class="chip-link" href="quality/index.html">품질 게이트</a>
-        <a class="chip-link" href="lifecycle/index.html">라이프사이클</a>
-        <a class="chip-link" href="#automation-bridge" style="background:linear-gradient(135deg,rgba(15,118,110,0.12),rgba(29,78,216,0.10));border-color:rgba(15,118,110,0.35);color:#0f766e;font-weight:700;" onclick="document.getElementById('automation-bridge').scrollIntoView({behavior:'smooth'});return false;">⚡ 자동화 브리지</a>
+        <a class="chip-link" href="master-planner/index.html">계획 화면</a>
+        <a class="chip-link" href="catalog-site/index.html">기능 목록</a>
+        <a class="chip-link" href="study-guide/index.html">학습 자료</a>
+        <a class="chip-link" href="flags/index.html">기능 스위치</a>
+        <a class="chip-link" href="audit/index.html">기록 보기</a>
+        <a class="chip-link" href="quality/index.html">품질 결과</a>
+        <a class="chip-link" href="lifecycle/index.html">진행 단계</a>
+        <a class="chip-link" href="#automation-bridge" style="background:linear-gradient(135deg,rgba(15,118,110,0.12),rgba(29,78,216,0.10));border-color:rgba(15,118,110,0.35);color:#0f766e;font-weight:700;" onclick="document.getElementById('automation-bridge').scrollIntoView({behavior:'smooth'});return false;">⚡ 자동 실행 연결</a>
       </div>
       </nav>
     </header>
 
     <section class="hero" id="main-content">
       <div>
-        <div class="eyebrow">운영자 시작 화면</div>
-        <h1>지금 필요한 화면을 바로 찾고,<br>현재 상태를 한눈에 확인합니다.</h1>
+        <div class="eyebrow">처음 볼 때 가장 먼저 여는 화면</div>
+        <h1>지금 무슨 일이 진행 중인지,<br>다음에 무엇을 해야 하는지 바로 보입니다.</h1>
         <p>
-          이 홈은 <code>artifacts/</code> 루트에서 바로 열리는 안내 화면입니다.
-          복잡한 planner, 카탈로그, 학습 문서를 한국어 중심으로 이어 주고,
-          현재 stage · Work Packet · 품질 상태를 첫 화면에서 보여줍니다.
+          이 화면은 여러 운영 도구를 한곳에 모아 둔 시작점입니다.
+          어려운 내부 용어보다 먼저, 지금 작업 상태와 다음 행동을 쉽게 읽을 수 있도록 정리했습니다.
         </p>
+        <div class="loop-list" style="margin-top:18px">
+          <div class="loop-row"><span class="muted">1. 지금 상태</span><strong>오른쪽 요약 카드에서 확인</strong></div>
+          <div class="loop-row"><span class="muted">2. 지금 할 일</span><strong>아래 안내 바 카드 클릭</strong></div>
+          <div class="loop-row"><span class="muted">3. 더 자세히 보기</span><strong>필요한 화면으로 바로 이동</strong></div>
+        </div>
         <div class="hero-actions">
-          <a class="cta cta-primary" href="master-planner/index.html">플래너 바로 열기</a>
-          <a class="cta cta-secondary" href="catalog-site/index.html">도메인 보기</a>
-          <a class="cta cta-secondary" href="study-guide/index.html">학습 경로 보기</a>
+          <a class="cta cta-primary" href="master-planner/index.html">계획 화면 열기</a>
+          <a class="cta cta-secondary" href="catalog-site/index.html">기능 목록 보기</a>
+          <a class="cta cta-secondary" href="study-guide/index.html">초보자 안내 보기</a>
         </div>
       </div>
       <aside class="hero-side">
-        <h2>지금 상태</h2>
+        <h2>핵심 상태 요약</h2>
         <div class="side-list">
-          <div class="side-item"><span class="muted">요구사항 Stage</span><strong>${esc(report.requirements_stage || '—')}</strong></div>
-          <div class="side-item"><span class="muted">현재 Work Packet</span><strong id="live-current-wp">${esc(report.current_wp || 'NONE')}</strong></div>
-          <div class="side-item"><span class="muted">다음 Work Packet</span><strong>${esc(report.next_wp || 'NONE')}</strong></div>
-          <div class="side-item"><span class="muted">프로모션 파이프라인</span><strong>${esc(report.promotion_pipeline?.drift_status || '—')}</strong></div>
-          <div class="side-item"><span class="muted">자동 전송</span><strong id="live-autosend-state">—</strong></div>
-          <div class="side-item"><span class="muted">브랜치</span><strong id="live-branch-status">—</strong></div>
-          <div class="side-item"><span class="muted">터미널 세션</span><strong id="live-pty-sessions">—</strong></div>
-          <div class="side-item"><span class="muted">스케줄러</span><strong id="live-pty-scheduler">—</strong></div>
-          <div class="side-item"><span class="muted">활성 플래그</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
-          <div class="side-item"><span class="muted">ENV 오버라이드</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
-          <div class="side-item"><span class="muted">최근 operator action</span><strong id="live-operator-action">—</strong></div>
+          <div class="side-item"><span class="muted">현재 진행 단계</span><strong>${esc(report.requirements_stage || '—')}</strong></div>
+          <div class="side-item"><span class="muted">지금 작업 카드</span><strong id="live-current-wp">${esc(report.current_wp || 'NONE')}</strong></div>
+          <div class="side-item"><span class="muted">다음 작업 카드</span><strong>${esc(report.next_wp || 'NONE')}</strong></div>
+          <div class="side-item"><span class="muted">배포 준비 상태</span><strong>${esc(report.promotion_pipeline?.drift_status || '—')}</strong></div>
+          <div class="side-item"><span class="muted">자동 실행</span><strong id="live-autosend-state">—</strong></div>
+          <div class="side-item"><span class="muted">현재 브랜치</span><strong id="live-branch-status">—</strong></div>
+          <div class="side-item"><span class="muted">연결된 터미널</span><strong id="live-pty-sessions">—</strong></div>
+          <div class="side-item"><span class="muted">자동 스케줄</span><strong id="live-pty-scheduler">—</strong></div>
+          <div class="side-item"><span class="muted">켜진 기능 스위치</span><strong id="live-active-flags" title="클릭하면 /flags 전체 목록 이동" style="cursor:pointer;" onclick="window.open('/flags','_blank')">—</strong></div>
+          <div class="side-item"><span class="muted">환경값 덮어쓰기</span><strong id="live-env-overrides" style="color:var(--accent-2)">—</strong></div>
+          <div class="side-item"><span class="muted">최근 실행 기록</span><strong id="live-operator-action">—</strong></div>
         </div>
         ${buildHandoffLane({ report, nextActions, bootstrap, operatorCockpit })}
         <div class="loop-card">
-          <h3>최근 Operator Loop</h3>
+          <h3>최근 자동 실행 기록</h3>
         <div class="loop-list">
-          <div class="loop-row"><span class="muted">상태</span><strong id="live-loop-status">—</strong></div>
+          <div class="loop-row"><span class="muted">최근 상태</span><strong id="live-loop-status">—</strong></div>
           <div class="loop-row"><span class="muted">권장 브랜치</span><strong id="live-loop-branch">—</strong></div>
-          <div class="loop-row"><span class="muted">다음 가드 행동</span><strong id="live-loop-next">—</strong></div>
+          <div class="loop-row"><span class="muted">다음 안전 점검</span><strong id="live-loop-next">—</strong></div>
         </div>
         <div class="loop-actions">
-            <a id="live-loop-primary-link" class="page-link" href="mindmap/index.html?focus=execution-failure&reason=%EC%B5%9C%EA%B7%BC%20operator%20action%20%EC%8B%A4%ED%8C%A8&command=npm%20run%20operator%3Acockpit&source=home-loop#execution-console">실행 콘솔 열기</a>
-            <a id="live-loop-secondary-link" class="page-link" href="mindmap/index.html?focus=guard&reason=%EC%BB%A4%EB%B0%8B%20%EA%B0%80%EB%93%9C%20%ED%99%95%EC%9D%B8%20%ED%95%84%EC%9A%94&command=npm%20run%20commit%3Aguard&source=home-loop#plan-board">plan board 열기</a>
-            <a id="live-loop-summary-link" class="page-link" href="mindmap/index.html?focus=operator-summary&reason=operator%20%EC%83%81%ED%83%9C%20%EC%A0%84%EC%B2%B4%20%ED%99%95%EC%9D%B8&command=npm%20run%20operator%3Acockpit&source=home-loop#master-status" style="display:none">통합 상태 열기</a>
+            <a id="live-loop-primary-link" class="page-link" href="mindmap/index.html?focus=execution-failure&reason=%EC%B5%9C%EA%B7%BC%20operator%20action%20%EC%8B%A4%ED%8C%A8&command=npm%20run%20operator%3Acockpit&source=home-loop#execution-console">문제 해결 화면 열기</a>
+            <a id="live-loop-secondary-link" class="page-link" href="mindmap/index.html?focus=guard&reason=%EC%BB%A4%EB%B0%8B%20%EA%B0%80%EB%93%9C%20%ED%99%95%EC%9D%B8%20%ED%95%84%EC%9A%94&command=npm%20run%20commit%3Aguard&source=home-loop#plan-board">검사 보드 열기</a>
+            <a id="live-loop-summary-link" class="page-link" href="mindmap/index.html?focus=operator-summary&reason=operator%20%EC%83%81%ED%83%9C%20%EC%A0%84%EC%B2%B4%20%ED%99%95%EC%9D%B8&command=npm%20run%20operator%3Acockpit&source=home-loop#master-status" style="display:none">전체 상황 열기</a>
         </div>
       </div>
     </aside>
@@ -1584,24 +1588,24 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
 
     <section class="stats" id="home-stat-detail">
       <article class="stat-card">
-        <div class="stat-label">헬스 레이팅</div>
+        <div class="stat-label">전체 건강 점수</div>
         <div class="stat-value">${esc(currentState?.health_metrics?.last_known?.health_rating || '—')}</div>
-        <div class="stat-note">게이트 통과율 ${esc(currentState?.health_metrics?.last_known?.gate_pass_rate_pct || '—')}%</div>
+        <div class="stat-note">품질 문 통과율 ${esc(currentState?.health_metrics?.last_known?.gate_pass_rate_pct || '—')}%</div>
       </article>
       <article class="stat-card">
-        <div class="stat-label">활성 capability</div>
+        <div class="stat-label">사용 가능한 기능 수</div>
         <div class="stat-value">${capabilities.length}</div>
-        <div class="stat-note">현재 상태 파일 기준 pass capability 수</div>
+        <div class="stat-note">현재 상태 기준으로 바로 쓸 수 있는 기능 수</div>
       </article>
       <article class="stat-card">
-        <div class="stat-label">잠금 토큰</div>
+        <div class="stat-label">잠금된 작업 수</div>
         <div class="stat-value">${esc(report.promotion_pipeline?.locked_tokens || 0)}</div>
-        <div class="stat-note">프로모션 파이프라인 context lock 기준</div>
+        <div class="stat-note">동시에 바꾸지 않도록 묶어 둔 작업 수</div>
       </article>
       <article class="stat-card">
-        <div class="stat-label">미결 이슈</div>
+        <div class="stat-label">아직 남은 이슈</div>
         <div class="stat-value">${issues.length}</div>
-        <div class="stat-note">현재 known issues 수</div>
+        <div class="stat-note">아직 해결되지 않은 문제 개수</div>
       </article>
     </section>
 
@@ -1611,42 +1615,42 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
 
     <div class="section-head">
       <div>
-        <h2>화면 바로가기</h2>
-        <p>운영 목적에 맞는 화면을 고르면 됩니다.</p>
+        <h2>자주 여는 화면</h2>
+        <p>지금 필요한 목적에 맞춰 바로 들어갈 수 있습니다.</p>
       </div>
     </div>
     <section class="page-grid">
       <article class="page-card">
-        <h3>통합 통제 센터</h3>
-        <p>도메인 라이프사이클, 피처 플래그, 실행 계획표, 롤백 제어를 한 화면에서 직접 조작하는 마스터 컨트롤 패널입니다.</p>
-        <a class="page-link" href="mindmap/index.html">열기</a>
+        <h3>문제 해결 제어 센터</h3>
+        <p>실행 상태, 실패 원인, 롤백, 기능 스위치를 한곳에서 보면서 직접 조작하는 화면입니다.</p>
+        <a class="page-link" href="mindmap/index.html">이 화면 열기</a>
       </article>
       <article class="page-card">
-        <h3>마스터 플래너</h3>
-        <p>Work Packet, stage, AI planning surface, benchmark 흐름을 한 화면에서 보는 메인 운영 콘솔입니다.</p>
-        <a class="page-link" href="master-planner/index.html">열기</a>
+        <h3>계획 화면</h3>
+        <p>작업 카드, 단계, 계획 흐름을 한눈에 보고 다음 우선순위를 정하는 화면입니다.</p>
+        <a class="page-link" href="master-planner/index.html">이 화면 열기</a>
       </article>
       <article class="page-card">
-        <h3>도메인 카탈로그</h3>
-        <p>플러그인별 계약 파일, owner, feature flag, 메뉴 노출 경로를 빠르게 확인하는 화면입니다.</p>
-        <a class="page-link" href="catalog-site/index.html">열기</a>
+        <h3>기능 목록 화면</h3>
+        <p>각 기능의 담당자, 연결 경로, 켜고 끄는 스위치를 빠르게 확인하는 화면입니다.</p>
+        <a class="page-link" href="catalog-site/index.html">이 화면 열기</a>
       </article>
       <article class="page-card">
-        <h3>학습 가이드</h3>
-        <p>ADR, 로드맵, 도메인 역량을 정리한 한국어 학습 화면입니다. 신규 참여자 온보딩에 적합합니다.</p>
-        <a class="page-link" href="study-guide/index.html">열기</a>
+        <h3>초보자 안내 화면</h3>
+        <p>처음 합류한 사람이 구조와 용어를 이해할 수 있도록 정리한 설명 화면입니다.</p>
+        <a class="page-link" href="study-guide/index.html">이 화면 열기</a>
       </article>
     </section>
 
     <div class="section-head">
       <div>
-        <h2>운영 요약</h2>
-        <p>현재 stage와 개선 포인트, 메뉴 구성을 한 번에 봅니다.</p>
+        <h2>지금 상태 한눈에 보기</h2>
+        <p>현재 단계와 개선이 필요한 곳을 빠르게 파악할 수 있습니다.</p>
       </div>
     </div>
     <section class="content-grid">
       <div class="panel">
-        <h3>Stage 상태</h3>
+        <h3>단계별 진행 상태</h3>
         <div class="panel-list">
           ${stageSummary.map((item) => `
             <div class="panel-row">
@@ -1660,7 +1664,7 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
         </div>
       </div>
       <div class="panel">
-        <h3>필수 개선 3종</h3>
+        <h3>우선 확인할 개선 항목</h3>
         <div class="panel-list">
           ${improvements.map((item) => `
             <div class="panel-row">
@@ -1677,8 +1681,8 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
 
     <div class="section-head">
       <div>
-        <h2>메뉴 구조</h2>
-        <p>마스터 UI에 연결된 도메인 메뉴를 한국어 기준으로 정리했습니다.</p>
+        <h2>메뉴와 연결 구조</h2>
+        <p>어떤 메뉴가 어디로 연결되는지 쉽게 찾을 수 있게 정리했습니다.</p>
       </div>
     </div>
     <section class="panel nav-groups">
@@ -1704,29 +1708,29 @@ ${buildSystemOsSection(sysHealth, sysFlags, sysCatalog, sysQg)}
 
     <div class="section-head">
       <div>
-        <h2>권장 명령</h2>
-        <p>정적 UI와 현재 상태를 다시 맞출 때 가장 많이 쓰는 명령입니다.</p>
+        <h2>자주 쓰는 명령</h2>
+        <p>화면과 상태를 다시 맞출 때 가장 자주 쓰는 명령만 모았습니다.</p>
       </div>
     </div>
     <section class="panel">
       <div class="cmd-list">
         <div class="cmd-item">
-          <strong>UI 전체 재생성</strong>
+          <strong>화면 전체 다시 만들기</strong>
           <code>npm run ui:build</code>
         </div>
         <div class="cmd-item">
-          <strong>현재 상태 확인</strong>
+          <strong>현재 상태 다시 확인</strong>
           <code>npm run project:status</code>
         </div>
         <div class="cmd-item">
-          <strong>다음 Work Packet 확인</strong>
+          <strong>다음 작업 카드 찾기</strong>
           <code>npm run wp:next</code>
         </div>
       </div>
     </section>
 
-    <p class="foot" style="font-size:12px;color:#61707f;margin-top:8px;">같은 자동화 저장 재시도는 안전하게 재사용됩니다. 같은 계획 초안을 다시 저장해도 중복 기록되지 않습니다.</p>
-    <p class="foot">생성 소스: <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code></p>
+    <p class="foot" style="font-size:12px;color:#61707f;margin-top:8px;">같은 자동화 요청을 다시 저장해도 중복으로 처리되지 않도록 안전장치가 들어 있습니다.</p>
+    <p class="foot">이 화면은 <code>memory/current-state.yaml</code>, <code>memory/current-wp.yaml</code>, <code>master-shell/navigation/nav.yaml</code>, <code>master-shell/plugin-registry/registry.yaml</code>를 바탕으로 만들어집니다.</p>
 
 ${buildAutomationBridgeHtml()}
   </div>
@@ -2073,7 +2077,7 @@ function updateHomeOperatorChainSpotlight(item) {
   var focus = itemId === 'verify' || itemId === 'commit-guard' ? 'guard' : 'operator-summary';
   spotlight.dataset.chainId = itemId || '';
   titleEl.textContent = String(item.label || item.id || 'step');
-  reasonEl.textContent = String(item.reason || '다음 operator action 설명 없음');
+  reasonEl.textContent = String(item.reason || '다음 단계 설명이 없습니다.');
   statusEl.textContent = String(item.status || 'pending');
   statusEl.className = 'tag ' + homeStatusClass(String(item.status || 'pending'));
   commandEl.textContent = String(item.command || '');
@@ -2419,13 +2423,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         : (validationCommands[0] || 'npm run operator:cockpit')
     ).trim();
     const reason = failedAction
-      ? String(latestHomeRecentAction.delivery_message || latestHomeRecentAction.label || '최근 operator action 실패').trim()
+      ? String(latestHomeRecentAction.delivery_message || latestHomeRecentAction.label || '최근 실행이 실패했습니다.').trim()
       : String(
         operatorCockpit && operatorCockpit.commit_guard
-          ? operatorCockpit.commit_guard.next_action || '최근 operator loop 상태 확인'
-          : '최근 operator loop 상태 확인'
+          ? operatorCockpit.commit_guard.next_action || '최근 자동 실행 상태 확인'
+          : '최근 자동 실행 상태 확인'
       ).trim();
-    recentLoopPrimaryLinkEl.href = failedAction
+      recentLoopPrimaryLinkEl.href = failedAction
       ? buildControlCenterHref('execution-failure', 'execution-console', {
         reason,
         command: recommendedCommand,
@@ -2438,7 +2442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: 'operator summary',
         source: 'home-loop',
       });
-    recentLoopPrimaryLinkEl.textContent = failedAction ? '실행 콘솔 열기' : '통합 상태 열기';
+    recentLoopPrimaryLinkEl.textContent = failedAction ? '문제 해결 화면 열기' : '전체 상황 열기';
   }
   if (recentLoopSecondaryLinkEl) {
     const guardBlocked = operatorCockpit && operatorCockpit.commit_guard
@@ -2459,7 +2463,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? operatorCockpit.commit_guard.reasons[0]
             : (operatorCockpit && operatorCockpit.commit_guard ? operatorCockpit.commit_guard.next_action : '커밋 가드 확인 필요')
         )
-        : '실행 패널에서 다음 operator action을 준비하세요.'
+        : '실행 화면에서 다음 작업 명령을 준비하세요.'
     ).trim();
     const guardCommand = String(
       guardBlocked
@@ -2486,7 +2490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         label: 'execution console',
         source: 'home-loop',
       });
-    recentLoopSecondaryLinkEl.textContent = guardBlocked ? 'plan board 열기' : '실행 패널 열기';
+    recentLoopSecondaryLinkEl.textContent = guardBlocked ? '검사 보드 열기' : '실행 화면 열기';
   }
 });
 </script>
@@ -2539,30 +2543,58 @@ function buildKanbanSection(wpQueue) {
     return tier ? `<span class="kb-tier" style="background:${color}22;color:${color};border-color:${color}44;">${tier}</span>` : '';
   }
 
+  const PAGE_SIZE = 5;
+
   const laneHtml = KANBAN_LANES.map((lane) => {
     const cards = laneMap[lane.id];
-    const cardHtml = cards.length === 0
-      ? `<div class="kb-empty">없음</div>`
-      : cards.map((wp) => `
-        <div class="kb-card">
-          <div class="kb-card-head">
-            <span class="kb-id">${esc(wp.id || '—')}</span>
-            ${tierBadge(wp)}
-          </div>
-          <div class="kb-goal">${esc(wp.goal || wp.name || '—')}</div>
-          <div class="kb-stages">${stageBadges(wp)}</div>
+    const laneId = `kb-lane-${lane.id}`;
+
+    let bodyContent;
+    if (cards.length === 0) {
+      bodyContent = `<div class="kb-empty">없음</div>`;
+    } else {
+      // Split cards into pages
+      const pages = [];
+      for (let i = 0; i < cards.length; i += PAGE_SIZE) {
+        pages.push(cards.slice(i, i + PAGE_SIZE));
+      }
+      const pagesHtml = pages.map((pageCards, pageIdx) => `
+        <div class="kb-page" data-page="${pageIdx}" style="${pageIdx === 0 ? '' : 'display:none'}">
+          ${pageCards.map((wp) => `
+          <div class="kb-card">
+            <div class="kb-card-head">
+              <span class="kb-id">${esc(wp.id || '—')}</span>
+              ${tierBadge(wp)}
+            </div>
+            <div class="kb-goal">${esc(wp.goal || wp.name || '—')}</div>
+            <div class="kb-stages">${stageBadges(wp)}</div>
+          </div>`).join('')}
         </div>`).join('');
+
+      const navHtml = pages.length > 1 ? `
+        <div class="kb-page-nav">
+          <button class="kb-nav-btn" onclick="kbPrevPage(this)" disabled aria-label="이전">‹</button>
+          <span class="kb-page-ind">1 / ${pages.length}</span>
+          <button class="kb-nav-btn" onclick="kbNextPage(this)" ${pages.length === 1 ? 'disabled' : ''} aria-label="다음">›</button>
+        </div>` : '';
+
+      bodyContent = `<div class="kb-cards">${pagesHtml}${navHtml}</div>`;
+    }
+
     return `
-      <div class="kb-lane">
+      <div class="kb-lane" id="${laneId}">
         <div class="kb-lane-head" style="border-top:3px solid ${lane.color}">
           <span class="kb-lane-label">${lane.label}</span>
-          <span class="kb-lane-count">${cards.length}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="kb-lane-count">${cards.length}</span>
+            <button class="kb-lane-toggle" onclick="kbToggleLane('${laneId}',this)" title="접기 / 펼치기" aria-expanded="true">▾</button>
+          </div>
         </div>
-        <div class="kb-cards">${cardHtml}</div>
+        <div class="kb-lane-body" id="${laneId}-body">${bodyContent}</div>
       </div>`;
   }).join('');
 
-  // Spiral model: iterations derived from done caps vs total
+  // Spiral model
   const totalCaps = wpQueue.capabilities.length;
   const doneCaps = wpQueue.capabilities.filter((c) => c.work_packets && c.work_packets.every((w) => String(w.status || '').toLowerCase().includes('done') || String(w.status || '').toLowerCase().includes('pass'))).length;
   const iteration = doneCaps > 0 ? doneCaps : 1;
@@ -2584,20 +2616,83 @@ function buildKanbanSection(wpQueue) {
       ${i < spiralSteps.length - 1 ? '<div class="spiral-arrow">→</div>' : ''}
     </div>`).join('');
 
+  // Summary pill bar (always visible even when section collapsed)
+  const summaryPills = KANBAN_LANES.map((lane) => {
+    const count = laneMap[lane.id].length;
+    return `<span class="kb-sum-pill" style="border-color:${lane.color}44;color:${lane.color};background:${lane.color}11;">${lane.label} <strong>${count}</strong></span>`;
+  }).join('');
+
   return `
-    <div class="section-head" style="margin-top:40px">
+    <div class="section-head kb-section-head" style="margin-top:40px" id="kb-section-header">
       <div>
-        <h2>칸반 보드 · 작업 흐름</h2>
-        <p>Work Packet 상태를 레인별로 시각화합니다. 각 카드의 A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
+        <h2>작업 진행판</h2>
+        <p>레인별 WP 카드 · A→E 배지는 나선형 반복 주기를 나타냅니다.</p>
       </div>
-      <div class="spiral-iteration">반복 <strong>#${iteration}</strong> / ${totalCaps} 능력</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div class="spiral-iteration">반복 <strong>#${iteration}</strong> / ${totalCaps}개 기능</div>
+        <button class="kb-section-toggle" id="kb-section-toggle-btn" onclick="kbToggleSection()" title="섹션 접기 / 펼치기" aria-expanded="true">▾ 접기</button>
+      </div>
     </div>
 
-    <div class="spiral-row">${spiralHtml}</div>
+    <div class="kb-summary-bar">${summaryPills}</div>
 
-    <section class="kb-board" aria-label="칸반 보드">
-      ${laneHtml}
-    </section>`;
+    <div id="kb-section-body">
+      <div class="spiral-row">${spiralHtml}</div>
+      <section class="kb-board" aria-label="칸반 보드">
+        ${laneHtml}
+      </section>
+    </div>
+
+    <script>
+    (function() {
+      function kbToggleSection() {
+        var body = document.getElementById('kb-section-body');
+        var btn = document.getElementById('kb-section-toggle-btn');
+        if (!body || !btn) return;
+        var collapsed = body.style.display === 'none';
+        body.style.display = collapsed ? '' : 'none';
+        btn.textContent = collapsed ? '▾ 접기' : '▸ 펼치기';
+        btn.setAttribute('aria-expanded', String(collapsed));
+      }
+      window.kbToggleSection = kbToggleSection;
+
+      function kbToggleLane(laneId, btn) {
+        var bodyEl = document.getElementById(laneId + '-body');
+        if (!bodyEl) return;
+        var collapsed = bodyEl.style.display === 'none';
+        bodyEl.style.display = collapsed ? '' : 'none';
+        btn.textContent = collapsed ? '▾' : '▸';
+        btn.setAttribute('aria-expanded', String(collapsed));
+      }
+      window.kbToggleLane = kbToggleLane;
+
+      function getPageNav(btn) {
+        var nav = btn.closest('.kb-page-nav');
+        if (!nav) return null;
+        var cards = nav.closest('.kb-cards');
+        if (!cards) return null;
+        var pages = Array.from(cards.querySelectorAll('.kb-page'));
+        var ind = nav.querySelector('.kb-page-ind');
+        var currentPage = pages.findIndex(function(p) { return p.style.display !== 'none'; });
+        return { pages: pages, ind: ind, currentPage: currentPage, prevBtn: nav.querySelector('[aria-label="이전"]'), nextBtn: nav.querySelector('[aria-label="다음"]') };
+      }
+
+      function kbGoToPage(btn, delta) {
+        var nav = getPageNav(btn);
+        if (!nav) return;
+        var target = nav.currentPage + delta;
+        if (target < 0 || target >= nav.pages.length) return;
+        nav.pages[nav.currentPage].style.display = 'none';
+        nav.pages[target].style.display = '';
+        if (nav.ind) nav.ind.textContent = (target + 1) + ' / ' + nav.pages.length;
+        if (nav.prevBtn) nav.prevBtn.disabled = target === 0;
+        if (nav.nextBtn) nav.nextBtn.disabled = target === nav.pages.length - 1;
+      }
+
+      window.kbPrevPage = function(btn) { kbGoToPage(btn, -1); };
+      window.kbNextPage = function(btn) { kbGoToPage(btn, +1); };
+    })();
+    </script>`;
 }
 
 const KANBAN_CSS = `
@@ -3010,6 +3105,84 @@ const KANBAN_CSS = `
     line-height: 1.6;
   }
   /* ── Kanban Board ─────────────────────────── */
+  /* ── Kanban section controls ─────────────────── */
+  .kb-section-head {
+    align-items: center;
+  }
+  .kb-section-toggle {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 99px;
+    border: 1px solid rgba(220,207,186,0.9);
+    background: var(--surface);
+    cursor: pointer;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .kb-section-toggle:hover { background: rgba(15,118,110,0.06); }
+  .kb-summary-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .kb-sum-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid;
+    font-weight: 600;
+  }
+  .kb-sum-pill strong { margin-left: 4px; }
+  /* ── Lane toggle ─────────────────────────────── */
+  .kb-lane-toggle {
+    border: none;
+    background: rgba(0,0,0,0.05);
+    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .13s;
+    flex-shrink: 0;
+  }
+  .kb-lane-toggle:hover { background: rgba(0,0,0,0.1); }
+  /* ── Paging ──────────────────────────────────── */
+  .kb-page-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 10px 8px;
+    border-top: 1px solid rgba(220,207,186,0.5);
+    margin-top: 4px;
+  }
+  .kb-nav-btn {
+    border: 1px solid rgba(220,207,186,0.9);
+    background: var(--surface);
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .13s;
+  }
+  .kb-nav-btn:hover:not(:disabled) { background: rgba(15,118,110,0.08); }
+  .kb-nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .kb-page-ind { font-size: 11px; color: var(--muted); min-width: 36px; text-align: center; }
+  /* ── Board & Lane ────────────────────────────── */
   .kb-board {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -3037,7 +3210,7 @@ const KANBAN_CSS = `
     font-size: 11px;
     font-weight: 700;
   }
-  .kb-cards { display: grid; gap: 8px; padding: 10px; }
+  .kb-cards { display: grid; gap: 0; }
   .kb-card {
     background: var(--surface-strong);
     border: 1px solid rgba(220,207,186,0.75);
@@ -3092,6 +3265,7 @@ const KANBAN_CSS = `
     background: linear-gradient(135deg, #0f766e, #1d4ed8);
     color: white;
   }
+  .kb-page { display: grid; gap: 8px; padding: 10px; }
   .kb-empty {
     text-align: center;
     padding: 18px 10px;
@@ -3185,11 +3359,13 @@ const KANBAN_CSS = `
     }
     .flow-chain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .kb-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kb-summary-bar { gap: 4px; }
   }
   @media (max-width: 600px) {
     .flow-strip { grid-template-columns: 1fr; }
     .flow-map-route { grid-template-columns: 1fr; }
     .flow-chain-grid { grid-template-columns: 1fr; }
+    .kb-board { grid-template-columns: 1fr; }
     .kb-board { grid-template-columns: 1fr; }
     .spiral-row { gap: 2px; }
   }
@@ -3342,28 +3518,28 @@ function buildAutomationBridgeHtml() {
     <div class="ab-header">
       <div class="section-head" style="margin:0;flex:1;">
         <div>
-          <h2>⚡ Automation Bridge</h2>
-          <p>UI에서 VS Code 터미널을 직접 제어하고, 전체 프로젝트 사용법 + 명령 팔레트 + 파일 탐색을 한 화면에서 사용합니다.</p>
+          <h2>⚡ 자동 실행 연결</h2>
+          <p>이 영역에서는 터미널 연결, 자주 쓰는 명령, 파일 열기, 빠른 실행 키워드를 한 화면에서 다룰 수 있습니다.</p>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
         <span class="ab-badge"><span class="ab-status-dot" id="ab-conn-dot"></span><span id="ab-conn-label">서버 연결 중...</span></span>
-        <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRefreshSessions()">⟳ 세션 갱신</button>
+        <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRefreshSessions()">⟳ 터미널 새로고침</button>
       </div>
     </div>
     <div class="ab-state-bar">
-      <span class="ab-state-pill">WP <strong id="ab-wp-live">—</strong></span>
+      <span class="ab-state-pill">현재 작업 <strong id="ab-wp-live">—</strong></span>
       <span class="ab-state-pill">브랜치 <strong id="ab-branch-live">—</strong></span>
-      <span class="ab-state-pill">터미널 <strong id="ab-pty-live">—</strong></span>
-      <span class="ab-state-pill">대상 세션 <strong id="ab-target-pts">미선택</strong></span>
+      <span class="ab-state-pill">열린 터미널 <strong id="ab-pty-live">—</strong></span>
+      <span class="ab-state-pill">선택한 터미널 <strong id="ab-target-pts">미선택</strong></span>
       <span class="ab-state-pill" style="margin-left:auto;">서버 <strong id="ab-server-status">localhost:8080</strong></span>
     </div>
     <div class="ab-tabs">
-      <button class="ab-tab ab-active" onclick="abSwitchTab('guide',this)">📖 사용법 가이드</button>
-      <button class="ab-tab" onclick="abSwitchTab('terminal',this)">🖥 터미널 브리지</button>
-      <button class="ab-tab" onclick="abSwitchTab('commands',this)">⚡ 명령 팔레트</button>
-      <button class="ab-tab" onclick="abSwitchTab('files',this)">📂 파일 탐색</button>
-      <button class="ab-tab" onclick="abSwitchTab('keywords',this)">🔑 키워드 실행표</button>
+      <button class="ab-tab ab-active" onclick="abSwitchTab('guide',this)">📖 처음 보는 사람 안내</button>
+      <button class="ab-tab" onclick="abSwitchTab('terminal',this)">🖥 터미널 연결</button>
+      <button class="ab-tab" onclick="abSwitchTab('commands',this)">⚡ 자주 쓰는 명령</button>
+      <button class="ab-tab" onclick="abSwitchTab('files',this)">📂 파일 바로 열기</button>
+      <button class="ab-tab" onclick="abSwitchTab('keywords',this)">🔑 빠른 키워드</button>
     </div>
 
     <!-- 사용법 가이드 -->
@@ -3371,11 +3547,11 @@ function buildAutomationBridgeHtml() {
       <div class="ab-guide-grid">
         <div class="ab-guide-block ab-open">
           <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
-            <div class="ab-guide-block-title"><span>🗺</span><span>한눈에 보기 — Workflow OS란?</span></div>
+            <div class="ab-guide-block-title"><span>🗺</span><span>먼저 이해하기 — 이 시스템은 무엇을 하나요?</span></div>
             <span class="ab-guide-chevron">▼</span>
           </div>
           <div class="ab-guide-body">
-            <p>Workflow OS는 요구사항→설계→구현→검증의 전 사이클을 <strong>Work Packet</strong> 단위로 추적하고, Claude Code가 자율적으로 실행하는 프로젝트 운영 시스템입니다.</p>
+            <p>이 시스템은 요구사항 정리부터 구현, 검증까지의 흐름을 <strong>작업 카드(Work Packet)</strong> 단위로 추적하고 실행하도록 돕습니다.</p>
             <div class="ab-stage-flow">
               <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-a" onclick="abSendKeyword('A 도메인명')">A 분석</span><span class="ab-arrow">→</span></div>
               <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-b" onclick="abSendKeyword('B_review 도메인명')">B 리뷰</span><span class="ab-arrow">→</span></div>
@@ -3384,10 +3560,10 @@ function buildAutomationBridgeHtml() {
               <div class="ab-stage-node"><span class="ab-stage-pill ab-stage-e" onclick="abSendKeyword('E 도메인명')">E 검증</span></div>
             </div>
             <ul>
-              <li><strong>사용자가 하는 일</strong>: 요구사항과 우선순위 정의, <code>requirements/requirements.yaml</code> 편집</li>
-              <li><strong>Claude가 하는 일</strong>: 한 번에 하나의 Work Packet을 끝까지 닫음</li>
-              <li><strong>상태 추적</strong>: <code>memory/L0-hot/current-state.yaml</code>에서 현재 stage 확인</li>
-              <li><strong>빠른 시작</strong>: 터미널에 <code>npm run project:status</code></li>
+              <li><strong>사람이 하는 일</strong>: 요구사항과 우선순위를 정하고 <code>requirements/requirements.yaml</code>를 관리합니다.</li>
+              <li><strong>도구가 하는 일</strong>: 한 번에 하나의 작업 카드를 끝까지 처리하려고 시도합니다.</li>
+              <li><strong>상태 확인</strong>: <code>memory/L0-hot/current-state.yaml</code>에서 현재 단계를 봅니다.</li>
+              <li><strong>가장 쉬운 시작</strong>: 터미널에 <code>npm run project:status</code> 실행</li>
             </ul>
           </div>
         </div>
@@ -3412,12 +3588,12 @@ function buildAutomationBridgeHtml() {
         </div>
         <div class="ab-guide-block">
           <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
-            <div class="ab-guide-block-title"><span>🚀</span><span>5분 빠른 시작</span></div>
+            <div class="ab-guide-block-title"><span>🚀</span><span>5분 안에 시작하기</span></div>
             <span class="ab-guide-chevron">▼</span>
           </div>
           <div class="ab-guide-body">
             <p><strong>Step 1</strong>: <code>requirements/requirements.yaml</code>에 도메인 추가</p>
-            <p><strong>Step 2</strong>: Claude Code 터미널에 입력 (아래 키워드 탭 또는 터미널 브리지 탭 사용)</p>
+            <p><strong>Step 2</strong>: 터미널에 실행 키워드 입력 (아래 빠른 키워드 탭 또는 터미널 연결 탭 사용)</p>
             <pre>A my-feature    # 전체 Stage A~E 실행
 D my-feature    # Stage D만 (구현)
 E my-feature    # Stage E + B_review (검증)</pre>
@@ -3429,11 +3605,11 @@ npm run gate:all</pre>
         </div>
         <div class="ab-guide-block">
           <div class="ab-guide-block-head" onclick="abToggleGuide(this)">
-            <div class="ab-guide-block-title"><span>🔑</span><span>단일 키워드 실행표</span></div>
+            <div class="ab-guide-block-title"><span>🔑</span><span>짧은 키워드로 실행하기</span></div>
             <span class="ab-guide-chevron">▼</span>
           </div>
           <div class="ab-guide-body">
-            <p>키워드를 클릭하면 선택된 터미널에 전송됩니다. 터미널 브리지 탭에서 세션을 먼저 선택하세요.</p>
+            <p>키워드를 누르면 선택한 터미널로 바로 전송됩니다. 먼저 터미널 연결 탭에서 터미널을 선택하세요.</p>
             <ul>
               <li><code onclick="abSendKeyword(this.textContent)">계속</code> — next-actions priority 1 실행</li>
               <li><code onclick="abSendKeyword('A 도메인명')">A [도메인]</code> — Stage A~E 전체 실행</li>
@@ -3488,23 +3664,23 @@ npm run gate:all</pre>
     <div class="ab-panel" id="ab-panel-terminal">
       <div class="ab-term-grid">
         <div class="ab-card">
-          <div class="ab-card-title">VS Code 터미널 세션 선택</div>
-          <div class="ab-session-list" id="ab-session-list"><div style="font-size:12px;color:var(--muted);padding:8px;">세션 로딩 중...</div></div>
+          <div class="ab-card-title">VS Code 터미널 선택</div>
+          <div class="ab-session-list" id="ab-session-list"><div style="font-size:12px;color:var(--muted);padding:8px;">터미널 목록 불러오는 중...</div></div>
           <div style="margin-top:10px;display:flex;gap:6px;">
             <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRefreshSessions()">⟳ 새로고침</button>
             <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abSendEnter()">↵ Enter</button>
           </div>
         </div>
         <div class="ab-card">
-          <div class="ab-card-title">명령 전송</div>
-          <input class="ab-cmd-input" id="ab-cmd-input" type="text" placeholder="명령어 또는 Claude 키워드... (Enter로 전송)" autocomplete="off" spellcheck="false">
+          <div class="ab-card-title">명령 보내기</div>
+          <input class="ab-cmd-input" id="ab-cmd-input" type="text" placeholder="명령어 또는 실행 키워드 입력... (Enter로 전송)" autocomplete="off" spellcheck="false">
           <div class="ab-btn-row">
-            <button class="ab-btn ab-btn-primary" onclick="abSendCmd()">▶ 전송 + Enter</button>
-            <button class="ab-btn ab-btn-secondary" onclick="abSendCmdNoEnter()">전송만</button>
+            <button class="ab-btn ab-btn-primary" onclick="abSendCmd()">▶ 보내고 실행</button>
+            <button class="ab-btn ab-btn-secondary" onclick="abSendCmdNoEnter()">입력만</button>
           </div>
           <div id="ab-send-result" class="ab-result"></div>
           <div style="margin-top:14px;">
-            <div class="ab-card-title" style="margin-bottom:8px;">빠른 키워드</div>
+            <div class="ab-card-title" style="margin-bottom:8px;">자주 쓰는 키워드</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;">
               <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('계속')">계속</button>
               <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abFillCmd('검토')">검토</button>
@@ -3517,7 +3693,7 @@ npm run gate:all</pre>
             </div>
           </div>
           <div style="margin-top:12px;">
-            <div class="ab-card-title" style="margin-bottom:8px;">도메인 지정 실행</div>
+            <div class="ab-card-title" style="margin-bottom:8px;">특정 기능만 실행</div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <input class="ab-cmd-input" id="ab-domain-input" type="text" placeholder="도메인명 (예: billing)" style="flex:1;margin-bottom:0;min-width:120px;">
               <button class="ab-btn ab-btn-secondary ab-btn-sm" onclick="abRunWithDomain('A')">A</button>
@@ -3588,7 +3764,7 @@ npm run gate:all</pre>
 
     <!-- 파일 탐색 -->
     <div class="ab-panel" id="ab-panel-files">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">파일을 클릭하면 VS Code에서 열립니다. 「보기/열기」 버튼으로 경로를 터미널에 전송합니다.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">파일을 누르면 바로 열 수 있습니다. 옆 버튼으로는 경로를 터미널에 보낼 수 있습니다.</p>
       <div class="ab-file-tree">
         <div class="ab-file-group"><div class="ab-file-group-head">📋 요구사항</div><div class="ab-file-list">
           <a class="ab-file-item" href="#" onclick="abOpenFile('requirements/requirements.yaml');return false;"><span>📄</span><span class="ab-file-name">requirements.yaml</span><div class="ab-file-actions"><button class="ab-file-action-btn" onclick="abSendToTerminal('code requirements/requirements.yaml');event.stopPropagation();">VS Code</button></div></a>
@@ -3620,19 +3796,19 @@ npm run gate:all</pre>
           <a class="ab-file-item" href="/api/automation/state" target="_blank"><span>📊</span><span class="ab-file-name">/api/automation/state</span></a>
         </div></div>
         <div class="ab-file-group"><div class="ab-file-group-head">📊 UI 포털</div><div class="ab-file-list">
-          <a class="ab-file-item" href="master-planner/index.html" target="_blank"><span>🗂</span><span class="ab-file-name">마스터 플래너</span></a>
-          <a class="ab-file-item" href="catalog-site/index.html" target="_blank"><span>📚</span><span class="ab-file-name">도메인 카탈로그</span></a>
-          <a class="ab-file-item" href="mindmap/index.html" target="_blank"><span>🎛</span><span class="ab-file-name">통합 통제 센터</span></a>
+          <a class="ab-file-item" href="master-planner/index.html" target="_blank"><span>🗂</span><span class="ab-file-name">계획 화면</span></a>
+          <a class="ab-file-item" href="catalog-site/index.html" target="_blank"><span>📚</span><span class="ab-file-name">기능 목록 화면</span></a>
+          <a class="ab-file-item" href="mindmap/index.html" target="_blank"><span>🎛</span><span class="ab-file-name">문제 해결 제어 센터</span></a>
           <a class="ab-file-item" href="quality/index.html" target="_blank"><span>✅</span><span class="ab-file-name">품질 게이트</span></a>
           <a class="ab-file-item" href="audit/index.html" target="_blank"><span>🔍</span><span class="ab-file-name">감사 로그</span></a>
-          <a class="ab-file-item" href="study-guide/index.html" target="_blank"><span>🎓</span><span class="ab-file-name">학습 가이드</span></a>
+          <a class="ab-file-item" href="study-guide/index.html" target="_blank"><span>🎓</span><span class="ab-file-name">초보자 안내 화면</span></a>
         </div></div>
       </div>
     </div>
 
     <!-- 키워드 실행표 -->
     <div class="ab-panel" id="ab-panel-keywords">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">키워드를 클릭하면 선택된 VS Code 터미널에 바로 전송됩니다. 도메인 이름이 필요한 키워드는 아래 입력창에서 설정하세요.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">키워드를 누르면 선택한 VS Code 터미널로 바로 보냅니다. 기능 이름이 필요한 경우 아래 입력칸을 같이 사용하세요.</p>
       <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
         <span style="font-size:12px;color:var(--muted);">도메인명:</span>
         <input class="ab-cmd-input" id="ab-kw-domain" type="text" placeholder="billing, video, task-tracking ..." style="width:220px;margin:0;">
