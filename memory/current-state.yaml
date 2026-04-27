@@ -1,216 +1,266 @@
-as_of: "2026-04-27"
-session_mode: "work-packet-cycle"
-current_wp_queue: "memory/wp-queue.yaml"
+as_of: '2026-04-27'
+session_mode: work-packet-cycle
+current_wp_queue: memory/wp-queue.yaml
 last_completed_wp:
-  id: "WP-HO-012"
-  completed_at: "2026-04-27"
-  result: "PASS"
+  id: WP-HO-013
+  completed_at: '2026-04-27'
+  result: PASS
 last_completed_spiral:
-  id: "SPIRAL-18"
-  completed_at: "2026-04-23"
-  result: "PASS — billing/video DB routing tests 10/10. 801/801 total."
+  id: SPIRAL-18
+  completed_at: '2026-04-23'
+  result: PASS — billing/video DB routing tests 10/10. 801/801 total.
 queue_summary:
   total: 104
   done: 94
   ready: 1
   blocked: 9
-branch: "chore/core-git-governance-activation"
+branch: chore/core-git-governance-activation
 branch_commits_ahead_main: 215
-pr_status: "pending — gh auth required"
-tests: "816/816 PASS"
-lint: "PASS"
+pr_status: pending — gh auth required
+tests: 816/816 PASS
+lint: PASS
 working_capabilities:
-  - id: "requirements-validation"
-    status: "pass"
-    detail: "requirements.yaml 구조/경로/gate baseline을 validate_requirements.py가 실제로 검증한다."
-    evidence: "worklog/2026-03-19_WP-01.yaml"
-  - id: "work-packet-operator-protocol"
-    status: "pass"
-    detail: "CLAUDE.md, README, memory schema가 Work Packet 운영 모델을 기준으로 정렬돼 있다."
-    evidence: "worklog/2026-03-19_WP-02.yaml"
-  - id: "requirements-validation-ci"
-    status: "pass"
-    detail: "requirements-validation.yml이 requirements validator 변경과 main push에서 gate를 수행한다."
-    evidence: "worklog/2026-03-19_WP-03.yaml"
-  - id: "root-memory-bridge"
-    status: "pass"
-    detail: "운영 문서와 release evidence 생성기는 root memory를 우선 읽고 legacy memory/project를 fallback으로 사용한다."
-    evidence: "worklog/2026-03-19_WP-04.yaml"
-  - id: "stage-executor-dry-run"
-    status: "pass"
-    detail: "stage:a~stage:e가 read-only JSON dry-run 결과를 반환한다."
-    evidence: "worklog/2026-03-19_WP-05.yaml"
-  - id: "project-status-runner"
-    status: "pass"
-    detail: "project:status가 stage 상태, current WP, next WP, known issue를 구조화 출력한다."
-    evidence: "worklog/2026-03-19_WP-06.yaml"
-  - id: "server-wiring-smoke"
-    status: "pass"
-    detail: "HTTP transport, JSON parsing, caller headers, feature flag off-path 404까지 e2e smoke로 검증한다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "quality-gate-ci"
-    status: "pass"
-    detail: "quality-gates.yml이 correctness, quality/security, supply-chain/operations gate를 분리 실행한다."
-    evidence: "worklog/2026-03-19_WP-08.yaml"
-  - id: "how-to-truthfulness"
-    status: "pass"
-    detail: "HOW_TO_USE와 root how-to가 legacy autopilot 대신 queue-driven Work Packet 흐름을 설명한다."
-    evidence: "worklog/2026-03-19_WP-09.yaml"
-  - id: "video-domain-stage-a"
-    status: "pass"
-    detail: "memory/stageA/video.yaml에 ubiquitous language, aggregate invariants, public contract path, risk profile, permissions, NFR이 있다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "billing-domain-contracts"
-    status: "pass"
-    detail: "billing 도메인은 openapi, events, capability, ui contract를 모두 갖추고 contract drift 검증에 포함된다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "dag-wp-scheduler"
-    status: "pass"
-    detail: "wp:next/wp:status/wp:validate가 DAG dependency와 tier 순서를 해석한다."
-    evidence: "worklog/2026-03-19_WP-ARCH-001.yaml"
-  - id: "requirements-gap-detector"
-    status: "pass"
-    detail: "wp:gaps가 desired_state, requirements, contract path 간 갭을 보고한다."
-    evidence: "worklog/2026-03-19_WP-ARCH-001.yaml"
-  - id: "session-health-metrics"
-    status: "pass"
-    detail: "wp:health가 gate pass rate, change failure rate, avg WPs/session 기반 health rating을 계산한다."
-    evidence: "worklog/2026-03-19_WP-ARCH-001.yaml"
-  - id: "desired-state-reconciliation"
-    status: "pass"
-    detail: "wp:reconcile이 desired_state, working_capabilities, wp-queue coverage를 비교한다."
-    evidence: "worklog/2026-03-19_WP-ARCH-003.yaml"
-  - id: "wp-queue-ci-validation"
-    status: "pass"
-    detail: "quality-gates.yml correctness job이 npm run wp:validate로 queue DAG 무결성을 CI에서 강제한다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "release-evidence-automation"
-    status: "pass"
-    detail: "release-evidence.yml이 quality gates 후 SBOM, provenance, release evidence 생성 및 artifact upload를 자동 수행한다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "branch-protection-ci"
-    status: "pass"
-    detail: "quality-gates.yml이 branch protection policy baseline validator를 실행하고 운영 문서가 같은 required checks 집합을 가리킨다."
-    evidence: "worklog/2026-03-20_WP-GOV-002.yaml"
-  - id: "cross-domain-event-bus"
-    status: "pass"
-    detail: "contracts/events registry와 CloudEvents envelope가 domain event schema 및 produced_by 경로와 함께 contract drift validator로 검증된다."
-    evidence: "worklog/2026-03-20_WP-DOM-002.yaml"
-  - id: "rfc7807-error-standard"
-    status: "pass"
-    detail: "ProblemDetails helper와 controller error mapping이 RFC 7807 형식의 JSON 응답을 제공한다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "feature-flag-runtime"
-    status: "pass"
-    detail: "FeatureFlagProvider와 createServer가 flag evaluation을 route wiring에 반영하고 flag-off는 404로 검증된다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "event-publishing"
-    status: "pass"
-    detail: "CreateTaskUseCase가 EventPublisher 포트를 통해 도메인 이벤트를 발행하고 InMemory/Outbox adapter가 존재한다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "opentelemetry-instrumentation"
-    status: "pass"
-    detail: "telemetry.js와 createServer가 trace_id, RED-style metrics, structured logs를 남긴다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "sqlite-persistence"
-    status: "pass"
-    detail: "SQLiteTaskRepository, schema.sql, db:migrate:test, infrastructure test가 task repository persistence baseline을 검증한다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "self-improvement-loop"
-    status: "pass"
-    detail: "session:end가 gap detect → reconcile → health → ready WPs 출력까지 자동 수행한다."
-    evidence: "worklog/2026-03-20_WP-ARCH-004.yaml"
-  - id: "cloudevents-envelope"
-    status: "pass"
-    detail: "contracts/events/envelope.schema.json과 registry.yaml이 중앙 이벤트 봉투/카탈로그 기준선을 제공한다."
-    evidence: "worklog/2026-03-20_WP-DOM-002.yaml"
-  - id: "contract-drift-validation"
-    status: "pass"
-    detail: "test:contract가 task-tracking, billing, 중앙 event registry, CloudEvents envelope, produced_by 경로 정합성을 함께 검증한다."
-    evidence: "worklog/2026-03-20_WP-DOM-002.yaml"
-  - id: "master-shell-composition-validation"
-    status: "pass"
-    detail: "validate:composition이 registry, navigation, catalog, feature flags, observability coherence를 검사한다."
-    evidence: "memory/project/current-state.yaml"
-  - id: "quality-gate-baseline"
-    status: "pass"
-    detail: "lint, type-check, dependency/security baseline, rollback, sbom, provenance, controller smoke, network smoke gate가 연결돼 있다."
-    evidence: "memory/project/current-state.yaml"
-  - id: "deployment-environment-smoke-runner"
-    status: "pass"
-    detail: "run_deployment_smoke.js와 deployment-smoke.yml이 실제 base URL 대상 health/task/billing smoke를 실행하고 JSON artifact를 남긴다."
-    evidence: "worklog/2026-03-20_WP-RUN-002.yaml"
-  - id: "root-entry-doc-truthfulness"
-    status: "pass"
-    detail: "README와 HOW_TO_USE entry guidance가 root memory, CI workflows, stage executor, deployment smoke posture와 다시 일치한다."
-    evidence: "worklog/2026-03-20_WP-DOC-002.yaml"
-  - id: "deployment-environment-binding"
-    status: "pass"
-    detail: "deployment-smoke workflow가 registry에 선언된 GitHub environment 이름과 환경 변수 해석 경로에 바인딩되고, validator가 drift를 CI에서 막는다."
-    evidence: "worklog/2026-03-20_WP-RUN-003.yaml"
-  - id: "deployment-environment-provisioning-audit"
-    status: "pass"
-    detail: "원격 GitHub environment provisioning 정책이 저장소에 선언되고, audit template 생성기와 validator가 registry/policy/template drift를 CI에서 막는다."
-    evidence: "worklog/2026-03-20_WP-RUN-004.yaml"
+- id: requirements-validation
+  status: pass
+  detail: requirements.yaml 구조/경로/gate baseline을 validate_requirements.py가 실제로 검증한다.
+  evidence: worklog/2026-03-19_WP-01.yaml
+- id: work-packet-operator-protocol
+  status: pass
+  detail: CLAUDE.md, README, memory schema가 Work Packet 운영 모델을 기준으로 정렬돼 있다.
+  evidence: worklog/2026-03-19_WP-02.yaml
+- id: requirements-validation-ci
+  status: pass
+  detail: requirements-validation.yml이 requirements validator 변경과 main push에서 gate를
+    수행한다.
+  evidence: worklog/2026-03-19_WP-03.yaml
+- id: root-memory-bridge
+  status: pass
+  detail: 운영 문서와 release evidence 생성기는 root memory를 우선 읽고 legacy memory/project를 fallback으로
+    사용한다.
+  evidence: worklog/2026-03-19_WP-04.yaml
+- id: stage-executor-dry-run
+  status: pass
+  detail: stage:a~stage:e가 read-only JSON dry-run 결과를 반환한다.
+  evidence: worklog/2026-03-19_WP-05.yaml
+- id: project-status-runner
+  status: pass
+  detail: project:status가 stage 상태, current WP, next WP, known issue를 구조화 출력한다.
+  evidence: worklog/2026-03-19_WP-06.yaml
+- id: server-wiring-smoke
+  status: pass
+  detail: HTTP transport, JSON parsing, caller headers, feature flag off-path 404까지
+    e2e smoke로 검증한다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: quality-gate-ci
+  status: pass
+  detail: quality-gates.yml이 correctness, quality/security, supply-chain/operations
+    gate를 분리 실행한다.
+  evidence: worklog/2026-03-19_WP-08.yaml
+- id: how-to-truthfulness
+  status: pass
+  detail: HOW_TO_USE와 root how-to가 legacy autopilot 대신 queue-driven Work Packet 흐름을
+    설명한다.
+  evidence: worklog/2026-03-19_WP-09.yaml
+- id: video-domain-stage-a
+  status: pass
+  detail: memory/stageA/video.yaml에 ubiquitous language, aggregate invariants, public
+    contract path, risk profile, permissions, NFR이 있다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: billing-domain-contracts
+  status: pass
+  detail: billing 도메인은 openapi, events, capability, ui contract를 모두 갖추고 contract drift
+    검증에 포함된다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: dag-wp-scheduler
+  status: pass
+  detail: wp:next/wp:status/wp:validate가 DAG dependency와 tier 순서를 해석한다.
+  evidence: worklog/2026-03-19_WP-ARCH-001.yaml
+- id: requirements-gap-detector
+  status: pass
+  detail: wp:gaps가 desired_state, requirements, contract path 간 갭을 보고한다.
+  evidence: worklog/2026-03-19_WP-ARCH-001.yaml
+- id: session-health-metrics
+  status: pass
+  detail: wp:health가 gate pass rate, change failure rate, avg WPs/session 기반 health
+    rating을 계산한다.
+  evidence: worklog/2026-03-19_WP-ARCH-001.yaml
+- id: desired-state-reconciliation
+  status: pass
+  detail: wp:reconcile이 desired_state, working_capabilities, wp-queue coverage를 비교한다.
+  evidence: worklog/2026-03-19_WP-ARCH-003.yaml
+- id: wp-queue-ci-validation
+  status: pass
+  detail: quality-gates.yml correctness job이 npm run wp:validate로 queue DAG 무결성을 CI에서
+    강제한다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: release-evidence-automation
+  status: pass
+  detail: release-evidence.yml이 quality gates 후 SBOM, provenance, release evidence
+    생성 및 artifact upload를 자동 수행한다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: branch-protection-ci
+  status: pass
+  detail: quality-gates.yml이 branch protection policy baseline validator를 실행하고 운영
+    문서가 같은 required checks 집합을 가리킨다.
+  evidence: worklog/2026-03-20_WP-GOV-002.yaml
+- id: cross-domain-event-bus
+  status: pass
+  detail: contracts/events registry와 CloudEvents envelope가 domain event schema 및 produced_by
+    경로와 함께 contract drift validator로 검증된다.
+  evidence: worklog/2026-03-20_WP-DOM-002.yaml
+- id: rfc7807-error-standard
+  status: pass
+  detail: ProblemDetails helper와 controller error mapping이 RFC 7807 형식의 JSON 응답을 제공한다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: feature-flag-runtime
+  status: pass
+  detail: FeatureFlagProvider와 createServer가 flag evaluation을 route wiring에 반영하고 flag-off는
+    404로 검증된다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: event-publishing
+  status: pass
+  detail: CreateTaskUseCase가 EventPublisher 포트를 통해 도메인 이벤트를 발행하고 InMemory/Outbox adapter가
+    존재한다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: opentelemetry-instrumentation
+  status: pass
+  detail: telemetry.js와 createServer가 trace_id, RED-style metrics, structured logs를
+    남긴다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: sqlite-persistence
+  status: pass
+  detail: SQLiteTaskRepository, schema.sql, db:migrate:test, infrastructure test가
+    task repository persistence baseline을 검증한다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: self-improvement-loop
+  status: pass
+  detail: session:end가 gap detect → reconcile → health → ready WPs 출력까지 자동 수행한다.
+  evidence: worklog/2026-03-20_WP-ARCH-004.yaml
+- id: cloudevents-envelope
+  status: pass
+  detail: contracts/events/envelope.schema.json과 registry.yaml이 중앙 이벤트 봉투/카탈로그 기준선을
+    제공한다.
+  evidence: worklog/2026-03-20_WP-DOM-002.yaml
+- id: contract-drift-validation
+  status: pass
+  detail: test:contract가 task-tracking, billing, 중앙 event registry, CloudEvents envelope,
+    produced_by 경로 정합성을 함께 검증한다.
+  evidence: worklog/2026-03-20_WP-DOM-002.yaml
+- id: master-shell-composition-validation
+  status: pass
+  detail: validate:composition이 registry, navigation, catalog, feature flags, observability
+    coherence를 검사한다.
+  evidence: memory/project/current-state.yaml
+- id: quality-gate-baseline
+  status: pass
+  detail: lint, type-check, dependency/security baseline, rollback, sbom, provenance,
+    controller smoke, network smoke gate가 연결돼 있다.
+  evidence: memory/project/current-state.yaml
+- id: deployment-environment-smoke-runner
+  status: pass
+  detail: run_deployment_smoke.js와 deployment-smoke.yml이 실제 base URL 대상 health/task/billing
+    smoke를 실행하고 JSON artifact를 남긴다.
+  evidence: worklog/2026-03-20_WP-RUN-002.yaml
+- id: root-entry-doc-truthfulness
+  status: pass
+  detail: README와 HOW_TO_USE entry guidance가 root memory, CI workflows, stage executor,
+    deployment smoke posture와 다시 일치한다.
+  evidence: worklog/2026-03-20_WP-DOC-002.yaml
+- id: deployment-environment-binding
+  status: pass
+  detail: deployment-smoke workflow가 registry에 선언된 GitHub environment 이름과 환경 변수 해석
+    경로에 바인딩되고, validator가 drift를 CI에서 막는다.
+  evidence: worklog/2026-03-20_WP-RUN-003.yaml
+- id: deployment-environment-provisioning-audit
+  status: pass
+  detail: 원격 GitHub environment provisioning 정책이 저장소에 선언되고, audit template 생성기와 validator가
+    registry/policy/template drift를 CI에서 막는다.
+  evidence: worklog/2026-03-20_WP-RUN-004.yaml
 desired_state:
-  handoff-operating-loop: "모든 작업이 intake packet, context lock, execution packet, validation profile, completion report, memory/worklog/artifact 갱신, next WP 추천으로 이어지는 handoff 회로를 가진다"
-  dag-wp-scheduler: "wp:next resolves ready WPs from DAG, wp:validate passes with zero errors"
-  requirements-gap-detector: "wp:gaps reports zero high-severity gaps for current requirements.yaml"
-  session-health-metrics: "wp:health returns ELITE or HIGH rating with ≥95% gate pass rate"
-  release-evidence-automation: "generate:release-evidence runs in GitHub Actions without manual trigger"
-  video-domain-stage-a: "video domain has Stage A blueprint, risk profile, and contract skeleton"
-  billing-domain-contracts: "billing domain has openapi, events, capability, and ui contracts at Stage A level"
-  cross-domain-event-bus: "shared event envelope schema exists and contract drift validator covers the central registry"
-  self-improvement-loop: "session end auto-runs gap detector and appends generated WPs to wp-queue.yaml"
-  rfc7807-error-standard: "all controllers return Problem Details JSON; openapi.yaml has Problem schema; error tests pass"
-  feature-flag-runtime: "server wiring evaluates flags.yaml at startup; flag=false returns 404 verified by test"
-  event-publishing: "UseCase publishes domain events via EventPublisher port; InMemoryPublisher tested; OutboxPublisher stub exists"
-  opentelemetry-instrumentation: "HTTP spans created per request with trace_id; task_created_total metric recorded; structured JSON logs emitted"
-  sqlite-persistence: "SQLiteTaskRepository passes task repository tests; schema.sql present; migrate.js runs in CI"
-  wp-queue-ci-validation: "quality-gates.yml runs npm run wp:validate on pull_request and main push"
-  branch-protection-ci: "quality-gates.yml runs check:branch-protection-policy and documents required status checks"
-  deployment-environment-smoke-runner: "operators can execute a real deployed-environment smoke runner locally or via workflow_dispatch with explicit target inputs and artifacted results"
-  deployment-environment-binding: "deployment-smoke workflow binds to named GitHub environments declared in master-shell/operations/deployment-environments.yaml and resolves target inputs from environment vars or explicit override"
-  deployment-environment-provisioning-audit: "operators can generate an audit template for remote GitHub deployment environments and CI validates registry/provisioning-policy drift without pretending live remote state is in git"
+  handoff-operating-loop: 모든 작업이 intake packet, context lock, execution packet, validation
+    profile, completion report, memory/worklog/artifact 갱신, next WP 추천으로 이어지는 handoff
+    회로를 가진다
+  dag-wp-scheduler: wp:next resolves ready WPs from DAG, wp:validate passes with zero
+    errors
+  requirements-gap-detector: wp:gaps reports zero high-severity gaps for current requirements.yaml
+  session-health-metrics: wp:health returns ELITE or HIGH rating with ≥95% gate pass
+    rate
+  release-evidence-automation: generate:release-evidence runs in GitHub Actions without
+    manual trigger
+  video-domain-stage-a: video domain has Stage A blueprint, risk profile, and contract
+    skeleton
+  billing-domain-contracts: billing domain has openapi, events, capability, and ui
+    contracts at Stage A level
+  cross-domain-event-bus: shared event envelope schema exists and contract drift validator
+    covers the central registry
+  self-improvement-loop: session end auto-runs gap detector and appends generated
+    WPs to wp-queue.yaml
+  rfc7807-error-standard: all controllers return Problem Details JSON; openapi.yaml
+    has Problem schema; error tests pass
+  feature-flag-runtime: server wiring evaluates flags.yaml at startup; flag=false
+    returns 404 verified by test
+  event-publishing: UseCase publishes domain events via EventPublisher port; InMemoryPublisher
+    tested; OutboxPublisher stub exists
+  opentelemetry-instrumentation: HTTP spans created per request with trace_id; task_created_total
+    metric recorded; structured JSON logs emitted
+  sqlite-persistence: SQLiteTaskRepository passes task repository tests; schema.sql
+    present; migrate.js runs in CI
+  wp-queue-ci-validation: quality-gates.yml runs npm run wp:validate on pull_request
+    and main push
+  branch-protection-ci: quality-gates.yml runs check:branch-protection-policy and
+    documents required status checks
+  deployment-environment-smoke-runner: operators can execute a real deployed-environment
+    smoke runner locally or via workflow_dispatch with explicit target inputs and
+    artifacted results
+  deployment-environment-binding: deployment-smoke workflow binds to named GitHub
+    environments declared in master-shell/operations/deployment-environments.yaml
+    and resolves target inputs from environment vars or explicit override
+  deployment-environment-provisioning-audit: operators can generate an audit template
+    for remote GitHub deployment environments and CI validates registry/provisioning-policy
+    drift without pretending live remote state is in git
 health_metrics:
-  as_of: "2026-03-20"
-  schema_version: "2"
-  run_cmd: "npm run wp:health"
+  as_of: '2026-03-20'
+  schema_version: '2'
+  run_cmd: npm run wp:health
   last_known:
     gate_pass_rate_pct: 88.1
     change_failure_rate_pct: 0
     avg_wps_per_session: 10
-    health_rating: "ELITE"
+    health_rating: ELITE
 release_summary:
-  as_of: "2026-03-20"
-  release_mode: "work-packet-governed"
-  quality_gate_result: "PASS"
+  as_of: '2026-03-20'
+  release_mode: work-packet-governed
+  quality_gate_result: PASS
   quality_gate_inputs:
-    - "npm run validate:requirements"
-    - "npm run test:contract"
-    - "npm test"
-    - "npm run lint"
-  evidence_workflow: ".github/workflows/release-evidence.yml"
+  - npm run validate:requirements
+  - npm run test:contract
+  - npm test
+  - npm run lint
+  evidence_workflow: .github/workflows/release-evidence.yml
   artifacts:
-    release_evidence: "artifacts/release-evidence/release-evidence.json"
-    provenance: "artifacts/provenance/workflow-os-provenance.json"
-    sbom: "artifacts/sbom/workflow-os.spdx.json"
+    release_evidence: artifacts/release-evidence/release-evidence.json
+    provenance: artifacts/provenance/workflow-os-provenance.json
+    sbom: artifacts/sbom/workflow-os.spdx.json
 placeholders_manual:
-  - id: "deployment-environment-smoke"
-    status: "operator-triggered"
-    detail: "runner는 registry와 GitHub environment에 바인딩됐지만, 실제 원격 environment provisioning과 로그/ingress 확인은 여전히 운영자 트리거가 필요하다"
-  - id: "deployment-environment-provisioning-audit"
-    status: "operator-collected"
-    detail: "원격 GitHub environment API 결과는 generated audit template 에 운영자가 채워 넣어야 하며, 저장소는 그 계약과 템플릿만 보장한다"
+- id: deployment-environment-smoke
+  status: operator-triggered
+  detail: runner는 registry와 GitHub environment에 바인딩됐지만, 실제 원격 environment provisioning과
+    로그/ingress 확인은 여전히 운영자 트리거가 필요하다
+- id: deployment-environment-provisioning-audit
+  status: operator-collected
+  detail: 원격 GitHub environment API 결과는 generated audit template 에 운영자가 채워 넣어야 하며,
+    저장소는 그 계약과 템플릿만 보장한다
 known_issues:
-  - id: "KI-RUN-001"
-    severity: "low"
-    description: "deployment environment provisioning is now governed by a repo-local policy/template baseline, but live remote audit evidence still needs operator collection outside git."
+- id: KI-RUN-001
+  severity: low
+  description: deployment environment provisioning is now governed by a repo-local
+    policy/template baseline, but live remote audit evidence still needs operator
+    collection outside git.
 legacy_refs:
-  project_current_state: "memory/project/current-state.yaml"
-  project_next_actions: "memory/project/next-actions.yaml"
+  project_current_state: memory/project/current-state.yaml
+  project_next_actions: memory/project/next-actions.yaml
 last_completed_mpo_session:
-  session_id: "mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93"
-  wp_id: "WP-AUTO-004"
-  completed_at: "2026-04-27T01:01:56.705Z"
-  verification_status: "PASS"
+  session_id: mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93
+  wp_id: WP-AUTO-004
+  completed_at: '2026-04-27T01:01:56.705Z'
+  verification_status: PASS
