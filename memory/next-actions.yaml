@@ -1,7 +1,7 @@
 as_of: '2026-04-27'
 selection_policy: 'handoff-perfect-loop-first: context drift와 dirty baseline을 보호한
   뒤 실행 가능한 SPIRAL-20 handoff 체인을 진행한다'
-next_wp: WP-HO-014
+next_wp: WP-HO-015
 queue:
 - id: WP-HO-012
   priority: P0

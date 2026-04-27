@@ -1,1872 +1,1974 @@
-schema_version: "2"
-queue_date: "2026-03-20"
-epic: "MY-MODULE Workflow OS v2 실체화"
+schema_version: '2'
+queue_date: '2026-03-20'
+epic: MY-MODULE Workflow OS v2 실체화
 capabilities:
-  - id: "CAP-01"
-    name: "Operating model alignment"
-    priority: 1
-    work_packets:
-      - id: "WP-2026-03-19-01"
-        goal: "requirements schema와 validator를 실제 requirements.yaml 구조에 맞게 정렬한다"
-        status: "done"
-        tier: "infra"
-        depends_on: []
-        completed_at: "2026-03-19"
-        result: "PASS — validate:requirements가 실제 구조/경로/gate baseline 검증으로 전환됐다."
-      - id: "WP-2026-03-19-02"
-        goal: "CLAUDE.md와 핵심 운영 문서를 Work Packet 사이클 모델로 정렬한다"
-        status: "done"
-        tier: "infra"
-        depends_on: []
-        completed_at: "2026-03-19"
-        result: "PASS — auto-loaded protocol, README, memory schema가 Work Packet 모델과 현재 상태에 맞게 정렬됐다."
-      - id: "WP-2026-03-19-03"
-        goal: "requirements validation을 CI와 stage entry documentation에 연결한다"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-2026-03-19-01"
-        completed_at: "2026-03-19"
-        result: "PASS — GitHub Actions workflow와 Stage A how-to가 real requirements validator를 가리킨다."
-  - id: "CAP-02"
-    name: "Session memory normalization"
-    priority: 2
-    work_packets:
-      - id: "WP-2026-03-19-04"
-        goal: "root memory files와 legacy memory/project files의 역할을 정리하고 bridge 규칙을 고정한다"
-        status: "done"
-        tier: "infra"
-        depends_on: []
-        completed_at: "2026-03-19"
-        result: "PASS — root memory is now the canonical session surface, key docs use explicit legacy fallback wording."
-  - id: "CAP-03"
-    name: "Stage executor truthfulness"
-    priority: 3
-    work_packets:
-      - id: "WP-2026-03-19-05"
-        goal: "echo-only stage scripts를 status/dry-run 가능한 실행기로 교체한다"
-        status: "done"
-        tier: "arch"
-        depends_on:
-          - "WP-2026-03-19-01"
-        completed_at: "2026-03-19"
-        result: "PASS — stage:a~stage:e now return truthful JSON dry-run status."
-      - id: "WP-2026-03-19-06"
-        goal: "project status runner를 추가해 stage A-E 상태를 구조화 출력한다"
-        status: "done"
-        tier: "arch"
-        depends_on:
-          - "WP-2026-03-19-05"
-        completed_at: "2026-03-19"
-        result: "PASS — npm run project:status now returns structured Stage A-E route status."
-  - id: "CAP-04"
-    name: "Runtime smoke coverage"
-    priority: 4
-    work_packets:
-      - id: "WP-2026-03-19-07"
-        goal: "controller-level smoke 다음 단계인 실제 server wiring smoke 기준선을 만든다"
-        status: "done"
-        tier: "domain"
-        depends_on: []
-        completed_at: "2026-03-19"
-        result: "PASS — test:e2e-smoke now includes a real HTTP server wiring smoke."
-  - id: "CAP-05"
-    name: "Governance automation"
-    priority: 5
-    work_packets:
-      - id: "WP-2026-03-19-08"
-        goal: "기존 quality gate를 실행하는 GitHub Actions workflow를 추가한다"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-2026-03-19-03"
-        completed_at: "2026-03-19"
-        result: "PASS — quality-gates.yml now automates implemented local gates in GitHub Actions."
-  - id: "CAP-06"
-    name: "Repository truthfulness"
-    priority: 6
-    work_packets:
-      - id: "WP-2026-03-19-09"
-        goal: "HOW_TO_USE와 남은 legacy how-to/reference 문서를 Work Packet 운영 모델로 정렬한다"
-        status: "done"
-        tier: "infra"
-        depends_on:
-          - "WP-2026-03-19-02"
-        completed_at: "2026-03-19"
-        result: "PASS — HOW_TO_USE no longer tells operators to drive the repo with legacy autopilot commands."
-  - id: "CAP-07"
-    name: "Domain onboarding"
-    priority: 7
-    work_packets:
-      - id: "WP-2026-03-19-10"
-        goal: "video 도메인 Stage A 청사진과 리스크 프로파일을 작성한다"
-        covers_capability: "video-domain-stage-a"
-        status: "done"
-        completed_at: "2026-03-19"
-        result: "PASS — memory/stageA/video.yaml: 6개 ubiquitous language, 2개 aggregate, INV-V001~V005, 5개 risk profile, permissions 3-tier, NFR 정의 완료."
-        tier: "domain"
-        depends_on: []
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "requirements/requirements.yaml"
-            - "requirements/domain-map.yaml"
-            - "requirements/DOMAIN_TEMPLATE.yaml"
-          skip_if_capability: []
-          estimated_turns: 3
-          max_new_files: 3
-          max_modified_files: 2
-  - id: "CAP-08"
-    name: "Architecture v2 — DAG scheduler + Context Budget"
-    priority: 1
-    work_packets:
-      - id: "WP-ARCH-001"
-        goal: "DAG 스케줄러, context budget 시스템, requirements gap 검출기, session health 메트릭을 설치한다"
-        status: "done"
-        tier: "arch"
-        depends_on: []
-        completed_at: "2026-03-19"
-        result: "PASS — wp_scheduler.py, requirements_gap.py, session_metrics.py 구현 완료. wp-queue.yaml v2 DAG 스키마로 업그레이드. CLAUDE.md context budget 규칙 추가."
-      - id: "WP-ARCH-002"
-        goal: "wp-queue.yaml CI 자동 검증 — DAG 무결성 게이트를 quality-gates.yml에 추가한다"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-ARCH-001"
-        completed_at: "2026-03-20"
-        result: "PASS — quality-gates.yml correctness job now runs npm run wp:validate on pull_request and main push."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - ".github/workflows/quality-gates.yml"
-            - "scripts/wp_scheduler.py"
-          skip_if_capability: []
-          estimated_turns: 2
-          max_new_files: 0
-          max_modified_files: 2
-      - id: "WP-ARCH-003"
-        goal: "desired_state와 actual capabilities 간 자동 reconciliation 스크립트를 구현한다"
-        covers_capability: "desired-state-reconciliation"
-        status: "done"
-        tier: "arch"
-        depends_on:
-          - "WP-ARCH-001"
-        completed_at: "2026-03-19"
-        result: "PASS — reconcile_state.py: Satisfied=3, Scheduled=5, Uncovered=0. covers_capability 필드로 명시적 WP↔capability 매핑 확립."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-state.yaml"
-          context_reads:
-            - "scripts/requirements_gap.py"
-            - "memory/wp-queue.yaml"
-          skip_if_capability: []
-          estimated_turns: 3
-          max_new_files: 1
-          max_modified_files: 3
-  - id: "CAP-09"
-    name: "Governance v2 — Release Evidence Automation"
-    priority: 8
-    work_packets:
-      - id: "WP-GOV-001"
-        goal: "release evidence 생성을 GitHub Actions에 통합해 KI-EVIDENCE-001을 해소한다"
-        covers_capability: "release-evidence-automation"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-ARCH-001"
-        completed_at: "2026-03-20"
-        result: "PASS — release-evidence.yml now generates SBOM, provenance, release evidence, and uploads artifacts in GitHub Actions."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-state.yaml"
-          context_reads:
-            - ".github/workflows/quality-gates.yml"
-            - "scripts/generate_release_evidence.py"
-            - "artifacts/release-evidence/release-evidence.json"
-          skip_if_capability:
-            - "release-evidence-automation"
-          estimated_turns: 3
-          max_new_files: 1
-          max_modified_files: 3
-      - id: "WP-GOV-002"
-        goal: "branch protection 정책 검증을 CI에 자동 추가한다"
-        covers_capability: "branch-protection-ci"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-GOV-001"
-        completed_at: "2026-03-20"
-        result: "PASS — quality-gates.yml now runs check:branch-protection-policy and governance docs describe the repository-vs-remote enforcement boundary."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-          context_reads:
-            - ".github/workflows/quality-gates.yml"
-            - "scripts/validate_branch_protection_policy.py"
-          skip_if_capability: []
-          estimated_turns: 2
-          max_new_files: 0
-          max_modified_files: 1
-  - id: "CAP-10"
-    name: "Domain Expansion — Billing + Cross-Domain"
-    priority: 9
-    work_packets:
-      - id: "WP-DOM-001"
-        goal: "billing 도메인 계약 파일(openapi, events, capability)을 Stage A 수준으로 완성한다"
-        covers_capability: "billing-domain-contracts"
-        status: "done"
-        tier: "domain"
-        depends_on:
-          - "WP-2026-03-19-10"
-        completed_at: "2026-03-20"
-        result: "PASS — billing domain already contains openapi, capability, events, and ui contracts aligned to contract drift validation."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "domains/billing/contracts/"
-            - "domains/productivity/task-tracking/contract/"
-            - "requirements/DOMAIN_TEMPLATE.yaml"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 4
-          max_modified_files: 2
-      - id: "WP-DOM-002"
-        goal: "cross-domain event bus 계약을 정의하고 contract drift 검증에 연결한다"
-        covers_capability: "cross-domain-event-bus"
-        status: "done"
-        tier: "domain"
-        depends_on:
-          - "WP-DOM-001"
-          - "WP-2026-03-19-10"
-        completed_at: "2026-03-20"
-        result: "PASS — central event registry, CloudEvents envelope, and produced_by paths are now enforced by test:contract."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "domains/productivity/task-tracking/contract/events.schema.json"
-            - "domains/billing/contracts/"
-            - "scripts/validate_contract_drift.py"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 2
-          max_modified_files: 3
-  - id: "CAP-12"
-    name: "Production Readiness — Event / Error / Feature Flag"
-    priority: 11
-    work_packets:
-      - id: "WP-ERR-001"
-        goal: "RFC 7807 Problem Details 에러 응답 표준을 모든 컨트롤러에 적용한다"
-        covers_capability: "rfc7807-error-standard"
-        status: "done"
-        tier: "domain"
-        depends_on: []
-        completed_at: "2026-03-20"
-        result: "PASS — ProblemDetails helper and controller error responses are already wired and validated by repository tests."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "domains/productivity/task-tracking/src/interface/TaskController.js"
-            - "domains/billing/src/interface/BillingController.js"
-            - "domains/productivity/task-tracking/contract/openapi.yaml"
-          skip_if_capability: []
-          estimated_turns: 3
-          max_new_files: 2
-          max_modified_files: 4
-      - id: "WP-FLAG-001"
-        goal: "OpenFeature 패턴으로 Feature Flag 런타임 평가를 서버 wiring에 추가한다"
-        covers_capability: "feature-flag-runtime"
-        status: "done"
-        tier: "domain"
-        depends_on:
-          - "WP-ERR-001"
-        completed_at: "2026-03-20"
-        result: "PASS — FeatureFlagProvider is active in server wiring and the flag-off path is covered by e2e smoke."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "master-shell/flags.yaml"
-            - "src/server/"
-            - "src/index.js"
-          skip_if_capability: []
-          estimated_turns: 3
-          max_new_files: 2
-          max_modified_files: 3
-      - id: "WP-EVT-001"
-        goal: "Transactional Outbox 패턴으로 도메인 이벤트 발행을 보장한다"
-        covers_capability: "event-publishing"
-        status: "done"
-        tier: "domain"
-        depends_on:
-          - "WP-ERR-001"
-          - "WP-DOM-002"
-        completed_at: "2026-03-20"
-        result: "PASS — EventPublisher port, InMemory adapter, Outbox adapter stub, and CreateTaskUseCase event publication are present and tested."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "domains/productivity/task-tracking/src/application/CreateTaskUseCase.js"
-            - "domains/productivity/task-tracking/src/domain/entities/Task.js"
-            - "contracts/events/"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 3
-          max_modified_files: 4
-  - id: "CAP-13"
-    name: "Observability — OpenTelemetry Instrumentation"
-    priority: 12
-    work_packets:
-      - id: "WP-OBS-001"
-        goal: "OpenTelemetry SDK로 HTTP trace·메트릭·구조화 로그 최소 계측을 추가한다"
-        covers_capability: "opentelemetry-instrumentation"
-        status: "done"
-        tier: "domain"
-        depends_on:
-          - "WP-FLAG-001"
-        completed_at: "2026-03-20"
-        result: "PASS — telemetry.js and createServer emit structured logs and request metrics with trace context."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "master-shell/config.yaml"
-            - "src/server/"
-            - "domains/productivity/task-tracking/src/interface/TaskController.js"
-            - "scripts/validate_operations.py"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 2
-          max_modified_files: 4
-  - id: "CAP-14"
-    name: "Persistence — SQLite Repository Adapter"
-    priority: 13
-    work_packets:
-      - id: "WP-PERSIST-001"
-        goal: "SQLite 기반 TaskRepository 어댑터와 스키마 마이그레이션을 추가한다"
-        covers_capability: "sqlite-persistence"
-        status: "done"
-        tier: "domain"
-        depends_on:
-          - "WP-EVT-001"
-        completed_at: "2026-03-20"
-        result: "PASS — SQLiteTaskRepository, schema.sql, migration script, and infrastructure test now verify the persistence adapter."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "domains/productivity/task-tracking/src/infrastructure/"
-            - "domains/productivity/task-tracking/src/domain/entities/Task.js"
-          skip_if_capability: []
-          estimated_turns: 5
-          max_new_files: 4
-          max_modified_files: 3
-  - id: "CAP-11"
-    name: "Meta — Self-Improvement Loop"
-    priority: 10
-    work_packets:
-      - id: "WP-META-001"
-        goal: "세션 종료 시 자동으로 gap 검출 → 신규 WP 생성 → queue 갱신하는 자기개선 루프를 구현한다"
-        covers_capability: "self-improvement-loop"
-        status: "done"
-        tier: "meta"
-        depends_on:
-          - "WP-ARCH-001"
-          - "WP-ARCH-003"
-        completed_at: "2026-03-20"
-        result: "PASS — session:end runs gap detection, reconciliation, health reporting, and surfaces ready WPs automatically."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-state.yaml"
-            - "memory/wp-queue.yaml"
-          context_reads:
-            - "scripts/requirements_gap.py"
-            - "scripts/wp_scheduler.py"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 1
-          max_modified_files: 3
-  - id: "CAP-15"
-    name: "Hardening — Evidence / Runtime / Legacy Cleanup"
-    priority: 2
-    work_packets:
-      - id: "WP-EVID-001"
-        goal: "root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다"
-        status: "done"
-        tier: "arch"
-        depends_on: []
-        completed_at: "2026-03-20"
-        result: "PASS — release evidence now reads quality gate summary from root current-state and no longer needs the legacy quality_gate_result field."
-        context_budget:
-          tier_reads:
-            - "memory/current-state.yaml"
-            - "memory/checkpoint.yaml"
-          context_reads:
-            - "scripts/generate_release_evidence.py"
-            - ".github/workflows/release-evidence.yml"
-          skip_if_capability: []
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-DOC-001"
-        goal: "legacy operator model이 남아 있는 template와 memory/project 문서를 root protocol과 정렬한다"
-        status: "done"
-        tier: "infra"
-        depends_on: []
-        completed_at: "2026-03-20"
-        result: "PASS — DOMAIN_TEMPLATE and memory/project files now declare root memory as canonical and legacy surfaces as fallback-only."
-        context_budget:
-          tier_reads:
-            - "memory/current-state.yaml"
-            - "memory/checkpoint.yaml"
-          context_reads:
-            - "requirements/DOMAIN_TEMPLATE.yaml"
-            - "memory/project/"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 1
-          max_modified_files: 5
-      - id: "WP-RUN-001"
-        goal: "배포 환경 수준 smoke 체크리스트와 executable baseline을 추가해 KI-RUN-001을 축소한다"
-        status: "done"
-        tier: "governance"
-        depends_on: []
-        completed_at: "2026-03-20"
-        result: "PASS — Stage E docs now distinguish in-repo smoke from deployment-environment smoke and provide a truthful manual runtime checklist."
-        context_budget:
-          tier_reads:
-            - "memory/current-state.yaml"
-            - "memory/checkpoint.yaml"
-          context_reads:
-            - "docs/how-to/run-stage-e.md"
-            - "src/tests/smoke/serverWiring.smoke.test.js"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 2
-          max_modified_files: 4
-      - id: "WP-RUN-002"
-        goal: "배포 환경 smoke를 실제 실행 가능한 runner와 workflow_dispatch 경로로 승격한다"
-        covers_capability: "deployment-environment-smoke-runner"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-RUN-001"
-        completed_at: "2026-03-20"
-        result: "PASS — deployment smoke now has an executable CLI runner, workflow_dispatch path, JSON artifact, and updated operator docs."
-        context_budget:
-          tier_reads:
-            - "memory/current-state.yaml"
-            - "memory/current-wp.yaml"
-          context_reads:
-            - "docs/how-to/run-stage-e.md"
-            - ".github/workflows/quality-gates.yml"
-            - "src/tests/smoke/serverWiring.smoke.test.js"
-          skip_if_capability:
-            - "deployment-environment-smoke-runner"
-          estimated_turns: 4
-          max_new_files: 3
-          max_modified_files: 8
-  - id: "CAP-13"
-    name: "Root entry doc truthfulness"
-    priority: 9
-    work_packets:
-      - id: "WP-DOC-002"
-        goal: "root entry docs를 현재 capability/CI/runtime 상태와 일치시킨다"
-        status: "done"
-        tier: "infra"
-        depends_on:
-          - "WP-DOC-001"
-          - "WP-RUN-002"
-        completed_at: "2026-03-20"
-        result: "PASS — README entry guidance no longer contradicts root memory about stage executors, GitHub Actions, or deployment smoke."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-state.yaml"
-          context_reads:
-            - "README.md"
-            - "HOW_TO_USE.md"
-            - "docs/reference/quality-gates.md"
-          skip_if_capability: []
-          estimated_turns: 2
-          max_new_files: 1
-          max_modified_files: 4
-  - id: "CAP-14"
-    name: "Deployment environment binding"
-    priority: 10
-    work_packets:
-      - id: "WP-RUN-003"
-        goal: "deployment smoke를 environment registry와 GitHub environment binding에 연결한다"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-RUN-002"
-        completed_at: "2026-03-20"
-        result: "PASS — deployment smoke is now bound to named GitHub environments declared in a repo-local registry, and CI validates the binding."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-state.yaml"
-          context_reads:
-            - ".github/workflows/deployment-smoke.yml"
-            - "docs/how-to/run-stage-e.md"
-            - "master-shell/operations/rollback-playbook.yaml"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 4
-          max_modified_files: 8
-  - id: "CAP-15"
-    name: "Deployment environment provisioning audit"
-    priority: 11
-    work_packets:
-      - id: "WP-RUN-004"
-        goal: "원격 GitHub deployment environment provisioning을 policy/template/validator 기준으로 감사 가능하게 만든다"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-RUN-003"
-        completed_at: "2026-03-20"
-        result: "PASS — remote deployment environment provisioning now has a repo-local policy baseline, CI validator, and generated audit template without pretending live remote evidence is in git."
-        context_budget:
-          tier_reads:
-            - "memory/checkpoint.yaml"
-            - "memory/current-state.yaml"
-          context_reads:
-            - "master-shell/operations/deployment-environments.yaml"
-            - ".github/workflows/deployment-smoke.yml"
-            - "docs/how-to/run-stage-e.md"
-          skip_if_capability: []
-          estimated_turns: 4
-          max_new_files: 4
-          max_modified_files: 10
-  - id: "CAP-HRN"
-    name: "Harness v0.2 Engineering"
-    priority: 1
-    work_packets:
-      - id: "WP-HRN-001"
-        goal: "requirements/harness-engineering.yaml v0.2 — FR/NFR/패턴/DB/동시성 정의"
-        status: "done"
-        tier: "infra"
-        depends_on: []
-        completed_at: "2026-04-12"
-        result: "PASS — FR-001~042 + NFR Extended(concurrency/DB/OOP/patterns/modularity) 추가"
-      - id: "WP-HRN-002"
-        goal: "Master UI 칸반 보드 5레인 + 나선형 모델 시각화 추가"
-        status: "done"
-        tier: "meta"
-        depends_on:
-          - "WP-HRN-001"
-        completed_at: "2026-04-12"
-        result: "PASS — buildKanbanSection + KANBAN_CSS + spiral row 생성, 30개 WP 카드 렌더링"
-      - id: "WP-HRN-003"
-        goal: "docs/harness/CONTINUOUS_PROMPT.md — 연속 실행 마스터 프롬프트 생성"
-        status: "done"
-        tier: "infra"
-        depends_on:
-          - "WP-HRN-001"
-        completed_at: "2026-04-12"
-        result: "PASS — 세션 초기화 프로토콜 5단계 + 작업 유형별 라우팅 표 + 보고 형식 정의"
-      - id: "WP-HRN-004"
-        goal: "scheduler property/adversarial 테스트 수정 — rate limit + pts 없음 접미사"
-        status: "done"
-        tier: "infra"
-        depends_on: []
-        completed_at: "2026-04-12"
-        result: "PASS — HIGH_RATE_LIMIT 옵션 추가 + summarizeExecutionFailureLocation pts 없음 접미사 수정"
-      - id: "WP-HRN-005"
-        goal: "docs/db/migration-strategy.md — FR-041 DB 마이그레이션 전략 문서화"
-        status: "done"
-        tier: "infra"
-        depends_on:
-          - "WP-HRN-001"
-        completed_at: "2026-04-12"
-        result: "PASS — SQLite→PG 전환 경로, 스키마 명명, 인덱스 정책, 낙관적 잠금, 자료사전 동기화 의무 정의"
-  - id: "CAP-S7"
-    name: "Spiral 7 — Concurrency / Event / Data hardening"
-    priority: 10
-    work_packets:
-      - id: "WP-S7-001"
-        goal: "In-process EventBus singleton — Observer 패턴 인프라 기반 수립"
-        status: "done"
-        tier: "infra"
-        depends_on: []
-        completed_at: "2026-04-12"
-        result: "PASS — src/shared/EventBus.js Singleton 구현 (subscribe/publish/unsubscribe/wildcard/history), 18/18 단위 테스트 PASS"
-        context_budget:
-          tier_reads:
-            - "memory/L0-hot/current-state.yaml"
-          context_reads:
-            - "requirements/harness-engineering.yaml#nfr_extended.design_patterns.observer"
-          estimated_turns: 4
-        intake_packet:
-          goal: "NFR observer 규칙 준수 — 도메인 이벤트 발행/구독을 EventBus 경유로 강제하는 인프라 모듈 생성"
-          context:
-            - "현재 도메인 이벤트는 use case 내부에서 직접 결과 반환 또는 callback 방식"
-            - "task_outbox 스키마 인덱스는 schema.sql에 존재하지만 OutboxRepository 없음"
-          constraints:
-            - "기존 domain core 변경 최소화 — Port 인터페이스만 추가"
-            - "동기 in-process 구현으로 시작 (async 확장 path 열어둠)"
-          done_when:
-            - "src/shared/EventBus.js Singleton 구현 + subscribe/publish API"
-            - "단위 테스트 최소 5개 PASS"
-          verification:
-            - "npm test PASS (기존 570 + 신규)"
-      - id: "WP-S7-002"
-        goal: "OutboxRepository + OutboxPoller — task-tracking 도메인 이벤트 전달 완성"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — OutboxRepository Port + InMemory/SQLite 구현체 + OutboxPoller, 20/20 테스트, 731/731 전체"
-        tier: "domain"
-        depends_on:
-          - "WP-S7-001"
-        context_budget:
-          tier_reads:
-            - "memory/L0-hot/current-state.yaml"
-          context_reads:
-            - "domains/productivity/task-tracking/src/infrastructure/schema.sql"
-          estimated_turns: 6
-        intake_packet:
-          goal: "task_outbox 스키마 인덱스(idx_outbox_pending)를 실제로 사용하는 OutboxRepository + OutboxPoller 구현"
-          context:
-            - "schema.sql에 task_outbox 테이블 + idx_outbox_pending 인덱스 이미 정의됨"
-            - "delivered=0 행을 polling → EventBus publish → delivered=1 업데이트"
-          constraints:
-            - "도메인 코어(Task, use case) 변경 없음"
-            - "SQLiteTaskRepository 인터페이스 유지"
-          done_when:
-            - "OutboxRepository.js (Port + SQLite 구현체)"
-            - "OutboxPoller.js (setInterval 기반 polling)"
-            - "단위 테스트 최소 8개 PASS"
-          verification:
-            - "npm test PASS + schema 적합성 확인"
-      - id: "WP-S7-003"
-        goal: "Worker Thread로 generate-mindmap.js CPU 바운드 작업 분리"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — scripts/generateMindmapWorker.js + POST /api/mindmap/rebuild + smoke 3/3 + 711 tests"
-        tier: "infra"
-        depends_on: []
-        context_budget:
-          tier_reads:
-            - "memory/L0-hot/current-state.yaml"
-          context_reads:
-            - "scripts/generate-mindmap.js"
-            - "src/server/createServer.js"
-          estimated_turns: 5
-        intake_packet:
-          goal: "mindmap HTML 생성(~700KB, 동기)을 Worker Thread로 분리해 이벤트 루프 블로킹 제거"
-          context:
-            - "scripts/generate-mindmap.js는 동기 실행으로 ~100ms 이상 메인 루프 블로킹"
-            - "createServer.js가 mindmap 재생성을 POST /api/mindmap/rebuild에서 호출"
-          constraints:
-            - "generate-mindmap.js 내부 로직 변경 없음 — Worker 래퍼만 추가"
-            - "기존 npm run generate-mindmap CLI 동작 유지"
-          done_when:
-            - "scripts/generateMindmapWorker.js — Worker Thread entry"
-            - "createServer.js rebuild 엔드포인트가 workerData로 호출"
-            - "smoke test PASS"
-          verification:
-            - "npm test PASS + rebuild 엔드포인트 응답 확인"
-      - id: "WP-S7-004"
-        goal: "data-dictionary 경로 정렬 — NFR 참조 경로와 실제 파일 일치"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — harness-engineering.yaml + migration-strategy.md 경로를 ai-harness-data-dictionary.md로 통일"
-        tier: "infra"
-        depends_on: []
-        context_budget:
-          tier_reads: []
-          context_reads:
-            - "requirements/harness-engineering.yaml#nfr_extended.data_dictionary"
-          estimated_turns: 2
-        intake_packet:
-          goal: "NFR이 가리키는 docs/reference/data-dictionary.md 경로와 실제 파일 docs/reference/ai-harness-data-dictionary.md를 정렬"
-          context:
-            - "harness-engineering.yaml nfr_extended.data_dictionary.location: docs/reference/data-dictionary.md"
-            - "실제 파일: docs/reference/ai-harness-data-dictionary.md"
-          constraints:
-            - "기존 링크/참조 깨지지 않도록 symlink 또는 NFR 경로 수정 선택"
-          done_when:
-            - "NFR location 경로로 파일 접근 가능"
-            - "migration-strategy.md 참조 경로 일치"
-          verification:
-            - "npm run lint PASS + 경로 참조 정합성 확인"
-      - id: "WP-S7-005"
-        goal: "validation-profiles.yaml 명령 갭 감사 — 누락 npm scripts 추가"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — 모든 15개 validation-profile 명령이 package.json에 존재, 갭 없음 확인"
-        tier: "governance"
-        depends_on: []
-        context_budget:
-          tier_reads: []
-          context_reads:
-            - "requirements/validation-profiles.yaml"
-            - "package.json"
-          estimated_turns: 3
-        intake_packet:
-          goal: "validation-profiles.yaml에 선언된 모든 npm 명령이 package.json에 실제 존재하는지 검증하고 누락 명령 추가"
-          context:
-            - "validation-profiles.yaml에 wp:reconcile, wp:check-fit, test:integration 등 명령 선언됨"
-            - "package.json에 해당 scripts가 없으면 프로파일 실행 시 실패"
-          constraints:
-            - "기존 scripts 동작 변경 없음 — 누락 scripts만 추가"
-          done_when:
-            - "validation-profiles.yaml의 모든 commands가 package.json에 존재"
-            - "각 script 실행 시 0 exit code"
-          verification:
-            - "npm run wp:reconcile && npm run wp:check-fit && npm run test:integration PASS"
-  - id: "CAP-S8"
-    name: "Spiral 8 — EventBus domain wiring"
-    priority: 11
-    work_packets:
-      - id: "WP-S8-001"
-        goal: "EventBusPublisher 어댑터 — EventPublisher 포트 → EventBus 싱글톤 브릿지"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — src/shared/EventBusPublisher.js 8/8 unit tests"
-        tier: "infra"
-        depends_on:
-          - "WP-S7-001"
-      - id: "WP-S8-002"
-        goal: "CreateTaskUseCase 통합 테스트 — EventBus publish + Outbox 연결 검증"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — 통합 테스트 5/5 PASS (Use case→EventBusPublisher→EventBus + Outbox→Poller→EventBus)"
-        tier: "domain"
-        depends_on:
-          - "WP-S8-001"
-      - id: "WP-S8-003"
-        goal: "서버 EventBusPublisher 배선 검증 — end-to-end smoke (POST /tasks → domain-events ring buffer)"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — 2/2 smoke tests PASS; 746/746 전체 테스트 PASS"
-        tier: "infra"
-        depends_on:
-          - "WP-S8-001"
-          - "WP-S8-002"
-  - capability: "CAP-S9"
-    label: "Spiral 9 — 이벤트 내구성·관찰가능성 강화"
-    spiral: 9
-    work_packets:
-      - id: "WP-S9-001"
-        goal: "서버에 OutboxPoller 배선 — InMemoryOutboxRepository + OutboxPoller 자동 시작"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — OutboxPoller 서버 기동 시 자동 시작, /api/v1/outbox/stats 노출"
-        tier: "infra"
-        depends_on:
-          - "WP-S8-003"
-      - id: "WP-S9-002"
-        goal: "EventBus Dead-Letter Queue(DLQ) — 구독자 오류 격리, /api/v1/domain-events/dlq 엔드포인트"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — EventBus.setHandlerErrorCallback + DLQ ring buffer + endpoint 구현"
-        tier: "infra"
-        depends_on:
-          - "WP-S9-001"
-      - id: "WP-S9-003"
-        goal: "서버 graceful shutdown — OutboxPoller 정상 종료 보장"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — shutdown() 시 poller.stop() 선행, smoke 3/3 PASS"
-        tier: "infra"
-        depends_on:
-          - "WP-S9-001"
-  - capability: "CAP-S10"
-    label: "Spiral 10 — 운영 관찰가능성 완성"
-    spiral: 10
-    work_packets:
-      - id: "WP-S10-001"
-        goal: "/health 엔드포인트에 EventBus + OutboxPoller 관찰 데이터 추가"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — /health.observability { event_bus, outbox_poller, dlq_size } 구현"
-        tier: "infra"
-        depends_on:
-          - "WP-S9-001"
-          - "WP-S9-002"
-      - id: "WP-S10-002"
-        goal: "EventBus 내부 publish/error 통계 (stats) 추가 — 운영 메트릭 기반"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — EventBus.getStats() + 4 unit tests"
-        tier: "infra"
-        depends_on:
-          - "WP-S10-001"
-  - capability: "CAP-S11"
-    label: "Spiral 11 — 동시성 안전성 (NFR thread_safety)"
-    spiral: 11
-    work_packets:
-      - id: "WP-S11-001"
-        goal: "Task 낙관적 잠금 — InMemoryTaskRepository OPTIMISTIC_LOCK_CONFLICT 충돌 감지"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — Task.version 필드 + 충돌 감지 8 tests PASS, 189/189 domain PASS"
-        tier: "domain"
-        nfr: "nfr_extended.concurrency.thread_safety"
-  - capability: "CAP-S12"
-    label: "Spiral 12 — 낙관적 잠금 HTTP 배선"
-    spiral: 12
-    work_packets:
-      - id: "WP-S12-001"
-        goal: "OPTIMISTIC_LOCK_CONFLICT → HTTP 409 ProblemDetails 배선 + SQLiteTaskRepository 낙관적 잠금"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — ProblemDetails 매핑 + SQLite UPDATE WHERE version + smoke 2/2 PASS"
-        tier: "interface"
-        depends_on:
-          - "WP-S11-001"
-  - capability: "CAP-S13"
-    label: "Spiral 13 — version API 노출"
-    spiral: 13
-    work_packets:
-      - id: "WP-S13-001"
-        goal: "Task API 응답에 version 필드 노출 — 클라이언트 낙관적 잠금 지원"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — TaskController._serializeTask() version 추가"
-        tier: "interface"
-        depends_on:
-          - "WP-S12-001"
-  - capability: "CAP-S14"
-    label: "Spiral 14 — Outbox 듀얼 라이트 (at-least-once)"
-    spiral: 14
-    work_packets:
-      - id: "WP-S14-001"
-        goal: "CreateTaskUseCase outbox dual-write — EventBus 직접 발행 + OutboxRepository 내구성 기록"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — 4/4 통합 테스트, 서버 _sharedOutboxRepo 주입, at-least-once 보장"
-        tier: "domain"
-        depends_on:
-          - "WP-S9-001"
-        pattern: "microservices.io Outbox Pattern"
-  - capability: "CAP-S15"
-    label: "Spiral 15 — 전 Use Case 이벤트 배선 완성"
-    spiral: 15
-    work_packets:
-      - id: "WP-S15-001"
-        goal: "TransitionTask/ReassignTask에 EventPublisher + Outbox 주입 (누락 배선 수정)"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — 197/197 task-tracking PASS, 통합 테스트 4건 (전 use case 생명주기)"
-        tier: "domain"
-        fix: "TaskStatusChanged/TaskReassigned이 EventBus에 미발행된 버그 수정"
-        depends_on:
-          - "WP-S14-001"
-  - id: "CAP-SPIRAL-16"
-    label: "Spiral 16 — Billing/Video EventPublisher 배선"
-    spiral: 16
-    work_packets:
-      - id: "WP-S16-001"
-        goal: "createBillingController() / createVideoController()에 _sharedDomainEventPublisher 전달"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — InvoiceCreated / VideoUploaded 이벤트가 EventBus ring buffer에 기록됨. 3/3 smoke PASS"
-        tier: "domain"
-        deliverables:
-          - "src/server/createServer.js: billing/video publisher 어댑터 래핑"
-          - "src/tests/smoke/billingVideoEventWiring.smoke.test.js: 3건 smoke PASS"
-        depends_on:
-          - "WP-S15-001"
-  - id: "CAP-SPIRAL-17"
-    label: "Spiral 17 — 동시성/성능 강화 (NFR Extended)"
-    spiral: 17
-    nfr_ref: "nfr_extended.concurrency"
-    work_packets:
-      - id: "WP-S17-001"
-        goal: "Per-route rate-limit 강화 — billing payment/video upload 엔드포인트에 stricter limit tier 적용"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — routeRateLimitPolicies 파라미터 추가, 3/3 smoke PASS (billing 429, video 429, global bypass)"
-        tier: "domain"
-        nfr: "nfr_extended.concurrency.rule_shared_state"
-        depends_on:
-          - "WP-S16-001"
-        deliverables:
-          - "src/server/createServer.js: routeRateLimitPolicy map 추가 (payment=10/min, upload=5/min)"
-          - "src/tests/smoke/perRouteRateLimit.smoke.test.js: 3건 smoke PASS"
-        success_criteria:
-          - "POST /billing/payment: 10회/분 초과 시 429"
-          - "POST /video/upload: 5회/분 초과 시 429"
-          - "기존 전역 rate-limit 회귀 없음"
-      - id: "WP-S17-002"
-        goal: "GetBillingSummaryUseCase async-first 강화 — Promise.all 병렬화 검증"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — Promise.all 이미 구현됨. NFR async-first 검증 테스트 1건 추가, 6/6 PASS"
-        tier: "domain"
-        nfr: "nfr_extended.concurrency.model"
-        depends_on:
-          - "WP-S16-001"
-        deliverables:
-          - "domains/billing/src/application/GetBillingSummaryUseCase.js: Promise.all 병렬화 (기존 구현 확인)"
-          - "domains/billing/tests/application/GetBillingSummaryUseCase.test.js: NFR async-first 테스트 추가"
-        success_criteria:
-          - "invoices + payments 조회가 Promise.all로 병렬 실행됨"
-          - "기존 테스트 회귀 없음"
-      - id: "WP-S17-003"
-        goal: "StartTranscodeJobUseCase Worker Thread 분리 — CPU-bound 트랜스코딩 시뮬레이션 격리"
-        status: "done"
-        completed_at: "2026-04-12"
-        result: "PASS — workerAdapter 주입 패턴, TranscodeWorkerAdapter + NullAdapter, 3/3 tests PASS. 621/621 회귀 없음"
-        tier: "domain"
-        nfr: "nfr_extended.concurrency.rule_cpu"
-        depends_on:
-          - "WP-S17-002"
-        deliverables:
-          - "domains/video/src/application/StartTranscodeJobUseCase.js: workerAdapter 주입 패턴"
-          - "src/shared/TranscodeWorkerAdapter.js: Worker Thread 래핑 어댑터 + NullAdapter"
-          - "domains/video/tests/application/StartTranscodeJobUseCase.workerThread.test.js: 3/3 PASS"
-        success_criteria:
-          - "CPU-bound transcoding이 Worker Thread로 분리 실행됨"
-          - "메인 이벤트 루프 블로킹 없음 (타이밍 검증)"
-          - "기존 Stage D 621/621 회귀 없음"
-  - id: "CAP-SPIRAL-18"
-    label: "Spiral 18 — SQLite→PostgreSQL Phase 2 어댑터 전환"
-    spiral: 18
-    doc_ref: "docs/db/migration-strategy.md#phase-2"
-    status: "done"
-    work_packets:
-      - id: "WP-S18-001"
-        goal: "PostgresTaskRepository 어댑터 스켈레톤 — 포트 계약 구현 + 연결 없는 구조 테스트"
-        status: "done"
-        tier: "domain"
-        depends_on:
-          - "WP-S17-003"
-        completed_at: "2026-04-14"
-        result: "PASS — client.query 주입형 스켈레톤 + FakePgClient 계약 테스트. 실 DB 연결 없이 포트 구조 검증"
-      - id: "WP-S18-002"
-        goal: "ENV 기반 어댑터 선택 — DB_TYPE=sqlite|postgres 런타임 분기 (DI wiring)"
-        status: "done"
-        tier: "infra"
-        depends_on:
-          - "WP-S18-001"
-        completed_at: "2026-04-14"
-        result: "PASS — DB_TYPE env 분기, sqlite 기본값 유지, task repository routing smoke PASS"
-      - id: "WP-S18-003"
-        goal: "task-tracking PostgreSQL DDL + validate:schema 게이트 추가"
-        status: "done"
-        tier: "infra"
-        depends_on:
-          - "WP-S18-002"
-        completed_at: "2026-04-14"
-        result: "PASS — 001_initial_pg.sql DDL 추가, validate:schema PASS, 기존 schema.sql 변경 없음"
-  - id: "CAP-HARNESS-VNEXT"
-    label: "Harness vNext — Mode Router / Provider Adapter / Eval / Security"
-    status: "done"
-    work_packets:
-      - id: "WP-HARNESS-VNEXT-001"
-        goal: "Harness vNext 실행 계획 문서화"
-        status: "done"
-        tier: "arch"
-        completed_at: "2026-04-14"
-        result: "PASS — docs/explanation/harness-vnext-execution-plan.md (Phase 0~7)"
-      - id: "WP-HARNESS-VNEXT-002"
-        goal: "Harness intake/output JSON Schema 계약 고정"
-        status: "done"
-        tier: "arch"
-        completed_at: "2026-04-14"
-        result: "PASS — contracts/harness/intake.schema.json + output.schema.json"
-      - id: "WP-HARNESS-VNEXT-003"
-        goal: "HarnessProviderAdapter 계약 + NullHarnessProvider 구현"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — HarnessProviderAdapter.js + NullHarnessProvider fallback"
-      - id: "WP-HARNESS-VNEXT-004"
-        goal: "HarnessRuntimeRouter mode→model tier 라우팅 구현"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — resolveHarnessRuntimeRoute, Build/Debug/Research/Policy 4-mode 분기"
-      - id: "WP-HARNESS-VNEXT-005"
-        goal: "Eval plane baseline — 케이스/골든/메트릭 파일 구조"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — evals/cases/*.jsonl + evals/golden/ + evals/metrics/baseline.json"
-      - id: "WP-HARNESS-VNEXT-006"
-        goal: "Harness ADR-0013 — provider adapter 전략 결정"
-        status: "done"
-        tier: "arch"
-        completed_at: "2026-04-14"
-        result: "PASS — docs/adr/0013-harness-provider-adapter-strategy.md"
-      - id: "WP-HARNESS-VNEXT-007"
-        goal: "validate-harness-contract.js 스크립트 추가"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — scripts/validate-harness-contract.js, contract smoke PASS"
-      - id: "WP-HARNESS-VNEXT-008"
-        goal: "validate_harness_routing.py 라우팅 검증 스크립트"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — scripts/validate_harness_routing.py, routing smoke PASS"
-      - id: "WP-HARNESS-VNEXT-009"
-        goal: "OWASP trust boundary / security policy 기준선"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — security/policies/trust-boundary.yaml + security/redteam/owasp-core.yaml"
-      - id: "WP-HARNESS-VNEXT-010"
-        goal: "validate_harness_security.py 보안 검증 스크립트"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — scripts/validate_harness_security.py, security smoke PASS"
-      - id: "WP-HARNESS-VNEXT-011"
-        goal: "Harness eval runner (run-harness-evals.js) 추가"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-14"
-        result: "PASS — scripts/run-harness-evals.js, eval smoke PASS"
-      - id: "WP-HARNESS-VNEXT-012"
-        goal: "next_wp truth surface — next-actions 우선 규칙 정렬"
-        status: "done"
-        tier: "arch"
-        completed_at: "2026-04-14"
-        result: "PASS — project_status.js extractNextWp operator selection 우선 로직"
-      - id: "WP-HARNESS-VNEXT-013"
-        goal: "createServer.js LLM provider 실제 연결 (WP-LLM-001)"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-15"
-        result: "PASS — POST /api/harness/prompt-recommendation 라우트 + provider wiring"
-      - id: "WP-HARNESS-VNEXT-014"
-        goal: "Harness observability + release evidence smoke"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-15"
-        result: "PASS — harnessReleaseEvidence + harnessRouting smoke PASS"
-      - id: "WP-HARNESS-VNEXT-015"
-        goal: "provider failure modes Stage E 적대 검증"
-        status: "done"
-        tier: "arch"
-        completed_at: "2026-04-15"
-        result: "PASS — schema mismatch 500, auth failure safe fallback, provider outage 503 고정"
-  - id: "CAP-VIDEO-CLOSURE"
-    label: "Video 도메인 Stage C~E root memory 증적 closure"
-    status: "done"
-    work_packets:
-      - id: "WP-VIDEO-001"
-        goal: "video 도메인 Stage C plugin registration + Stage D/E memory closure"
-        status: "done"
-        tier: "domain"
-        completed_at: "2026-04-14"
-        result: "PASS — memory/stageC/video-plugin.yaml + stageD/video.yaml + stageE/video.yaml 추가"
-  - id: "CAP-UI-PHASE1"
-    label: "System OS Phase 1 UI 통합 — Stage C~E"
-    status: "done"
-    work_packets:
-      - id: "WP-UI-002"
-        goal: "system-api-plugin Stage C — master shell registry/nav/flags/observability 등록"
-        status: "done"
-        tier: "arch"
-        completed_at: "2026-04-15"
-        result: "PASS — plugin-registry, navigation, feature-flags, catalog 등록 + validate:composition PASS"
-      - id: "WP-UI-003"
-        goal: "SystemApiController runtime wiring — SSE/toggle/rollback 엔드포인트 + smoke"
-        status: "done"
-        tier: "infra"
-        completed_at: "2026-04-15"
-        result: "PASS — POST/GET system-api 라우트 wiring + runtime smoke PASS"
-      - id: "WP-UI-004"
-        goal: "System OS SSE/authz/rollback Stage E 적대 검증"
-        status: "done"
-        tier: "arch"
-        completed_at: "2026-04-15"
-        result: "PASS — system.admin 403 회귀 + SSE reconnect + memory/stageE/system-api-plugin.yaml"
-  - id: "CAP-RUN-EXT"
-    label: "Deployment environment real target verification"
-    status: "done"
-    work_packets:
-      - id: "WP-RUN-005"
-        goal: "배포 environment 실 URL health/ingress verification 자동화 baseline"
-        status: "done"
-        tier: "governance"
-        completed_at: "2026-04-15"
-        result: "PASS — ingress host/TLS/correlation-header 검증 + resolve_deployment_target.py 확장"
-      - id: "WP-RUN-006"
-        goal: "배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-RUN-005"
-        completed_at: "2026-04-16"
-        result: "PASS — --require-https TLS gate + 3종 adversarial smoke (unreachable/tls-fail/tls-pass). memory/stageE/deployment-ingress.yaml"
-  - id: "CAP-SPIRAL-19"
-    label: "Spiral 19 — Harness live provider 연결 + .env 운영 완성"
-    spiral: 19
-    status: "pending"
-    work_packets:
-      - id: "WP-S19-001"
-        goal: "OpenAI live provider 연결 검증 — OPENAI_API_KEY 주입 시 실제 LLM 추천 반환"
-        status: "done"
-        completed_at: "2026-04-16"
-        result: "PASS — startServer harnessProviderAdapter wiring fix + 3/3 smoke tests"
-        tier: "infra"
-        depends_on:
-          - "WP-HARNESS-VNEXT-015"
-        deliverables:
-          - "src/tests/smoke/harnessLiveProvider.smoke.test.js: OPENAI_API_KEY 주입 시 provider_id=openai-responses 검증"
-          - "memory/stageD/harness-live-provider.yaml: live provider 구조 테스트 evidence"
-        success_criteria:
-          - "OPENAI_API_KEY 주입 시 provider_id=openai-responses 반환"
-          - "키 없으면 NullProvider fallback 유지 (기존 회귀 없음)"
-          - "harness provider adapter unit tests PASS"
-        note: "실제 API 호출은 CI에서 skipped — local 검증 전용"
-      - id: "WP-S19-002"
-        goal: "npm start 로컬 서버 기동 + .env 운영 가이드 확정"
-        status: "done"
-        completed_at: "2026-04-16"
-        result: "PASS — docs/how-to/local-server-startup.md 생성. 7/7 endpoints PASS"
-        tier: "governance"
-        depends_on:
-          - "WP-S19-001"
-        deliverables:
-          - "docs/how-to/local-server-startup.md: npm start + .env 플래그 제어 가이드"
-          - ".env: OPENAI_API_KEY live 연결 검증 기록"
-        success_criteria:
-          - "npm start 기동 후 /health /tasks /api/v1/system/flags 200 응답"
-          - "가이드 문서 존재"
-  - id: "CAP-SPIRAL-20-HANDOFF"
-    label: "Spiral 20 — Perfect handoff operating loop"
-    spiral: 20
-    status: "pending"
-    priority: 0
-    intent: "요청 intake부터 context lock, execution packet, verification, completion report, memory/worklog/artifact 갱신, 다음 WP 추천까지 끊기지 않는 하네스 핸드오프 회로를 완성한다."
-    work_packets:
-      - id: "WP-HO-000"
-        goal: "SPIRAL-20 handoff 기준선 고정 — 기존 dirty 변경 보호선과 실행 가능한 handoff WP 체인 시작"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS — SPIRAL-20 handoff DAG 등록, current/next memory 정렬, 기존 dirty 변경 보호선 기록, scheduler/status/requirements 검증 통과"
-        tier: "governance"
-        depends_on: []
-        covers_capability: "handoff-baseline-protection"
-        validation:
-          - "npm run wp:status"
-          - "npm run project:status"
-          - "npm run wp:validate"
-          - "npm run validate:requirements"
-        deliverables:
-          - "memory/current-wp.yaml: active handoff baseline packet"
-          - "memory/next-actions.yaml: next ready handoff queue"
-          - "memory/wp-queue.yaml: SPIRAL-20 handoff DAG"
-          - "memory/current-state.yaml: queue summary and desired handoff state"
-        success_criteria:
-          - "기존 dirty 변경 파일 목록이 protected baseline으로 기록된다."
-          - "wp scheduler가 WP-HO-000을 next ready WP로 반환한다."
-          - "project status가 current_wp와 next_wp를 WP-HO-000으로 표시한다."
-        context_budget:
-          tier_reads:
-            - "memory/current-wp.yaml"
-            - "memory/next-actions.yaml"
-            - "memory/wp-queue.yaml"
-            - "memory/current-state.yaml"
-          context_reads:
-            - "requirements/harness-engineering.yaml"
-            - "requirements/validation-profiles.yaml"
-            - "docs/harness/CONTINUOUS_PROMPT.md"
-            - "docs/explanation/ai-harness-upgrade-plan.md"
-          estimated_turns: 1
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-HO-001"
-        goal: "context drift 복구 자동화 — wp:context-drift 기본 입력 결함 수정과 최신 context lock 재생성"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS — check_context_drift.py 기본 latest context-lock 입력 추가, context lock JSON output footgun 방지, drift clean 재생성, smoke regression 통과"
-        tier: "infra"
-        depends_on:
-          - "WP-HO-000"
-        covers_capability: "handoff-context-drift-recovery"
-        validation:
-          - "npm run wp:context-drift"
-          - "npm run wp:context-lock"
-          - "npm run project:status"
-        deliverables:
-          - "package.json: wp:context-drift 기본 input 연결"
-          - "scripts/check_context_drift.py 또는 wrapper: latest context-lock 기본값"
-          - "artifacts/promotion-pipeline/latest/context-lock.json: refreshed handoff baseline"
-        success_criteria:
-          - "npm run wp:context-drift가 별도 인자 없이 실행된다."
-          - "drift 발생 시 reread_first가 출력된다."
-          - "context lock 재생성 후 drift_status가 clean으로 회복 가능하다."
-        context_budget:
-          tier_reads:
-            - "package.json"
-            - "scripts/check_context_drift.py"
-            - "artifacts/promotion-pipeline/latest/context-lock.json"
-          context_reads:
-            - "scripts/export_context_lock.py"
-            - "scripts/wp_scheduler.py"
-          estimated_turns: 2
-          max_new_files: 0
-          max_modified_files: 3
-      - id: "WP-HO-002"
-        goal: "표준 handoff bundle 계약 강화 — intake, scope, validation, rollback, next packet을 단일 bundle에 포함"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS_WITH_RESIDUAL — handoff bundle에 intake/scope/validation_profile/rollback_plan/next_action 추가, replay actor? 문구 제거, targeted smoke/contract/lint/type/composition PASS. Global e2e-smoke는 84/92 PASS로 기존 광역 smoke 실패 8건이 남음."
-        tier: "arch"
-        depends_on:
-          - "WP-HO-001"
-        covers_capability: "handoff-bundle-contract"
-        validation:
-          - "npm run wp:handoff-bundle -- --json"
-          - "npm run validate:contracts"
-          - "npm run test:e2e-smoke"
-        deliverables:
-          - "scripts/compose_handoff_bundle.py: required handoff sections"
-          - "contracts/harness/output.schema.json: handoff output alignment"
-          - "src/tests/smoke/composeHandoffBundle.smoke.test.js: regression coverage"
-        success_criteria:
-          - "handoff bundle 하나로 다음 에이전트가 read_first, constraints, validation, rollback, next_action을 복구한다."
-          - "completed packet에서 생성된 replay_next_packet 문구가 불완전하지 않다."
-        context_budget:
-          tier_reads:
-            - "scripts/compose_handoff_bundle.py"
-            - "contracts/harness/output.schema.json"
-            - "src/tests/smoke/composeHandoffBundle.smoke.test.js"
-          context_reads:
-            - "scripts/export_context_bundle.py"
-            - "scripts/check_planning_fit.py"
-            - "scripts/generate_replay_packet.py"
-          estimated_turns: 3
-          max_new_files: 1
-          max_modified_files: 4
-      - id: "WP-HO-003"
-        goal: "Intake Packet 강제 진입점 정렬 — 모든 운영 surface가 6필드 intake를 같은 이름으로 표시"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS — session:bootstrap/operator:cockpit에 intake_packet 6필드 값을 노출하고 smoke/requirements/lint/composition/governance/contract 검증 통과"
-        tier: "governance"
-        depends_on:
-          - "WP-HO-002"
-        covers_capability: "handoff-intake-first"
-        validation:
-          - "npm run validate:requirements"
-          - "npm run session:bootstrap"
-          - "npm run operator:cockpit"
-        deliverables:
-          - "requirements/harness-engineering.yaml: intake policy source"
-          - "docs/harness/CONTINUOUS_PROMPT.md: operator-facing sequence"
-          - "docs/how-to/repeatable-cli-master-prompt.md: short prompt contract"
-        success_criteria:
-          - "goal/context/constraints/done_when/work_mode/verification 명칭이 문서와 bootstrap에서 일치한다."
-          - "자유 형식 요청도 intake packet으로 변환하는 절차가 명확하다."
-        context_budget:
-          tier_reads:
-            - "requirements/harness-engineering.yaml"
-            - "docs/harness/CONTINUOUS_PROMPT.md"
-            - "docs/how-to/repeatable-cli-master-prompt.md"
-          context_reads:
-            - "scripts/session_bootstrap.js"
-            - "scripts/operator_cockpit.js"
-          estimated_turns: 2
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-004"
-        goal: "Execution Packet 스키마 분리 — 실행 전 payload를 기계 검증 가능한 계약으로 고정"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS_WITH_RESIDUAL — contracts/harness/execution-packet.schema.json 추가, validate-harness-contract에 execution packet schema/golden 검증 연결, harness contract smoke/validate:contracts/lint PASS. test:mpo는 mpoExecutionContracts 장기 실행 residual로 WP-HO-005에서 계속 정리"
-        tier: "arch"
-        depends_on:
-          - "WP-HO-003"
-        covers_capability: "handoff-execution-packet-contract"
-        validation:
-          - "node scripts/validate-harness-contract.js"
-          - "npm run validate:contracts"
-          - "npm run test:mpo"
-        deliverables:
-          - "contracts/harness/execution-packet.schema.json"
-          - "scripts/validate-harness-contract.js: execution packet validation"
-          - "evals/golden/harness-core.jsonl: execution packet cases"
-        success_criteria:
-          - "실행 전 packet에 goal, scope, context_lock, validation_profile, rollback_plan이 모두 존재한다."
-          - "누락된 실행 필드는 validator에서 실패한다."
-        context_budget:
-          tier_reads:
-            - "contracts/harness/"
-            - "scripts/validate-harness-contract.js"
-            - "evals/golden/harness-core.jsonl"
-          context_reads:
-            - "requirements/harness-engineering.yaml"
-            - "src/tests/unit/mpoExecutionContracts.test.js"
-          estimated_turns: 3
-          max_new_files: 1
-          max_modified_files: 4
-      - id: "WP-HO-005"
-        goal: "Completion Report truthfulness 강화 — evidence 없는 PASS와 미실행 테스트 PASS 표기 차단"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS — completion report PASS truthfulness가 evidence/tests_run 없이는 실패하고, NOT_RUN tests_run 오표기가 계약 계층에서 거부되며, npm run test:mpo PASS"
-        tier: "arch"
-        depends_on:
-          - "WP-HO-004"
-        covers_capability: "handoff-completion-truthfulness"
-        validation:
-          - "npm run commit:guard:verify"
-          - "npm run test:mpo"
-          - "npm run validate:contracts"
-        deliverables:
-          - "contracts/harness/completion-report.schema.json: strict evidence fields"
-          - "scripts/validate-completion-report.js: PASS/evidence consistency checks"
-          - "scripts/wp-complete.js: strict report generation"
-        success_criteria:
-          - "verification_status=PASS이면 tests_run과 evidence가 실제 경로를 가진다."
-          - "실행하지 않은 검증은 tests_planned 또는 NOT_RUN으로만 기록된다."
-        context_budget:
-          tier_reads:
-            - "contracts/harness/completion-report.schema.json"
-            - "scripts/validate-completion-report.js"
-            - "scripts/wp-complete.js"
-          context_reads:
-            - "src/tests/unit/mpoExecutionContracts.test.js"
-            - "src/tests/unit/mpoBehavioralSecurityEval.test.js"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-006"
-        goal: "validation profile을 handoff 필수 필드로 연결 — WP type/stage별 검증 묶음이 bundle에 포함"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS_WITH_RESIDUAL — validation profile handoff_contract/required pass_criteria를 resolver와 handoff bundle에 동시 노출, resolver CLI/validation profile smoke/handoff bundle smoke/requirements PASS. full test:e2e-smoke는 83/92 PASS로 WP-HO-007 gate-first-pass에서 계속 정리"
-        tier: "infra"
-        depends_on:
-          - "WP-HO-005"
-        covers_capability: "handoff-validation-profile-binding"
-        validation:
-          - "node scripts/resolve_validation_profile.js --json"
-          - "npm run validate:requirements"
-          - "npm run test:e2e-smoke"
-        deliverables:
-          - "requirements/validation-profiles.yaml: handoff profile notes"
-          - "scripts/resolve_validation_profile.js: bundle-ready required/optional output"
-          - "handoff bundle: validation_profile section"
-        success_criteria:
-          - "handoff bundle에 required/optional validation command와 pass criteria가 포함된다."
-          - "stage override와 packet.validation이 중복 없이 병합된다."
-        context_budget:
-          tier_reads:
-            - "requirements/validation-profiles.yaml"
-            - "scripts/resolve_validation_profile.js"
-          context_reads:
-            - "scripts/compose_handoff_bundle.py"
-            - "src/tests/smoke/validationProfiles.smoke.test.js"
-          estimated_turns: 2
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-HO-007"
-        goal: "gate first pass rate 개선 — 실패 원인 top 3를 사전 체크와 handoff 경고로 이동"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS — failure-patterns registry에 e2e residual top 3를 구조화하고 harness dashboard/commit guard가 actionable preflight warnings를 노출. harness:dashboard:json/wp:health/commit:guard:verify PASS"
-        tier: "governance"
-        depends_on:
-          - "WP-HO-006"
-        covers_capability: "handoff-gate-first-pass-rate"
-        validation:
-          - "npm run harness:dashboard:json"
-          - "npm run wp:health"
-          - "npm run commit:guard:verify"
-        deliverables:
-          - "memory/L0-hot/failure-patterns.yaml: recurring gate failures"
-          - "scripts/harness-dashboard.js: actionable failure summary"
-          - "commit guard or bootstrap: preflight warnings"
-        success_criteria:
-          - "gate_first_pass_rate FAIL 원인이 handoff 전 경고로 드러난다."
-          - "operator가 어떤 사전 검증을 먼저 실행할지 알 수 있다."
-        context_budget:
-          tier_reads:
-            - "scripts/harness-dashboard.js"
-            - "memory/L0-hot/failure-patterns.yaml"
-            - "scripts/verified_auto_commit_guard.js"
-          context_reads:
-            - "scripts/session_metrics.py"
-            - "artifacts/evals/harness/latest/harness-dashboard.json"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-008"
-        goal: "context budget 과다 방지 — read_later 대용량 문맥을 기본 제외하고 예외 승인 경로로 분리"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS_WITH_RESIDUAL — context bundle/planning fit/handoff bundle에 active/deferred token risk와 read_later 승인 예외 경로를 추가, targeted smoke와 wp export/check-fit PASS. full test:e2e-smoke residual 83/92는 WP-HO-007 preflight warning으로 노출 유지"
-        tier: "infra"
-        depends_on:
-          - "WP-HO-007"
-        covers_capability: "handoff-context-budget-guard"
-        validation:
-          - "npm run wp:export-context -- --json"
-          - "npm run wp:check-fit -- --json"
-          - "npm run test:e2e-smoke"
-        deliverables:
-          - "scripts/export_context_bundle.py: token risk thresholds"
-          - "scripts/check_planning_fit.py: budget risk guidance"
-          - "routing profiles: read_later exception policy"
-        success_criteria:
-          - "handoff 기본 문맥은 read_first/read_next 중심으로 유지된다."
-          - "대용량 domains/worklog/artifacts 읽기는 명시적 예외로만 승격된다."
-        context_budget:
-          tier_reads:
-            - "scripts/export_context_bundle.py"
-            - "scripts/check_planning_fit.py"
-            - "master-shell/catalog/context-routing-profiles.yaml"
-          context_reads:
-            - "master-shell/catalog/adapter-compatibility-matrix.yaml"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-HO-009"
-        goal: "Master UI handoff lane 추가 — 현재 WP, drift, next action, evidence 상태를 첫 화면에 표시"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS_WITH_RESIDUAL — artifacts/index.html 첫 화면 hero side에 Handoff Lane(current/next WP, drift, validation, evidence, next command)을 추가하고 staticUiHome/ui:build/validate:composition PASS. full test:e2e-smoke는 기존 residual 83/92 유지"
-        tier: "arch"
-        depends_on:
-          - "WP-HO-008"
-        covers_capability: "handoff-master-ui-lane"
-        validation:
-          - "npm run ui:build"
-          - "npm run validate:composition"
-          - "npm run test:e2e-smoke"
-        deliverables:
-          - "scripts/generate-ui-home.js: handoff lane render"
-          - "artifacts/index.html: generated handoff status"
-          - "src/tests/smoke/staticUiHome.smoke.test.js: regression"
-        success_criteria:
-          - "첫 화면에서 current WP, next WP, drift status, validation state가 보인다."
-          - "빈 보드처럼 보이지 않고 다음 액션이 명확하다."
-        context_budget:
-          tier_reads:
-            - "scripts/generate-ui-home.js"
-            - "src/tests/smoke/staticUiHome.smoke.test.js"
-          context_reads:
-            - "master-shell/navigation/nav.yaml"
-          read_later:
-            - "artifacts/home-data.json"
-            - "artifacts/index.html"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-010"
-        goal: "Operator Cockpit을 handoff 관제면으로 승격 — bootstrap/status/drift/guard 결과를 한 번에 표시"
-        status: "done"
-        completed_at: "2026-04-23"
-        result: "PASS — session bootstrap/operator cockpit 공통 handoff_summary(current/next/drift/validation/evidence/next command)를 추가하고 repeatable CLI 문서에 cockpit-first handoff flow 반영. operator:cockpit/session:bootstrap/project:status PASS"
-        tier: "governance"
-        depends_on:
-          - "WP-HO-009"
-        covers_capability: "handoff-operator-cockpit"
-        validation:
-          - "npm run operator:cockpit"
-          - "npm run session:bootstrap"
-          - "npm run project:status"
-        deliverables:
-          - "scripts/operator_cockpit.js: handoff summary section"
-          - "scripts/session_bootstrap.js: cockpit-compatible fields"
-          - "docs/how-to/repeatable-cli-master-prompt.md: cockpit flow"
-        success_criteria:
-          - "operator cockpit 하나로 current, next, drift, validation, guard 상태를 읽는다."
-          - "후속 작업자가 어떤 명령을 먼저 실행할지 명확하다."
-        context_budget:
-          tier_reads:
-            - "scripts/operator_cockpit.js"
-            - "scripts/session_bootstrap.js"
-            - "docs/how-to/repeatable-cli-master-prompt.md"
-          context_reads:
-            - "scripts/project_status.js"
-            - "scripts/verified_auto_commit_guard.js"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-011"
-        goal: "replay packet 품질 개선 — 불완전한 다음 WP 추천 문구 제거와 audit signal 정규화"
-        status: "done"
-        tier: "infra"
-        depends_on:
-          - "WP-HO-010"
-        covers_capability: "handoff-replay-quality"
-        validation:
-          - "npm run wp:replay-packet -- --json"
-          - "npm run wp:handoff-bundle -- --json"
-          - "npm run test:e2e-smoke"
-        deliverables:
-          - "scripts/generate_replay_packet.py: stable goal generation"
-          - "scripts/generate_routing_learning_ledger.py: reusable signal"
-          - "handoff bundle replay_next_packet: clean goal/type/stage"
-        success_criteria:
-          - "replay_next_packet.goal에 불완전한 actor/hash 문구가 남지 않는다."
-          - "완료된 packet 다음 추천이 actionable WP 초안으로 생성된다."
-        context_budget:
-          tier_reads:
-            - "scripts/generate_replay_packet.py"
-            - "scripts/generate_routing_learning_ledger.py"
-            - "artifacts/promotion-pipeline/latest/handoff-bundle.json"
-          context_reads:
-            - "worklog/audit-chain.jsonl"
-            - "master-shell/observability/timeline.jsonl"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 4
-        result: "PASS — replay_next_packet 생성, actor/hash 문구 정제, audit_signals 노출, lint 0 warnings"
-      - id: "WP-HO-012"
-        goal: "promotion pipeline과 handoff bundle 연결 — promotion 결과가 handoff bundle path와 evidence status를 포함"
-        status: "done"
-        tier: "governance"
-        depends_on:
-          - "WP-HO-011"
-        covers_capability: "handoff-promotion-link"
-        validation:
-          - "npm run wp:promote-pipeline"
-          - "npm run wp:promotion-decision"
-          - "npm run project:status"
-        deliverables:
-          - "scripts/run_promotion_pipeline.py: handoff bundle output linkage"
-          - "artifacts/promotion-pipeline/latest/pipeline-report.json: handoff metadata"
-          - "artifacts/promotion-pipeline/latest/handoff-bundle.json: generated current bundle"
-        success_criteria:
-          - "pipeline report가 handoff bundle 경로와 drift/evidence 상태를 제공한다."
-          - "promotion ready 판단과 handoff ready 판단이 충돌하지 않는다."
-        context_budget:
-          tier_reads:
-            - "scripts/run_promotion_pipeline.py"
-            - "scripts/generate_promotion_decision.py"
-            - "artifacts/promotion-pipeline/latest/pipeline-report.json"
-          context_reads:
-            - "scripts/compose_handoff_bundle.py"
-            - "scripts/export_context_lock.py"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-HO-013"
-        goal: "memory 원자 갱신 보장 — current-state/current-wp/next-actions가 같은 완료 시점으로 갱신"
-        status: "pending"
-        tier: "infra"
-        depends_on:
-          - "WP-HO-012"
-        covers_capability: "handoff-memory-atomicity"
-        validation:
-          - "npm run session:end"
-          - "npm run wp:reconcile"
-          - "npm run project:status"
-        deliverables:
-          - "scripts/session_end.py: atomic memory update checks"
-          - "scripts/generate_apply_checkpoint.py: next state consistency"
-          - "memory schema docs: update ordering"
-        success_criteria:
-          - "완료 시 current-state, current-wp, next-actions가 서로 다른 WP를 가리키지 않는다."
-          - "원자성 실패 시 완료 선언이 차단된다."
-        context_budget:
-          tier_reads:
-            - "scripts/session_end.py"
-            - "scripts/generate_apply_checkpoint.py"
-            - "memory/current-state.yaml"
-            - "memory/current-wp.yaml"
-            - "memory/next-actions.yaml"
-          context_reads:
-            - "docs/reference/memory-schema.md"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-014"
-        goal: "Worklog 증적 템플릿 통합 — 모든 WP 완료 기록이 같은 evidence 필드를 사용"
-        status: "pending"
-        tier: "meta"
-        depends_on:
-          - "WP-HO-013"
-        covers_capability: "handoff-worklog-evidence"
-        validation:
-          - "npm run validate:requirements"
-          - "npm run wp:reconcile"
-          - "npm run commit:guard:verify"
-        deliverables:
-          - "templates/worklog-template.md: handoff evidence fields"
-          - "templates/review-template.md: verification/risk fields"
-          - "worklog template docs: completion report linkage"
-        success_criteria:
-          - "worklog, completion report, handoff bundle이 같은 evidence vocabulary를 사용한다."
-          - "검증 미실행 항목은 planned/not_run으로 구분된다."
-        context_budget:
-          tier_reads:
-            - "templates/worklog-template.md"
-            - "templates/review-template.md"
-            - "contracts/harness/completion-report.schema.json"
-          context_reads:
-            - "worklog/reports/"
-          estimated_turns: 2
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-HO-015"
-        goal: "보안/권한 handoff gate — tool abuse, prompt injection, data exfiltration 체크를 handoff에 포함"
-        status: "pending"
-        tier: "governance"
-        depends_on:
-          - "WP-HO-014"
-        covers_capability: "handoff-security-gate"
-        validation:
-          - "npm run check:advisory-policy"
-          - "npm run test:e2e-smoke"
-          - "node scripts/validate-harness-contract.js"
-        deliverables:
-          - "security/policies/trust-boundary.yaml: handoff trust boundary refs"
-          - "security/redteam/owasp-core.yaml: required attack mapping"
-          - "handoff bundle: security_review section"
-        success_criteria:
-          - "위험 작업 handoff에 trust boundary와 required attacks가 표시된다."
-          - "미확인 보안 상태는 PASS가 아니라 not_observed로 남는다."
-        context_budget:
-          tier_reads:
-            - "security/policies/trust-boundary.yaml"
-            - "security/redteam/owasp-core.yaml"
-            - "requirements/harness-engineering.yaml"
-          context_reads:
-            - "src/tests/unit/mpoBehavioralSecurityEval.test.js"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-HO-016"
-        goal: "AI provider handoff 표준화 — provider/model/mode/fallback/token 사용량을 completion report에 고정"
-        status: "pending"
-        tier: "arch"
-        depends_on:
-          - "WP-HO-015"
-        covers_capability: "handoff-provider-observability"
-        validation:
-          - "npm run test:mpo"
-          - "npm run harness:dashboard:json"
-          - "npm run validate:contracts"
-        deliverables:
-          - "src/infrastructure/ai/HarnessProviderAdapter.js: provider metadata"
-          - "src/infrastructure/ai/OpenAIResponsesProvider.js: usage mapping"
-          - "contracts/harness/provider-adapter.yaml: handoff metadata contract"
-        success_criteria:
-          - "completion report가 provider_id, route_id, selected_model_tier, fallback_applied, token_usage를 일관되게 담는다."
-          - "Null provider fallback도 handoff에서 명확히 구분된다."
-        context_budget:
-          tier_reads:
-            - "src/infrastructure/ai/HarnessProviderAdapter.js"
-            - "src/infrastructure/ai/OpenAIResponsesProvider.js"
-            - "src/infrastructure/ai/NullHarnessProvider.js"
-            - "contracts/harness/provider-adapter.yaml"
-          context_reads:
-            - "src/tests/unit/harnessProviderAdapter.test.js"
-            - "src/tests/unit/openAiResponsesProvider.test.js"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 6
-      - id: "WP-HO-017"
-        goal: "도메인 작업용 handoff preset — billing/video/task 작업이 같은 domain handoff 형식을 사용"
-        status: "pending"
-        tier: "domain"
-        depends_on:
-          - "WP-HO-016"
-        covers_capability: "handoff-domain-preset"
-        validation:
-          - "npm run test:contract"
-          - "npm test"
-          - "npm run test:integration"
-        deliverables:
-          - "templates/domain-app-template/README.md: domain handoff preset"
-          - "requirements/DOMAIN_TEMPLATE.yaml: handoff fields"
-          - "docs/reference/capability-contract-reference.md: preset linkage"
-        success_criteria:
-          - "도메인 변경 handoff가 requirements, contracts, ports, tests, worklog를 같은 순서로 요구한다."
-          - "기존 billing/video/task 계약 검증이 회귀하지 않는다."
-        context_budget:
-          tier_reads:
-            - "templates/domain-app-template/README.md"
-            - "requirements/DOMAIN_TEMPLATE.yaml"
-            - "docs/reference/capability-contract-reference.md"
-          context_reads:
-            - "domains/billing/contracts/"
-            - "domains/video/contract/"
-            - "domains/productivity/task-tracking/contract/"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-018"
-        goal: "배포/운영 handoff preset — 원격 증적과 operator-collected 항목을 명시적으로 분리"
-        status: "pending"
-        tier: "governance"
-        depends_on:
-          - "WP-HO-017"
-        covers_capability: "handoff-operations-preset"
-        validation:
-          - "npm run check:deployment-environment-provisioning"
-          - "npm run smoke:deployment"
-          - "npm run generate:deployment-environment-audit-template"
-        deliverables:
-          - "master-shell/operations/deployment-environment-provisioning.yaml: handoff refs"
-          - "docs/release-checklist.md: operator evidence handoff"
-          - "artifacts/deployment-smoke/environment-provisioning-audit-template.json: generated template"
-        success_criteria:
-          - "저장소가 보장하는 증적과 운영자가 수집해야 하는 원격 증적이 분리되어 표시된다."
-          - "확인 불가 원격 상태는 observed로 표기되지 않는다."
-        context_budget:
-          tier_reads:
-            - "master-shell/operations/deployment-environment-provisioning.yaml"
-            - "docs/release-checklist.md"
-            - "scripts/generate_deployment_environment_audit_template.py"
-          context_reads:
-            - "artifacts/deployment-smoke/"
-            - "scripts/run_deployment_smoke.js"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 4
-      - id: "WP-HO-019"
-        goal: "최종 release evidence 생성 — handoff v1.0 기준선 artifact와 provenance 생성"
-        status: "pending"
-        tier: "governance"
-        depends_on:
-          - "WP-HO-018"
-        covers_capability: "handoff-release-evidence"
-        validation:
-          - "npm run generate:release-evidence"
-          - "npm run verify:provenance"
-          - "npm run audit:verify"
-        deliverables:
-          - "artifacts/release-evidence/release-evidence.json: handoff baseline evidence"
-          - "artifacts/provenance/workflow-os-provenance.json: updated provenance"
-          - "worklog/release-notes.md: handoff v1.0 summary"
-        success_criteria:
-          - "handoff operating loop v1.0 기준선이 release evidence에 남는다."
-          - "provenance와 audit chain 검증이 통과한다."
-        context_budget:
-          tier_reads:
-            - "scripts/generate_release_evidence.py"
-            - "scripts/verify_provenance.py"
-            - "scripts/audit-chain.js"
-          context_reads:
-            - "artifacts/release-evidence/"
-            - "artifacts/provenance/"
-            - "worklog/release-notes.md"
-          estimated_turns: 3
-          max_new_files: 0
-          max_modified_files: 5
-      - id: "WP-HO-020"
-        goal: "SPIRAL-20 closure — handoff loop 검증, memory/worklog 정리, 다음 Spiral 후보 산출"
-        status: "pending"
-        tier: "meta"
-        depends_on:
-          - "WP-HO-019"
-        covers_capability:
-          - "handoff-spiral-closure"
-          - "handoff-operating-loop"
-        validation:
-          - "npm run session:bootstrap"
-          - "npm run project:status"
-          - "npm run wp:gaps"
-          - "npm run wp:health"
-          - "npm run harness:dashboard:json"
-          - "npm run commit:guard:verify"
-        deliverables:
-          - "memory/current-state.yaml: handoff capability status"
-          - "memory/current-wp.yaml: SPIRAL-20 completed state"
-          - "memory/next-actions.yaml: next Spiral candidate"
-          - "worklog/2026-04-23_WP-HO-020.yaml: closure evidence"
-        success_criteria:
-          - "handoff loop의 current, next, drift, validation, evidence 상태가 모든 운영 surface에서 일치한다."
-          - "다음 작업자가 짧은 프롬프트 하나로 이어받을 수 있다."
-        context_budget:
-          tier_reads:
-            - "memory/current-state.yaml"
-            - "memory/current-wp.yaml"
-            - "memory/next-actions.yaml"
-            - "memory/wp-queue.yaml"
-          context_reads:
-            - "worklog/"
-            - "artifacts/release-evidence/"
-          estimated_turns: 2
-          max_new_files: 1
-          max_modified_files: 4
+- id: CAP-01
+  name: Operating model alignment
+  priority: 1
+  work_packets:
+  - id: WP-2026-03-19-01
+    goal: requirements schema와 validator를 실제 requirements.yaml 구조에 맞게 정렬한다
+    status: done
+    tier: infra
+    depends_on: []
+    completed_at: '2026-03-19'
+    result: PASS — validate:requirements가 실제 구조/경로/gate baseline 검증으로 전환됐다.
+  - id: WP-2026-03-19-02
+    goal: CLAUDE.md와 핵심 운영 문서를 Work Packet 사이클 모델로 정렬한다
+    status: done
+    tier: infra
+    depends_on: []
+    completed_at: '2026-03-19'
+    result: PASS — auto-loaded protocol, README, memory schema가 Work Packet 모델과 현재
+      상태에 맞게 정렬됐다.
+  - id: WP-2026-03-19-03
+    goal: requirements validation을 CI와 stage entry documentation에 연결한다
+    status: done
+    tier: governance
+    depends_on:
+    - WP-2026-03-19-01
+    completed_at: '2026-03-19'
+    result: PASS — GitHub Actions workflow와 Stage A how-to가 real requirements validator를
+      가리킨다.
+- id: CAP-02
+  name: Session memory normalization
+  priority: 2
+  work_packets:
+  - id: WP-2026-03-19-04
+    goal: root memory files와 legacy memory/project files의 역할을 정리하고 bridge 규칙을 고정한다
+    status: done
+    tier: infra
+    depends_on: []
+    completed_at: '2026-03-19'
+    result: PASS — root memory is now the canonical session surface, key docs use
+      explicit legacy fallback wording.
+- id: CAP-03
+  name: Stage executor truthfulness
+  priority: 3
+  work_packets:
+  - id: WP-2026-03-19-05
+    goal: echo-only stage scripts를 status/dry-run 가능한 실행기로 교체한다
+    status: done
+    tier: arch
+    depends_on:
+    - WP-2026-03-19-01
+    completed_at: '2026-03-19'
+    result: PASS — stage:a~stage:e now return truthful JSON dry-run status.
+  - id: WP-2026-03-19-06
+    goal: project status runner를 추가해 stage A-E 상태를 구조화 출력한다
+    status: done
+    tier: arch
+    depends_on:
+    - WP-2026-03-19-05
+    completed_at: '2026-03-19'
+    result: PASS — npm run project:status now returns structured Stage A-E route status.
+- id: CAP-04
+  name: Runtime smoke coverage
+  priority: 4
+  work_packets:
+  - id: WP-2026-03-19-07
+    goal: controller-level smoke 다음 단계인 실제 server wiring smoke 기준선을 만든다
+    status: done
+    tier: domain
+    depends_on: []
+    completed_at: '2026-03-19'
+    result: PASS — test:e2e-smoke now includes a real HTTP server wiring smoke.
+- id: CAP-05
+  name: Governance automation
+  priority: 5
+  work_packets:
+  - id: WP-2026-03-19-08
+    goal: 기존 quality gate를 실행하는 GitHub Actions workflow를 추가한다
+    status: done
+    tier: governance
+    depends_on:
+    - WP-2026-03-19-03
+    completed_at: '2026-03-19'
+    result: PASS — quality-gates.yml now automates implemented local gates in GitHub
+      Actions.
+- id: CAP-06
+  name: Repository truthfulness
+  priority: 6
+  work_packets:
+  - id: WP-2026-03-19-09
+    goal: HOW_TO_USE와 남은 legacy how-to/reference 문서를 Work Packet 운영 모델로 정렬한다
+    status: done
+    tier: infra
+    depends_on:
+    - WP-2026-03-19-02
+    completed_at: '2026-03-19'
+    result: PASS — HOW_TO_USE no longer tells operators to drive the repo with legacy
+      autopilot commands.
+- id: CAP-07
+  name: Domain onboarding
+  priority: 7
+  work_packets:
+  - id: WP-2026-03-19-10
+    goal: video 도메인 Stage A 청사진과 리스크 프로파일을 작성한다
+    covers_capability: video-domain-stage-a
+    status: done
+    completed_at: '2026-03-19'
+    result: 'PASS — memory/stageA/video.yaml: 6개 ubiquitous language, 2개 aggregate,
+      INV-V001~V005, 5개 risk profile, permissions 3-tier, NFR 정의 완료.'
+    tier: domain
+    depends_on: []
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - requirements/requirements.yaml
+      - requirements/domain-map.yaml
+      - requirements/DOMAIN_TEMPLATE.yaml
+      skip_if_capability: []
+      estimated_turns: 3
+      max_new_files: 3
+      max_modified_files: 2
+- id: CAP-08
+  name: Architecture v2 — DAG scheduler + Context Budget
+  priority: 1
+  work_packets:
+  - id: WP-ARCH-001
+    goal: DAG 스케줄러, context budget 시스템, requirements gap 검출기, session health 메트릭을
+      설치한다
+    status: done
+    tier: arch
+    depends_on: []
+    completed_at: '2026-03-19'
+    result: PASS — wp_scheduler.py, requirements_gap.py, session_metrics.py 구현 완료.
+      wp-queue.yaml v2 DAG 스키마로 업그레이드. CLAUDE.md context budget 규칙 추가.
+  - id: WP-ARCH-002
+    goal: wp-queue.yaml CI 자동 검증 — DAG 무결성 게이트를 quality-gates.yml에 추가한다
+    status: done
+    tier: governance
+    depends_on:
+    - WP-ARCH-001
+    completed_at: '2026-03-20'
+    result: PASS — quality-gates.yml correctness job now runs npm run wp:validate
+      on pull_request and main push.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - .github/workflows/quality-gates.yml
+      - scripts/wp_scheduler.py
+      skip_if_capability: []
+      estimated_turns: 2
+      max_new_files: 0
+      max_modified_files: 2
+  - id: WP-ARCH-003
+    goal: desired_state와 actual capabilities 간 자동 reconciliation 스크립트를 구현한다
+    covers_capability: desired-state-reconciliation
+    status: done
+    tier: arch
+    depends_on:
+    - WP-ARCH-001
+    completed_at: '2026-03-19'
+    result: 'PASS — reconcile_state.py: Satisfied=3, Scheduled=5, Uncovered=0. covers_capability
+      필드로 명시적 WP↔capability 매핑 확립.'
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-state.yaml
+      context_reads:
+      - scripts/requirements_gap.py
+      - memory/wp-queue.yaml
+      skip_if_capability: []
+      estimated_turns: 3
+      max_new_files: 1
+      max_modified_files: 3
+- id: CAP-09
+  name: Governance v2 — Release Evidence Automation
+  priority: 8
+  work_packets:
+  - id: WP-GOV-001
+    goal: release evidence 생성을 GitHub Actions에 통합해 KI-EVIDENCE-001을 해소한다
+    covers_capability: release-evidence-automation
+    status: done
+    tier: governance
+    depends_on:
+    - WP-ARCH-001
+    completed_at: '2026-03-20'
+    result: PASS — release-evidence.yml now generates SBOM, provenance, release evidence,
+      and uploads artifacts in GitHub Actions.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-state.yaml
+      context_reads:
+      - .github/workflows/quality-gates.yml
+      - scripts/generate_release_evidence.py
+      - artifacts/release-evidence/release-evidence.json
+      skip_if_capability:
+      - release-evidence-automation
+      estimated_turns: 3
+      max_new_files: 1
+      max_modified_files: 3
+  - id: WP-GOV-002
+    goal: branch protection 정책 검증을 CI에 자동 추가한다
+    covers_capability: branch-protection-ci
+    status: done
+    tier: governance
+    depends_on:
+    - WP-GOV-001
+    completed_at: '2026-03-20'
+    result: PASS — quality-gates.yml now runs check:branch-protection-policy and governance
+      docs describe the repository-vs-remote enforcement boundary.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      context_reads:
+      - .github/workflows/quality-gates.yml
+      - scripts/validate_branch_protection_policy.py
+      skip_if_capability: []
+      estimated_turns: 2
+      max_new_files: 0
+      max_modified_files: 1
+- id: CAP-10
+  name: Domain Expansion — Billing + Cross-Domain
+  priority: 9
+  work_packets:
+  - id: WP-DOM-001
+    goal: billing 도메인 계약 파일(openapi, events, capability)을 Stage A 수준으로 완성한다
+    covers_capability: billing-domain-contracts
+    status: done
+    tier: domain
+    depends_on:
+    - WP-2026-03-19-10
+    completed_at: '2026-03-20'
+    result: PASS — billing domain already contains openapi, capability, events, and
+      ui contracts aligned to contract drift validation.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - domains/billing/contracts/
+      - domains/productivity/task-tracking/contract/
+      - requirements/DOMAIN_TEMPLATE.yaml
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 4
+      max_modified_files: 2
+  - id: WP-DOM-002
+    goal: cross-domain event bus 계약을 정의하고 contract drift 검증에 연결한다
+    covers_capability: cross-domain-event-bus
+    status: done
+    tier: domain
+    depends_on:
+    - WP-DOM-001
+    - WP-2026-03-19-10
+    completed_at: '2026-03-20'
+    result: PASS — central event registry, CloudEvents envelope, and produced_by paths
+      are now enforced by test:contract.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - domains/productivity/task-tracking/contract/events.schema.json
+      - domains/billing/contracts/
+      - scripts/validate_contract_drift.py
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 2
+      max_modified_files: 3
+- id: CAP-12
+  name: Production Readiness — Event / Error / Feature Flag
+  priority: 11
+  work_packets:
+  - id: WP-ERR-001
+    goal: RFC 7807 Problem Details 에러 응답 표준을 모든 컨트롤러에 적용한다
+    covers_capability: rfc7807-error-standard
+    status: done
+    tier: domain
+    depends_on: []
+    completed_at: '2026-03-20'
+    result: PASS — ProblemDetails helper and controller error responses are already
+      wired and validated by repository tests.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - domains/productivity/task-tracking/src/interface/TaskController.js
+      - domains/billing/src/interface/BillingController.js
+      - domains/productivity/task-tracking/contract/openapi.yaml
+      skip_if_capability: []
+      estimated_turns: 3
+      max_new_files: 2
+      max_modified_files: 4
+  - id: WP-FLAG-001
+    goal: OpenFeature 패턴으로 Feature Flag 런타임 평가를 서버 wiring에 추가한다
+    covers_capability: feature-flag-runtime
+    status: done
+    tier: domain
+    depends_on:
+    - WP-ERR-001
+    completed_at: '2026-03-20'
+    result: PASS — FeatureFlagProvider is active in server wiring and the flag-off
+      path is covered by e2e smoke.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - master-shell/flags.yaml
+      - src/server/
+      - src/index.js
+      skip_if_capability: []
+      estimated_turns: 3
+      max_new_files: 2
+      max_modified_files: 3
+  - id: WP-EVT-001
+    goal: Transactional Outbox 패턴으로 도메인 이벤트 발행을 보장한다
+    covers_capability: event-publishing
+    status: done
+    tier: domain
+    depends_on:
+    - WP-ERR-001
+    - WP-DOM-002
+    completed_at: '2026-03-20'
+    result: PASS — EventPublisher port, InMemory adapter, Outbox adapter stub, and
+      CreateTaskUseCase event publication are present and tested.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - domains/productivity/task-tracking/src/application/CreateTaskUseCase.js
+      - domains/productivity/task-tracking/src/domain/entities/Task.js
+      - contracts/events/
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 3
+      max_modified_files: 4
+- id: CAP-13
+  name: Observability — OpenTelemetry Instrumentation
+  priority: 12
+  work_packets:
+  - id: WP-OBS-001
+    goal: OpenTelemetry SDK로 HTTP trace·메트릭·구조화 로그 최소 계측을 추가한다
+    covers_capability: opentelemetry-instrumentation
+    status: done
+    tier: domain
+    depends_on:
+    - WP-FLAG-001
+    completed_at: '2026-03-20'
+    result: PASS — telemetry.js and createServer emit structured logs and request
+      metrics with trace context.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - master-shell/config.yaml
+      - src/server/
+      - domains/productivity/task-tracking/src/interface/TaskController.js
+      - scripts/validate_operations.py
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 2
+      max_modified_files: 4
+- id: CAP-14
+  name: Persistence — SQLite Repository Adapter
+  priority: 13
+  work_packets:
+  - id: WP-PERSIST-001
+    goal: SQLite 기반 TaskRepository 어댑터와 스키마 마이그레이션을 추가한다
+    covers_capability: sqlite-persistence
+    status: done
+    tier: domain
+    depends_on:
+    - WP-EVT-001
+    completed_at: '2026-03-20'
+    result: PASS — SQLiteTaskRepository, schema.sql, migration script, and infrastructure
+      test now verify the persistence adapter.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - domains/productivity/task-tracking/src/infrastructure/
+      - domains/productivity/task-tracking/src/domain/entities/Task.js
+      skip_if_capability: []
+      estimated_turns: 5
+      max_new_files: 4
+      max_modified_files: 3
+- id: CAP-11
+  name: Meta — Self-Improvement Loop
+  priority: 10
+  work_packets:
+  - id: WP-META-001
+    goal: 세션 종료 시 자동으로 gap 검출 → 신규 WP 생성 → queue 갱신하는 자기개선 루프를 구현한다
+    covers_capability: self-improvement-loop
+    status: done
+    tier: meta
+    depends_on:
+    - WP-ARCH-001
+    - WP-ARCH-003
+    completed_at: '2026-03-20'
+    result: PASS — session:end runs gap detection, reconciliation, health reporting,
+      and surfaces ready WPs automatically.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-state.yaml
+      - memory/wp-queue.yaml
+      context_reads:
+      - scripts/requirements_gap.py
+      - scripts/wp_scheduler.py
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 1
+      max_modified_files: 3
+- id: CAP-15
+  name: Hardening — Evidence / Runtime / Legacy Cleanup
+  priority: 2
+  work_packets:
+  - id: WP-EVID-001
+    goal: root current-state에 release summary를 추가해 release evidence의 legacy fallback을
+      제거한다
+    status: done
+    tier: arch
+    depends_on: []
+    completed_at: '2026-03-20'
+    result: PASS — release evidence now reads quality gate summary from root current-state
+      and no longer needs the legacy quality_gate_result field.
+    context_budget:
+      tier_reads:
+      - memory/current-state.yaml
+      - memory/checkpoint.yaml
+      context_reads:
+      - scripts/generate_release_evidence.py
+      - .github/workflows/release-evidence.yml
+      skip_if_capability: []
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 4
+  - id: WP-DOC-001
+    goal: legacy operator model이 남아 있는 template와 memory/project 문서를 root protocol과
+      정렬한다
+    status: done
+    tier: infra
+    depends_on: []
+    completed_at: '2026-03-20'
+    result: PASS — DOMAIN_TEMPLATE and memory/project files now declare root memory
+      as canonical and legacy surfaces as fallback-only.
+    context_budget:
+      tier_reads:
+      - memory/current-state.yaml
+      - memory/checkpoint.yaml
+      context_reads:
+      - requirements/DOMAIN_TEMPLATE.yaml
+      - memory/project/
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 1
+      max_modified_files: 5
+  - id: WP-RUN-001
+    goal: 배포 환경 수준 smoke 체크리스트와 executable baseline을 추가해 KI-RUN-001을 축소한다
+    status: done
+    tier: governance
+    depends_on: []
+    completed_at: '2026-03-20'
+    result: PASS — Stage E docs now distinguish in-repo smoke from deployment-environment
+      smoke and provide a truthful manual runtime checklist.
+    context_budget:
+      tier_reads:
+      - memory/current-state.yaml
+      - memory/checkpoint.yaml
+      context_reads:
+      - docs/how-to/run-stage-e.md
+      - src/tests/smoke/serverWiring.smoke.test.js
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 2
+      max_modified_files: 4
+  - id: WP-RUN-002
+    goal: 배포 환경 smoke를 실제 실행 가능한 runner와 workflow_dispatch 경로로 승격한다
+    covers_capability: deployment-environment-smoke-runner
+    status: done
+    tier: governance
+    depends_on:
+    - WP-RUN-001
+    completed_at: '2026-03-20'
+    result: PASS — deployment smoke now has an executable CLI runner, workflow_dispatch
+      path, JSON artifact, and updated operator docs.
+    context_budget:
+      tier_reads:
+      - memory/current-state.yaml
+      - memory/current-wp.yaml
+      context_reads:
+      - docs/how-to/run-stage-e.md
+      - .github/workflows/quality-gates.yml
+      - src/tests/smoke/serverWiring.smoke.test.js
+      skip_if_capability:
+      - deployment-environment-smoke-runner
+      estimated_turns: 4
+      max_new_files: 3
+      max_modified_files: 8
+- id: CAP-13
+  name: Root entry doc truthfulness
+  priority: 9
+  work_packets:
+  - id: WP-DOC-002
+    goal: root entry docs를 현재 capability/CI/runtime 상태와 일치시킨다
+    status: done
+    tier: infra
+    depends_on:
+    - WP-DOC-001
+    - WP-RUN-002
+    completed_at: '2026-03-20'
+    result: PASS — README entry guidance no longer contradicts root memory about stage
+      executors, GitHub Actions, or deployment smoke.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-state.yaml
+      context_reads:
+      - README.md
+      - HOW_TO_USE.md
+      - docs/reference/quality-gates.md
+      skip_if_capability: []
+      estimated_turns: 2
+      max_new_files: 1
+      max_modified_files: 4
+- id: CAP-14
+  name: Deployment environment binding
+  priority: 10
+  work_packets:
+  - id: WP-RUN-003
+    goal: deployment smoke를 environment registry와 GitHub environment binding에 연결한다
+    status: done
+    tier: governance
+    depends_on:
+    - WP-RUN-002
+    completed_at: '2026-03-20'
+    result: PASS — deployment smoke is now bound to named GitHub environments declared
+      in a repo-local registry, and CI validates the binding.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-state.yaml
+      context_reads:
+      - .github/workflows/deployment-smoke.yml
+      - docs/how-to/run-stage-e.md
+      - master-shell/operations/rollback-playbook.yaml
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 4
+      max_modified_files: 8
+- id: CAP-15
+  name: Deployment environment provisioning audit
+  priority: 11
+  work_packets:
+  - id: WP-RUN-004
+    goal: 원격 GitHub deployment environment provisioning을 policy/template/validator
+      기준으로 감사 가능하게 만든다
+    status: done
+    tier: governance
+    depends_on:
+    - WP-RUN-003
+    completed_at: '2026-03-20'
+    result: PASS — remote deployment environment provisioning now has a repo-local
+      policy baseline, CI validator, and generated audit template without pretending
+      live remote evidence is in git.
+    context_budget:
+      tier_reads:
+      - memory/checkpoint.yaml
+      - memory/current-state.yaml
+      context_reads:
+      - master-shell/operations/deployment-environments.yaml
+      - .github/workflows/deployment-smoke.yml
+      - docs/how-to/run-stage-e.md
+      skip_if_capability: []
+      estimated_turns: 4
+      max_new_files: 4
+      max_modified_files: 10
+- id: CAP-HRN
+  name: Harness v0.2 Engineering
+  priority: 1
+  work_packets:
+  - id: WP-HRN-001
+    goal: requirements/harness-engineering.yaml v0.2 — FR/NFR/패턴/DB/동시성 정의
+    status: done
+    tier: infra
+    depends_on: []
+    completed_at: '2026-04-12'
+    result: PASS — FR-001~042 + NFR Extended(concurrency/DB/OOP/patterns/modularity)
+      추가
+  - id: WP-HRN-002
+    goal: Master UI 칸반 보드 5레인 + 나선형 모델 시각화 추가
+    status: done
+    tier: meta
+    depends_on:
+    - WP-HRN-001
+    completed_at: '2026-04-12'
+    result: PASS — buildKanbanSection + KANBAN_CSS + spiral row 생성, 30개 WP 카드 렌더링
+  - id: WP-HRN-003
+    goal: docs/harness/CONTINUOUS_PROMPT.md — 연속 실행 마스터 프롬프트 생성
+    status: done
+    tier: infra
+    depends_on:
+    - WP-HRN-001
+    completed_at: '2026-04-12'
+    result: PASS — 세션 초기화 프로토콜 5단계 + 작업 유형별 라우팅 표 + 보고 형식 정의
+  - id: WP-HRN-004
+    goal: scheduler property/adversarial 테스트 수정 — rate limit + pts 없음 접미사
+    status: done
+    tier: infra
+    depends_on: []
+    completed_at: '2026-04-12'
+    result: PASS — HIGH_RATE_LIMIT 옵션 추가 + summarizeExecutionFailureLocation pts 없음
+      접미사 수정
+  - id: WP-HRN-005
+    goal: docs/db/migration-strategy.md — FR-041 DB 마이그레이션 전략 문서화
+    status: done
+    tier: infra
+    depends_on:
+    - WP-HRN-001
+    completed_at: '2026-04-12'
+    result: PASS — SQLite→PG 전환 경로, 스키마 명명, 인덱스 정책, 낙관적 잠금, 자료사전 동기화 의무 정의
+- id: CAP-S7
+  name: Spiral 7 — Concurrency / Event / Data hardening
+  priority: 10
+  work_packets:
+  - id: WP-S7-001
+    goal: In-process EventBus singleton — Observer 패턴 인프라 기반 수립
+    status: done
+    tier: infra
+    depends_on: []
+    completed_at: '2026-04-12'
+    result: PASS — src/shared/EventBus.js Singleton 구현 (subscribe/publish/unsubscribe/wildcard/history),
+      18/18 단위 테스트 PASS
+    context_budget:
+      tier_reads:
+      - memory/L0-hot/current-state.yaml
+      context_reads:
+      - requirements/harness-engineering.yaml#nfr_extended.design_patterns.observer
+      estimated_turns: 4
+    intake_packet:
+      goal: NFR observer 규칙 준수 — 도메인 이벤트 발행/구독을 EventBus 경유로 강제하는 인프라 모듈 생성
+      context:
+      - 현재 도메인 이벤트는 use case 내부에서 직접 결과 반환 또는 callback 방식
+      - task_outbox 스키마 인덱스는 schema.sql에 존재하지만 OutboxRepository 없음
+      constraints:
+      - 기존 domain core 변경 최소화 — Port 인터페이스만 추가
+      - 동기 in-process 구현으로 시작 (async 확장 path 열어둠)
+      done_when:
+      - src/shared/EventBus.js Singleton 구현 + subscribe/publish API
+      - 단위 테스트 최소 5개 PASS
+      verification:
+      - npm test PASS (기존 570 + 신규)
+  - id: WP-S7-002
+    goal: OutboxRepository + OutboxPoller — task-tracking 도메인 이벤트 전달 완성
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — OutboxRepository Port + InMemory/SQLite 구현체 + OutboxPoller, 20/20
+      테스트, 731/731 전체
+    tier: domain
+    depends_on:
+    - WP-S7-001
+    context_budget:
+      tier_reads:
+      - memory/L0-hot/current-state.yaml
+      context_reads:
+      - domains/productivity/task-tracking/src/infrastructure/schema.sql
+      estimated_turns: 6
+    intake_packet:
+      goal: task_outbox 스키마 인덱스(idx_outbox_pending)를 실제로 사용하는 OutboxRepository + OutboxPoller
+        구현
+      context:
+      - schema.sql에 task_outbox 테이블 + idx_outbox_pending 인덱스 이미 정의됨
+      - delivered=0 행을 polling → EventBus publish → delivered=1 업데이트
+      constraints:
+      - 도메인 코어(Task, use case) 변경 없음
+      - SQLiteTaskRepository 인터페이스 유지
+      done_when:
+      - OutboxRepository.js (Port + SQLite 구현체)
+      - OutboxPoller.js (setInterval 기반 polling)
+      - 단위 테스트 최소 8개 PASS
+      verification:
+      - npm test PASS + schema 적합성 확인
+  - id: WP-S7-003
+    goal: Worker Thread로 generate-mindmap.js CPU 바운드 작업 분리
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — scripts/generateMindmapWorker.js + POST /api/mindmap/rebuild +
+      smoke 3/3 + 711 tests
+    tier: infra
+    depends_on: []
+    context_budget:
+      tier_reads:
+      - memory/L0-hot/current-state.yaml
+      context_reads:
+      - scripts/generate-mindmap.js
+      - src/server/createServer.js
+      estimated_turns: 5
+    intake_packet:
+      goal: mindmap HTML 생성(~700KB, 동기)을 Worker Thread로 분리해 이벤트 루프 블로킹 제거
+      context:
+      - scripts/generate-mindmap.js는 동기 실행으로 ~100ms 이상 메인 루프 블로킹
+      - createServer.js가 mindmap 재생성을 POST /api/mindmap/rebuild에서 호출
+      constraints:
+      - generate-mindmap.js 내부 로직 변경 없음 — Worker 래퍼만 추가
+      - 기존 npm run generate-mindmap CLI 동작 유지
+      done_when:
+      - scripts/generateMindmapWorker.js — Worker Thread entry
+      - createServer.js rebuild 엔드포인트가 workerData로 호출
+      - smoke test PASS
+      verification:
+      - npm test PASS + rebuild 엔드포인트 응답 확인
+  - id: WP-S7-004
+    goal: data-dictionary 경로 정렬 — NFR 참조 경로와 실제 파일 일치
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — harness-engineering.yaml + migration-strategy.md 경로를 ai-harness-data-dictionary.md로
+      통일
+    tier: infra
+    depends_on: []
+    context_budget:
+      tier_reads: []
+      context_reads:
+      - requirements/harness-engineering.yaml#nfr_extended.data_dictionary
+      estimated_turns: 2
+    intake_packet:
+      goal: NFR이 가리키는 docs/reference/data-dictionary.md 경로와 실제 파일 docs/reference/ai-harness-data-dictionary.md를
+        정렬
+      context:
+      - 'harness-engineering.yaml nfr_extended.data_dictionary.location: docs/reference/data-dictionary.md'
+      - '실제 파일: docs/reference/ai-harness-data-dictionary.md'
+      constraints:
+      - 기존 링크/참조 깨지지 않도록 symlink 또는 NFR 경로 수정 선택
+      done_when:
+      - NFR location 경로로 파일 접근 가능
+      - migration-strategy.md 참조 경로 일치
+      verification:
+      - npm run lint PASS + 경로 참조 정합성 확인
+  - id: WP-S7-005
+    goal: validation-profiles.yaml 명령 갭 감사 — 누락 npm scripts 추가
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — 모든 15개 validation-profile 명령이 package.json에 존재, 갭 없음 확인
+    tier: governance
+    depends_on: []
+    context_budget:
+      tier_reads: []
+      context_reads:
+      - requirements/validation-profiles.yaml
+      - package.json
+      estimated_turns: 3
+    intake_packet:
+      goal: validation-profiles.yaml에 선언된 모든 npm 명령이 package.json에 실제 존재하는지 검증하고 누락
+        명령 추가
+      context:
+      - validation-profiles.yaml에 wp:reconcile, wp:check-fit, test:integration 등 명령
+        선언됨
+      - package.json에 해당 scripts가 없으면 프로파일 실행 시 실패
+      constraints:
+      - 기존 scripts 동작 변경 없음 — 누락 scripts만 추가
+      done_when:
+      - validation-profiles.yaml의 모든 commands가 package.json에 존재
+      - 각 script 실행 시 0 exit code
+      verification:
+      - npm run wp:reconcile && npm run wp:check-fit && npm run test:integration PASS
+- id: CAP-S8
+  name: Spiral 8 — EventBus domain wiring
+  priority: 11
+  work_packets:
+  - id: WP-S8-001
+    goal: EventBusPublisher 어댑터 — EventPublisher 포트 → EventBus 싱글톤 브릿지
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — src/shared/EventBusPublisher.js 8/8 unit tests
+    tier: infra
+    depends_on:
+    - WP-S7-001
+  - id: WP-S8-002
+    goal: CreateTaskUseCase 통합 테스트 — EventBus publish + Outbox 연결 검증
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — 통합 테스트 5/5 PASS (Use case→EventBusPublisher→EventBus + Outbox→Poller→EventBus)
+    tier: domain
+    depends_on:
+    - WP-S8-001
+  - id: WP-S8-003
+    goal: 서버 EventBusPublisher 배선 검증 — end-to-end smoke (POST /tasks → domain-events
+      ring buffer)
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — 2/2 smoke tests PASS; 746/746 전체 테스트 PASS
+    tier: infra
+    depends_on:
+    - WP-S8-001
+    - WP-S8-002
+- capability: CAP-S9
+  label: Spiral 9 — 이벤트 내구성·관찰가능성 강화
+  spiral: 9
+  work_packets:
+  - id: WP-S9-001
+    goal: 서버에 OutboxPoller 배선 — InMemoryOutboxRepository + OutboxPoller 자동 시작
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — OutboxPoller 서버 기동 시 자동 시작, /api/v1/outbox/stats 노출
+    tier: infra
+    depends_on:
+    - WP-S8-003
+  - id: WP-S9-002
+    goal: EventBus Dead-Letter Queue(DLQ) — 구독자 오류 격리, /api/v1/domain-events/dlq 엔드포인트
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — EventBus.setHandlerErrorCallback + DLQ ring buffer + endpoint 구현
+    tier: infra
+    depends_on:
+    - WP-S9-001
+  - id: WP-S9-003
+    goal: 서버 graceful shutdown — OutboxPoller 정상 종료 보장
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — shutdown() 시 poller.stop() 선행, smoke 3/3 PASS
+    tier: infra
+    depends_on:
+    - WP-S9-001
+- capability: CAP-S10
+  label: Spiral 10 — 운영 관찰가능성 완성
+  spiral: 10
+  work_packets:
+  - id: WP-S10-001
+    goal: /health 엔드포인트에 EventBus + OutboxPoller 관찰 데이터 추가
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — /health.observability { event_bus, outbox_poller, dlq_size } 구현
+    tier: infra
+    depends_on:
+    - WP-S9-001
+    - WP-S9-002
+  - id: WP-S10-002
+    goal: EventBus 내부 publish/error 통계 (stats) 추가 — 운영 메트릭 기반
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — EventBus.getStats() + 4 unit tests
+    tier: infra
+    depends_on:
+    - WP-S10-001
+- capability: CAP-S11
+  label: Spiral 11 — 동시성 안전성 (NFR thread_safety)
+  spiral: 11
+  work_packets:
+  - id: WP-S11-001
+    goal: Task 낙관적 잠금 — InMemoryTaskRepository OPTIMISTIC_LOCK_CONFLICT 충돌 감지
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — Task.version 필드 + 충돌 감지 8 tests PASS, 189/189 domain PASS
+    tier: domain
+    nfr: nfr_extended.concurrency.thread_safety
+- capability: CAP-S12
+  label: Spiral 12 — 낙관적 잠금 HTTP 배선
+  spiral: 12
+  work_packets:
+  - id: WP-S12-001
+    goal: OPTIMISTIC_LOCK_CONFLICT → HTTP 409 ProblemDetails 배선 + SQLiteTaskRepository
+      낙관적 잠금
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — ProblemDetails 매핑 + SQLite UPDATE WHERE version + smoke 2/2 PASS
+    tier: interface
+    depends_on:
+    - WP-S11-001
+- capability: CAP-S13
+  label: Spiral 13 — version API 노출
+  spiral: 13
+  work_packets:
+  - id: WP-S13-001
+    goal: Task API 응답에 version 필드 노출 — 클라이언트 낙관적 잠금 지원
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — TaskController._serializeTask() version 추가
+    tier: interface
+    depends_on:
+    - WP-S12-001
+- capability: CAP-S14
+  label: Spiral 14 — Outbox 듀얼 라이트 (at-least-once)
+  spiral: 14
+  work_packets:
+  - id: WP-S14-001
+    goal: CreateTaskUseCase outbox dual-write — EventBus 직접 발행 + OutboxRepository
+      내구성 기록
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — 4/4 통합 테스트, 서버 _sharedOutboxRepo 주입, at-least-once 보장
+    tier: domain
+    depends_on:
+    - WP-S9-001
+    pattern: microservices.io Outbox Pattern
+- capability: CAP-S15
+  label: Spiral 15 — 전 Use Case 이벤트 배선 완성
+  spiral: 15
+  work_packets:
+  - id: WP-S15-001
+    goal: TransitionTask/ReassignTask에 EventPublisher + Outbox 주입 (누락 배선 수정)
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — 197/197 task-tracking PASS, 통합 테스트 4건 (전 use case 생명주기)
+    tier: domain
+    fix: TaskStatusChanged/TaskReassigned이 EventBus에 미발행된 버그 수정
+    depends_on:
+    - WP-S14-001
+- id: CAP-SPIRAL-16
+  label: Spiral 16 — Billing/Video EventPublisher 배선
+  spiral: 16
+  work_packets:
+  - id: WP-S16-001
+    goal: createBillingController() / createVideoController()에 _sharedDomainEventPublisher
+      전달
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — InvoiceCreated / VideoUploaded 이벤트가 EventBus ring buffer에 기록됨.
+      3/3 smoke PASS
+    tier: domain
+    deliverables:
+    - 'src/server/createServer.js: billing/video publisher 어댑터 래핑'
+    - 'src/tests/smoke/billingVideoEventWiring.smoke.test.js: 3건 smoke PASS'
+    depends_on:
+    - WP-S15-001
+- id: CAP-SPIRAL-17
+  label: Spiral 17 — 동시성/성능 강화 (NFR Extended)
+  spiral: 17
+  nfr_ref: nfr_extended.concurrency
+  work_packets:
+  - id: WP-S17-001
+    goal: Per-route rate-limit 강화 — billing payment/video upload 엔드포인트에 stricter limit
+      tier 적용
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — routeRateLimitPolicies 파라미터 추가, 3/3 smoke PASS (billing 429, video
+      429, global bypass)
+    tier: domain
+    nfr: nfr_extended.concurrency.rule_shared_state
+    depends_on:
+    - WP-S16-001
+    deliverables:
+    - 'src/server/createServer.js: routeRateLimitPolicy map 추가 (payment=10/min, upload=5/min)'
+    - 'src/tests/smoke/perRouteRateLimit.smoke.test.js: 3건 smoke PASS'
+    success_criteria:
+    - 'POST /billing/payment: 10회/분 초과 시 429'
+    - 'POST /video/upload: 5회/분 초과 시 429'
+    - 기존 전역 rate-limit 회귀 없음
+  - id: WP-S17-002
+    goal: GetBillingSummaryUseCase async-first 강화 — Promise.all 병렬화 검증
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — Promise.all 이미 구현됨. NFR async-first 검증 테스트 1건 추가, 6/6 PASS
+    tier: domain
+    nfr: nfr_extended.concurrency.model
+    depends_on:
+    - WP-S16-001
+    deliverables:
+    - 'domains/billing/src/application/GetBillingSummaryUseCase.js: Promise.all 병렬화
+      (기존 구현 확인)'
+    - 'domains/billing/tests/application/GetBillingSummaryUseCase.test.js: NFR async-first
+      테스트 추가'
+    success_criteria:
+    - invoices + payments 조회가 Promise.all로 병렬 실행됨
+    - 기존 테스트 회귀 없음
+  - id: WP-S17-003
+    goal: StartTranscodeJobUseCase Worker Thread 분리 — CPU-bound 트랜스코딩 시뮬레이션 격리
+    status: done
+    completed_at: '2026-04-12'
+    result: PASS — workerAdapter 주입 패턴, TranscodeWorkerAdapter + NullAdapter, 3/3
+      tests PASS. 621/621 회귀 없음
+    tier: domain
+    nfr: nfr_extended.concurrency.rule_cpu
+    depends_on:
+    - WP-S17-002
+    deliverables:
+    - 'domains/video/src/application/StartTranscodeJobUseCase.js: workerAdapter 주입
+      패턴'
+    - 'src/shared/TranscodeWorkerAdapter.js: Worker Thread 래핑 어댑터 + NullAdapter'
+    - 'domains/video/tests/application/StartTranscodeJobUseCase.workerThread.test.js:
+      3/3 PASS'
+    success_criteria:
+    - CPU-bound transcoding이 Worker Thread로 분리 실행됨
+    - 메인 이벤트 루프 블로킹 없음 (타이밍 검증)
+    - 기존 Stage D 621/621 회귀 없음
+- id: CAP-SPIRAL-18
+  label: Spiral 18 — SQLite→PostgreSQL Phase 2 어댑터 전환
+  spiral: 18
+  doc_ref: docs/db/migration-strategy.md#phase-2
+  status: done
+  work_packets:
+  - id: WP-S18-001
+    goal: PostgresTaskRepository 어댑터 스켈레톤 — 포트 계약 구현 + 연결 없는 구조 테스트
+    status: done
+    tier: domain
+    depends_on:
+    - WP-S17-003
+    completed_at: '2026-04-14'
+    result: PASS — client.query 주입형 스켈레톤 + FakePgClient 계약 테스트. 실 DB 연결 없이 포트 구조 검증
+  - id: WP-S18-002
+    goal: ENV 기반 어댑터 선택 — DB_TYPE=sqlite|postgres 런타임 분기 (DI wiring)
+    status: done
+    tier: infra
+    depends_on:
+    - WP-S18-001
+    completed_at: '2026-04-14'
+    result: PASS — DB_TYPE env 분기, sqlite 기본값 유지, task repository routing smoke PASS
+  - id: WP-S18-003
+    goal: task-tracking PostgreSQL DDL + validate:schema 게이트 추가
+    status: done
+    tier: infra
+    depends_on:
+    - WP-S18-002
+    completed_at: '2026-04-14'
+    result: PASS — 001_initial_pg.sql DDL 추가, validate:schema PASS, 기존 schema.sql
+      변경 없음
+- id: CAP-HARNESS-VNEXT
+  label: Harness vNext — Mode Router / Provider Adapter / Eval / Security
+  status: done
+  work_packets:
+  - id: WP-HARNESS-VNEXT-001
+    goal: Harness vNext 실행 계획 문서화
+    status: done
+    tier: arch
+    completed_at: '2026-04-14'
+    result: PASS — docs/explanation/harness-vnext-execution-plan.md (Phase 0~7)
+  - id: WP-HARNESS-VNEXT-002
+    goal: Harness intake/output JSON Schema 계약 고정
+    status: done
+    tier: arch
+    completed_at: '2026-04-14'
+    result: PASS — contracts/harness/intake.schema.json + output.schema.json
+  - id: WP-HARNESS-VNEXT-003
+    goal: HarnessProviderAdapter 계약 + NullHarnessProvider 구현
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — HarnessProviderAdapter.js + NullHarnessProvider fallback
+  - id: WP-HARNESS-VNEXT-004
+    goal: HarnessRuntimeRouter mode→model tier 라우팅 구현
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — resolveHarnessRuntimeRoute, Build/Debug/Research/Policy 4-mode
+      분기
+  - id: WP-HARNESS-VNEXT-005
+    goal: Eval plane baseline — 케이스/골든/메트릭 파일 구조
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — evals/cases/*.jsonl + evals/golden/ + evals/metrics/baseline.json
+  - id: WP-HARNESS-VNEXT-006
+    goal: Harness ADR-0013 — provider adapter 전략 결정
+    status: done
+    tier: arch
+    completed_at: '2026-04-14'
+    result: PASS — docs/adr/0013-harness-provider-adapter-strategy.md
+  - id: WP-HARNESS-VNEXT-007
+    goal: validate-harness-contract.js 스크립트 추가
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — scripts/validate-harness-contract.js, contract smoke PASS
+  - id: WP-HARNESS-VNEXT-008
+    goal: validate_harness_routing.py 라우팅 검증 스크립트
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — scripts/validate_harness_routing.py, routing smoke PASS
+  - id: WP-HARNESS-VNEXT-009
+    goal: OWASP trust boundary / security policy 기준선
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — security/policies/trust-boundary.yaml + security/redteam/owasp-core.yaml
+  - id: WP-HARNESS-VNEXT-010
+    goal: validate_harness_security.py 보안 검증 스크립트
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — scripts/validate_harness_security.py, security smoke PASS
+  - id: WP-HARNESS-VNEXT-011
+    goal: Harness eval runner (run-harness-evals.js) 추가
+    status: done
+    tier: infra
+    completed_at: '2026-04-14'
+    result: PASS — scripts/run-harness-evals.js, eval smoke PASS
+  - id: WP-HARNESS-VNEXT-012
+    goal: next_wp truth surface — next-actions 우선 규칙 정렬
+    status: done
+    tier: arch
+    completed_at: '2026-04-14'
+    result: PASS — project_status.js extractNextWp operator selection 우선 로직
+  - id: WP-HARNESS-VNEXT-013
+    goal: createServer.js LLM provider 실제 연결 (WP-LLM-001)
+    status: done
+    tier: infra
+    completed_at: '2026-04-15'
+    result: PASS — POST /api/harness/prompt-recommendation 라우트 + provider wiring
+  - id: WP-HARNESS-VNEXT-014
+    goal: Harness observability + release evidence smoke
+    status: done
+    tier: infra
+    completed_at: '2026-04-15'
+    result: PASS — harnessReleaseEvidence + harnessRouting smoke PASS
+  - id: WP-HARNESS-VNEXT-015
+    goal: provider failure modes Stage E 적대 검증
+    status: done
+    tier: arch
+    completed_at: '2026-04-15'
+    result: PASS — schema mismatch 500, auth failure safe fallback, provider outage
+      503 고정
+- id: CAP-VIDEO-CLOSURE
+  label: Video 도메인 Stage C~E root memory 증적 closure
+  status: done
+  work_packets:
+  - id: WP-VIDEO-001
+    goal: video 도메인 Stage C plugin registration + Stage D/E memory closure
+    status: done
+    tier: domain
+    completed_at: '2026-04-14'
+    result: PASS — memory/stageC/video-plugin.yaml + stageD/video.yaml + stageE/video.yaml
+      추가
+- id: CAP-UI-PHASE1
+  label: System OS Phase 1 UI 통합 — Stage C~E
+  status: done
+  work_packets:
+  - id: WP-UI-002
+    goal: system-api-plugin Stage C — master shell registry/nav/flags/observability
+      등록
+    status: done
+    tier: arch
+    completed_at: '2026-04-15'
+    result: PASS — plugin-registry, navigation, feature-flags, catalog 등록 + validate:composition
+      PASS
+  - id: WP-UI-003
+    goal: SystemApiController runtime wiring — SSE/toggle/rollback 엔드포인트 + smoke
+    status: done
+    tier: infra
+    completed_at: '2026-04-15'
+    result: PASS — POST/GET system-api 라우트 wiring + runtime smoke PASS
+  - id: WP-UI-004
+    goal: System OS SSE/authz/rollback Stage E 적대 검증
+    status: done
+    tier: arch
+    completed_at: '2026-04-15'
+    result: PASS — system.admin 403 회귀 + SSE reconnect + memory/stageE/system-api-plugin.yaml
+- id: CAP-RUN-EXT
+  label: Deployment environment real target verification
+  status: done
+  work_packets:
+  - id: WP-RUN-005
+    goal: 배포 environment 실 URL health/ingress verification 자동화 baseline
+    status: done
+    tier: governance
+    completed_at: '2026-04-15'
+    result: PASS — ingress host/TLS/correlation-header 검증 + resolve_deployment_target.py
+      확장
+  - id: WP-RUN-006
+    goal: 배포 환경 ingress failure-path Stage E smoke + release evidence/rollback linkage
+    status: done
+    tier: governance
+    depends_on:
+    - WP-RUN-005
+    completed_at: '2026-04-16'
+    result: PASS — --require-https TLS gate + 3종 adversarial smoke (unreachable/tls-fail/tls-pass).
+      memory/stageE/deployment-ingress.yaml
+- id: CAP-SPIRAL-19
+  label: Spiral 19 — Harness live provider 연결 + .env 운영 완성
+  spiral: 19
+  status: pending
+  work_packets:
+  - id: WP-S19-001
+    goal: OpenAI live provider 연결 검증 — OPENAI_API_KEY 주입 시 실제 LLM 추천 반환
+    status: done
+    completed_at: '2026-04-16'
+    result: PASS — startServer harnessProviderAdapter wiring fix + 3/3 smoke tests
+    tier: infra
+    depends_on:
+    - WP-HARNESS-VNEXT-015
+    deliverables:
+    - 'src/tests/smoke/harnessLiveProvider.smoke.test.js: OPENAI_API_KEY 주입 시 provider_id=openai-responses
+      검증'
+    - 'memory/stageD/harness-live-provider.yaml: live provider 구조 테스트 evidence'
+    success_criteria:
+    - OPENAI_API_KEY 주입 시 provider_id=openai-responses 반환
+    - 키 없으면 NullProvider fallback 유지 (기존 회귀 없음)
+    - harness provider adapter unit tests PASS
+    note: 실제 API 호출은 CI에서 skipped — local 검증 전용
+  - id: WP-S19-002
+    goal: npm start 로컬 서버 기동 + .env 운영 가이드 확정
+    status: done
+    completed_at: '2026-04-16'
+    result: PASS — docs/how-to/local-server-startup.md 생성. 7/7 endpoints PASS
+    tier: governance
+    depends_on:
+    - WP-S19-001
+    deliverables:
+    - 'docs/how-to/local-server-startup.md: npm start + .env 플래그 제어 가이드'
+    - '.env: OPENAI_API_KEY live 연결 검증 기록'
+    success_criteria:
+    - npm start 기동 후 /health /tasks /api/v1/system/flags 200 응답
+    - 가이드 문서 존재
+- id: CAP-SPIRAL-20-HANDOFF
+  label: Spiral 20 — Perfect handoff operating loop
+  spiral: 20
+  status: pending
+  priority: 0
+  intent: 요청 intake부터 context lock, execution packet, verification, completion report,
+    memory/worklog/artifact 갱신, 다음 WP 추천까지 끊기지 않는 하네스 핸드오프 회로를 완성한다.
+  work_packets:
+  - id: WP-HO-000
+    goal: SPIRAL-20 handoff 기준선 고정 — 기존 dirty 변경 보호선과 실행 가능한 handoff WP 체인 시작
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS — SPIRAL-20 handoff DAG 등록, current/next memory 정렬, 기존 dirty 변경 보호선
+      기록, scheduler/status/requirements 검증 통과
+    tier: governance
+    depends_on: []
+    covers_capability: handoff-baseline-protection
+    validation:
+    - npm run wp:status
+    - npm run project:status
+    - npm run wp:validate
+    - npm run validate:requirements
+    deliverables:
+    - 'memory/current-wp.yaml: active handoff baseline packet'
+    - 'memory/next-actions.yaml: next ready handoff queue'
+    - 'memory/wp-queue.yaml: SPIRAL-20 handoff DAG'
+    - 'memory/current-state.yaml: queue summary and desired handoff state'
+    success_criteria:
+    - 기존 dirty 변경 파일 목록이 protected baseline으로 기록된다.
+    - wp scheduler가 WP-HO-000을 next ready WP로 반환한다.
+    - project status가 current_wp와 next_wp를 WP-HO-000으로 표시한다.
+    context_budget:
+      tier_reads:
+      - memory/current-wp.yaml
+      - memory/next-actions.yaml
+      - memory/wp-queue.yaml
+      - memory/current-state.yaml
+      context_reads:
+      - requirements/harness-engineering.yaml
+      - requirements/validation-profiles.yaml
+      - docs/harness/CONTINUOUS_PROMPT.md
+      - docs/explanation/ai-harness-upgrade-plan.md
+      estimated_turns: 1
+      max_new_files: 0
+      max_modified_files: 4
+  - id: WP-HO-001
+    goal: context drift 복구 자동화 — wp:context-drift 기본 입력 결함 수정과 최신 context lock 재생성
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS — check_context_drift.py 기본 latest context-lock 입력 추가, context lock
+      JSON output footgun 방지, drift clean 재생성, smoke regression 통과
+    tier: infra
+    depends_on:
+    - WP-HO-000
+    covers_capability: handoff-context-drift-recovery
+    validation:
+    - npm run wp:context-drift
+    - npm run wp:context-lock
+    - npm run project:status
+    deliverables:
+    - 'package.json: wp:context-drift 기본 input 연결'
+    - 'scripts/check_context_drift.py 또는 wrapper: latest context-lock 기본값'
+    - 'artifacts/promotion-pipeline/latest/context-lock.json: refreshed handoff baseline'
+    success_criteria:
+    - npm run wp:context-drift가 별도 인자 없이 실행된다.
+    - drift 발생 시 reread_first가 출력된다.
+    - context lock 재생성 후 drift_status가 clean으로 회복 가능하다.
+    context_budget:
+      tier_reads:
+      - package.json
+      - scripts/check_context_drift.py
+      - artifacts/promotion-pipeline/latest/context-lock.json
+      context_reads:
+      - scripts/export_context_lock.py
+      - scripts/wp_scheduler.py
+      estimated_turns: 2
+      max_new_files: 0
+      max_modified_files: 3
+  - id: WP-HO-002
+    goal: 표준 handoff bundle 계약 강화 — intake, scope, validation, rollback, next packet을
+      단일 bundle에 포함
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS_WITH_RESIDUAL — handoff bundle에 intake/scope/validation_profile/rollback_plan/next_action
+      추가, replay actor? 문구 제거, targeted smoke/contract/lint/type/composition PASS.
+      Global e2e-smoke는 84/92 PASS로 기존 광역 smoke 실패 8건이 남음.
+    tier: arch
+    depends_on:
+    - WP-HO-001
+    covers_capability: handoff-bundle-contract
+    validation:
+    - npm run wp:handoff-bundle -- --json
+    - npm run validate:contracts
+    - npm run test:e2e-smoke
+    deliverables:
+    - 'scripts/compose_handoff_bundle.py: required handoff sections'
+    - 'contracts/harness/output.schema.json: handoff output alignment'
+    - 'src/tests/smoke/composeHandoffBundle.smoke.test.js: regression coverage'
+    success_criteria:
+    - handoff bundle 하나로 다음 에이전트가 read_first, constraints, validation, rollback, next_action을
+      복구한다.
+    - completed packet에서 생성된 replay_next_packet 문구가 불완전하지 않다.
+    context_budget:
+      tier_reads:
+      - scripts/compose_handoff_bundle.py
+      - contracts/harness/output.schema.json
+      - src/tests/smoke/composeHandoffBundle.smoke.test.js
+      context_reads:
+      - scripts/export_context_bundle.py
+      - scripts/check_planning_fit.py
+      - scripts/generate_replay_packet.py
+      estimated_turns: 3
+      max_new_files: 1
+      max_modified_files: 4
+  - id: WP-HO-003
+    goal: Intake Packet 강제 진입점 정렬 — 모든 운영 surface가 6필드 intake를 같은 이름으로 표시
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS — session:bootstrap/operator:cockpit에 intake_packet 6필드 값을 노출하고 smoke/requirements/lint/composition/governance/contract
+      검증 통과
+    tier: governance
+    depends_on:
+    - WP-HO-002
+    covers_capability: handoff-intake-first
+    validation:
+    - npm run validate:requirements
+    - npm run session:bootstrap
+    - npm run operator:cockpit
+    deliverables:
+    - 'requirements/harness-engineering.yaml: intake policy source'
+    - 'docs/harness/CONTINUOUS_PROMPT.md: operator-facing sequence'
+    - 'docs/how-to/repeatable-cli-master-prompt.md: short prompt contract'
+    success_criteria:
+    - goal/context/constraints/done_when/work_mode/verification 명칭이 문서와 bootstrap에서
+      일치한다.
+    - 자유 형식 요청도 intake packet으로 변환하는 절차가 명확하다.
+    context_budget:
+      tier_reads:
+      - requirements/harness-engineering.yaml
+      - docs/harness/CONTINUOUS_PROMPT.md
+      - docs/how-to/repeatable-cli-master-prompt.md
+      context_reads:
+      - scripts/session_bootstrap.js
+      - scripts/operator_cockpit.js
+      estimated_turns: 2
+      max_new_files: 0
+      max_modified_files: 5
+  - id: WP-HO-004
+    goal: Execution Packet 스키마 분리 — 실행 전 payload를 기계 검증 가능한 계약으로 고정
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS_WITH_RESIDUAL — contracts/harness/execution-packet.schema.json 추가,
+      validate-harness-contract에 execution packet schema/golden 검증 연결, harness contract
+      smoke/validate:contracts/lint PASS. test:mpo는 mpoExecutionContracts 장기 실행 residual로
+      WP-HO-005에서 계속 정리
+    tier: arch
+    depends_on:
+    - WP-HO-003
+    covers_capability: handoff-execution-packet-contract
+    validation:
+    - node scripts/validate-harness-contract.js
+    - npm run validate:contracts
+    - npm run test:mpo
+    deliverables:
+    - contracts/harness/execution-packet.schema.json
+    - 'scripts/validate-harness-contract.js: execution packet validation'
+    - 'evals/golden/harness-core.jsonl: execution packet cases'
+    success_criteria:
+    - 실행 전 packet에 goal, scope, context_lock, validation_profile, rollback_plan이 모두
+      존재한다.
+    - 누락된 실행 필드는 validator에서 실패한다.
+    context_budget:
+      tier_reads:
+      - contracts/harness/
+      - scripts/validate-harness-contract.js
+      - evals/golden/harness-core.jsonl
+      context_reads:
+      - requirements/harness-engineering.yaml
+      - src/tests/unit/mpoExecutionContracts.test.js
+      estimated_turns: 3
+      max_new_files: 1
+      max_modified_files: 4
+  - id: WP-HO-005
+    goal: Completion Report truthfulness 강화 — evidence 없는 PASS와 미실행 테스트 PASS 표기 차단
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS — completion report PASS truthfulness가 evidence/tests_run 없이는 실패하고,
+      NOT_RUN tests_run 오표기가 계약 계층에서 거부되며, npm run test:mpo PASS
+    tier: arch
+    depends_on:
+    - WP-HO-004
+    covers_capability: handoff-completion-truthfulness
+    validation:
+    - npm run commit:guard:verify
+    - npm run test:mpo
+    - npm run validate:contracts
+    deliverables:
+    - 'contracts/harness/completion-report.schema.json: strict evidence fields'
+    - 'scripts/validate-completion-report.js: PASS/evidence consistency checks'
+    - 'scripts/wp-complete.js: strict report generation'
+    success_criteria:
+    - verification_status=PASS이면 tests_run과 evidence가 실제 경로를 가진다.
+    - 실행하지 않은 검증은 tests_planned 또는 NOT_RUN으로만 기록된다.
+    context_budget:
+      tier_reads:
+      - contracts/harness/completion-report.schema.json
+      - scripts/validate-completion-report.js
+      - scripts/wp-complete.js
+      context_reads:
+      - src/tests/unit/mpoExecutionContracts.test.js
+      - src/tests/unit/mpoBehavioralSecurityEval.test.js
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 5
+  - id: WP-HO-006
+    goal: validation profile을 handoff 필수 필드로 연결 — WP type/stage별 검증 묶음이 bundle에 포함
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS_WITH_RESIDUAL — validation profile handoff_contract/required pass_criteria를
+      resolver와 handoff bundle에 동시 노출, resolver CLI/validation profile smoke/handoff
+      bundle smoke/requirements PASS. full test:e2e-smoke는 83/92 PASS로 WP-HO-007 gate-first-pass에서
+      계속 정리
+    tier: infra
+    depends_on:
+    - WP-HO-005
+    covers_capability: handoff-validation-profile-binding
+    validation:
+    - node scripts/resolve_validation_profile.js --json
+    - npm run validate:requirements
+    - npm run test:e2e-smoke
+    deliverables:
+    - 'requirements/validation-profiles.yaml: handoff profile notes'
+    - 'scripts/resolve_validation_profile.js: bundle-ready required/optional output'
+    - 'handoff bundle: validation_profile section'
+    success_criteria:
+    - handoff bundle에 required/optional validation command와 pass criteria가 포함된다.
+    - stage override와 packet.validation이 중복 없이 병합된다.
+    context_budget:
+      tier_reads:
+      - requirements/validation-profiles.yaml
+      - scripts/resolve_validation_profile.js
+      context_reads:
+      - scripts/compose_handoff_bundle.py
+      - src/tests/smoke/validationProfiles.smoke.test.js
+      estimated_turns: 2
+      max_new_files: 0
+      max_modified_files: 4
+  - id: WP-HO-007
+    goal: gate first pass rate 개선 — 실패 원인 top 3를 사전 체크와 handoff 경고로 이동
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS — failure-patterns registry에 e2e residual top 3를 구조화하고 harness dashboard/commit
+      guard가 actionable preflight warnings를 노출. harness:dashboard:json/wp:health/commit:guard:verify
+      PASS
+    tier: governance
+    depends_on:
+    - WP-HO-006
+    covers_capability: handoff-gate-first-pass-rate
+    validation:
+    - npm run harness:dashboard:json
+    - npm run wp:health
+    - npm run commit:guard:verify
+    deliverables:
+    - 'memory/L0-hot/failure-patterns.yaml: recurring gate failures'
+    - 'scripts/harness-dashboard.js: actionable failure summary'
+    - 'commit guard or bootstrap: preflight warnings'
+    success_criteria:
+    - gate_first_pass_rate FAIL 원인이 handoff 전 경고로 드러난다.
+    - operator가 어떤 사전 검증을 먼저 실행할지 알 수 있다.
+    context_budget:
+      tier_reads:
+      - scripts/harness-dashboard.js
+      - memory/L0-hot/failure-patterns.yaml
+      - scripts/verified_auto_commit_guard.js
+      context_reads:
+      - scripts/session_metrics.py
+      - artifacts/evals/harness/latest/harness-dashboard.json
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 5
+  - id: WP-HO-008
+    goal: context budget 과다 방지 — read_later 대용량 문맥을 기본 제외하고 예외 승인 경로로 분리
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS_WITH_RESIDUAL — context bundle/planning fit/handoff bundle에 active/deferred
+      token risk와 read_later 승인 예외 경로를 추가, targeted smoke와 wp export/check-fit PASS.
+      full test:e2e-smoke residual 83/92는 WP-HO-007 preflight warning으로 노출 유지
+    tier: infra
+    depends_on:
+    - WP-HO-007
+    covers_capability: handoff-context-budget-guard
+    validation:
+    - npm run wp:export-context -- --json
+    - npm run wp:check-fit -- --json
+    - npm run test:e2e-smoke
+    deliverables:
+    - 'scripts/export_context_bundle.py: token risk thresholds'
+    - 'scripts/check_planning_fit.py: budget risk guidance'
+    - 'routing profiles: read_later exception policy'
+    success_criteria:
+    - handoff 기본 문맥은 read_first/read_next 중심으로 유지된다.
+    - 대용량 domains/worklog/artifacts 읽기는 명시적 예외로만 승격된다.
+    context_budget:
+      tier_reads:
+      - scripts/export_context_bundle.py
+      - scripts/check_planning_fit.py
+      - master-shell/catalog/context-routing-profiles.yaml
+      context_reads:
+      - master-shell/catalog/adapter-compatibility-matrix.yaml
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 4
+  - id: WP-HO-009
+    goal: Master UI handoff lane 추가 — 현재 WP, drift, next action, evidence 상태를 첫 화면에
+      표시
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS_WITH_RESIDUAL — artifacts/index.html 첫 화면 hero side에 Handoff Lane(current/next
+      WP, drift, validation, evidence, next command)을 추가하고 staticUiHome/ui:build/validate:composition
+      PASS. full test:e2e-smoke는 기존 residual 83/92 유지
+    tier: arch
+    depends_on:
+    - WP-HO-008
+    covers_capability: handoff-master-ui-lane
+    validation:
+    - npm run ui:build
+    - npm run validate:composition
+    - npm run test:e2e-smoke
+    deliverables:
+    - 'scripts/generate-ui-home.js: handoff lane render'
+    - 'artifacts/index.html: generated handoff status'
+    - 'src/tests/smoke/staticUiHome.smoke.test.js: regression'
+    success_criteria:
+    - 첫 화면에서 current WP, next WP, drift status, validation state가 보인다.
+    - 빈 보드처럼 보이지 않고 다음 액션이 명확하다.
+    context_budget:
+      tier_reads:
+      - scripts/generate-ui-home.js
+      - src/tests/smoke/staticUiHome.smoke.test.js
+      context_reads:
+      - master-shell/navigation/nav.yaml
+      read_later:
+      - artifacts/home-data.json
+      - artifacts/index.html
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 5
+  - id: WP-HO-010
+    goal: Operator Cockpit을 handoff 관제면으로 승격 — bootstrap/status/drift/guard 결과를 한
+      번에 표시
+    status: done
+    completed_at: '2026-04-23'
+    result: PASS — session bootstrap/operator cockpit 공통 handoff_summary(current/next/drift/validation/evidence/next
+      command)를 추가하고 repeatable CLI 문서에 cockpit-first handoff flow 반영. operator:cockpit/session:bootstrap/project:status
+      PASS
+    tier: governance
+    depends_on:
+    - WP-HO-009
+    covers_capability: handoff-operator-cockpit
+    validation:
+    - npm run operator:cockpit
+    - npm run session:bootstrap
+    - npm run project:status
+    deliverables:
+    - 'scripts/operator_cockpit.js: handoff summary section'
+    - 'scripts/session_bootstrap.js: cockpit-compatible fields'
+    - 'docs/how-to/repeatable-cli-master-prompt.md: cockpit flow'
+    success_criteria:
+    - operator cockpit 하나로 current, next, drift, validation, guard 상태를 읽는다.
+    - 후속 작업자가 어떤 명령을 먼저 실행할지 명확하다.
+    context_budget:
+      tier_reads:
+      - scripts/operator_cockpit.js
+      - scripts/session_bootstrap.js
+      - docs/how-to/repeatable-cli-master-prompt.md
+      context_reads:
+      - scripts/project_status.js
+      - scripts/verified_auto_commit_guard.js
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 5
+  - id: WP-HO-011
+    goal: replay packet 품질 개선 — 불완전한 다음 WP 추천 문구 제거와 audit signal 정규화
+    status: done
+    tier: infra
+    depends_on:
+    - WP-HO-010
+    covers_capability: handoff-replay-quality
+    validation:
+    - npm run wp:replay-packet -- --json
+    - npm run wp:handoff-bundle -- --json
+    - npm run test:e2e-smoke
+    deliverables:
+    - 'scripts/generate_replay_packet.py: stable goal generation'
+    - 'scripts/generate_routing_learning_ledger.py: reusable signal'
+    - 'handoff bundle replay_next_packet: clean goal/type/stage'
+    success_criteria:
+    - replay_next_packet.goal에 불완전한 actor/hash 문구가 남지 않는다.
+    - 완료된 packet 다음 추천이 actionable WP 초안으로 생성된다.
+    context_budget:
+      tier_reads:
+      - scripts/generate_replay_packet.py
+      - scripts/generate_routing_learning_ledger.py
+      - artifacts/promotion-pipeline/latest/handoff-bundle.json
+      context_reads:
+      - worklog/audit-chain.jsonl
+      - master-shell/observability/timeline.jsonl
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 4
+    result: PASS — replay_next_packet 생성, actor/hash 문구 정제, audit_signals 노출, lint
+      0 warnings
+  - id: WP-HO-012
+    goal: promotion pipeline과 handoff bundle 연결 — promotion 결과가 handoff bundle path와
+      evidence status를 포함
+    status: done
+    tier: governance
+    depends_on:
+    - WP-HO-011
+    covers_capability: handoff-promotion-link
+    validation:
+    - npm run wp:promote-pipeline
+    - npm run wp:promotion-decision
+    - npm run project:status
+    deliverables:
+    - 'scripts/run_promotion_pipeline.py: handoff bundle output linkage'
+    - 'artifacts/promotion-pipeline/latest/pipeline-report.json: handoff metadata'
+    - 'artifacts/promotion-pipeline/latest/handoff-bundle.json: generated current
+      bundle'
+    success_criteria:
+    - pipeline report가 handoff bundle 경로와 drift/evidence 상태를 제공한다.
+    - promotion ready 판단과 handoff ready 판단이 충돌하지 않는다.
+    context_budget:
+      tier_reads:
+      - scripts/run_promotion_pipeline.py
+      - scripts/generate_promotion_decision.py
+      - artifacts/promotion-pipeline/latest/pipeline-report.json
+      context_reads:
+      - scripts/compose_handoff_bundle.py
+      - scripts/export_context_lock.py
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 4
+  - id: WP-HO-013
+    goal: memory 원자 갱신 보장 — current-state/current-wp/next-actions가 같은 완료 시점으로 갱신
+    status: done
+    tier: infra
+    depends_on:
+    - WP-HO-012
+    covers_capability: handoff-memory-atomicity
+    validation:
+    - npm run session:end
+    - npm run wp:reconcile
+    - npm run project:status
+    deliverables:
+    - 'scripts/session_end.py: atomic memory update checks'
+    - 'scripts/generate_apply_checkpoint.py: next state consistency'
+    - 'memory schema docs: update ordering'
+    success_criteria:
+    - 완료 시 current-state, current-wp, next-actions가 서로 다른 WP를 가리키지 않는다.
+    - 원자성 실패 시 완료 선언이 차단된다.
+    context_budget:
+      tier_reads:
+      - scripts/session_end.py
+      - scripts/generate_apply_checkpoint.py
+      - memory/current-state.yaml
+      - memory/current-wp.yaml
+      - memory/next-actions.yaml
+      context_reads:
+      - docs/reference/memory-schema.md
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 5
+    completed_at: '2026-04-27'
+    result: 'PASS — memory triad atomic update: MEMORY_TRIAD + verify_memory_consistency
+      + atomic_write_memory_triad. triad_consistent=true. 816/816 PASS.'
+  - id: WP-HO-014
+    goal: Worklog 증적 템플릿 통합 — 모든 WP 완료 기록이 같은 evidence 필드를 사용
+    status: done
+    tier: meta
+    depends_on:
+    - WP-HO-013
+    covers_capability: handoff-worklog-evidence
+    validation:
+    - npm run validate:requirements
+    - npm run wp:reconcile
+    - npm run commit:guard:verify
+    deliverables:
+    - 'templates/worklog-template.md: handoff evidence fields'
+    - 'templates/review-template.md: verification/risk fields'
+    - 'worklog template docs: completion report linkage'
+    success_criteria:
+    - worklog, completion report, handoff bundle이 같은 evidence vocabulary를 사용한다.
+    - 검증 미실행 항목은 planned/not_run으로 구분된다.
+    context_budget:
+      tier_reads:
+      - templates/worklog-template.md
+      - templates/review-template.md
+      - contracts/harness/completion-report.schema.json
+      context_reads:
+      - worklog/reports/
+      estimated_turns: 2
+      max_new_files: 0
+      max_modified_files: 4
+    completed_at: '2026-04-27'
+    result: PASS — worklog/review template evidence vocabulary aligned with completion-report.schema.json
+  - id: WP-HO-015
+    goal: 보안/권한 handoff gate — tool abuse, prompt injection, data exfiltration 체크를
+      handoff에 포함
+    status: pending
+    tier: governance
+    depends_on:
+    - WP-HO-014
+    covers_capability: handoff-security-gate
+    validation:
+    - npm run check:advisory-policy
+    - npm run test:e2e-smoke
+    - node scripts/validate-harness-contract.js
+    deliverables:
+    - 'security/policies/trust-boundary.yaml: handoff trust boundary refs'
+    - 'security/redteam/owasp-core.yaml: required attack mapping'
+    - 'handoff bundle: security_review section'
+    success_criteria:
+    - 위험 작업 handoff에 trust boundary와 required attacks가 표시된다.
+    - 미확인 보안 상태는 PASS가 아니라 not_observed로 남는다.
+    context_budget:
+      tier_reads:
+      - security/policies/trust-boundary.yaml
+      - security/redteam/owasp-core.yaml
+      - requirements/harness-engineering.yaml
+      context_reads:
+      - src/tests/unit/mpoBehavioralSecurityEval.test.js
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 4
+  - id: WP-HO-016
+    goal: AI provider handoff 표준화 — provider/model/mode/fallback/token 사용량을 completion
+      report에 고정
+    status: pending
+    tier: arch
+    depends_on:
+    - WP-HO-015
+    covers_capability: handoff-provider-observability
+    validation:
+    - npm run test:mpo
+    - npm run harness:dashboard:json
+    - npm run validate:contracts
+    deliverables:
+    - 'src/infrastructure/ai/HarnessProviderAdapter.js: provider metadata'
+    - 'src/infrastructure/ai/OpenAIResponsesProvider.js: usage mapping'
+    - 'contracts/harness/provider-adapter.yaml: handoff metadata contract'
+    success_criteria:
+    - completion report가 provider_id, route_id, selected_model_tier, fallback_applied,
+      token_usage를 일관되게 담는다.
+    - Null provider fallback도 handoff에서 명확히 구분된다.
+    context_budget:
+      tier_reads:
+      - src/infrastructure/ai/HarnessProviderAdapter.js
+      - src/infrastructure/ai/OpenAIResponsesProvider.js
+      - src/infrastructure/ai/NullHarnessProvider.js
+      - contracts/harness/provider-adapter.yaml
+      context_reads:
+      - src/tests/unit/harnessProviderAdapter.test.js
+      - src/tests/unit/openAiResponsesProvider.test.js
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 6
+  - id: WP-HO-017
+    goal: 도메인 작업용 handoff preset — billing/video/task 작업이 같은 domain handoff 형식을 사용
+    status: pending
+    tier: domain
+    depends_on:
+    - WP-HO-016
+    covers_capability: handoff-domain-preset
+    validation:
+    - npm run test:contract
+    - npm test
+    - npm run test:integration
+    deliverables:
+    - 'templates/domain-app-template/README.md: domain handoff preset'
+    - 'requirements/DOMAIN_TEMPLATE.yaml: handoff fields'
+    - 'docs/reference/capability-contract-reference.md: preset linkage'
+    success_criteria:
+    - 도메인 변경 handoff가 requirements, contracts, ports, tests, worklog를 같은 순서로 요구한다.
+    - 기존 billing/video/task 계약 검증이 회귀하지 않는다.
+    context_budget:
+      tier_reads:
+      - templates/domain-app-template/README.md
+      - requirements/DOMAIN_TEMPLATE.yaml
+      - docs/reference/capability-contract-reference.md
+      context_reads:
+      - domains/billing/contracts/
+      - domains/video/contract/
+      - domains/productivity/task-tracking/contract/
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 5
+  - id: WP-HO-018
+    goal: 배포/운영 handoff preset — 원격 증적과 operator-collected 항목을 명시적으로 분리
+    status: pending
+    tier: governance
+    depends_on:
+    - WP-HO-017
+    covers_capability: handoff-operations-preset
+    validation:
+    - npm run check:deployment-environment-provisioning
+    - npm run smoke:deployment
+    - npm run generate:deployment-environment-audit-template
+    deliverables:
+    - 'master-shell/operations/deployment-environment-provisioning.yaml: handoff refs'
+    - 'docs/release-checklist.md: operator evidence handoff'
+    - 'artifacts/deployment-smoke/environment-provisioning-audit-template.json: generated
+      template'
+    success_criteria:
+    - 저장소가 보장하는 증적과 운영자가 수집해야 하는 원격 증적이 분리되어 표시된다.
+    - 확인 불가 원격 상태는 observed로 표기되지 않는다.
+    context_budget:
+      tier_reads:
+      - master-shell/operations/deployment-environment-provisioning.yaml
+      - docs/release-checklist.md
+      - scripts/generate_deployment_environment_audit_template.py
+      context_reads:
+      - artifacts/deployment-smoke/
+      - scripts/run_deployment_smoke.js
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 4
+  - id: WP-HO-019
+    goal: 최종 release evidence 생성 — handoff v1.0 기준선 artifact와 provenance 생성
+    status: pending
+    tier: governance
+    depends_on:
+    - WP-HO-018
+    covers_capability: handoff-release-evidence
+    validation:
+    - npm run generate:release-evidence
+    - npm run verify:provenance
+    - npm run audit:verify
+    deliverables:
+    - 'artifacts/release-evidence/release-evidence.json: handoff baseline evidence'
+    - 'artifacts/provenance/workflow-os-provenance.json: updated provenance'
+    - 'worklog/release-notes.md: handoff v1.0 summary'
+    success_criteria:
+    - handoff operating loop v1.0 기준선이 release evidence에 남는다.
+    - provenance와 audit chain 검증이 통과한다.
+    context_budget:
+      tier_reads:
+      - scripts/generate_release_evidence.py
+      - scripts/verify_provenance.py
+      - scripts/audit-chain.js
+      context_reads:
+      - artifacts/release-evidence/
+      - artifacts/provenance/
+      - worklog/release-notes.md
+      estimated_turns: 3
+      max_new_files: 0
+      max_modified_files: 5
+  - id: WP-HO-020
+    goal: SPIRAL-20 closure — handoff loop 검증, memory/worklog 정리, 다음 Spiral 후보 산출
+    status: pending
+    tier: meta
+    depends_on:
+    - WP-HO-019
+    covers_capability:
+    - handoff-spiral-closure
+    - handoff-operating-loop
+    validation:
+    - npm run session:bootstrap
+    - npm run project:status
+    - npm run wp:gaps
+    - npm run wp:health
+    - npm run harness:dashboard:json
+    - npm run commit:guard:verify
+    deliverables:
+    - 'memory/current-state.yaml: handoff capability status'
+    - 'memory/current-wp.yaml: SPIRAL-20 completed state'
+    - 'memory/next-actions.yaml: next Spiral candidate'
+    - 'worklog/2026-04-23_WP-HO-020.yaml: closure evidence'
+    success_criteria:
+    - handoff loop의 current, next, drift, validation, evidence 상태가 모든 운영 surface에서
+      일치한다.
+    - 다음 작업자가 짧은 프롬프트 하나로 이어받을 수 있다.
+    context_budget:
+      tier_reads:
+      - memory/current-state.yaml
+      - memory/current-wp.yaml
+      - memory/next-actions.yaml
+      - memory/wp-queue.yaml
+      context_reads:
+      - worklog/
+      - artifacts/release-evidence/
+      estimated_turns: 2
+      max_new_files: 1
+      max_modified_files: 4
 mpo_sessions:
-  - session_id: "mpo-e6dcf7b6-f740-4c63-bdf4-3661e79a330b"
-    reports:
-      - wp_id: "WP-AUTO-001"
-        status: "done"
-        report: "worklog/reports/2026-04-19_WP-AUTO-001.yaml"
-        completed_at: "2026-04-19T11:32:16.252Z"
-  - session_id: "mpo-f55c5bfd-a234-4ca1-8a4b-321560077798"
-    reports:
-      - wp_id: "WP-AUTO-001"
-        status: "done"
-        report: "worklog/reports/2026-04-19_WP-AUTO-001.yaml"
-        completed_at: "2026-04-19T11:33:44.158Z"
-  - session_id: "mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-21_WP-AUTO-004.yaml"
-        completed_at: "2026-04-21T13:19:16.350Z"
-  - session_id: "mpo-c744050d-8dd7-4315-a60e-67935d8263ce"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-22_WP-AUTO-004.yaml"
-        completed_at: "2026-04-22T14:36:25.800Z"
-  - session_id: "mpo-258dbd06-7612-41b6-aec8-1129f9e6554f"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-22_WP-AUTO-004.yaml"
-        completed_at: "2026-04-22T14:41:57.714Z"
-  - session_id: "mpo-c661e92f-f43c-40d2-bf43-2b67b555b1fc"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-22_WP-AUTO-004.yaml"
-        completed_at: "2026-04-22T14:44:22.853Z"
-  - session_id: "mpo-36f0e6aa-e110-4ebe-9f49-64bbd8a8e9f0"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-26_WP-AUTO-004.yaml"
-        completed_at: "2026-04-26T13:48:41.948Z"
-  - session_id: "mpo-268ba5c1-8aaf-4be9-9920-651faf8f9a49"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-26_WP-AUTO-004.yaml"
-        completed_at: "2026-04-26T13:49:08.711Z"
-  - session_id: "mpo-01a7bad9-7357-46ae-9742-74a530f9664d"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-26_WP-AUTO-004.yaml"
-        completed_at: "2026-04-26T14:14:24.748Z"
-  - session_id: "mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-26_WP-AUTO-004.yaml"
-        completed_at: "2026-04-26T14:28:12.699Z"
-  - session_id: "mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93"
-    reports:
-      - wp_id: "WP-AUTO-004"
-        status: "done"
-        report: "worklog/reports/2026-04-27_WP-AUTO-004.yaml"
-        completed_at: "2026-04-27T01:01:56.706Z"
+- session_id: mpo-e6dcf7b6-f740-4c63-bdf4-3661e79a330b
+  reports:
+  - wp_id: WP-AUTO-001
+    status: done
+    report: worklog/reports/2026-04-19_WP-AUTO-001.yaml
+    completed_at: '2026-04-19T11:32:16.252Z'
+- session_id: mpo-f55c5bfd-a234-4ca1-8a4b-321560077798
+  reports:
+  - wp_id: WP-AUTO-001
+    status: done
+    report: worklog/reports/2026-04-19_WP-AUTO-001.yaml
+    completed_at: '2026-04-19T11:33:44.158Z'
+- session_id: mpo-9bd4e7f7-4f31-4f80-a094-ccbaa82c7f95
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-21_WP-AUTO-004.yaml
+    completed_at: '2026-04-21T13:19:16.350Z'
+- session_id: mpo-c744050d-8dd7-4315-a60e-67935d8263ce
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-22_WP-AUTO-004.yaml
+    completed_at: '2026-04-22T14:36:25.800Z'
+- session_id: mpo-258dbd06-7612-41b6-aec8-1129f9e6554f
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-22_WP-AUTO-004.yaml
+    completed_at: '2026-04-22T14:41:57.714Z'
+- session_id: mpo-c661e92f-f43c-40d2-bf43-2b67b555b1fc
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-22_WP-AUTO-004.yaml
+    completed_at: '2026-04-22T14:44:22.853Z'
+- session_id: mpo-36f0e6aa-e110-4ebe-9f49-64bbd8a8e9f0
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-26_WP-AUTO-004.yaml
+    completed_at: '2026-04-26T13:48:41.948Z'
+- session_id: mpo-268ba5c1-8aaf-4be9-9920-651faf8f9a49
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-26_WP-AUTO-004.yaml
+    completed_at: '2026-04-26T13:49:08.711Z'
+- session_id: mpo-01a7bad9-7357-46ae-9742-74a530f9664d
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-26_WP-AUTO-004.yaml
+    completed_at: '2026-04-26T14:14:24.748Z'
+- session_id: mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-26_WP-AUTO-004.yaml
+    completed_at: '2026-04-26T14:28:12.699Z'
+- session_id: mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93
+  reports:
+  - wp_id: WP-AUTO-004
+    status: done
+    report: worklog/reports/2026-04-27_WP-AUTO-004.yaml
+    completed_at: '2026-04-27T01:01:56.706Z'
