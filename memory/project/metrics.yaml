@@ -2,6 +2,14 @@ executions:
   - date: "2026-04-06"
   - date: "2026-04-06"
   - date: "2026-04-06"
+  - date: "2026-04-26"
+    domain: "WP-HO-012"
+    stage: "D"
+    duration_seconds: 3
+    tests_passed: 816
+    tests_total: 816
+    gate_result: "PASS"
+    timestamp: "2026-04-26T15:22:38.576Z"
     domain: "zone-gui-api-contract"
     stage: "D"
     duration_seconds: 90
