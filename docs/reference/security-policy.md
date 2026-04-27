@@ -19,6 +19,8 @@
 - High/Critical CVE가 있는 의존성은 사용하지 않는다.
 - 의존성 버전은 고정(pin)한다.
 - 주 1회 이상 dependency scan을 실행한다.
+- 오프라인 baseline(`npm run scan:dependencies`)과 온라인 advisory feed는 분리해 운영한다.
+- online advisory 차단 기준은 `artifacts/advisory/advisory-policy.yaml`을 따른다.
 
 ## 입력 검증
 

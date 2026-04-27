@@ -2,10 +2,56 @@
 # 마스터 UI에 탑재된 플러그인 목록
 # Stage C에서만 수정한다.
 # 마스터 UI는 이 파일 → ui_contract → capability_contract 순서로 읽는다. 모듈 코드는 읽지 않는다.
-version: "0.2.0"
-last_updated: "2026-03-18"
+version: "0.3.0"
+last_updated: "2026-03-25"
 
 plugins:
+  - id: "system-api-plugin"
+    name: "System OS"
+    module_id: "system-os"
+    entry_point: "/"
+    navigation:
+      group: "system"
+      label: "System OS"
+      icon: "monitoring"
+      order: 0
+    ui_contract: "contracts/ui-shell/ui-contract.yaml"
+    capability_contract: "contracts/system-api/capability.yaml"
+    feature_flag: "system_api.enabled"
+    architecture_profile: "master-os-shell"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+    observability:
+      dashboard: "master-shell/observability/config.yaml#system-api-dashboard"
+      alert_group: "system-api-alerts"
+    rollout:
+      strategy: "canary"
+      current_phase: "internal"
+      percentage: 5
+      full_rollout_condition: "B_review PASS + 7일 error_rate < 0.1% 유지 후 100%"
+      rollout_history:
+        - phase: "internal"
+          percentage: 5
+          date: "2026-04-16"
+          trigger: "WP-UI-018 B_review CONDITIONAL_PASS"
+          gates_passed: [unit_tests, contract_drift, authz_regression, Stage_E_11/11]
+    rollback:
+      strategy: "disable_flag"
+      flag: "system_api.enabled"
+      trigger_conditions:
+        - "system_api 엔드포인트 error_rate > 1%"
+        - "system.admin 권한 우회 감지"
+        - "SSE 연결 무한 누적"
+    status: "inactive"
+    registered_at: "2026-04-15"
+    owner: "platform-team"
+    stage_b_memory_ref: "memory/stageB/ui-shell-composition.yaml"
+    notes: |
+      Stage C 등록면만 완료. 기본 flag=false. 실제 노출은 Stage D/E PASS 후.
+
   - id: "task-management-plugin"
     name: "작업 관리"                 # 도메인 언어. 기술 용어 금지.
     module_id: "task-management"
@@ -20,7 +66,8 @@ plugins:
     feature_flag: "enable_task_management"
     rollout:
       strategy: "canary"
-      percentage: 0                   # Stage D PASS 전까지 0%. PASS 후 단계적 확대.
+      current_phase: "full"
+      percentage: 100                 # B_review PASS → full(100%) rollout 완료 (2026-03-25)
       full_rollout_condition: "Stage D 품질 게이트 전체 PASS 후"
     rollback:
       strategy: "disable_flag"
@@ -32,9 +79,17 @@ plugins:
     observability:
       dashboard: "master-shell/observability/config.yaml#task-management-dashboard"
       alert_group: "task-management-alerts"
-    status: "inactive"               # feature_flag=false 동안 inactive. PASS 후 active로 변경.
+    status: "active"                 # B_review PASS → active (2026-03-25)
     registered_at: "2026-03-17"
     owner: "productivity-team"
+    architecture_profile: "stateful-domain-module"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
+      - "repository-sqlite"
     stage_b_memory_ref: "memory/stageB/task-management-composition.yaml"
     notes: |
       - enable_task_management: false → 마스터 UI 미노출 상태.
@@ -55,6 +110,8 @@ plugins:
     feature_flag: "billing.enabled"
     rollout:
       strategy: "canary"
+      current_phase: "full"
+      percentage: 100                 # B_review PASS → full(100%) rollout 완료 (2026-03-25)
       phases:
         - phase: internal
           percentage: 5
@@ -75,12 +132,71 @@ plugins:
     observability:
       dashboard: "master-shell/observability/config.yaml#billing-dashboard"
       alert_group: "billing-alerts"
-    status: "inactive"
+    status: "active"                 # B_review PASS → active (2026-03-25)
     registered_at: "2026-03-18"
     owner: "platform-team"
+    architecture_profile: "workflow-domain-module"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
     stage_b_memory_ref: "memory/stageB/billing.yaml"
     notes: |
       - billing.enabled: false → 마스터 UI 미노출 상태.
       - billing.exception.enabled: false → 예외처리 화면 별도 제어 가능.
       - DISPUTED→PAID 전이는 billing.admin 권한 필요 (INV-B005).
       - Stage D PASS 후: status: active, internal 5% rollout 시작.
+
+  - id: "video-plugin"
+    name: "비디오 관리"
+    module_id: "video"
+    entry_point: "/videos"
+    navigation:
+      group: "content"
+      label: "비디오"
+      icon: "play_circle"
+      order: 3
+    ui_contract: "domains/video/contract/ui-contract.yaml"
+    capability_contract: "domains/video/contract/capability.yaml"
+    feature_flag: "video.enabled"
+    rollout:
+      strategy: "canary"
+      current_phase: "full"
+      percentage: 100                 # B_review PASS → full(100%) rollout 완료 (2026-03-25)
+      phases:
+        - phase: internal
+          percentage: 5
+          condition: "Stage D 품질 게이트 PASS 후"
+        - phase: beta
+          percentage: 20
+          condition: "internal 7일 이상 error_rate 기준 충족"
+        - phase: full
+          percentage: 100
+          condition: "beta 7일 이상 error_rate 기준 충족"
+    rollback:
+      strategy: "disable_flag"
+      flag: "video.enabled"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "INV-V002 상태 전이 위반 감지"
+    observability:
+      dashboard: "master-shell/observability/config.yaml#video-dashboard"
+      alert_group: "video-alerts"
+    status: "active"                 # B_review PASS → active (2026-03-25)
+    registered_at: "2026-03-20"
+    owner: "video-team"
+    architecture_profile: "workflow-domain-module"
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
+    stage_b_memory_ref: "memory/stageB/video.yaml"
+    notes: |
+      - video.enabled: false → Stage D PASS 후 internal 5% 시작.
+      - INV-V004: 동시 RUNNING TranscodeJob 1개 제한.
+      - RISK-V002: 트랜스코딩은 비동기 — UseCase는 Job ID만 반환.

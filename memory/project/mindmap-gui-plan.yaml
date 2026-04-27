@@ -1,0 +1,282 @@
+# =============================================================================
+# Workflow OS — Mindmap GUI Control Center 구현 계획
+# =============================================================================
+# plan_id:    MINDMAP-GUI-v1.0
+# created_at: 2026-04-05
+# owner:      Workflow OS 설계자
+# north_star: >
+#   마인드맵 형태의 대화형 GUI에서 모든 도메인·스테이지·계약·피처플래그를
+#   시각적으로 연결하고, 플래그 토글·롤백·라이프사이클 전환을 UI에서 직접
+#   실행할 수 있는 살아있는 컨트롤 센터를 기존 빌드 파이프라인에 통합한다.
+# =============================================================================
+
+meta:
+  version: "1.0.0"
+  status: "READY"
+  tech_stack: "Vanilla JS + SVG (No external JS framework)"
+  output_artifact: "artifacts/mindmap/index.html"
+  build_script: "scripts/generate-mindmap.js"
+  npm_command: "npm run mindmap"
+  depends_on:
+    - "contracts/system-api/openapi.yaml (WP-UI-001 이미 완료)"
+    - "contracts/system-api/events.schema.json (WP-UI-001 이미 완료)"
+    - "contracts/ui-shell/ui-contract.yaml (WP-UI-001 이미 완료)"
+  guardrails:
+    - "외부 JS 라이브러리 의존성 0 (D3, Cytoscape 등 금지)"
+    - "기존 570+ 테스트 깨지 않음"
+    - "INV-SYS-003: system_api.enabled=false 시 컨트롤 전체 비활성화"
+    - "INV-SYS-004: flag_toggle_ui.enabled=false 시 토글 비활성"
+    - "INV-SYS-005: rollback_ui.enabled=false 시 롤백 버튼 숨김"
+
+# =============================================================================
+# 아키텍처 개요
+# =============================================================================
+architecture:
+  layout:
+    html_file: "artifacts/mindmap/index.html (단일 self-contained HTML)"
+    sections:
+      - "#topbar: 고정 브랜드바 + SSE 상태 배지 + 줌 컨트롤"
+      - "#canvas-wrap: 전체 뷰포트 SVG 호스트 + 팬/줌 컨테이너"
+      - "#detail-panel: 우측 슬라이드 드로어 (340px) — 4개 탭"
+      - "#status-bar: 고정 하단 바 — 헬스 요약, SSE 지연, 테스트 PASS%"
+      - "#confirm-modal: 롤백 확인 오버레이"
+
+  graph_layers:
+    - "edges-layer: 모든 <line>/<path> 엣지"
+    - "nodes-layer: 모든 노드 그룹 <g class='node'>"
+    - "labels-layer: 부동 상태 라벨 / 툴팁"
+
+  node_types:
+    system_root:
+      shape: "circle r=48"
+      fill: "gradient teal→blue"
+      count: 1
+    domain:
+      shape: "circle r=36"
+      fill: "--node-domain (#0f766e)"
+      count: "3 (billing, productivity, video)"
+    stage:
+      shape: "rect rounded 56x32"
+      fill: "--node-stage (#1d4ed8)"
+      count: "3 domains × 5 stages = 15"
+    contract:
+      shape: "polygon diamond 44px"
+      fill: "--node-contract (#475569)"
+      count: "도메인당 최대 4개"
+    feature_flag:
+      shape: "rect pill 80x26"
+      fill: "--node-flag (#b45309)"
+      count: "flags.yaml 전체 항목"
+
+  edge_types:
+    dependency: "line — 도메인 간 의존성 (#dccfba solid)"
+    contract: "cubic bezier — 도메인→계약 (#0f766e dashed)"
+    dataflow: "curved path — 데이터 흐름 (#1d4ed8 animated)"
+    flag: "line — 도메인→플래그 (#b45309 dotted opacity=0.5)"
+    lifecycle: "line — 도메인→스테이지 (#475569)"
+
+  layout_algorithm:
+    name: "Hierarchical + Force-directed Hybrid"
+    steps:
+      - "Step 1 (정적 배치): 도메인 중앙 r=80, 스테이지 r=160, 플래그 r=280, 계약 r=320"
+      - "Step 2 (포스 완화): Verlet 120 tick — 반발력 charge=-400, 스프링 stiffness=0.08, 중력 alpha=0.02"
+      - "Step 3 (고정): 120 tick 후 포지션 동결. 리사이즈/리셋 버튼 시에만 재실행"
+    note: "순수 Verlet 80줄 — D3 의존성 없음"
+
+  data_flow:
+    build_time:
+      - "YAML 파일들 → buildGraphData() → JSON blob → <script id='mindmap-data'> 임베드"
+    runtime:
+      initial_load:
+        - "임베드 JSON 파싱 → 그래프 부트스트랩"
+        - "GET /api/v1/system/health|flags|lifecycle|quality-gate|catalog → State.nodes 병합"
+      live_updates:
+        - "EventSource /api/v1/system/events → SSE 이벤트 타입별 State 패치 → 영향 노드만 재렌더"
+      user_actions:
+        - "플래그 토글 → PATCH /api/v1/system/flags/{id} → 낙관적 UI → SSE 확인"
+        - "롤백 → 확인 모달 → POST /api/v1/system/rollback/{domain} → 노드 애니메이션"
+
+# =============================================================================
+# Work Packets
+# =============================================================================
+work_packets:
+
+  - id: "WP-MINDMAP-001"
+    title: "디자인 토큰 레이어 & HTML 쉘"
+    agent: "implementer"
+    files_create:
+      - "artifacts/mindmap/index.html (HTML 구조 + CSS 토큰 + 레이아웃 쉘)"
+    acceptance_criteria:
+      - "올바른 브랜드·레이아웃 비율로 브라우저에서 열림"
+      - "CSS 커스텀 속성 전체 정의됨"
+      - "클래스 토글로 패널 열기/닫기 동작"
+      - "뷰포트 < 768px 시 패널 접힘"
+    css_tokens_new:
+      - "--node-domain, --node-stage, --node-flag, --node-contract, --node-inactive"
+      - "--edge-dependency, --edge-contract, --edge-dataflow, --edge-flag"
+      - "--health-healthy/degraded/down"
+      - "--stage-pass/in-progress/fail/not-started"
+      - "--canvas-bg, --node-stroke, --node-shadow, --panel-width"
+
+  - id: "WP-MINDMAP-002"
+    title: "빌드 스크립트 (generate-mindmap.js)"
+    agent: "implementer"
+    files_create:
+      - "scripts/generate-mindmap.js"
+    yaml_sources:
+      - "master-shell/feature-flags/flags.yaml → 플래그 상태"
+      - "master-shell/navigation/nav.yaml → 네비 그룹"
+      - "master-shell/plugin-registry/registry.yaml → 플러그인"
+      - "master-shell/catalog/domains.yaml → 도메인 목록"
+      - "master-shell/observability/health-scores.yaml → 헬스 점수"
+      - "contracts/system-api/openapi.yaml → API 엔드포인트 (계약 노드)"
+    output_json_shape:
+      nodes: "[{ id, type, label, x, y, healthScore?, stage?, flagActive?, ... }]"
+      edges: "[{ id, source, target, type }]"
+      meta: "{ generatedAt, flagStates, apiBase, sseUrl }"
+    acceptance_criteria:
+      - "node scripts/generate-mindmap.js 종료코드 0"
+      - "artifacts/mindmap/index.html 생성됨 (유효한 임베드 JSON)"
+      - "누락 YAML 파일 graceful 처리 (빈 배열, 크래시 없음)"
+
+  - id: "WP-MINDMAP-003"
+    title: "SVG 그래프 엔진 (포스 레이아웃 + 렌더러)"
+    agent: "implementer"
+    files_modify:
+      - "artifacts/mindmap/index.html (JS 블록 추가)"
+    modules_to_implement:
+      State: "{ nodes: Map, edges: [], selectedNode, transform, sseStatus, config }"
+      Bootstrap: "DOMContentLoaded → JSON 파싱 → layoutForce() → render()"
+      layoutForce: "순수 Verlet 시뮬레이션 120 tick"
+      render: "renderEdges() + renderNodes()"
+      updateBadges: "헬스 배지만 외과적 DOM 업데이트 (전체 재렌더 없음)"
+      PanZoom: "wheel=줌, drag배경=팬, dblclick=fit-all"
+      NodeDrag: "노드 드래그 + 실시간 엣지 재라우팅"
+    acceptance_criteria:
+      - "모든 노드 올바른 초기 포지션 (도메인 중앙, 위성 궤도)"
+      - "팬/줌/드래그 정상 작동"
+      - "Escape=패널 닫기, +/-=줌, 방향키=팬"
+      - "노드 드래그 시 연결 엣지 실시간 재라우팅"
+      - "더블클릭 캔버스=전체 노드 fit"
+
+  - id: "WP-MINDMAP-004"
+    title: "디테일 패널 & 컨트롤 액션"
+    agent: "implementer"
+    files_modify:
+      - "artifacts/mindmap/index.html (JS 확장)"
+    tabs:
+      overview:
+        - "헬스 링 SVG"
+        - "스테이지 스테퍼 (A→B→C→D→E, 색상=상태)"
+        - "next_action 텍스트"
+        - "ejectable 배지"
+        - "롤백 버튼 (flag 조건부)"
+      flags:
+        - "도메인 prefix 기준 필터링"
+        - "flag id, 설명, rollout%, 최종변경, 토글 스위치"
+        - "PATCH /api/v1/system/flags/{id} 낙관적 UI"
+      audit:
+        - "GET /api/v1/system/audit?domain={id}&page_size=20"
+        - "가상화 목록, 로딩 스켈레톤, 더 불러오기"
+      quality:
+        - "domain별 게이트 결과 테이블"
+        - "통과/전체 요약 카운트"
+    rollback_flow:
+      trigger: "Overview 탭 버튼 or 단축키 R"
+      modal: "도메인명 + 이유 텍스트 + Cancel/Confirm"
+      on_confirm: "POST /api/v1/system/rollback/{domain} → 노드 빨간 펄스 → 플래그 새로고침"
+    acceptance_criteria:
+      - "도메인 노드 클릭 → 패널 슬라이드인 + 올바른 데이터"
+      - "4개 탭 에러 없이 렌더"
+      - "토글 → DevTools Network에서 올바른 PATCH 요청 확인"
+      - "flag_toggle_ui.enabled=false 시 토글 비활성"
+      - "롤백 모달 Cancel → 사이드이펙트 없이 닫힘"
+
+  - id: "WP-MINDMAP-005"
+    title: "SSE 통합 & 실시간 업데이트"
+    agent: "implementer"
+    files_modify:
+      - "artifacts/mindmap/index.html (JS 확장)"
+    sse_events:
+      system.health.updated: "updateBadges() + 상태바 갱신"
+      system.flag.toggled: "State.flags 패치 + 플래그 노드 플래시 애니메이션"
+      system.rollback.triggered: "도메인 노드 빨간 펄스 + 토스트 + 플래그 새로고침"
+      system.quality-gate.updated: "State.qualityGates 패치 + 패널 탭 갱신"
+      system.domain.lifecycle-changed: "스테이지 상태 업데이트 + 패널 스테퍼 갱신"
+    reconnect_strategy: "지수 백오프 2s→30s + 0-1000ms 지터, Last-Event-ID 네이티브 재전송"
+    static_fallback: "EventSource 불가 시 15초 폴링 GET /api/v1/system/health"
+    acceptance_criteria:
+      - "상태바 'SSE: CONNECTED' 표시"
+      - "서버 system.health.updated → 배지 실시간 업데이트"
+      - "강제 연결 해제 → 'SSE: RECONNECTING' → 자동 재연결"
+      - "정적 모드 (서버 없음): 'SSE: UNAVAILABLE', 임베드 데이터로 그래프 렌더"
+
+  - id: "WP-MINDMAP-006"
+    title: "빌드 파이프라인 통합"
+    agent: "implementer"
+    files_modify:
+      - "scripts/build-static-ui.js (steps 배열에 항목 추가)"
+      - "package.json (npm script 추가)"
+    changes:
+      build_static_ui: |
+        // steps 배열에 추가 (기존 패턴 동일):
+        { label: '마인드맵 컨트롤 센터', command: 'node', args: ['scripts/generate-mindmap.js'] }
+      package_json: |
+        "mindmap": "node scripts/generate-mindmap.js"
+    acceptance_criteria:
+      - "npm run mindmap → 종료코드 0, artifacts/mindmap/index.html 생성"
+      - "npm run ui:build → '[ui:build] 마인드맵 컨트롤 센터 생성 완료' 출력"
+      - "마인드맵 스텝 실패 시 ui:build 전체 non-zero 종료"
+
+# =============================================================================
+# API 연동 매핑
+# =============================================================================
+api_integration:
+  - panel: "초기 하이드레이션"
+    method: GET
+    endpoint: "/api/v1/system/health|flags|lifecycle|quality-gate|catalog"
+    when: "페이지 로드 시 병렬 fetch"
+  - panel: "SSE 스트림"
+    method: GET
+    endpoint: "/api/v1/system/events"
+    when: "로드 시 지속 연결"
+  - panel: "감사 로그 탭"
+    method: GET
+    endpoint: "/api/v1/system/audit?domain={id}&page_size=20&page={n}"
+    when: "탭 열기, 더 불러오기"
+  - panel: "플래그 토글"
+    method: PATCH
+    endpoint: "/api/v1/system/flags/{flagId}"
+    when: "토글 스위치 클릭"
+  - panel: "롤백 확인"
+    method: POST
+    endpoint: "/api/v1/system/rollback/{domain}"
+    when: "확인 모달 Confirm 클릭"
+
+# =============================================================================
+# 구현 순서 (의존성 체인)
+# =============================================================================
+implementation_order:
+  - "WP-MINDMAP-002 (데이터 형태 확정)"
+  - "WP-MINDMAP-001 (HTML 쉘 — 데이터 형태 알아야 임베드 구조 결정)"
+  - "WP-MINDMAP-003 (그래프 엔진 — HTML 쉘 필요)"
+  - "WP-MINDMAP-004 (디테일 패널 — selectNode() 필요)"
+  - "WP-MINDMAP-005 (SSE — State 객체 + 업데이트 함수 필요)"
+  - "WP-MINDMAP-006 (빌드 통합 — 스크립트 완성 후)"
+  note: "WP-002와 WP-001 HTML 쉘은 부분 병렬 가능"
+
+# =============================================================================
+# 핵심 구현 제약사항
+# =============================================================================
+constraints:
+  no_external_libs: "포스 시뮬레이션 순수 Verlet 80줄, SVG 조작 document.createElementNS만"
+  feature_flag_guards:
+    - "system_api.enabled=false → 전체 그래프 'System API disabled' 오버레이"
+    - "flag_toggle_ui.enabled=false → 토글 스위치 disabled + 툴팁"
+    - "rollback_ui.enabled=false → 롤백 버튼 숨김"
+  accessibility:
+    - "모든 인터랙티브 노드: role='button', tabindex='0', aria-label"
+    - "Enter/Space → 포커스된 노드 선택"
+  auth_token:
+    - "<meta name='api-token'> 빌드 시 빈 값, 런타임 서버 사이드 주입 또는 수동 설정"
+    - "토큰 없으면 API 호출 비활성, 임베드 데이터만 표시 (degraded 모드)"

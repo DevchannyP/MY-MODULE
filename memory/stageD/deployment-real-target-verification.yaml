@@ -1,0 +1,47 @@
+# Deployment real-target verification automation — Stage D
+# 생성일: 2026-04-15
+
+capability_id: "deployment-real-target-verification-automation"
+stage: "D"
+status: "PASS"
+
+implementation_surface:
+  workflow: ".github/workflows/deployment-smoke.yml"
+  target_registry: "master-shell/operations/deployment-environments.yaml"
+  resolver: "scripts/resolve_deployment_target.py"
+  runner: "scripts/run_deployment_smoke.js"
+  runbook: "docs/how-to/run-stage-e.md"
+
+real_target_contract:
+  required_environment_vars:
+    - "DEPLOYMENT_BASE_URL"
+    - "DEPLOYMENT_INGRESS_HOST"
+    - "DEPLOYMENT_TLS_REQUIRED"
+  automated_checks:
+    - "resolved target URL hostname matches expected ingress host"
+    - "https requirement is enforced when the environment contract requires it"
+    - "health request preserves x-request-id/x-correlation-id across ingress"
+    - "health response final URL stays on the resolved target origin"
+
+quality_bundle:
+  deployment_runner_smoke:
+    command: "node --test src/tests/smoke/runDeploymentSmoke.test.js"
+    result: "PASS"
+    coverage_note: "runner가 target-url/ingress-health/task/billing/video/flag-off bundle을 artifact로 기록한다."
+  binding_validator:
+    command: "python3 scripts/validate_deployment_smoke_binding.py"
+    result: "PASS"
+    coverage_note: "workflow, registry, resolver의 변수/입력 정합성을 검증한다."
+  provisioning_validator:
+    command: "python3 scripts/validate_deployment_environment_provisioning.py"
+    result: "PASS"
+    coverage_note: "registry 추가 vars가 provisioning policy/template와 어긋나지 않는지 확인한다."
+  lint:
+    command: "npm run lint"
+    result: "PASS"
+    coverage_note: "runner/workflow/docs 수정 후 lint 기준을 유지한다."
+
+notes: |
+  - 이전 baseline은 실제 URL/ingress 검증을 수동 확인 항목으로만 남겨두고 있었다.
+  - 현재는 registry/resolver/workflow/runner가 expected ingress host와 TLS requirement를 함께 해석해 artifact에 남긴다.
+  - 다음 Stage E packet은 target mismatch/TLS mismatch 같은 실패면과 release evidence 연결을 적대 검증으로 닫는다.

@@ -1,0 +1,42 @@
+wp_id: "WP-HARNESS-VNEXT-001"
+goal: "프로젝트 전체에 적용 가능한 Harness vNext 실행 계획을 문서화한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+
+files_created:
+  - path: "docs/explanation/harness-vnext-execution-plan.md"
+    purpose: "Mode router, eval plane, observability, security gate, rollout까지 포함한 실행 가능한 하네스 업그레이드 계획"
+  - path: "worklog/2026-04-14_WP-HARNESS-VNEXT-001.yaml"
+    purpose: "Harness vNext 계획 문서화에 대한 structured evidence"
+
+files_modified: []
+
+validation:
+  layer1_schema:
+    - cmd: "sed -n '1,260p' docs/explanation/harness-vnext-execution-plan.md"
+      result: "PASS"
+  layer2_contract:
+    - cmd: "rg 'Phase 0|Phase 1|Phase 2|Phase 3|Phase 4|Phase 5|Phase 6|Phase 7' docs/explanation/harness-vnext-execution-plan.md"
+      result: "PASS"
+  layer3_scenario:
+    - cmd: "npm run project:status"
+      result: "PASS — 현재 상태와 충돌 없이 계획 문서만 추가"
+    - cmd: "npm run session:bootstrap -- --json"
+      result: "PASS — current-wp/queue를 건드리지 않은 상태에서 운영 surface 정상"
+
+decisions:
+  - id: "HARNESS-VNEXT-001-D1"
+    decision: "현재 runtime/governance packet과 섞지 않고 계획 문서와 worklog만 먼저 추가한다"
+    rationale: "현 워크트리가 이미 dirty하고 current-wp가 verify 단계에 있으므로, 즉시 memory/queue를 변경하면 evidence 계보가 흐려질 수 있다."
+  - id: "HARNESS-VNEXT-001-D2"
+    decision: "실행 계획은 mode router, structured contract, eval, observability, security, routing, release plane 순으로 분할한다"
+    rationale: "프롬프트 문구만 바꾸는 방식보다 운영 제어면을 단계적으로 올리는 편이 회귀와 롤백에 유리하다."
+
+risks:
+  - id: "HARNESS-VNEXT-001-R1"
+    risk: "문서화만 완료된 상태이므로 실제 성능 개선은 후속 packet 구현 전까지 발생하지 않는다."
+    mitigation: "Phase 0~2를 우선 packet으로 실행해 control plane 핵심부터 구현한다."
+  - id: "HARNESS-VNEXT-001-R2"
+    risk: "향후 mode router를 current packet routing과 무리하게 결합하면 queue 해석이 복잡해질 수 있다."
+    mitigation: "packet_type과 mode를 별도 축으로 유지하고 bootstrap/cockpit에서 둘 다 노출한다."

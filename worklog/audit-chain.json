@@ -1,0 +1,221 @@
+{
+  "entries": [
+    {
+      "seq": 1,
+      "timestamp": "2026-03-20T11:03:24.242Z",
+      "action": "Phase3",
+      "details": "audit-chain 설치",
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "hash": "c75a2ccf65e1432a33369600a7b06ad9f4830e3e124d832dc8f1389ce2298219"
+    },
+    {
+      "seq": 2,
+      "timestamp": "2026-03-21T01:50:20.302Z",
+      "action": "fix/billing-payment-usecase",
+      "details": "payment 3 UseCase 신설 + Clean Arch 위반 수정 + 36 테스트 추가",
+      "prev_hash": "c75a2ccf65e1432a33369600a7b06ad9f4830e3e124d832dc8f1389ce2298219",
+      "hash": "e20338b4677db7b6c817a08dccf01ca9c6ab50571e7e87240e82f04e614d72e3"
+    },
+    {
+      "seq": 3,
+      "timestamp": "2026-03-25T11:28:00.434Z",
+      "action": "C/core",
+      "details": "video event registry gap 해소 + 3도메인 full rollout 활성화 + health 84→100",
+      "prev_hash": "e20338b4677db7b6c817a08dccf01ca9c6ab50571e7e87240e82f04e614d72e3",
+      "hash": "02a258814583319851a625434ffcd23bbc8763770fc63cfaa6e98e6e4f961b7c"
+    },
+    {
+      "seq": 4,
+      "timestamp": "2026-03-25T11:37:10.201Z",
+      "action": "C/core",
+      "details": "flag-status consistency guard + stale memory repair + Stage A reports 실내용 작성",
+      "prev_hash": "02a258814583319851a625434ffcd23bbc8763770fc63cfaa6e98e6e4f961b7c",
+      "hash": "880f539503812c3d61c6ae0a1cb58be63008ef898bca54423a6ae7bc3c8d22fc"
+    },
+    {
+      "seq": 5,
+      "timestamp": "2026-04-06T10:58:01.729Z",
+      "action": "D/zone-ui-rendering",
+      "details": "Zone④ dynamic UI routing + ETag; Zone⑥ requires.yaml uniqueItems enforcement",
+      "prev_hash": "880f539503812c3d61c6ae0a1cb58be63008ef898bca54423a6ae7bc3c8d22fc",
+      "hash": "4622824a8c74b90ed50ff935d34bf9ea6c6f5637fde2087514b2166234439ce8"
+    },
+    {
+      "seq": 6,
+      "timestamp": "2026-04-06T11:05:47.752Z",
+      "action": "D/zone-feature-flags",
+      "details": "Zone⑭ feature flag defaults reset to false + video-plugin rollback playbook added",
+      "prev_hash": "4622824a8c74b90ed50ff935d34bf9ea6c6f5637fde2087514b2166234439ce8",
+      "hash": "9543a440d4e46e1d1177c856a0ba3213a500e4bec2bd70fb503904dc2f30380d"
+    },
+    {
+      "seq": 7,
+      "timestamp": "2026-04-06T11:15:10.930Z",
+      "action": "D/zone-gui-api-contract",
+      "details": "Zone⑤ home UI wired to callPlanningApi('snapshot') — frontend-mapped 0→1, live auto-send+branch status in dashboard",
+      "prev_hash": "9543a440d4e46e1d1177c856a0ba3213a500e4bec2bd70fb503904dc2f30380d",
+      "hash": "5e071ba3f0c0fd2a0e0620c0a332482723370da0384ee67bcb2d1638f5791ba4"
+    },
+    {
+      "seq": 8,
+      "timestamp": "2026-04-06T11:22:32.657Z",
+      "action": "R4/zone①",
+      "details": "save-packet/save-sections/save-automation POST routes added to createServer.js; callPlanningApi upgraded to POST; autosend toggle wired; frontend-mapped 1→3",
+      "prev_hash": "5e071ba3f0c0fd2a0e0620c0a332482723370da0384ee67bcb2d1638f5791ba4",
+      "hash": "a303bd26bbf2eef39f08bec963dbe8dcf3f916cd2e826cb077103c1b096ae85b"
+    },
+    {
+      "seq": 9,
+      "timestamp": "2026-04-06T15:25:09.975Z",
+      "action": "D/zone-error-handling",
+      "details": "PTY send errors → RFC 7807 fromError() 정규화 + 에러 케이스 smoke 테스트 추가",
+      "prev_hash": "a303bd26bbf2eef39f08bec963dbe8dcf3f916cd2e826cb077103c1b096ae85b",
+      "hash": "32057cc2d6573b8e879a520654de9f190bd5fb5ec834bf644cef94373765dbf1"
+    },
+    {
+      "seq": 10,
+      "timestamp": "2026-04-06T15:35:52.436Z",
+      "action": "D/zone-gui-api-contract",
+      "details": "validate_ui_shell_contract.py fetchJson PTY 5개 연산 감지 추가 (6→9 frontend-mapped ops)",
+      "prev_hash": "32057cc2d6573b8e879a520654de9f190bd5fb5ec834bf644cef94373765dbf1",
+      "hash": "eed721b8a2645fa75298ceab9221ccdcd73bd725a302456d04d8d0e4ac69eaf9"
+    },
+    {
+      "seq": 11,
+      "timestamp": "2026-04-06T15:37:02.810Z",
+      "action": "D/zone-architecture-fitness",
+      "details": "architectureFitness.smoke: 위반수·도메인수·각 도메인 PASS 검증 추가 (stderr만→종합 회귀 감지)",
+      "prev_hash": "eed721b8a2645fa75298ceab9221ccdcd73bd725a302456d04d8d0e4ac69eaf9",
+      "hash": "442373c16a925c7840c0bc0b10d44a2cdb1b353f280fb3c87b41af99f071d85b"
+    },
+    {
+      "seq": 12,
+      "timestamp": "2026-04-06T15:48:14.820Z",
+      "action": "D/zone-requirements-contract",
+      "details": "requirementsValidation.smoke: --all 도메인 검증 + module.id 누락 + NFR 음수 거부 케이스 추가 (3→6 테스트)",
+      "prev_hash": "442373c16a925c7840c0bc0b10d44a2cdb1b353f280fb3c87b41af99f071d85b",
+      "hash": "2731bde94f54db0ce556edb711a0cb99fd8e1df2bde812ad14e76d016cbe7ce4"
+    },
+    {
+      "seq": 13,
+      "timestamp": "2026-04-06T22:20:50.527Z",
+      "action": "contract/ui-shell",
+      "details": "openapi.yaml 계약 정합성 수정: undeclared tags(planning-stage, automation) 추가, StageRunReport.prerequisites 필드 정의, info.description 갱신",
+      "prev_hash": "2731bde94f54db0ce556edb711a0cb99fd8e1df2bde812ad14e76d016cbe7ce4",
+      "hash": "95e4e80a53d9bdee4a28a17f5d7fb0967c1168db83a18cb2ae4e4d88b001ca78"
+    },
+    {
+      "seq": 14,
+      "timestamp": "2026-04-06T22:27:51.208Z",
+      "action": "security/stage-run",
+      "details": "execute 모드 system.admin authz 게이트 추가 + recordControlCenterOperation 텔레메트리 래퍼 + spawnSync 30s timeout + 403 smoke 테스트 추가",
+      "prev_hash": "95e4e80a53d9bdee4a28a17f5d7fb0967c1168db83a18cb2ae4e4d88b001ca78",
+      "hash": "cf2feb6a122f92ab486b98415a5e12cf34d4d1df40ecc4c6050f6549fc0dbeac"
+    },
+    {
+      "seq": 15,
+      "timestamp": "2026-04-06T22:37:10.389Z",
+      "action": "ops/feature-flag-env",
+      "details": "FeatureFlagProvider WOS_FLAG_ env 오버라이드 구현 — yaml 선언 키 한정, phantom flag 방지, getRuntimeStatus.envOverridesApplied 노출, 3 신규 테스트 PASS",
+      "prev_hash": "cf2feb6a122f92ab486b98415a5e12cf34d4d1df40ecc4c6050f6549fc0dbeac",
+      "hash": "8a433e88a33ea6afa71a7bfd1cdfd16936e3501827fa47c27f4b7355bbc45107"
+    },
+    {
+      "seq": 16,
+      "timestamp": "2026-04-06T22:47:52.150Z",
+      "action": "ops/env-loader",
+      "details": "npm start --env-file-if-exists=.env 추가, .env.example 생성, WOS_FLAG_* rollout 우회 수정 (ENV_OVERRIDE_TRUE/FALSE reason), 4 FeatureFlagProvider 테스트 PASS",
+      "prev_hash": "8a433e88a33ea6afa71a7bfd1cdfd16936e3501827fa47c27f4b7355bbc45107",
+      "hash": "e1c3728210592be6489540b7ee82d17e52190fb824418c832c1906d8b529a41f"
+    },
+    {
+      "seq": 17,
+      "timestamp": "2026-04-09T14:02:50.383Z",
+      "action": "gate/L5-full",
+      "details": "전체 품질 게이트 PASS: contract-drift PASS, openapi-governance PASS, feature-flags 12/12, ui-shell-contract 16/16, architecture-fitness 0위반, requirements PASS, ESLint PASS, 570/570 domain, 110/110 smoke",
+      "prev_hash": "e1c3728210592be6489540b7ee82d17e52190fb824418c832c1906d8b529a41f",
+      "hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd"
+    },
+    {
+      "seq": 18,
+      "timestamp": "2026-04-12T05:21:02.230Z",
+      "action": "memory-sync/platform",
+      "details": "next-actions + current-state + reflection-log 2026-04-12로 재정렬 — 35/35 WP 완료 상태 반영",
+      "prev_hash": "45c79f540f5953ad354bcfa6c7a61c58d6387f90d6de455c95bb33ed86cd6dcd",
+      "hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84"
+    },
+    {
+      "seq": 19,
+      "timestamp": "2026-04-12T06:02:53.201Z",
+      "action": "spiral7/platform",
+      "details": "WP-S7-001 EventBus Singleton 18/18 PASS + WP-S7-004 data-dict 경로 정렬 + WP-S7-005 validation-profiles 갭 0 + ESLint 0 errors + UI shell contract /ui/home-runtime 등록 + test 708/708 PASS",
+      "prev_hash": "9b4e6e1d6f849214c2aefbfb454ab82fe762c9cf6208708dafea7d58e34bfd84",
+      "hash": "1385bbb9778dd76dea08aaa75e8edadd37134e3db0bede28eaf0bf7b406a46ca"
+    },
+    {
+      "seq": 20,
+      "timestamp": "2026-04-12T06:15:09.520Z",
+      "action": "spiral7/WP-S7-003",
+      "details": "Worker Thread generateMindmapWorker.js + POST /api/mindmap/rebuild + smoke 3/3 PASS + 711 tests",
+      "prev_hash": "1385bbb9778dd76dea08aaa75e8edadd37134e3db0bede28eaf0bf7b406a46ca",
+      "hash": "9b07a557c92bdd39d76964c498b805945c0f0a6d76e121995b54aae376d1ad2c"
+    },
+    {
+      "seq": 21,
+      "timestamp": "2026-04-12T07:04:10.785Z",
+      "action": "spiral7/WP-S7-002",
+      "details": "OutboxRepository Port+InMemory+SQLite + OutboxPoller setInterval + 20 tests + 731/731",
+      "prev_hash": "9b07a557c92bdd39d76964c498b805945c0f0a6d76e121995b54aae376d1ad2c",
+      "hash": "be6b3acaa9a995fd3f6d1f56c29c2c00dea8fe453c28399888700182aa997aa2"
+    },
+    {
+      "seq": 22,
+      "timestamp": "2026-04-12T07:15:28.349Z",
+      "action": "spiral8/event-wiring",
+      "details": "WP-S8-001 EventBusPublisher 8/8 + WP-S8-002 통합테스트 5/5 + 744/744 PASS — Use case→EventBus→Outbox 루프 완성",
+      "prev_hash": "be6b3acaa9a995fd3f6d1f56c29c2c00dea8fe453c28399888700182aa997aa2",
+      "hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681"
+    },
+    {
+      "seq": 23,
+      "timestamp": "2026-04-19T02:01:05.919Z",
+      "action": "UI/automation-bridge",
+      "details": "VS Code 터미널 브리지 + 전체 사용법 가이드 + 명령 팔레트 + 파일 탐색 5탭 추가",
+      "prev_hash": "b547d5e24dd06a7838690aa284e3c36634ee2a60f69f11f13f66e91bca94c681",
+      "hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a"
+    },
+    {
+      "seq": 24,
+      "timestamp": "2026-04-26T14:17:45.541Z",
+      "action": "WP-HO-011/replay-packet-quality",
+      "details": "replay_next_packet 생성, actor/hash 문구 제거, audit_signals 노출, lint 0 warnings — 188/194 PASS",
+      "prev_hash": "319254b2a00e1f0f3dada481772917852dd5e0c5712c11235c78d56128323e8a",
+      "hash": "05b231566fcb9649a84c6226457b095f2c73289d7e9b5515ddc82dd6b29e7036"
+    },
+    {
+      "seq": 25,
+      "timestamp": "2026-04-26T15:09:58.984Z",
+      "action": "D/ui",
+      "details": "UI 3 버그 수정 + push 793db36 — mpo-term-bar display 충돌, spotlight-fill data-command 누락, showTermBar hex 계산 버그",
+      "prev_hash": "05b231566fcb9649a84c6226457b095f2c73289d7e9b5515ddc82dd6b29e7036",
+      "hash": "0eea6e468980314b6219c7e87cb5f96856b2621713cb8947e198ec32fc07914c"
+    },
+    {
+      "seq": 26,
+      "timestamp": "2026-04-26T15:22:37.917Z",
+      "action": "D/WP-HO-012",
+      "details": "promotion pipeline handoff 연결 — handoff_bundle_path/evidence_status/drift_status/promotion_handoff_conflict 필드 추가. 816/816 PASS",
+      "prev_hash": "0eea6e468980314b6219c7e87cb5f96856b2621713cb8947e198ec32fc07914c",
+      "hash": "deec5ebcbb7f49ff511669175a1a92aa201848b75da3e75a1600ee3682c540c8"
+    },
+    {
+      "seq": 27,
+      "timestamp": "2026-04-27T01:17:15.313Z",
+      "action": "UI/home-hero",
+      "details": "hero section upgraded: pulse dot, gradient h1, quick-status bar, numbered step cards, push 3585b16",
+      "prev_hash": "deec5ebcbb7f49ff511669175a1a92aa201848b75da3e75a1600ee3682c540c8",
+      "hash": "affa7754b843b0e463d6f00d5725a8abfba304ea2b45df4eba4fb694af9b6f87"
+    }
+  ],
+  "last_hash": "affa7754b843b0e463d6f00d5725a8abfba304ea2b45df4eba4fb694af9b6f87"
+}

@@ -1,0 +1,159 @@
+{
+  "schema_version": "0.1.0",
+  "generated_at": "2026-03-20",
+  "registry_path": "master-shell/operations/deployment-environments.yaml",
+  "policy_path": "master-shell/operations/deployment-environment-provisioning.yaml",
+  "note": "Template only. Replace placeholder owner/repo and null observed fields with live GitHub environment audit results.",
+  "environments": [
+    {
+      "id": "internal",
+      "github_environment": "internal",
+      "rollout_phase": "internal",
+      "expected": {
+        "required_environment_vars": [
+          "DEPLOYMENT_BASE_URL",
+          "TASK_WRITE_PERMISSIONS",
+          "TASK_READ_PERMISSIONS",
+          "FLAG_OFF_PATH",
+          "FLAG_OFF_PERMISSIONS"
+        ],
+        "protection_rules": {
+          "required_reviewers_min": 0,
+          "prevent_self_review": false,
+          "allow_admin_bypass": true,
+          "wait_timer_minutes": 0,
+          "deployment_branch_policy": {
+            "mode": "no-restriction",
+            "patterns": []
+          }
+        }
+      },
+      "observed": {
+        "captured_at": "",
+        "captured_by": "",
+        "source": "gh api",
+        "owner": "<repo-owner>",
+        "repo": "<repo-name>",
+        "environment_exists": null,
+        "variables_present": [],
+        "protection_rules": {
+          "required_reviewers_count": null,
+          "prevent_self_review": null,
+          "allow_admin_bypass": null,
+          "wait_timer_minutes": null,
+          "deployment_branch_policy": {
+            "mode": "",
+            "patterns": []
+          }
+        }
+      },
+      "collection_hints": {
+        "environment_endpoint": "/repos/<repo-owner>/<repo-name>/environments/internal",
+        "variables_endpoint": "/repos/<repo-owner>/<repo-name>/environments/internal/variables",
+        "branch_policy_endpoint": "/repos/<repo-owner>/<repo-name>/environments/internal/deployment-branch-policies"
+      }
+    },
+    {
+      "id": "canary",
+      "github_environment": "canary",
+      "rollout_phase": "canary",
+      "expected": {
+        "required_environment_vars": [
+          "DEPLOYMENT_BASE_URL",
+          "TASK_WRITE_PERMISSIONS",
+          "TASK_READ_PERMISSIONS",
+          "FLAG_OFF_PATH",
+          "FLAG_OFF_PERMISSIONS"
+        ],
+        "protection_rules": {
+          "required_reviewers_min": 1,
+          "prevent_self_review": true,
+          "allow_admin_bypass": false,
+          "wait_timer_minutes": 0,
+          "deployment_branch_policy": {
+            "mode": "selected",
+            "patterns": [
+              "main",
+              "release/*"
+            ]
+          }
+        }
+      },
+      "observed": {
+        "captured_at": "",
+        "captured_by": "",
+        "source": "gh api",
+        "owner": "<repo-owner>",
+        "repo": "<repo-name>",
+        "environment_exists": null,
+        "variables_present": [],
+        "protection_rules": {
+          "required_reviewers_count": null,
+          "prevent_self_review": null,
+          "allow_admin_bypass": null,
+          "wait_timer_minutes": null,
+          "deployment_branch_policy": {
+            "mode": "",
+            "patterns": []
+          }
+        }
+      },
+      "collection_hints": {
+        "environment_endpoint": "/repos/<repo-owner>/<repo-name>/environments/canary",
+        "variables_endpoint": "/repos/<repo-owner>/<repo-name>/environments/canary/variables",
+        "branch_policy_endpoint": "/repos/<repo-owner>/<repo-name>/environments/canary/deployment-branch-policies"
+      }
+    },
+    {
+      "id": "production",
+      "github_environment": "production",
+      "rollout_phase": "full",
+      "expected": {
+        "required_environment_vars": [
+          "DEPLOYMENT_BASE_URL",
+          "TASK_WRITE_PERMISSIONS",
+          "TASK_READ_PERMISSIONS",
+          "FLAG_OFF_PATH",
+          "FLAG_OFF_PERMISSIONS"
+        ],
+        "protection_rules": {
+          "required_reviewers_min": 1,
+          "prevent_self_review": true,
+          "allow_admin_bypass": false,
+          "wait_timer_minutes": 0,
+          "deployment_branch_policy": {
+            "mode": "selected",
+            "patterns": [
+              "main",
+              "release/*"
+            ]
+          }
+        }
+      },
+      "observed": {
+        "captured_at": "",
+        "captured_by": "",
+        "source": "gh api",
+        "owner": "<repo-owner>",
+        "repo": "<repo-name>",
+        "environment_exists": null,
+        "variables_present": [],
+        "protection_rules": {
+          "required_reviewers_count": null,
+          "prevent_self_review": null,
+          "allow_admin_bypass": null,
+          "wait_timer_minutes": null,
+          "deployment_branch_policy": {
+            "mode": "",
+            "patterns": []
+          }
+        }
+      },
+      "collection_hints": {
+        "environment_endpoint": "/repos/<repo-owner>/<repo-name>/environments/production",
+        "variables_endpoint": "/repos/<repo-owner>/<repo-name>/environments/production/variables",
+        "branch_policy_endpoint": "/repos/<repo-owner>/<repo-name>/environments/production/deployment-branch-policies"
+      }
+    }
+  ]
+}

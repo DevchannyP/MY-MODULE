@@ -19,8 +19,10 @@ Git 거버넌스는 이 네 가지를 같은 타이밍에 묶어 주는 규칙�
 
 ### 브랜치
 
-- 기본 브랜치: `main`
-- 작업 브랜치: `feat/core-*`, `fix/core-*`, `docs/core-*`, `chore/core-*`
+- 기준 안정 브랜치: `main`
+- 다음 통합 기준선: `develop`
+- 작업 브랜치: `feature/*`, `fix/*`, `bugfix/*`, `hotfix/*`, `release/*`, `recovery/*`, `sandbox/*`
+- 저장소 권장 패턴: `feature/core-*`, `fix/core-*`, `docs/core-*`, `chore/core-*`
 
 ### 커밋
 
@@ -39,6 +41,8 @@ PR에는 아래 내용이 빠지면 안 된다.
 3. 검증 명령
 4. memory/worklog 동기화 여부
 5. 위험과 rollback 포인트
+6. branch protection required checks 충족 여부
+7. root memory 기준면 반영 여부
 
 ## 3. 작업 단위 커밋이 중요한 이유
 
@@ -57,16 +61,20 @@ Git 커밋도 같다.
 
 - 코드만 바꾸지 않았는가
 - contract가 같이 맞춰졌는가
-- current-state / next-actions / risks가 업데이트됐는가
+- root current-state / next-actions / current-wp가 업데이트됐는가
+- 레거시 `memory/project/*`는 정말 필요한 경우에만 보조 갱신했는가
 - worklog에 이유와 검증이 남았는가
 - release evidence를 생성했는가
+- branch protection required checks 목록이 최신인가
 
 ## 5. 권장 흐름
 
-1. `main`에서 새 작업 브랜치를 만든다.
-2. 작은 작업 단위로 수정한다.
-3. 각 의미 단위마다 커밋한다.
+1. `npm run operator:cockpit`으로 현재 packet, 브랜치, 커밋 readiness를 먼저 읽는다.
+2. `main` 또는 `develop`에서 새 작업 브랜치를 만든다.
+3. 작은 작업 단위로 수정한다.
+4. `npm run commit:guard` 또는 `npm run commit:guard:verify`로 커밋 가능 상태를 먼저 확인한다.
+5. 각 의미 단위마다 커밋한다.
 4. 검증을 돌린다.
 5. release evidence를 만든다.
 6. PR을 생성한다.
-7. 리뷰 후 `main`에 병합한다.
+7. 리뷰 후 `develop` 또는 `main`에 병합한다.

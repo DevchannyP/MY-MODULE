@@ -1,0 +1,10 @@
+#!/bin/sh
+# post-commit: 커밋 후 마스터 기획서 UI 자동 재생성
+# 대상: memory/*.yaml, requirements/*.yaml, master-shell/**/*.yaml 변경 시
+CHANGED=$(git diff-tree --no-commit-id -r --name-only HEAD 2>/dev/null || true)
+NEEDS_REGEN=$(echo "$CHANGED" | grep -E '\.(yaml|json|md)$' | grep -vE '^node_modules' | head -1)
+if [ -n "$NEEDS_REGEN" ]; then
+  echo "🔄 마스터 기획서 재생성 중... ($NEEDS_REGEN 변경 감지)"
+  python3 scripts/generate-master-planner.py --silent 2>/dev/null || python3 scripts/generate-master-planner.py
+  echo "✅ artifacts/master-planner/index.html 갱신됨"
+fi

@@ -39,12 +39,23 @@
 ## 저장소 기준선 검증 명령
 
 ```bash
+npm run scan:dependencies
+npm run check:advisory-policy
 npm run generate:sbom
 npm run verify:provenance
 ```
 
 이 기준선은 실제 CI/CD 서명 체계 전 단계에서 다음을 보장한다.
 
-1. SBOM 산출 경로가 고정되어 있다.
-2. provenance evidence가 입력과 산출물 digest를 가진다.
-3. 공급망 증적 파일이 저장소 내부에서 재생성 가능하다.
+1. `package.json` 과 `package-lock.json` 이 일치한다.
+2. 현재 코어 baseline 에서 runtime dependency 유입이 즉시 감지된다.
+3. 잠긴 패키지는 integrity 와 license 메타데이터를 가진다.
+4. SBOM 산출 경로가 고정되어 있다.
+5. provenance evidence가 입력과 산출물 digest를 가진다.
+6. 공급망 증적 파일이 저장소 내부에서 재생성 가능하다.
+7. 온라인 advisory scan 으로 넘어가기 전 정책 baseline 이 고정되어 있다.
+
+## 현재 제한
+
+- 이 baseline 은 오프라인 검증이다.
+- 실제 CVE advisory feed 연동(`npm audit`, Snyk, GitHub Advisory DB)은 Phase 2에서 추가한다.

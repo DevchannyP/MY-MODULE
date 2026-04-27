@@ -1,0 +1,15 @@
+as_of: '2026-04-27'
+selection_policy: 'handoff-perfect-loop-first: context drift와 dirty baseline을 보호한
+  뒤 실행 가능한 SPIRAL-20 handoff 체인을 진행한다'
+next_wp: WP-HO-015
+queue:
+- id: WP-HO-012
+  priority: P0
+  status: done
+  completed_at: '2026-04-27'
+  result: PASS — promotion pipeline handoff bundle 연결 완료 (commit 3e6ebed)
+- id: WP-HO-013
+  priority: P1
+  status: in_progress
+  blocked_by: []
+  reason: memory 원자 갱신 보장 — current-state/current-wp/next-actions 동기화

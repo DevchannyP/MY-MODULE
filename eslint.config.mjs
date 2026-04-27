@@ -20,6 +20,8 @@ export default [
         clearTimeout: "readonly",
         setInterval: "readonly",
         clearInterval: "readonly",
+        setImmediate: "readonly",
+        clearImmediate: "readonly",
         Promise: "readonly",
         Error: "readonly",
         Map: "readonly",
@@ -31,11 +33,15 @@ export default [
         Math: "readonly",
         Symbol: "readonly",
         crypto: "readonly",
+        URL: "readonly",
+        URLSearchParams: "readonly",
+        fetch: "readonly",
+        globalThis: "readonly",
       },
     },
     rules: {
       // 오류 방지
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
       "no-undef": "error",
 
       // 코드 품질
@@ -45,6 +51,9 @@ export default [
 
       // 도메인 코어 순수성 보조 (C002)
       "no-console": "warn",
+
+      // 이스케이프 규칙: error로 복구 (generate-mindmap.js 수정 완료 2026-04-12)
+      "no-useless-escape": "error",
     },
   },
   {

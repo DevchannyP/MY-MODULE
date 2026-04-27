@@ -1,0 +1,41 @@
+wp_id: "WP-2026-03-19-01"
+goal: "Make requirements.yaml validation a real contract gate aligned with the current repository shape."
+completed: true
+files_created:
+  - path: "memory/wp-queue.yaml"
+    purpose: "Phase 0 queue based on the audited repository gaps"
+  - path: "scripts/validate_requirements.py"
+    purpose: "Real Stage A requirements validator with path and gate checks"
+  - path: "memory/current-state.yaml"
+    purpose: "Root session state snapshot for future work-packet cycles"
+  - path: "memory/next-actions.yaml"
+    purpose: "Root next-step queue aligned with the new work-packet flow"
+files_modified:
+  - path: "package.json"
+    change: "validate:requirements now runs the real Python validator"
+  - path: "requirements/requirements.schema.json"
+    change: "schema rewritten to match the actual top-level requirements.yaml shape"
+  - path: "docs/explanation/composition-and-shell.md"
+    change: "requirements validation explanation updated from ajv placeholder to the real gate"
+  - path: "docs/reference/quality-gates.md"
+    change: "requirements validation command and guarantees documented"
+  - path: "memory/wp-queue.yaml"
+    change: "WP-2026-03-19-01 marked done and next packet left pending"
+  - path: "memory/current-wp.yaml"
+    change: "current packet advanced to WP-2026-03-19-02 pending definition"
+validation:
+  lint: "pass"
+  tests: "skip"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "Repository automation still reads memory/project/* in several places; root memory is a new session layer, not yet a full replacement."
+  - "validate:requirements is truthful locally but not yet enforced by CI or stage runners."
+decisions:
+  - "Use a Python validator to avoid adding new npm dependencies while still making Stage A gating real."
+  - "Rewrite requirements.schema.json to the current repository input shape instead of the historical DOMAIN_TEMPLATE shape."
+commands:
+  - "python3 scripts/validate_requirements.py"
+  - "npm run validate:requirements"
+  - "npm run lint"
+  - "python3 scripts/validate_requirements.py /tmp/bad-requirements.yaml"

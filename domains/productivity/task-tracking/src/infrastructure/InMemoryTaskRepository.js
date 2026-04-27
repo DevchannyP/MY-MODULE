@@ -6,6 +6,10 @@ const { TaskRepository } = require('../application/ports/TaskRepository');
 /**
  * 인메모리 TaskRepository 구현체.
  * 프로덕션에서는 DB 어댑터로 교체한다. 인터페이스(포트)는 동일하다.
+ *
+ * NFR: nfr_extended.concurrency.thread_safety
+ *   쓰기는 낙관적 잠금: 저장된 version + 1 === 저장하려는 version이어야 함.
+ *   신규 엔티티(ID 없음)는 버전 체크 생략.
  */
 class InMemoryTaskRepository extends TaskRepository {
   constructor() {
@@ -14,6 +18,18 @@ class InMemoryTaskRepository extends TaskRepository {
   }
 
   async save(task) {
+    const existing = this._store.get(task.id);
+    if (existing && existing.version !== undefined && task.version !== undefined) {
+      if (existing.version + 1 !== task.version) {
+        throw Object.assign(
+          new Error(
+            `Optimistic lock conflict for task ${task.id}: ` +
+            `expected version ${existing.version + 1}, got ${task.version}`
+          ),
+          { code: 'OPTIMISTIC_LOCK_CONFLICT', expected: existing.version + 1, actual: task.version },
+        );
+      }
+    }
     this._store.set(task.id, task.toSnapshot());
     return task;
   }

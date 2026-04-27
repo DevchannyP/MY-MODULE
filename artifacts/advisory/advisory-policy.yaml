@@ -1,0 +1,31 @@
+version: "0.1.0"
+mode:
+  offline_baseline:
+    command: "npm run scan:dependencies"
+    purpose:
+      - "manifest-lock alignment"
+      - "runtime dependency ingress control"
+      - "integrity and license metadata validation"
+  online_advisory:
+    planned_command: "npm audit --omit=dev --audit-level=high"
+    providers:
+      - "npm-audit"
+      - "github-advisory-db"
+      - "snyk"
+    required_for:
+      - "main merge protection"
+      - "release candidate validation"
+blocking_policy:
+  fail_on:
+    - "runtime-high"
+    - "runtime-critical"
+  warn_on:
+    - "dev-high"
+    - "dev-critical"
+    - "provider-unavailable"
+exceptions:
+  required_fields:
+    - "advisory_id"
+    - "scope"
+    - "mitigation"
+    - "review_date"

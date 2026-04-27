@@ -22,14 +22,12 @@ const { TransitionInvoiceStatusUseCase } = require('../application/TransitionInv
 const { GetBillingSummaryUseCase }       = require('../application/GetBillingSummaryUseCase');
 const { ApproveBillingExceptionUseCase } = require('../application/ApproveBillingExceptionUseCase');
 const { RejectBillingExceptionUseCase }  = require('../application/RejectBillingExceptionUseCase');
+const { ListPaymentsUseCase }            = require('../application/ListPaymentsUseCase');
+const { GetPaymentUseCase }             = require('../application/GetPaymentUseCase');
+const { RetryPaymentSyncUseCase }        = require('../application/RetryPaymentSyncUseCase');
 
-/** 도메인 오류 코드 → HTTP 상태 코드 */
-const ERROR_STATUS_MAP = Object.freeze({
-  FORBIDDEN:        403,
-  NOT_FOUND:        404,
-  CONFLICT:         409,
-  VALIDATION_ERROR: 400,
-});
+const { fromError } = require('../../../../src/shared/ProblemDetails');
+const { parsePagination, parseOptionalFiniteNumber } = require('../../../../src/shared/QueryValidation');
 
 class BillingController {
   /**
@@ -46,13 +44,16 @@ class BillingController {
     this._exceptionRepo = exceptionRepo;
 
     // ── 유스케이스 바인딩 (ADR-0002: 권한 강제는 유스케이스에서) ──────────────
-    this._createInvoice    = new CreateInvoiceUseCase(invoiceRepo, eventPublisher);
-    this._listInvoices     = new GetInvoiceListUseCase(invoiceRepo);
-    this._addLineItem      = new AddLineItemUseCase(invoiceRepo);
-    this._transitionStatus = new TransitionInvoiceStatusUseCase(invoiceRepo, eventPublisher);
-    this._getSummary       = new GetBillingSummaryUseCase(invoiceRepo, exceptionRepo);
-    this._approveException = new ApproveBillingExceptionUseCase(invoiceRepo, exceptionRepo, eventPublisher);
-    this._rejectException  = new RejectBillingExceptionUseCase(exceptionRepo, eventPublisher);
+    this._createInvoice      = new CreateInvoiceUseCase(invoiceRepo, eventPublisher);
+    this._listInvoices       = new GetInvoiceListUseCase(invoiceRepo);
+    this._addLineItem        = new AddLineItemUseCase(invoiceRepo);
+    this._transitionStatus   = new TransitionInvoiceStatusUseCase(invoiceRepo, eventPublisher);
+    this._getSummary         = new GetBillingSummaryUseCase(invoiceRepo, exceptionRepo);
+    this._approveException   = new ApproveBillingExceptionUseCase(invoiceRepo, exceptionRepo, eventPublisher);
+    this._rejectException    = new RejectBillingExceptionUseCase(exceptionRepo, eventPublisher);
+    this._listPayments       = new ListPaymentsUseCase(paymentRepo);
+    this._getPayment         = new GetPaymentUseCase(paymentRepo);
+    this._retryPaymentSync   = new RetryPaymentSyncUseCase(paymentRepo);
   }
 
   /**
@@ -72,7 +73,7 @@ class BillingController {
     try {
       return await this._route(req);
     } catch (err) {
-      return this._errorResponse(err, req.correlationId);
+      return this._errorResponse(err, req.path, req.correlationId);
     }
   }
 
@@ -85,15 +86,21 @@ class BillingController {
     // GET /billing/invoices
     if (method === 'GET' && path === '/billing/invoices') {
       this._requirePermission(caller, 'billing.read');
+      const pagination = parsePagination(query);
+      const amountMin = parseOptionalFiniteNumber(query.amount_min, 'amount_min');
+      const amountMax = parseOptionalFiniteNumber(query.amount_max, 'amount_max');
+      if (amountMin !== undefined && amountMax !== undefined && amountMin > amountMax) {
+        throw Object.assign(new Error('amount_min must be less than or equal to amount_max'), { code: 'VALIDATION_ERROR' });
+      }
       const result = await this._invoiceRepo.findAll({
         status:     query.status,
         customerId: query.customer_id,
-        amountMin:  query.amount_min  !== undefined ? Number(query.amount_min)  : undefined,
-        amountMax:  query.amount_max  !== undefined ? Number(query.amount_max)  : undefined,
+        amountMin,
+        amountMax,
         dueFrom:    query.due_from,
         dueTo:      query.due_to,
-        page:       query.page       ? Number(query.page)       : 1,
-        pageSize:   query.page_size  ? Number(query.page_size)  : 20,
+        page:       pagination.page,
+        pageSize:   pagination.pageSize,
       });
       return { status: 200, body: this._pageOf(result, this._serializeInvoice) };
     }
@@ -144,35 +151,34 @@ class BillingController {
 
     // GET /billing/payments
     if (method === 'GET' && path === '/billing/payments') {
-      this._requirePermission(caller, 'billing.read');
-      const result = await this._paymentRepo.findAll({
-        invoiceId: query.invoice_id,
-        status:    query.status,
-        page:      query.page      ? Number(query.page)      : 1,
-        pageSize:  query.page_size ? Number(query.page_size) : 20,
-      });
+      const pagination = parsePagination(query);
+      const result = await this._listPayments.execute(
+        {
+          invoiceId: query.invoice_id,
+          status:    query.status,
+          page:      pagination.page,
+          pageSize:  pagination.pageSize,
+        },
+        caller,
+      );
       return { status: 200, body: this._pageOf(result, this._serializePayment) };
     }
 
     // GET /billing/payments/:payment_id
     if (method === 'GET' && path === '/billing/payments/:payment_id') {
-      this._requirePermission(caller, 'billing.read');
-      const payment = await this._paymentRepo.findById(params.payment_id);
-      if (!payment) {
-        throw Object.assign(new Error(`Payment not found: ${params.payment_id}`), { code: 'NOT_FOUND' });
-      }
+      const payment = await this._getPayment.execute(
+        { paymentId: params.payment_id },
+        caller,
+      );
       return { status: 200, body: this._serializePayment(payment) };
     }
 
     // POST /billing/payments/:payment_id/sync
     if (method === 'POST' && path === '/billing/payments/:payment_id/sync') {
-      this._requirePermission(caller, 'billing.write');
-      const payment = await this._paymentRepo.findById(params.payment_id);
-      if (!payment) {
-        throw Object.assign(new Error(`Payment not found: ${params.payment_id}`), { code: 'NOT_FOUND' });
-      }
-      // ADR-0006: 실제 재시도 정책(최대 3회, exponential backoff)은 Phase 2에서 구현.
-      // 현재 InMemory 구현에서는 결제를 조회 후 반환한다.
+      const payment = await this._retryPaymentSync.execute(
+        { paymentId: params.payment_id },
+        caller,
+      );
       return { status: 200, body: this._serializePayment(payment) };
     }
 
@@ -181,11 +187,12 @@ class BillingController {
     // GET /billing/exceptions
     if (method === 'GET' && path === '/billing/exceptions') {
       this._requirePermission(caller, 'billing.admin');
+      const pagination = parsePagination(query);
       const result = await this._exceptionRepo.findAll({
         exceptionType: query.exception_type,
         status:        query.status,
-        page:          query.page      ? Number(query.page)      : 1,
-        pageSize:      query.page_size ? Number(query.page_size) : 20,
+        page:          pagination.page,
+        pageSize:      pagination.pageSize,
       });
       return { status: 200, body: this._pageOf(result, this._serializeException) };
     }
@@ -216,7 +223,10 @@ class BillingController {
       return { status: 200, body: summary };
     }
 
-    return { status: 404, body: { code: 'NOT_FOUND', message: `Route not found: ${method} ${path}` } };
+    return fromError(
+      Object.assign(new Error(`Route not found: ${method} ${path}`), { code: 'NOT_FOUND' }),
+      { path, correlationId },
+    );
   }
 
   // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
@@ -230,25 +240,17 @@ class BillingController {
     }
   }
 
-  _errorResponse(err, correlationId) {
-    const code   = err.code || this._inferErrorCode(err.message);
-    const status = ERROR_STATUS_MAP[code] || 500;
-    return { status, body: { code, message: err.message, correlation_id: correlationId } };
-  }
-
-  /**
-   * 도메인 불변조건 오류 메시지로부터 오류 코드를 유추한다.
-   * UseCase가 code를 직접 첨부하지 않는 도메인 엔티티 오류 처리용.
-   */
-  _inferErrorCode(message) {
-    if (!message) return 'INTERNAL_ERROR';
-    if (message.includes('INV-B002')) return 'CONFLICT';          // 상태 역전이 불가
-    if (message.includes('INV-B003')) return 'CONFLICT';          // PAID 삭제 불가
-    if (message.includes('INV-B005')) return 'CONFLICT';          // DISPUTED→PAID 미승인
-    if (message.includes('INV-B004')) return 'VALIDATION_ERROR';  // 단가 > 0 위반
-    if (message.includes('INV-B001')) return 'CONFLICT';          // 합계 불변조건
-    if (message.includes('Currency mismatch')) return 'VALIDATION_ERROR';
-    return 'INTERNAL_ERROR';
+  /** RFC 7807 Problem Details 에러 응답 (IETF 표준) */
+  _errorResponse(err, path, correlationId) {
+    // 도메인 불변조건 코드 매핑 (code 미첨부 케이스 대비)
+    if (!err.code && err.message) {
+      const m = err.message;
+      if (m.includes('INV-B002') || m.includes('INV-B003') || m.includes('INV-B005') || m.includes('INV-B001'))
+        err.code = 'CONFLICT';
+      else if (m.includes('INV-B004') || m.includes('Currency mismatch'))
+        err.code = 'VALIDATION_ERROR';
+    }
+    return fromError(err, { path, correlationId });
   }
 
   _pageOf(result, serializer) {
@@ -289,8 +291,8 @@ class BillingController {
       invoice_id:     payment.invoiceId,
       amount:         this._serializeMoney(payment.amount),
       status:         payment.status,
-      synced_at:      payment.syncedAt      || null,
-      mismatch_delta: payment.mismatchDelta ? this._serializeMoney(payment.mismatchDelta) : null,
+      synced_at:      payment.syncedAt ?? null,
+      mismatch_delta: payment.mismatchDelta !== null ? this._serializeMoney(payment.mismatchDelta) : null,
       created_at:     payment.createdAt,
     };
   }

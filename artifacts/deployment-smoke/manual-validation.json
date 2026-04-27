@@ -1,0 +1,125 @@
+{
+  "schema_version": "1",
+  "generated_at_utc": "2026-03-19T16:03:56.067Z",
+  "overall_status": "PASS",
+  "target": {
+    "base_url": "http://127.0.0.1:3010",
+    "health_path": "/health",
+    "tasks_path": "/tasks",
+    "billing_invoices_path": "/billing/invoices",
+    "flag_off_path": null
+  },
+  "inputs": {
+    "task_write_permissions": [
+      "task:read",
+      "task:write"
+    ],
+    "task_read_permissions": [
+      "task:read"
+    ],
+    "billing_denied_permissions": [],
+    "flag_off_permissions": [
+      "task:read"
+    ],
+    "require_flag_off": false,
+    "timeout_ms": 8000,
+    "user_id": "smoke-user"
+  },
+  "steps": [
+    {
+      "id": "health",
+      "name": "Health endpoint returns 200 and exposes runtime trace ID",
+      "status": "PASS",
+      "duration_ms": 26,
+      "request": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "ok",
+          "service": "my-module",
+          "transport": "http",
+          "traceId": "89a9393447ba438d80fe3454050aa166"
+        }
+      }
+    },
+    {
+      "id": "task-create",
+      "name": "Task create path works with write permissions",
+      "status": "PASS",
+      "duration_ms": 5,
+      "request": {
+        "method": "POST",
+        "path": "/tasks"
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "task_id": "task-1773936236098-1",
+          "status": "PENDING"
+        }
+      },
+      "task_id": "task-1773936236098-1",
+      "health_trace_id": "89a9393447ba438d80fe3454050aa166"
+    },
+    {
+      "id": "task-read",
+      "name": "Task read path returns the created task",
+      "status": "PASS",
+      "duration_ms": 1,
+      "request": {
+        "method": "GET",
+        "path": "/tasks/task-1773936236098-1"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "task_id": "task-1773936236098-1",
+          "title": "deployment-smoke-1773936236094",
+          "assignee_id": "deployment-smoke-user",
+          "due_date": "2026-04-18",
+          "description": null,
+          "status": "PENDING",
+          "created_at": "2026-03-19T16:03:56.098Z",
+          "updated_at": "2026-03-19T16:03:56.098Z"
+        }
+      }
+    },
+    {
+      "id": "billing-permission-denied",
+      "name": "Billing write path rejects missing permissions",
+      "status": "PASS",
+      "duration_ms": 2,
+      "request": {
+        "method": "POST",
+        "path": "/billing/invoices"
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "type": "https://workflow-os/errors/forbidden",
+          "title": "Forbidden",
+          "status": 403,
+          "detail": "Forbidden: billing.write 권한이 필요합니다",
+          "message": "Forbidden: billing.write 권한이 필요합니다",
+          "correlationId": "deployment-smoke",
+          "code": "FORBIDDEN",
+          "correlation_id": "deployment-smoke"
+        }
+      }
+    },
+    {
+      "id": "flag-off-route",
+      "name": "Configured disabled route stays hidden with 404",
+      "status": "SKIPPED",
+      "reason": "No --flag-off-path supplied for this environment."
+    }
+  ],
+  "pending_manual_checks": [
+    "Confirm deployed platform logs retain trace_id or equivalent correlation for the smoke requests.",
+    "If the target environment includes a disabled feature route, rerun with --flag-off-path to capture the 404 assertion."
+  ],
+  "output_path": "artifacts/deployment-smoke/manual-validation.json"
+}

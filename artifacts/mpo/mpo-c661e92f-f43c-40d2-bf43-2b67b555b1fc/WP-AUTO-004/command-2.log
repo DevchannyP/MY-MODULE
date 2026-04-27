@@ -1,0 +1,112 @@
+$ npm run test:contract
+
+> my-module@0.2.0 test:contract
+> python3 -m unittest scripts/test_validate_contract_drift.py -v && python3 scripts/validate_contract_drift.py
+
+ERROR: harness-contracts: golden record harness-core-001 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-001 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-001 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-001 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-001 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-001 input schema violation at work_mode: ['결론 먼저', '근거는 인용 가능해야 함'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-001 input schema violation at work_mode: ['결론 먼저', '근거는 인용 가능해야 함'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-002 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-002 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-002 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-002 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-002 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-002 input schema violation at work_mode: ['먼저 계약 정리', '그다음 파일 추가'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-002 input schema violation at work_mode: ['먼저 계약 정리', '그다음 파일 추가'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-003 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-003 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-003 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-003 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-003 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-003 input schema violation at work_mode: ['원인 분석 우선', '수정 포인트만 제시'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-003 input schema violation at work_mode: ['원인 분석 우선', '수정 포인트만 제시'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-004 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-004 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-004 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-004 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-004 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-004 input schema violation at work_mode: ['운영 증거 중심'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-004 input schema violation at work_mode: ['운영 증거 중심'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-005 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-005 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-005 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-005 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-005 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-005 input schema violation at work_mode: ['위협모델 먼저'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-005 input schema violation at work_mode: ['위협모델 먼저'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-006 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-006 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-006 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-006 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-006 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-006 input schema violation at work_mode: ['운영 성능 비교'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-006 input schema violation at work_mode: ['운영 성능 비교'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-007 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-007 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-007 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-007 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-007 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-007 input schema violation at work_mode: ['출력 surface 우선'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-007 input schema violation at work_mode: ['출력 surface 우선'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-008 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-008 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-008 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-008 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-008 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-008 input schema violation at work_mode: ['diff 중심 점검'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-008 input schema violation at work_mode: ['diff 중심 점검'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-009 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-009 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-009 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-009 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-009 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-009 input schema violation at work_mode: ['계약 우선'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-009 input schema violation at work_mode: ['계약 우선'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+ERROR: harness-contracts: golden record harness-core-010 input schema violation at (root): 'packet_type' is a required property
+ERROR: harness-contracts: golden record harness-core-010 input schema violation at (root): 'risk_level' is a required property
+ERROR: harness-contracts: golden record harness-core-010 input schema violation at (root): 'trust_level' is a required property
+ERROR: harness-contracts: golden record harness-core-010 input schema violation at (root): 'evidence_required' is a required property
+ERROR: harness-contracts: golden record harness-core-010 input schema violation at (root): 'interactive_class' is a required property
+ERROR: harness-contracts: golden record harness-core-010 input schema violation at work_mode: ['관측 항목 먼저 정의'] is not of type 'string'
+ERROR: harness-contracts: golden record harness-core-010 input schema violation at work_mode: ['관측 항목 먼저 정의'] is not one of ['Research', 'Build', 'Debug', 'Operate', 'Policy']
+
+test_missing_event_definition_detected (scripts.test_validate_contract_drift.TestValidateBilling.test_missing_event_definition_detected) ... ok
+test_missing_operation_in_openapi_detected (scripts.test_validate_contract_drift.TestValidateBilling.test_missing_operation_in_openapi_detected) ... ok
+test_missing_route_snippet_detected (scripts.test_validate_contract_drift.TestValidateBilling.test_missing_route_snippet_detected) ... ok
+test_valid_no_errors (scripts.test_validate_contract_drift.TestValidateBilling.test_valid_no_errors) ... ok
+test_duplicate_event_type_detected (scripts.test_validate_contract_drift.TestValidateEventRegistry.test_duplicate_event_type_detected) ... ok
+test_envelope_missing_required_fields_detected (scripts.test_validate_contract_drift.TestValidateEventRegistry.test_envelope_missing_required_fields_detected) ... ok
+test_invalid_event_source_detected (scripts.test_validate_contract_drift.TestValidateEventRegistry.test_invalid_event_source_detected) ... ok
+test_invalid_event_type_detected (scripts.test_validate_contract_drift.TestValidateEventRegistry.test_invalid_event_type_detected) ... ok
+test_invalid_schema_ref_format_detected (scripts.test_validate_contract_drift.TestValidateEventRegistry.test_invalid_schema_ref_format_detected) ... ok
+test_valid_empty_registry_no_errors (scripts.test_validate_contract_drift.TestValidateEventRegistry.test_valid_empty_registry_no_errors) ... ok
+test_missing_required_input_field_detected (scripts.test_validate_contract_drift.TestValidateHarnessContracts.test_missing_required_input_field_detected) ... ok
+test_unknown_required_section_detected (scripts.test_validate_contract_drift.TestValidateHarnessContracts.test_unknown_required_section_detected) ... ok
+test_valid_golden_record_no_errors (scripts.test_validate_contract_drift.TestValidateHarnessContracts.test_valid_golden_record_no_errors) ... ok
+test_capability_op_missing_in_openapi_detected (scripts.test_validate_contract_drift.TestValidateSystemApiContract.test_capability_op_missing_in_openapi_detected) ... ok
+test_extra_openapi_op_not_in_capability_detected (scripts.test_validate_contract_drift.TestValidateSystemApiContract.test_extra_openapi_op_not_in_capability_detected) ... ok
+test_missing_event_definition_detected (scripts.test_validate_contract_drift.TestValidateSystemApiContract.test_missing_event_definition_detected) ... ok
+test_no_events_emitted_no_error (scripts.test_validate_contract_drift.TestValidateSystemApiContract.test_no_events_emitted_no_error) ... ok
+test_valid_contract_no_errors (scripts.test_validate_contract_drift.TestValidateSystemApiContract.test_valid_contract_no_errors) ... ok
+test_missing_event_definition_detected (scripts.test_validate_contract_drift.TestValidateTaskManagement.test_missing_event_definition_detected) ... ok
+test_missing_route_snippet_detected (scripts.test_validate_contract_drift.TestValidateTaskManagement.test_missing_route_snippet_detected) ... ok
+test_openapi_ops_mismatch_detected (scripts.test_validate_contract_drift.TestValidateTaskManagement.test_openapi_ops_mismatch_detected) ... ok
+test_ui_screen_unknown_capability_detected (scripts.test_validate_contract_drift.TestValidateTaskManagement.test_ui_screen_unknown_capability_detected) ... ok
+test_valid_no_errors (scripts.test_validate_contract_drift.TestValidateTaskManagement.test_valid_no_errors) ... ok
+test_missing_observability_required_field_reported (scripts.test_validate_contract_drift.TestValidateUiShellContract.test_missing_observability_required_field_reported) ... ok
+test_missing_report_property_reported (scripts.test_validate_contract_drift.TestValidateUiShellContract.test_missing_report_property_reported) ... ok
+test_missing_required_schema_reported (scripts.test_validate_contract_drift.TestValidateUiShellContract.test_missing_required_schema_reported) ... ok
+test_missing_response_header_reported (scripts.test_validate_contract_drift.TestValidateUiShellContract.test_missing_response_header_reported) ... ok
+test_valid_spec_produces_no_errors (scripts.test_validate_contract_drift.TestValidateUiShellContract.test_valid_spec_produces_no_errors) ... ok
+test_missing_event_definition_detected (scripts.test_validate_contract_drift.TestValidateVideo.test_missing_event_definition_detected) ... ok
+test_unknown_screen_in_capability_detected (scripts.test_validate_contract_drift.TestValidateVideo.test_unknown_screen_in_capability_detected) ... ok
+test_valid_no_errors (scripts.test_validate_contract_drift.TestValidateVideo.test_valid_no_errors) ... ok
+
+----------------------------------------------------------------------
+Ran 31 tests in 0.009s
+
+OK

@@ -1,0 +1,39 @@
+wp_id: "WP-2026-03-19-05"
+goal: "Replace echo-only stage scripts with truthful status and dry-run executors."
+completed: true
+files_created:
+  - path: "scripts/run_stage.js"
+    purpose: "Structured stage dry-run executor for stage:a through stage:e"
+  - path: "worklog/2026-03-19_WP-05.yaml"
+    purpose: "Structured evidence for executor baseline"
+files_modified:
+  - path: "package.json"
+    change: "stage:a through stage:e now call the real stage dry-run executor"
+  - path: "docs/how-to/run-stage-a.md"
+    change: "Added fast status check command and dry-run behavior"
+  - path: "docs/how-to/run-stage-b.md"
+    change: "Added fast status check command and dry-run behavior"
+  - path: "docs/how-to/run-stage-c.md"
+    change: "Added fast status check command and dry-run behavior"
+  - path: "docs/how-to/run-stage-d.md"
+    change: "Added fast status check command and dry-run behavior"
+  - path: "docs/how-to/run-stage-e.md"
+    change: "Added fast status check command and dry-run behavior"
+  - path: "memory/wp-queue.yaml"
+    change: "Marked WP-2026-03-19-05 done and advanced WP-2026-03-19-06"
+validation:
+  lint: "pass"
+  tests: "skip"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "Stage executors are truthful and structured, but still dry-run-only; they do not yet provide a repository-wide consolidated status view."
+  - "HOW_TO_USE.md still explains the old autopilot flow and should be aligned later."
+decisions:
+  - "Keep stage executors dry-run-only until a dedicated project status runner exists."
+  - "Use JSON output so the commands are human-readable and machine-consumable."
+commands:
+  - "npm run stage:a"
+  - "npm run stage:d"
+  - "npm run validate:requirements"
+  - "npm run lint"

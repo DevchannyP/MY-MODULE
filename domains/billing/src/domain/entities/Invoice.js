@@ -19,6 +19,7 @@ const { Money }         = require('../value-objects/Money');
  *   customerId: string,
  *   status: string|import('../value-objects/InvoiceStatus').InvoiceStatus,
  *   lineItems?: InvoiceLineItem[],
+ *   currency?: string,
  *   dueDate?: string|null,
  *   notes?: string|null,
  *   createdAt: string,
@@ -29,6 +30,7 @@ const { Money }         = require('../value-objects/Money');
  * @typedef {{
  *   invoiceId: string,
  *   customerId: string,
+ *   currency?: string,
  *   dueDate?: string|null,
  *   notes?: string|null,
  * }} CreateInvoiceInput
@@ -47,12 +49,13 @@ class Invoice {
   /**
    * @param {InvoiceSnapshot} param0
    */
-  constructor({ invoiceId, customerId, status, lineItems, dueDate, notes, createdAt, updatedAt }) {
+  constructor({ invoiceId, customerId, status, lineItems, currency, dueDate, notes, createdAt, updatedAt }) {
     this.invoiceId  = invoiceId;
     this.customerId = customerId;
     this.status     = status instanceof InvoiceStatus ? status : InvoiceStatus.of(status);
     // 외부 변형 방어: 복사 후 동결
     this.lineItems  = Object.freeze([...(lineItems || [])]);
+    this.currency   = currency || 'KRW';
     this.dueDate    = dueDate || null;
     this.notes      = notes   || null;
     this.createdAt  = createdAt;
@@ -64,10 +67,9 @@ class Invoice {
    * total은 저장된 필드가 아니라 계산값이다.
    */
   get total() {
-    if (this.lineItems.length === 0) return Money.zero('KRW');
     return this.lineItems.reduce(
       (acc, item) => acc.add(item.amount),
-      Money.zero(this.lineItems[0].amount.currency)
+      Money.zero(this.currency),
     );
   }
 
@@ -89,17 +91,25 @@ class Invoice {
    */
   addLineItem({ lineItemId, description, quantity, unitPrice }) {
     if (!this.status.equals('DRAFT')) {
-      throw new Error('INV-B002: 라인 항목은 DRAFT 상태에서만 추가할 수 있다');
+      throw Object.assign(
+        new Error('INV-B002: 라인 항목은 DRAFT 상태에서만 추가할 수 있다'),
+        { code: 'CONFLICT' },
+      );
     }
-    if (!(unitPrice instanceof Money)) throw new Error('unitPrice must be a Money instance');
+    if (!(unitPrice instanceof Money)) {
+      throw Object.assign(new Error('unitPrice must be a Money instance'), { code: 'VALIDATION_ERROR' });
+    }
     if (!unitPrice.isPositive()) {
-      throw new Error('INV-B004: 라인 항목 단가는 0 초과여야 한다');
+      throw Object.assign(
+        new Error('INV-B004: 라인 항목 단가는 0 초과여야 한다'),
+        { code: 'VALIDATION_ERROR' },
+      );
     }
     if (typeof quantity !== 'number' || quantity < 1) {
-      throw new Error('quantity must be >= 1');
+      throw Object.assign(new Error('quantity must be >= 1'), { code: 'VALIDATION_ERROR' });
     }
 
-    const amount = new Money(unitPrice.amount * quantity, unitPrice.currency);
+    const amount = unitPrice.multiply(quantity);
     const item   = { lineItemId, description, quantity, unitPrice, amount };
     return new Invoice({
       ...this._snapshot(),
@@ -117,8 +127,9 @@ class Invoice {
   transitionTo(nextStatus) {
     const next = nextStatus instanceof InvoiceStatus ? nextStatus : InvoiceStatus.of(nextStatus);
     if (!this.status.canTransitionTo(next)) {
-      throw new Error(
-        `INV-B002: ${this.status.value} → ${next.value} 전이는 허용되지 않는다`
+      throw Object.assign(
+        new Error(`INV-B002: ${this.status.value} → ${next.value} 전이는 허용되지 않는다`),
+        { code: 'CONFLICT' },
       );
     }
     return new Invoice({
@@ -137,6 +148,7 @@ class Invoice {
       customerId: this.customerId,
       status:     this.status,
       lineItems:  this.lineItems,
+      currency:   this.currency,
       dueDate:    this.dueDate,
       notes:      this.notes,
       createdAt:  this.createdAt,
@@ -173,14 +185,15 @@ class Invoice {
    * @param {CreateInvoiceInput} param0
    * @returns {Invoice}
    */
-  static create({ invoiceId, customerId, dueDate, notes }) {
-    if (!customerId) throw new Error('customerId is required');
+  static create({ invoiceId, customerId, currency, dueDate, notes }) {
+    if (!customerId) throw Object.assign(new Error('customerId is required'), { code: 'VALIDATION_ERROR' });
     const now = new Date().toISOString();
     return new Invoice({
       invoiceId,
       customerId,
       status:    InvoiceStatus.DRAFT,
       lineItems: [],
+      currency:  currency || 'KRW',
       dueDate:   dueDate || null,
       notes:     notes   || null,
       createdAt: now,

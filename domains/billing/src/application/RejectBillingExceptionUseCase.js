@@ -20,6 +20,9 @@ class RejectBillingExceptionUseCase {
     if (!exception) {
       throw Object.assign(new Error(`BillingException not found: ${exceptionId}`), { code: 'NOT_FOUND' });
     }
+    if (!exception.isOpen()) {
+      throw Object.assign(new Error('이미 처리된 예외 항목입니다'), { code: 'CONFLICT' });
+    }
 
     const rejectedBy       = caller.userId || 'admin';
     const updatedException = exception.reject({ rejectedBy, reason });

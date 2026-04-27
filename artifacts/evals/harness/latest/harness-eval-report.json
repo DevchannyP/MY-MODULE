@@ -1,0 +1,239 @@
+{
+  "eval_run_id": "1271bebb-8bdc-47a7-8b70-0d40fd9c15c6",
+  "generated_at_utc": "2026-04-26T14:53:11.015Z",
+  "repository": "my-module",
+  "suite": "harness-core-offline",
+  "baseline_id": "harness-spiral19-baseline-2026-04-18",
+  "prompt_version": "phase0-baseline-candidate",
+  "status": "PASS",
+  "summary": {
+    "golden_case_count": 11,
+    "safety_case_count": 5,
+    "baseline_case_count": 10,
+    "case_count_delta": 1,
+    "modes": {
+      "Research": 2,
+      "Build": 3,
+      "Debug": 2,
+      "Operate": 2,
+      "Policy": 2
+    },
+    "packet_types": {
+      "arch": 4,
+      "governance": 3,
+      "meta": 2,
+      "shell": 1,
+      "executor": 1
+    },
+    "case_files": 6
+  },
+  "checks": {
+    "golden_set_parsed": true,
+    "baseline_loaded": true,
+    "required_case_floor_met": true,
+    "required_modes_present": true,
+    "required_packet_types_present": true,
+    "packet_type_coverage": {
+      "present": [
+        "arch",
+        "executor",
+        "governance",
+        "meta",
+        "shell"
+      ],
+      "missing": []
+    },
+    "validation_failures": [],
+    "safety_set_parsed": true,
+    "safety_validation_failures": []
+  },
+  "case_files": [
+    {
+      "path": "evals/cases/build.jsonl",
+      "count": 2,
+      "modes": [
+        "Build"
+      ],
+      "ids": [
+        "build-001",
+        "build-002"
+      ]
+    },
+    {
+      "path": "evals/cases/debug.jsonl",
+      "count": 2,
+      "modes": [
+        "Debug"
+      ],
+      "ids": [
+        "debug-001",
+        "debug-002"
+      ]
+    },
+    {
+      "path": "evals/cases/operate.jsonl",
+      "count": 2,
+      "modes": [
+        "Operate"
+      ],
+      "ids": [
+        "operate-001",
+        "operate-002"
+      ]
+    },
+    {
+      "path": "evals/cases/policy.jsonl",
+      "count": 2,
+      "modes": [
+        "Policy"
+      ],
+      "ids": [
+        "policy-001",
+        "policy-002"
+      ]
+    },
+    {
+      "path": "evals/cases/research.jsonl",
+      "count": 2,
+      "modes": [
+        "Research"
+      ],
+      "ids": [
+        "research-001",
+        "research-002"
+      ]
+    },
+    {
+      "path": "evals/cases/safety.jsonl",
+      "count": 5,
+      "modes": [
+        "Build",
+        "Operate",
+        "Research"
+      ],
+      "ids": [
+        "safety-case-001",
+        "safety-case-002",
+        "safety-case-003",
+        "safety-case-004",
+        "safety-case-005"
+      ]
+    }
+  ],
+  "next_steps": [
+    "모델 호출 기반 grader를 추가한다",
+    "baseline 대비 schema_violation_rate와 retry_rate를 측정한다"
+  ],
+  "provider_invocations": [
+    {
+      "generated_at_utc": "2026-04-27T01:01:55.879Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93",
+      "wp_id": "WP-AUTO-004",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-27T01:01:55.191Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93",
+      "wp_id": "WP-AUTO-003",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-27T01:01:54.485Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93",
+      "wp_id": "WP-AUTO-002",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-27T01:01:53.633Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93",
+      "wp_id": "WP-AUTO-001",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:53:18.247Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-medium",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-199b34b1-7c7d-4822-b00a-8253a423c8db",
+      "wp_id": "WP-AUTO-001",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:53:15.098Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-6899bec7-1b74-4557-8a64-7caedb1dded7",
+      "wp_id": "WP-AUTO-004",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:53:14.338Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-6899bec7-1b74-4557-8a64-7caedb1dded7",
+      "wp_id": "WP-AUTO-003",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:53:13.431Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-6899bec7-1b74-4557-8a64-7caedb1dded7",
+      "wp_id": "WP-AUTO-002",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    },
+    {
+      "generated_at_utc": "2026-04-26T14:53:12.256Z",
+      "provider_id": "null-harness-provider",
+      "route_id": "mini-build-low",
+      "selected_model_tier": "mini",
+      "session_id": "mpo-6899bec7-1b74-4557-8a64-7caedb1dded7",
+      "wp_id": "WP-AUTO-001",
+      "schema_valid": true,
+      "fallback_applied": false,
+      "latency_ms": 0
+    }
+  ],
+  "last_provider_invocation": {
+    "generated_at_utc": "2026-04-27T01:01:55.879Z",
+    "provider_id": "null-harness-provider",
+    "route_id": "mini-build-low",
+    "selected_model_tier": "mini",
+    "session_id": "mpo-32350025-72b5-458d-9f94-eb5a8b7a1e93",
+    "wp_id": "WP-AUTO-004",
+    "schema_valid": true,
+    "fallback_applied": false,
+    "latency_ms": 0
+  }
+}

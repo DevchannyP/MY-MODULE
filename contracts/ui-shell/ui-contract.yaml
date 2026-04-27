@@ -1,0 +1,306 @@
+# UI Contract - System OS Shell
+# 모든 System OS 화면의 마운트 계약을 한 파일에 정의한다.
+# 마스터 UI 쉘은 이 파일을 기준으로 라우팅과 플러그인 등록을 수행한다.
+version: "0.1.0"
+module_id: "system-os"
+name: "System OS"
+description: "Workflow OS 전체 시스템 상태, 도메인 카탈로그, 피처 플래그, 감사 로그, 품질 게이트, 라이프사이클, 롤백을 운영하는 통합 관제 포털"
+
+entry_points:
+  - route: /
+    label: 대시보드
+    description: "시스템 전체 상태와 도메인 건강도를 한눈에 파악하는 운영 시작 화면"
+  - route: /catalog
+    label: 카탈로그
+    description: "등록된 도메인 목록과 계약 정보를 탐색한다"
+  - route: /flags
+    label: 피처 플래그
+    description: "피처 플래그 목록을 조회하고 관리자가 토글한다"
+  - route: /audit
+    label: 감사 로그
+    description: "SHA-256 해시 체인 감사 로그를 시간순으로 탐색한다"
+  - route: /quality
+    label: 품질 게이트
+    description: "전 도메인 품질 게이트 통과 현황을 확인한다"
+  - route: /lifecycle
+    label: 라이프사이클
+    description: "도메인별 Stage A~E 진행 상태를 파이프라인 뷰로 확인한다"
+  - route: /rollback
+    label: 롤백 콘솔
+    description: "도메인 롤백을 수행하고 이력을 확인한다"
+
+screens:
+  # ── 1. 대시보드 홈 ────────────────────────────────────────────────────────
+  - module_key: system.dashboard
+    route: /
+    mount: DashboardHomePage
+    title: System OS 대시보드
+    description: "시스템 전체 상태, 도메인 건강도, 품질 게이트 요약, 최근 감사 로그, 빠른 액션을 한 화면에서 제공하는 통합 관제 대시보드"
+    nav_group: System
+    required_permissions:
+      - domain.viewer
+    sections:
+      - id: HeroStatusBar
+        description: "overall_status (HEALTHY/DEGRADED/DOWN) + 전체 테스트 통과율 표시"
+        data_source: getSystemHealth
+        fields: [overall_status, total_tests, passing_tests]
+      - id: DomainCardsGrid
+        description: "도메인별 건강 점수, 스테이지, 플래그 상태를 카드 그리드로 표시"
+        data_source: getSystemHealth
+        fields: [domains]
+      - id: QualityGateSummary
+        description: "전체 품질 게이트 통과/실패 요약 게이지"
+        data_source: getQualityGateStatus
+        fields: [summary]
+      - id: RecentAuditLog
+        description: "최근 감사 로그 5건 타임라인"
+        data_source: getAuditLog
+        fields: [entries]
+      - id: SystemHealthChart
+        description: "도메인 건강 점수 추세 차트"
+        data_source: getSystemHealth
+        fields: [domains]
+      - id: QuickActions
+        description: "카탈로그 보기, 플래그 관리, 롤백 콘솔로의 빠른 이동 버튼"
+        actions:
+          - { id: go-catalog, label: 카탈로그, triggers: "/catalog로 이동" }
+          - { id: go-flags, label: 플래그 관리, triggers: "/flags로 이동" }
+          - { id: go-rollback, label: 롤백 콘솔, triggers: "/rollback로 이동" }
+    realtime_events:
+      - system.health.updated
+      - system.quality-gate.updated
+      - system.flag.toggled
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: system_api.enabled
+    observability_tags:
+      - domain:system
+      - screen:dashboard
+
+  # ── 2. 카탈로그 브라우저 ──────────────────────────────────────────────────
+  - module_key: system.catalog
+    route: /catalog
+    mount: CatalogBrowserPage
+    title: 도메인 카탈로그
+    description: "등록된 모든 도메인의 메타데이터, 라우트, 계약 파일, 어댑터 프로필을 탐색하고 계약 내용을 인라인으로 확인하는 화면"
+    nav_group: System
+    required_permissions:
+      - domain.viewer
+    sections:
+      - id: DomainCardList
+        description: "도메인 카드 목록 (건강 점수 배지, 스테이지 표시)"
+        data_source: getDomainCatalog
+        fields: [domains]
+      - id: ContractInlineViewer
+        description: "선택한 도메인의 계약 파일을 사이드 패널에서 인라인 표시"
+        data_source: getDomainCatalog
+        fields: [domains.contracts]
+        layout: side-panel
+      - id: SearchFilter
+        description: "도메인 이름, 그룹, 스테이지 기반 검색 및 필터"
+        filter_fields: [name, group, stage, adapter_profile]
+    realtime_events:
+      - system.health.updated
+      - system.domain.lifecycle-changed
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: system_api.enabled
+    observability_tags:
+      - domain:system
+      - screen:catalog
+
+  # ── 3. 피처 플래그 패널 ───────────────────────────────────────────────────
+  - module_key: system.flags
+    route: /flags
+    mount: FeatureFlagPanelPage
+    title: 피처 플래그 관리
+    description: "피처 플래그를 그룹별로 조회하고, system.admin이 토글하며, 확인 모달로 실수를 방지하는 화면"
+    nav_group: System
+    required_permissions:
+      - domain.viewer
+    write_permissions:
+      - system.admin
+    sections:
+      - id: FlagGroupList
+        description: "피처 플래그를 그룹별로 분류하여 목록 표시"
+        data_source: listFeatureFlags
+        fields: [flags]
+      - id: FlagToggle
+        description: "개별 플래그 토글 스위치 (system.admin 전용)"
+        data_source: toggleFeatureFlag
+        required_permissions: [system.admin]
+        invariants: [INV-SYS-001, INV-SYS-004]
+      - id: ToggleConfirmModal
+        description: "토글 전 확인 모달 — 영향 범위와 depends_on 플래그 표시"
+        trigger: FlagToggle 클릭 시
+    realtime_events:
+      - system.flag.toggled
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: system_api.flag_toggle_ui.enabled
+    observability_tags:
+      - domain:system
+      - screen:flags
+
+  # ── 4. 감사 로그 뷰어 ────────────────────────────────────────────────────
+  - module_key: system.audit
+    route: /audit
+    mount: AuditLogViewerPage
+    title: 감사 로그
+    description: "SHA-256 해시 체인 감사 로그를 도메인, 스테이지, 시간 범위로 필터링하고, 타임라인으로 탐색하며, CSV/JSON 내보내기를 지원하는 화면"
+    nav_group: System
+    required_permissions:
+      - domain.viewer
+    sections:
+      - id: FilterBar
+        description: "도메인, 스테이지, 날짜 범위 필터"
+        filter_fields: [domain, stage, from, to]
+      - id: LogTimeline
+        description: "감사 로그 항목을 시간순 타임라인으로 표시 (해시 검증 배지)"
+        data_source: getAuditLog
+        fields: [entries, total, page, page_size]
+      - id: ExportControls
+        description: "현재 필터 결과를 CSV 또는 JSON으로 내보내기"
+        actions:
+          - { id: export-csv, label: CSV 내보내기, triggers: "필터 결과 CSV 다운로드" }
+          - { id: export-json, label: JSON 내보내기, triggers: "필터 결과 JSON 다운로드" }
+    realtime_events:
+      - system.quality-gate.updated
+      - system.rollback.triggered
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: system_api.enabled
+    observability_tags:
+      - domain:system
+      - screen:audit
+
+  # ── 5. 품질 게이트 대시보드 ───────────────────────────────────────────────
+  - module_key: system.quality
+    route: /quality
+    mount: QualityGateDashboardPage
+    title: 품질 게이트
+    description: "전 도메인 품질 게이트의 통과/실패 현황을 매트릭스, 게이지, 히스토리 차트로 시각화하고, 실패 항목을 드릴다운하는 화면"
+    nav_group: System
+    required_permissions:
+      - domain.viewer
+    sections:
+      - id: OverallScoreGauge
+        description: "전체 품질 게이트 통과율 게이지 (passing / total)"
+        data_source: getQualityGateStatus
+        fields: [summary]
+      - id: GateMatrix
+        description: "도메인 x 게이트 이름 매트릭스 (PASS/FAIL/SKIP 셀 색상)"
+        data_source: getQualityGateStatus
+        fields: [gates]
+      - id: GateHistoryChart
+        description: "게이트 상태 변화 추세 차트"
+        data_source: getQualityGateStatus
+        fields: [gates]
+      - id: FailureDrillDown
+        description: "FAIL 게이트를 선택하면 상세 사유와 마지막 실행 시각 표시"
+        data_source: getQualityGateStatus
+        fields: [gates]
+        trigger: GateMatrix FAIL 셀 클릭 시
+    realtime_events:
+      - system.quality-gate.updated
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: system_api.enabled
+    observability_tags:
+      - domain:system
+      - screen:quality
+
+  # ── 6. 도메인 라이프사이클 맵 ─────────────────────────────────────────────
+  - module_key: system.lifecycle
+    route: /lifecycle
+    mount: DomainLifecycleMapPage
+    title: 도메인 라이프사이클
+    description: "도메인별 Stage A~E 파이프라인 진행 상태, 분리 가능 여부, 의존성 그래프를 시각화하는 화면"
+    nav_group: System
+    required_permissions:
+      - domain.viewer
+    sections:
+      - id: PipelineView
+        description: "도메인별 A→B→C→D→E 파이프라인 진행 바 (각 Stage 상태 색상)"
+        data_source: getDomainLifecycle
+        fields: [domains]
+      - id: EjectableStatus
+        description: "분리 가능 도메인 목록 (ejectable=true인 도메인 하이라이트)"
+        data_source: getDomainLifecycle
+        fields: [domains.ejectable]
+      - id: DependencyGraph
+        description: "도메인 간 의존성 방향 그래프 시각화"
+        data_source: getDomainCatalog
+        fields: [domains]
+    realtime_events:
+      - system.domain.lifecycle-changed
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: system_api.enabled
+    observability_tags:
+      - domain:system
+      - screen:lifecycle
+
+  # ── 7. 롤백 콘솔 ─────────────────────────────────────────────────────────
+  - module_key: system.rollback
+    route: /rollback
+    mount: RollbackConsolePage
+    title: 롤백 콘솔
+    description: "도메인별 롤백을 수행하고, 텍스트 확인 모달로 실수를 방지하며, 롤백 이력을 확인하는 관리자 전용 화면"
+    nav_group: System
+    required_permissions:
+      - system.admin
+    sections:
+      - id: DomainRollbackList
+        description: "활성 도메인 목록 (현재 플래그 상태, 건강 점수 표시)"
+        data_source: getSystemHealth
+        fields: [domains]
+      - id: RollbackModal
+        description: "롤백 확인 모달 — 도메인 이름 텍스트 입력 확인 필수"
+        trigger: DomainRollbackList 롤백 버튼 클릭 시
+        invariants: [INV-SYS-002, INV-SYS-005]
+        confirmation:
+          type: text-match
+          prompt: "롤백하려면 도메인 이름을 정확히 입력하세요"
+      - id: RollbackHistory
+        description: "과거 롤백 이력 타임라인"
+        data_source: getAuditLog
+        fields: [entries]
+        filter: { stage: "rollback" }
+    realtime_events:
+      - system.rollback.triggered
+      - system.flag.toggled
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: system_api.rollback_ui.enabled
+    observability_tags:
+      - domain:system
+      - screen:rollback
+
+design_tokens:
+  color_scheme: system
+  accent: "#0d47a1"
+
+invariant_display:
+  admin_required_badge:
+    color: danger
+    label: "관리자 전용"
+    tooltip: "이 기능은 system.admin 권한이 필요합니다"
+  feature_disabled_badge:
+    color: warning
+    label: "기능 비활성"
+    tooltip: "해당 피처 플래그가 비활성 상태입니다"

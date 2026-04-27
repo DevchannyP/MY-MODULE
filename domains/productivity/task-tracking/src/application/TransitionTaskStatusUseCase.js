@@ -1,20 +1,44 @@
 'use strict';
 
 class TransitionTaskStatusUseCase {
-  constructor(taskRepository) {
-    this._repo = taskRepository;
+  /**
+   * @param {import('./ports/TaskRepository').TaskRepository} taskRepository
+   * @param {import('../../../../../src/shared/EventPublisher').EventPublisher} [eventPublisher]
+   */
+  /**
+   * @param {import('../infrastructure/OutboxRepository').OutboxRepository} [outboxRepository]
+   */
+  constructor(taskRepository, eventPublisher = null, outboxRepository = null) {
+    this._repo      = taskRepository;
+    this._publisher = eventPublisher;
+    this._outbox    = outboxRepository;
   }
 
-  async execute({ task_id, new_status }) {
+  async execute({ task_id, new_status }, caller) {
+    if (!caller?.permissions?.includes('task:write')) {
+      throw Object.assign(new Error('Forbidden: task:write 권한이 필요합니다'), { code: 'FORBIDDEN' });
+    }
     const task = await this._repo.findById(task_id);
-    if (!task) throw new Error(`작업을 찾을 수 없습니다: ${task_id}`);
+    if (!task) throw Object.assign(new Error(`작업을 찾을 수 없습니다: ${task_id}`), { code: 'NOT_FOUND' });
 
-    const oldStatus = task.status;
-    task.transitionTo(new_status); // INV002는 Task 내부에서 throw
-    await this._repo.save(task);
-    task.pullDomainEvents(); // [확인 필요] 이벤트 버스 연동 필요
+    const oldStatus  = task.status;
+    const updated    = task.transitionTo(new_status); // INV002는 Task 내부에서 throw
+    await this._repo.save(updated);
+    const events = updated.pullDomainEvents();
+    if (this._publisher && events.length > 0) {
+      await this._publisher.publish(events);
+    }
+    if (this._outbox && events.length > 0) {
+      await this._outbox.append(
+        events.map((e) => ({
+          event_type:   e.event_type || e.type || 'domain.unknown',
+          aggregate_id: task_id,
+          payload:      e,
+        }))
+      );
+    }
 
-    return { task_id, old_status: oldStatus, new_status: task.status };
+    return { task_id, old_status: oldStatus, new_status: updated.status };
   }
 }
 

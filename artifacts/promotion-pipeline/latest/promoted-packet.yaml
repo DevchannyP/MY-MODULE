@@ -1,0 +1,72 @@
+id: WP-PROMOTE-2026-04-27-OPS
+goal: 최근 audit 시그널 기반으로 zone-feature-flags 후속 packet을 정리한다
+type: governance
+stage: D
+status: in_progress
+scope_in:
+- memory/checkpoint.yaml
+- memory/current-wp.yaml
+- master-shell/observability/config.yaml
+- master-shell/operations/rollback-playbook.yaml
+- master-shell/catalog/execution-packet-templates.yaml
+- master-shell/catalog/context-routing-profiles.yaml
+- scripts/generate_replay_packet.py
+- scripts/generate_routing_learning_ledger.py
+- master-shell/observability/health-scores.yaml
+- master-shell/operations/deployment-environments.yaml
+- artifacts/deployment-smoke/target-resolution.json
+scope_out:
+- domains/
+- src/infrastructure/ai/
+- artifacts/master-planner/index.html
+- system OS core
+- unrelated domains
+constraints:
+- 운영 증적 없이 완료로 선언하지 않는다
+- 로그, alert, dashboard를 같은 surface에서 검증한다
+- primary/secondary context lock이 예산 안에 있는 packet만 승격한다
+done_when:
+- replay에서 제안된 goal이 evidence와 함께 정리된다
+- primary read bundle 8개만으로 1차 구현/검증을 끝낸다
+- npm run check:observability 통과
+- npm run smoke:deployment 통과
+fail_if:
+- scope_out이 비어 코어 보호 범위가 흐려진다
+- primary 또는 locked context token budget이 허용치를 초과한다
+rollback: 승격 packet을 폐기하고 직전 current-wp 기준으로 되돌린다.
+subtasks:
+- context lock으로 exact read manifest를 고정한다
+- fit report를 다시 확인하고 risk 0 상태를 유지한다
+- 필요 시 handoff bundle을 저장하고 apply 전에 dry-run을 확인한다
+validation:
+- npm run check:observability
+- npm run smoke:deployment
+- npm run test:e2e-smoke
+- python3 scripts/check_planning_fit.py --goal stateful-ops --json
+evidence: []
+next_unlock: 승격 packet 완료 후 다음 adapter/module/runtime 확장 packet으로 넘긴다.
+contracts: {}
+context_budget:
+  tier_reads:
+  - memory/checkpoint.yaml
+  - memory/current-wp.yaml
+  - master-shell/observability/config.yaml
+  - master-shell/operations/rollback-playbook.yaml
+  - master-shell/catalog/execution-packet-templates.yaml
+  - master-shell/catalog/context-routing-profiles.yaml
+  - scripts/generate_replay_packet.py
+  - scripts/generate_routing_learning_ledger.py
+  context_reads:
+  - master-shell/observability/health-scores.yaml
+  - master-shell/operations/deployment-environments.yaml
+  - artifacts/deployment-smoke/target-resolution.json
+  - artifacts/promotion-pipeline/latest/handoff-bundle.json
+  estimated_turns: 3
+  max_new_files: 2
+  max_modified_files: 6
+  budget_primary_tokens: 12325
+  budget_total_tokens: 564943
+template_id: ops-hardening-packet
+planning_mode: ''
+generated_at: '2026-04-26T15:21:37.076209+00:00'
+applied_at: '2026-04-26T15:21:37.076219+00:00'

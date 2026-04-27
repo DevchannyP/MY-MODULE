@@ -1,0 +1,58 @@
+# Deployment Environment Registry
+# deployment-smoke workflow가 허용하는 GitHub environment 목록과
+# 환경별 smoke resolution 계약을 저장소 안에 선언한다.
+version: "0.1.0"
+workflow: ".github/workflows/deployment-smoke.yml"
+last_updated: "2026-03-20"
+
+required_github_environment_vars:
+  - "DEPLOYMENT_BASE_URL"
+  - "TASK_WRITE_PERMISSIONS"
+  - "TASK_READ_PERMISSIONS"
+  - "FLAG_OFF_PATH"
+  - "FLAG_OFF_PERMISSIONS"
+
+defaults:
+  task_write_permissions: "task:read,task:write"
+  task_read_permissions: "task:read"
+  flag_off_permissions: "task:read"
+
+environments:
+  - id: "internal"
+    github_environment: "internal"
+    rollout_phase: "internal"
+    owner: "productivity-team"
+    smoke_status: "operator-triggered"
+    description: "내부 환경에서 feature flag 기본 경로와 핵심 API smoke를 먼저 검증한다."
+    vars:
+      base_url: "DEPLOYMENT_BASE_URL"
+      task_write_permissions: "TASK_WRITE_PERMISSIONS"
+      task_read_permissions: "TASK_READ_PERMISSIONS"
+      flag_off_path: "FLAG_OFF_PATH"
+      flag_off_permissions: "FLAG_OFF_PERMISSIONS"
+
+  - id: "canary"
+    github_environment: "canary"
+    rollout_phase: "canary"
+    owner: "platform-team"
+    smoke_status: "operator-triggered"
+    description: "점진 rollout 중인 canary 환경에서 권한 경계와 노출 경로를 확인한다."
+    vars:
+      base_url: "DEPLOYMENT_BASE_URL"
+      task_write_permissions: "TASK_WRITE_PERMISSIONS"
+      task_read_permissions: "TASK_READ_PERMISSIONS"
+      flag_off_path: "FLAG_OFF_PATH"
+      flag_off_permissions: "FLAG_OFF_PERMISSIONS"
+
+  - id: "production"
+    github_environment: "production"
+    rollout_phase: "full"
+    owner: "platform-team"
+    smoke_status: "operator-triggered"
+    description: "전체 rollout 대상 운영 환경에서 health, 핵심 경로, 숨김 경로를 확인한다."
+    vars:
+      base_url: "DEPLOYMENT_BASE_URL"
+      task_write_permissions: "TASK_WRITE_PERMISSIONS"
+      task_read_permissions: "TASK_READ_PERMISSIONS"
+      flag_off_path: "FLAG_OFF_PATH"
+      flag_off_permissions: "FLAG_OFF_PERMISSIONS"

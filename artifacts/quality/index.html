@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>품질 게이트 — Workflow OS</title>
+<link rel="stylesheet" href="/shared/shell.css">
+
+<script src="/shared/shell.js"></script>
+</head>
+<body>
+<header class="wf-shell-header" data-component="nav-header">
+  <div class="wf-shell-header__brand">
+    <a href="/" class="wf-shell-header__logo">Workflow OS</a>
+  </div>
+  <nav class="wf-shell-header__nav" role="navigation" aria-label="주 메뉴">
+      <a href="/" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">대시보드</a>
+      <a href="/catalog" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">카탈로그</a>
+      <a href="/flags" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">피처 플래그</a>
+      <a href="/audit" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">감사 로그</a>
+      <a href="/quality" class="wf-nav-link wf-nav-link--active wf-nav-link--disabled" aria-disabled="true" tabindex="-1">품질 게이트</a>
+      <a href="/lifecycle" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">라이프사이클</a>
+      <a href="/rollback" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">롤백 콘솔</a>
+      <a href="/tasks" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">작업 관리</a>
+      <a href="/billing" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산관리 홈</a>
+      <a href="/billing/invoices" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">인보이스 목록</a>
+      <a href="/billing/payments" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">결제상태 추적</a>
+      <a href="/billing/exceptions" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산 예외처리</a>
+      <a href="/videos" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">비디오 관리</a>
+  </nav>
+  <div class="wf-shell-header__status">
+    <span class="wf-sse-indicator wf-sse-indicator--offline"
+          data-sse-indicator
+          title="System OS 실시간 연결 상태"
+          aria-label="실시간 연결 끊김">●</span>
+  </div>
+</header>
+<span data-sse-connect="/api/v1/system/events" hidden aria-hidden="true"></span>
+<main class="wf-page" id="main-content">
+
+  <div class="wf-status-bar">
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">전체 결과</span>
+      <span class="wf-status-item__value" style="color:var(--wf-color-pass);">PASS</span>
+    </div>
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">게이트</span>
+      <span class="wf-status-item__value">8/8 PASS</span>
+    </div>
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">마지막 실행</span>
+      <span class="wf-status-item__value" style="font-size:.8rem;">2026. 4. 16. 0시 42분 58초</span>
+    </div>
+  </div>
+
+  <!-- 도메인 헬스 요약 -->
+  <div class="wf-section">
+    <div class="wf-section__title">도메인 헬스 점수 (실시간)</div>
+    <div class="wf-status-bar"><div class="wf-status-item">
+      <span class="wf-status-item__label">billing</span>
+      <span class="wf-status-item__value" data-domain-id="billing"
+            style="font-size:.95rem;color:var(--wf-color-pass);">
+        <span data-health-score>100</span>
+      </span>
+    </div><div class="wf-status-item">
+      <span class="wf-status-item__label">productivity/task-tracking</span>
+      <span class="wf-status-item__value" data-domain-id="productivity/task-tracking"
+            style="font-size:.95rem;color:var(--wf-color-pass);">
+        <span data-health-score>100</span>
+      </span>
+    </div><div class="wf-status-item">
+      <span class="wf-status-item__label">video</span>
+      <span class="wf-status-item__value" data-domain-id="video"
+            style="font-size:.95rem;color:var(--wf-color-pass);">
+        <span data-health-score>100</span>
+      </span>
+    </div></div>
+  </div>
+
+  <!-- 게이트 매트릭스 -->
+  <div class="wf-section">
+    <div class="wf-section__title">게이트 매트릭스 (도메인 × 게이트)</div>
+    <div style="overflow-x:auto;">
+      <table class="wf-matrix">
+        <thead><tr><th style="text-align:left;">도메인</th><th title="단위 테스트">단위 테스트</th><th title="계약 드리프트">계약 드리프</th><th title="린트·정적분석">린트·정적분</th><th title="authz 회귀">authz </th><th title="E2E 스모크">E2E 스모</th><th title="공급망">공급망</th><th title="관측성">관측성</th><th title="롤백">롤백</th></tr></thead>
+        <tbody><tr><th style="text-align:left;padding:.4rem .75rem;background:var(--wf-color-surface);border:1px solid var(--wf-color-border);">작업 관리</th><td class="pass" title="단위 테스트 — PASS">✓</td><td class="pass" title="계약 드리프트 — PASS">✓</td><td class="pass" title="린트·정적분석 — PASS">✓</td><td class="pass" title="authz 회귀 — PASS">✓</td><td class="pass" title="E2E 스모크 — PASS">✓</td><td class="pass" title="공급망 — PASS">✓</td><td class="pass" title="관측성 — PASS">✓</td><td class="pass" title="롤백 — PASS">✓</td></tr><tr><th style="text-align:left;padding:.4rem .75rem;background:var(--wf-color-surface);border:1px solid var(--wf-color-border);">정산관리</th><td class="pass" title="단위 테스트 — PASS">✓</td><td class="pass" title="계약 드리프트 — PASS">✓</td><td class="pass" title="린트·정적분석 — PASS">✓</td><td class="pass" title="authz 회귀 — PASS">✓</td><td class="pass" title="E2E 스모크 — PASS">✓</td><td class="pass" title="공급망 — PASS">✓</td><td class="pass" title="관측성 — PASS">✓</td><td class="pass" title="롤백 — PASS">✓</td></tr><tr><th style="text-align:left;padding:.4rem .75rem;background:var(--wf-color-surface);border:1px solid var(--wf-color-border);">비디오</th><td class="pass" title="단위 테스트 — PASS">✓</td><td class="pass" title="계약 드리프트 — PASS">✓</td><td class="pass" title="린트·정적분석 — PASS">✓</td><td class="pass" title="authz 회귀 — PASS">✓</td><td class="pass" title="E2E 스모크 — PASS">✓</td><td class="pass" title="공급망 — PASS">✓</td><td class="pass" title="관측성 — PASS">✓</td><td class="pass" title="롤백 — PASS">✓</td></tr><tr><th style="text-align:left;padding:.4rem .75rem;background:var(--wf-color-surface);border:1px solid var(--wf-color-border);">System OS</th><td class="pass" title="단위 테스트 — PASS">✓</td><td class="pass" title="계약 드리프트 — PASS">✓</td><td class="pass" title="린트·정적분석 — PASS">✓</td><td class="pass" title="authz 회귀 — PASS">✓</td><td class="pass" title="E2E 스모크 — PASS">✓</td><td class="pass" title="공급망 — PASS">✓</td><td class="pass" title="관측성 — PASS">✓</td><td class="pass" title="롤백 — PASS">✓</td></tr></tbody>
+      </table>
+    </div>
+    <p style="color:var(--wf-color-neutral);font-size:.75rem;margin-top:.5rem;">
+      ✓ PASS &nbsp; ✗ FAIL &nbsp; — SKIP &nbsp;&nbsp; FAIL 셀 클릭 시 상세 표시
+    </p>
+  </div>
+
+  <!-- 드릴다운 패널 -->
+  <div id="gate-detail-panel" hidden
+       style="position:fixed;right:0;top:56px;width:320px;height:calc(100vh - 56px);background:var(--wf-color-surface);border-left:1px solid var(--wf-color-border);padding:1rem;overflow-y:auto;z-index:50;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <strong id="gate-detail-title">게이트 상세</strong>
+      <button class="wf-btn wf-btn--ghost wf-btn--sm" onclick="document.getElementById('gate-detail-panel').hidden=true">✕</button>
+    </div>
+    <div id="gate-detail-content"></div>
+  </div>
+
+  <script>
+  document.querySelectorAll('.wf-matrix td.fail').forEach(function(cell) {
+    cell.addEventListener('click', function() {
+      document.getElementById('gate-detail-title').textContent = cell.title;
+      document.getElementById('gate-detail-content').innerHTML =
+        '<p style="color:var(--wf-color-fail);">이 게이트는 FAIL 상태입니다.</p>' +
+        '<p style="color:var(--wf-color-neutral);font-size:.85rem;">감사 로그에서 상세 내용을 확인하세요.</p>' +
+        '<a href="../audit/index.html" class="wf-btn wf-btn--ghost wf-btn--sm">감사 로그 열기</a>';
+      document.getElementById('gate-detail-panel').hidden = false;
+    });
+  });
+  </script>
+</main>
+</body>
+</html>

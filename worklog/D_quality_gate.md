@@ -285,6 +285,88 @@
 
 ---
 
+## 2026-03-19 - Core Platform - dependency scan 기준선 실동작화
+
+**날짜**: 2026-03-19
+**트랙**: CORE-SECURITY (Q-110)
+**범위**: package.json + package-lock.json + supply-chain docs
+**실행자**: Codex (자동화)
+
+---
+
+### 핵심 변경
+
+| 항목 | 이전 | 현재 |
+|------|------|------|
+| scan:dependencies | placeholder echo | `validate_dependency_baseline.py` 실검증 |
+| 판정 근거 | 문서 설명과 실제 명령 불일치 | lockfile/runtime/license/integrity 기준으로 일치 |
+| dependency gate | 추상적 PASS | 오프라인 재현 가능한 PASS |
+
+### 이 검증기가 보는 것
+
+- `package.json` 과 `package-lock.json` root metadata 일치 여부
+- runtime dependency 유입 여부
+- 잠긴 패키지의 `integrity` 존재 여부
+- 잠긴 패키지의 `license` 존재 여부
+- 허용된 license 집합 준수 여부
+
+### 검증 결과
+
+| 게이트 | 결과 | 상세 |
+|--------|------|------|
+| dependency-scan | **PASS** | `npm run scan:dependencies` |
+| lint | **PASS** | `npm run lint` |
+| contract-tests | **PASS** | `npm run test:contract` |
+| regression tests | **PASS** | `npm test` |
+
+### 결정
+
+- 현재 코어 dependency scan 의 1차 기준은 "오프라인 advisory 조회"가 아니라 "잠금/무결성/유입 통제"다.
+- 실제 CVE feed 연동은 다음 단계에서 추가하되, 지금은 저장소 내부에서 재현 가능한 baseline 을 먼저 고정한다.
+
+---
+
+## 2026-03-19 - Core Platform - advisory feed 연동 전략 수립
+
+**날짜**: 2026-03-19
+**트랙**: CORE-SECURITY (Q-112)
+**범위**: advisory policy + ADR + security docs
+**실행자**: Codex (자동화)
+
+---
+
+### 핵심 변경
+
+| 항목 | 이전 | 현재 |
+|------|------|------|
+| online advisory 정책 | 메모 수준 언급만 존재 | ADR + policy file + validator |
+| 차단 기준 | 저장소 안에 고정 안 됨 | runtime High/Critical 차단 기준 명시 |
+| 예외 규칙 | 자유 텍스트 | required fields 고정 |
+
+### 이번에 고정한 구조
+
+- `docs/adr/0008-online-advisory-scan-strategy.md`
+- `docs/reference/advisory-feed-policy.md`
+- `artifacts/advisory/advisory-policy.yaml`
+- `scripts/validate_advisory_policy.py`
+
+### 검증 결과
+
+| 게이트 | 결과 | 상세 |
+|--------|------|------|
+| advisory-policy | **PASS** | `npm run check:advisory-policy` |
+| dependency-scan | **PASS** | `npm run scan:dependencies` |
+| lint | **PASS** | `npm run lint` |
+| regression tests | **PASS** | `npm test` |
+
+### 결정
+
+- 코어 저장소는 "오프라인 baseline"과 "온라인 advisory feed"를 서로 다른 층으로 유지한다.
+- `main` 차단 기준은 runtime dependency High/Critical advisory 로 고정한다.
+- dev dependency 취약점과 provider 장애는 우선 경고/기록으로 처리한다.
+
+---
+
 ## 2026-03-18 - Stage D - task-management 품질 게이트 3차 판정 (ESLint 해소)
 
 **날짜**: 2026-03-18

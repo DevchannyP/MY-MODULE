@@ -1,0 +1,48 @@
+# AI 에이전트 자기반성 로그 (Reflexion Pattern)
+# 매 Stage 실패/종료 시 에이전트가 직접 기록
+entries:
+  - stage: "harness-v0.2"
+    domain: "platform"
+    date: "2026-04-12"
+    sequence: 3
+    what_went_well:
+      - "6개 버그를 단일 세션 내 진단→수정→재검증 완료"
+      - "ESLint 인라인 disable 미작동 시 config-level 수정으로 빠르게 전환"
+      - "MAX_ETAG_PAYLOAD_BYTES 제한이 실제 파일 크기를 커버하지 못한 원인을 바로 추적"
+    what_went_wrong:
+      - "commitlint subject-case: 한국어 subject 첫 시도 실패 → 영문 subject로 전환"
+      - "ESLint 인라인 disable 규칙이 v10 flat config에서 작동 방식이 달라 2회 시도 낭비"
+    root_cause:
+      - "commitlint subject-case: 기본 규칙이 lowercase/sentence-case 영문 전용"
+      - "ESLint v10: eslint-disable-line이 특정 규칙에서 인라인 무시 안 되는 엣지케이스 존재"
+    improvement_for_next:
+      - "Conventional Commit subject는 영문 명사구로 시작"
+      - "ESLint 특정 규칙 비활성화 시 config-level로 우선 시도"
+    confidence_score: 0.92
+
+  - stage: "D(4차)"
+    domain: "billing"
+    date: "2026-03-20"
+    sequence: 1
+    what_went_well:
+      - "기존 구현이 요구사항 명세대로 완성됨"
+    what_went_wrong:
+      - "Phase 0~4 적용 전이라 새 프로토콜 미적용 상태였음"
+    root_cause:
+      - "인프라 부재"
+    improvement_for_next:
+      - "Phase 5 CLAUDE.md 재작성부터 새 프로토콜 적용"
+    confidence_score: 0.7
+  - stage: "D(4차)"
+    domain: "productivity"
+    date: "2026-03-20"
+    sequence: 1
+    what_went_well:
+      - "기존 구현이 요구사항 명세대로 완성됨"
+    what_went_wrong:
+      - "Phase 0~4 적용 전이라 새 프로토콜 미적용 상태였음"
+    root_cause:
+      - "인프라 부재"
+    improvement_for_next:
+      - "Phase 5 CLAUDE.md 재작성부터 새 프로토콜 적용"
+    confidence_score: 0.7

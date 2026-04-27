@@ -1,8 +1,9 @@
 # Workflow OS - 다음 실행 큐
-# 모든 자동 작업은 current-state.yaml → core-upgrade-plan.yaml → unresolved-risks.yaml →
-# next-actions.yaml 순서로 읽고 우선순위를 결정한다.
-as_of: "2026-03-18"
-current_phase: "core-platform-upgrade-for-video-era"
+# STATUS: legacy detail surface
+# 실제 다음 Work Packet 선택은 root memory/wp-queue.yaml 과 memory/current-wp.yaml 이 기준이다.
+# 이 파일은 legacy 코어 업그레이드 히스토리와 상세 우선순위 참고용이다.
+as_of: "2026-04-12"
+current_phase: "spiral-17-complete"
 strategy_ref: "memory/project/core-upgrade-plan.yaml"
 
 execution_policy:
@@ -13,6 +14,65 @@ execution_policy:
     - "구조 판단은 ADR 또는 memory 업데이트 없이 지나가지 않는다."
     - "사용자 변경사항은 되돌리지 않는다."
     - "한 턴에서 안전하게 끝낼 수 있는 범위는 연속 처리한다."
+
+queue_status:
+  total: 54
+  done: 54
+  ready: 0
+  blocked: 0
+  note: "2026-04-12 기준 55/55 WP 완료. Spiral 16 완료 (billing/video EventPublisher 배선, 3/3 smoke PASS). 전 3도메인 이벤트 완전 배선."
+
+next_actions:
+  - priority: 1
+    id: "NEXT-001"
+    action: "main 브랜치로 PR 준비"
+    track: "SCM-RELEASE"
+    done: true
+    completed_at: "2026-04-12"
+    result: "PR#1 생성 완료 — https://github.com/DevchannyP/MY-MODULE/pull/1 (180 commits, 555 files)"
+
+  - priority: 2
+    id: "NEXT-002"
+    action: "Spiral 17 WP 설계 및 wp-queue 등록"
+    track: "SPIRAL-17"
+    done: true
+    completed_at: "2026-04-12"
+    result: "CAP-SPIRAL-17 등록 완료 — WP-S17-001~003 pending, 2/3 ready (scheduler 확인)"
+
+  - priority: 3
+    id: "NEXT-003"
+    action: "Spiral 17 완료 — WP-S17-001~003 all done"
+    track: "SPIRAL-17"
+    done: true
+    completed_at: "2026-04-12"
+    result: "621/621 tests PASS. per-route rate-limit, Promise.all, Worker Thread 완료"
+
+  - priority: 4
+    id: "NEXT-004"
+    action: "CI 수정 — pip cache 제거 + lint 3건 해소 + push"
+    track: "SCM-RELEASE"
+    done: true
+    completed_at: "2026-04-12"
+    result: "fix(ci) + fix(lint) push 완료. CI 재트리거됨 (commit 8f1f55c)"
+
+  - priority: 5
+    id: "NEXT-005"
+    action: "CI PASS 확인 후 PR#1 머지"
+    track: "SCM-RELEASE"
+    done: false
+    goal: "GitHub Actions quality-gates PASS 확인 → PR#1 머지"
+    blocked_by: "CI 실행 대기"
+    success_criteria:
+      - "quality-gates 3 jobs PASS"
+      - "PR#1 머지 가능 상태"
+
+  - priority: 6
+    id: "NEXT-006"
+    action: "Spiral 18 설계 — DB 마이그레이션 SQLite→PostgreSQL Phase 2"
+    track: "SPIRAL-18"
+    done: false
+    goal: "docs/db/migration-strategy.md Phase 2 기반 WP 설계"
+    trigger: "NEXT-005 완료 후"
 
 queue:
   - priority: 1
@@ -113,13 +173,47 @@ queue:
     id: "Q-110"
     track: "CORE-SECURITY"
     action: "dependency scan 기준선 실동작화"
-    done: false
+    done: true
     goal: "placeholder 상태인 dependency scan을 lockfile 기반 실검증 또는 명시적 baseline으로 전환한다."
+    result: "PASS — scan:dependencies를 lockfile/runtime/license/integrity validator로 전환하고 상태 문서와 판정 근거를 일치시켰다."
     success_criteria:
       - "`scan:dependencies`가 placeholder가 아니라 실제 점검을 수행한다"
       - "runtime/dev dependency 현황과 판정 근거가 문서/상태 파일에 일치한다"
 
   - priority: 10
+    id: "Q-112"
+    track: "CORE-SECURITY"
+    action: "advisory feed 연동 전략 수립"
+    done: true
+    goal: "오프라인 dependency baseline 다음 단계로 npm audit 또는 동등 advisory feed 연동 정책을 정한다."
+    result: "PASS — ADR 0008, advisory policy file, validator 도입으로 offline/online 역할과 blocking policy를 고정했다."
+    success_criteria:
+      - "오프라인 baseline 과 온라인 advisory scan 의 역할 분리가 문서화된다"
+      - "Phase 2 연동 방식과 차단 조건이 정리된다"
+
+  - priority: 11
+    id: "Q-113"
+    track: "CORE-OPERATIONS"
+    action: "GitHub branch protection 기준선 정리"
+    done: true
+    goal: "저장소 내부 git 거버넌스와 GitHub 원격 보호 규칙이 어긋나지 않도록 branch protection 기준을 문서와 체크리스트로 고정한다."
+    result: "PASS — ADR 0009, branch protection policy file, validator, PR required checks checklist 를 추가했다."
+    success_criteria:
+      - "main 보호 규칙, PR merge 조건, required checks 가 정리된다"
+      - "원격 설정 의존 부분과 저장소 내부 규칙이 분리 문서화된다"
+
+  - priority: 12
+    id: "Q-114"
+    track: "CORE-QUALITY"
+    action: "실제 서버 기동 smoke 기준선 강화"
+    done: true
+    goal: "controller-level smoke 다음 단계로 transport/runtime wiring 을 검증하는 최소 서버 기동 smoke 전략을 정리한다."
+    result: "PASS — server wiring smoke와 deployment environment smoke runner를 도입해 transport/runtime wiring 검증 경로를 확보했다."
+    success_criteria:
+      - "서버 기동 smoke 범위와 최소 엔드포인트가 정의된다"
+      - "현재 controller-level smoke 와 역할 분리가 문서화된다"
+
+  - priority: 13
     id: "Q-106"
     track: "CORE-COMPOSITION"
     action: "마스터 셸 조합 규칙 강화"
@@ -130,13 +224,14 @@ queue:
       - "조합 규칙 검증 포인트가 문서 또는 스크립트로 존재한다"
       - "새 도메인 편입 시 필요한 입력이 명확해진다"
 
-  - priority: 11
+  - priority: 14
     id: "Q-107"
     track: "DOMAIN-VIDEO"
     action: "첫 확장 도메인 video 청사진 작성"
-    done: false
+    done: true
     goal: "video 도메인 온보딩을 위한 requirements/glossary/domain-map/contract 전략 초안을 만든다."
     dependencies: ["Q-101", "Q-106"]
+    result: "PASS — memory/stageA/video.yaml에 bounded context, invariants, permissions, risk profile, contract skeleton이 정리됐다."
     success_criteria:
       - "video 도메인 요구사항 초안이 존재한다"
       - "Stage A 진입 조건과 위험도가 명확하다"
@@ -211,10 +306,25 @@ completed:
     completed_at: "2026-03-19"
     result: "ADR 0007 + git governance docs + PR template + release evidence generator baseline"
 
+  - id: "DONE-015"
+    action: "dependency scan 기준선 실동작화 (Q-110)"
+    completed_at: "2026-03-19"
+    result: "scan:dependencies PASS — lockfile/runtime/license/integrity baseline validator"
+
+  - id: "DONE-016"
+    action: "advisory feed 연동 전략 수립 (Q-112)"
+    completed_at: "2026-03-19"
+    result: "ADR 0008 + advisory policy file + validator baseline"
+
+  - id: "DONE-017"
+    action: "GitHub branch protection 기준선 정리 (Q-113)"
+    completed_at: "2026-03-19"
+    result: "ADR 0009 + branch protection policy file + validator + PR required checks"
+
 active_risks:
   - ref: "memory/project/unresolved-risks.yaml"
     high_priority:
-      - "R-PLAT-007"
+      - "R-PLAT-011"
     medium_priority:
       - "R-PLAT-001"
       - "R-PLAT-002"
@@ -223,3 +333,5 @@ active_risks:
       - "R-PLAT-005"
       - "R-PLAT-006"
       - "R-PLAT-008"
+      - "R-PLAT-009"
+      - "R-PLAT-010"

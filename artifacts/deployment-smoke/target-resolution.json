@@ -1,0 +1,13 @@
+{
+  "registry_path": "master-shell/operations/deployment-environments.yaml",
+  "environment_name": "internal",
+  "registry_id": "internal",
+  "rollout_phase": "internal",
+  "owner": "productivity-team",
+  "smoke_status": "operator-triggered",
+  "base_url": "http://127.0.0.1:3010",
+  "task_write_permissions": "task:read,task:write",
+  "task_read_permissions": "task:read",
+  "flag_off_path": "",
+  "flag_off_permissions": "task:read"
+}

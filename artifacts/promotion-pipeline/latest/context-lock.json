@@ -1,0 +1,178 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-04-26T15:21:36.937857+00:00",
+  "goal": "stateful-ops",
+  "profile_id": "stateful-ops-routing",
+  "current_wp": {
+    "id": "MPO-COMPLETE",
+    "goal": "MPO session mpo-dad27de3-5e53-4be0-b74f-7cb581c8c388 completed",
+    "type": "infra",
+    "stage": "complete"
+  },
+  "protected_core": [
+    "domains/",
+    "src/infrastructure/ai/",
+    "artifacts/master-planner/index.html"
+  ],
+  "core_guardrails": [],
+  "requested_paths": {
+    "primary": [
+      "memory/checkpoint.yaml",
+      "memory/current-wp.yaml",
+      "master-shell/observability/config.yaml",
+      "master-shell/operations/rollback-playbook.yaml",
+      "master-shell/catalog/execution-packet-templates.yaml",
+      "master-shell/catalog/context-routing-profiles.yaml",
+      "scripts/generate_replay_packet.py",
+      "scripts/generate_routing_learning_ledger.py"
+    ],
+    "secondary": [
+      "master-shell/observability/health-scores.yaml",
+      "master-shell/operations/deployment-environments.yaml",
+      "artifacts/deployment-smoke/target-resolution.json",
+      "artifacts/promotion-pipeline/latest/handoff-bundle.json"
+    ],
+    "deferred": [
+      "domains/",
+      "worklog/reports/",
+      "artifacts/catalog-site/index.html",
+      "worklog/audit-chain.jsonl",
+      "master-shell/observability/timeline.jsonl"
+    ]
+  },
+  "locked_files": {
+    "primary": [
+      {
+        "requested_path": "memory/checkpoint.yaml",
+        "path": "memory/checkpoint.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 2081,
+        "estimated_tokens": 694,
+        "sha256": "1b27238678a7bde2081a7f4b96f46634acb686edb305114446aaeef9113d3486"
+      },
+      {
+        "requested_path": "memory/current-wp.yaml",
+        "path": "memory/current-wp.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 3282,
+        "estimated_tokens": 1094,
+        "sha256": "658c48c34e46f94ba776234e9385b74baccef13c8f78adbb0af8d0618551063d"
+      },
+      {
+        "requested_path": "master-shell/observability/config.yaml",
+        "path": "master-shell/observability/config.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 6017,
+        "estimated_tokens": 2006,
+        "sha256": "a7ded01249d8ba61c0d89bf866a2510745b0827ee494b03ec09a9737328b98d4"
+      },
+      {
+        "requested_path": "master-shell/operations/rollback-playbook.yaml",
+        "path": "master-shell/operations/rollback-playbook.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 2756,
+        "estimated_tokens": 919,
+        "sha256": "d79ec055105c3145de759ba4153c813c9fb1d04830798c75eee299cdcf5d7f18"
+      },
+      {
+        "requested_path": "master-shell/catalog/execution-packet-templates.yaml",
+        "path": "master-shell/catalog/execution-packet-templates.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 2484,
+        "estimated_tokens": 828,
+        "sha256": "d270d7d44821ba9b2c31ab0aec6fb780143c5ebf581a8359d737538fbd784b40"
+      },
+      {
+        "requested_path": "master-shell/catalog/context-routing-profiles.yaml",
+        "path": "master-shell/catalog/context-routing-profiles.yaml",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 4379,
+        "estimated_tokens": 1460,
+        "sha256": "9761ff28d86ecd4f1bec11bab3a69966e71d01b2e28a48ee46c140e8e3a97de5"
+      },
+      {
+        "requested_path": "scripts/generate_replay_packet.py",
+        "path": "scripts/generate_replay_packet.py",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 12043,
+        "estimated_tokens": 4014,
+        "sha256": "5ce6af2230f8a38c01c5d3c42245073e6eebfdd7aeb4491f09640aed04d9c68c"
+      },
+      {
+        "requested_path": "scripts/generate_routing_learning_ledger.py",
+        "path": "scripts/generate_routing_learning_ledger.py",
+        "tier": "primary",
+        "exists": true,
+        "bytes": 3931,
+        "estimated_tokens": 1310,
+        "sha256": "ec14abf6ac2d3e552f84d8a2b63cf3695fdd8446b128ff1630f40e090108db3a"
+      }
+    ],
+    "secondary": [
+      {
+        "requested_path": "master-shell/observability/health-scores.yaml",
+        "path": "master-shell/observability/health-scores.yaml",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 265,
+        "estimated_tokens": 88,
+        "sha256": "7da5eacaf972ce1684de358f50b5623335e282a313ff5c2d06c8210249b1730a"
+      },
+      {
+        "requested_path": "master-shell/operations/deployment-environments.yaml",
+        "path": "master-shell/operations/deployment-environments.yaml",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 2101,
+        "estimated_tokens": 700,
+        "sha256": "8a45e87867b53ab9a30c9b4564458c3ea359b9d4a59ee940f082e431af6acc56"
+      },
+      {
+        "requested_path": "artifacts/deployment-smoke/target-resolution.json",
+        "path": "artifacts/deployment-smoke/target-resolution.json",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 437,
+        "estimated_tokens": 146,
+        "sha256": "4a9b1a0f5a2d4e56317c60b24a4b045823f6bcefc3c6060598fd84b62f5b7635"
+      },
+      {
+        "requested_path": "artifacts/promotion-pipeline/latest/handoff-bundle.json",
+        "path": "artifacts/promotion-pipeline/latest/handoff-bundle.json",
+        "tier": "secondary",
+        "exists": true,
+        "bytes": 22945,
+        "estimated_tokens": 7648,
+        "sha256": "bba775f758d340d842e831ac03c0f4b905144a844fbf1cafa3255ebb032d8176"
+      }
+    ]
+  },
+  "summary": {
+    "primary": {
+      "file_count": 8,
+      "total_bytes": 36973,
+      "estimated_tokens": 12325
+    },
+    "secondary": {
+      "file_count": 4,
+      "total_bytes": 25748,
+      "estimated_tokens": 8582
+    },
+    "total": {
+      "file_count": 12,
+      "total_bytes": 62721,
+      "estimated_tokens": 20907
+    }
+  },
+  "commands": {
+    "context_bundle_json": "python3 scripts/export_context_bundle.py --goal stateful-ops --json",
+    "context_lock_json": "python3 scripts/export_context_lock.py --goal stateful-ops --json"
+  }
+}

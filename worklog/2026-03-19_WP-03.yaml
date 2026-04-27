@@ -1,0 +1,35 @@
+wp_id: "WP-2026-03-19-03"
+goal: "Wire requirements validation into CI and the Stage A entry flow."
+completed: true
+files_created:
+  - path: ".github/workflows/requirements-validation.yml"
+    purpose: "Repository governance workflow for the real requirements validator"
+  - path: "worklog/2026-03-19_WP-03.yaml"
+    purpose: "Structured evidence for CI/stage-entry governance wiring"
+files_modified:
+  - path: "docs/how-to/run-stage-a.md"
+    change: "Stage A now explicitly starts with npm run validate:requirements"
+  - path: "memory/wp-queue.yaml"
+    change: "Marked WP-2026-03-19-03 done and selected WP-2026-03-19-04 next"
+  - path: "memory/current-wp.yaml"
+    change: "Prepared the root-memory bridge packet as the next WP"
+  - path: "memory/current-state.yaml"
+    change: "Recorded requirements validation CI enforcement"
+  - path: "memory/next-actions.yaml"
+    change: "Advanced next action to WP-2026-03-19-04"
+validation:
+  lint: "pass"
+  tests: "skip"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "The workflow enforces requirements validation only; full quality-gate CI is still a separate packet."
+  - "Legacy manuals outside Stage A still reference the pre-WP operator model."
+decisions:
+  - "Use a network-free workflow that runs npm run validate:requirements without dependency installation."
+  - "Keep Stage A operator guidance explicit and minimal: validate first, then inspect requirements.yaml."
+commands:
+  - "npm run validate:requirements"
+  - "npm run lint"
+  - "rg -n \"validate:requirements|npm run validate:requirements|Run requirements validation\" .github/workflows/requirements-validation.yml docs/how-to/run-stage-a.md"
+  - "python3 - <<'PY' ... workflow/root memory YAML parse ... PY"

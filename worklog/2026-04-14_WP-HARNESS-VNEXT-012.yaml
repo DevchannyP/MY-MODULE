@@ -1,0 +1,50 @@
+wp_id: "WP-HARNESS-VNEXT-012"
+goal: "next_wp truth surface를 next-actions 우선 규칙으로 정렬한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PASS"
+
+context: |
+  Harness vNext 011까지 완료한 뒤 project:status는 next_wp를 canonical wp-queue의 ready pending packet으로 계산했다.
+  하지만 운영자가 실제 다음 실행 대상으로 고른 값은 memory/next-actions.yaml의 next_wp였고,
+  session_bootstrap과 operator surface도 결국 project:status를 따라가며 서로 다른 다음 packet을 보여주고 있었다.
+
+root_cause: |
+  scripts/project_status.js의 extractNextWp는 canonical queue가 존재하는 한 next-actions.next_wp를 무시하고,
+  pending + dependency ready 규칙으로 계산한 첫 packet을 항상 우선했다.
+  이 로직은 DAG fallback에는 유용하지만 operator가 명시적으로 고른 다음 packet을 truth surface에서 덮어쓰는 문제가 있었다.
+
+fix_applied: |
+  extractNextWp를 수정해 next-actions.next_wp가 존재하면 그 값을 최우선 source of truth로 사용하도록 바꿨다.
+  명시적 next_wp가 없을 때만 canonical wp-queue의 ready pending packet으로 fallback하게 유지했다.
+  project status smoke도 이 우선순위를 검증하도록 업데이트했고, session bootstrap JSON 출력이 같은 next_wp를 따르는지 다시 확인했다.
+
+files_created:
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-012.yaml"
+
+files_modified:
+  - "scripts/project_status.js"
+  - "src/tests/smoke/projectStatus.smoke.test.js"
+  - "memory/current-state.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  project_status: "PASS"
+  session_bootstrap_json: "PASS"
+  project_status_smoke: "PASS"
+  session_bootstrap_smoke: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-012-D1"
+    decision: "operator가 명시한 next-actions.next_wp를 project status의 1차 truth surface로 채택한다"
+    rationale: "실행 순서는 DAG 추천보다 operator selection이 우선이며, queue 기반 계산은 explicit choice가 없을 때만 fallback이어야 한다."
+  - id: "HARNESS-VNEXT-012-D2"
+    decision: "기존 canonical queue fallback은 유지한다"
+    rationale: "next-actions가 비어 있거나 신규 session bootstrap 상태에서는 자동 추천이 계속 필요하다."
+
+risks:
+  - id: "HARNESS-VNEXT-012-R1"
+    risk: "next-actions.next_wp가 stale 값이면 canonical queue보다 뒤처진 선택이 유지될 수 있다."
+    mitigation: "wp:next/wp:reconcile 운영 흐름을 유지하고, next-actions 갱신이 없는 경우에만 queue fallback이 작동하도록 설계했다."

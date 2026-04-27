@@ -1,0 +1,59 @@
+wp_id: "WP-HARNESS-VNEXT-004"
+goal: "Harness vNext Phase 2 truthfulness contract를 출력 스키마와 validation bundle에 연결한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PARTIAL_PASS"
+
+context: |
+  Phase 1에서 mode router는 도입됐지만, output schema와 validation profile은 아직
+  허위 PASS 금지 규칙을 강제하지 못했다.
+  따라서 verification_status, evidence_status, tests_run/tests_planned, rollback_plan을
+  실제 검증 계약으로 승격할 필요가 있다.
+
+root_cause: |
+  output.schema.json에는 truthfulness 필드가 optional 수준이었고,
+  validation bundle은 하네스 계약 자체를 검증하지 않았다.
+
+fix_applied: |
+  output.schema.json에 verification_status, evidence_status, tests_run, tests_planned,
+  rollback_plan을 required 필드로 승격했다.
+  또한 validate-harness-contract.js를 추가해 intake/output schema, harness contract,
+  golden set의 최소 truthfulness 조건을 검증하도록 했다.
+  package.json과 validation-profiles.yaml에도 validate:harness-contract를 연결해
+  이후 packet 검증 번들에 자동 포함되게 만들었다.
+
+files_created:
+  - "scripts/validate-harness-contract.js"
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-004.yaml"
+
+files_modified:
+  - "contracts/harness/output.schema.json"
+  - "package.json"
+  - "requirements/validation-profiles.yaml"
+  - "requirements/harness-engineering.yaml"
+  - "docs/harness/CONTINUOUS_PROMPT.md"
+
+validation:
+  validate_harness_contract_direct: "PASS"
+  validate_harness_contract_script: "PASS"
+  session_bootstrap_json: "PASS — validation bundle에 validate:harness-contract 자동 포함 확인"
+  lint: "PASS"
+  commit_guard_verify: "PARTIAL_PASS — 새 validator는 통과했지만 기존 e2e smoke baseline fail로 apply blocked"
+  test_e2e_smoke: "FAIL — architectureFitness, billingVideoEventWiring, envInit, eventBusWiring, mindmapRebuildWorker, optimisticLockHttp, outboxPollerWiring"
+
+decisions:
+  - id: "HARNESS-VNEXT-004-D1"
+    decision: "truthfulness enforcement는 먼저 schema + dedicated validator + validation profile 연결로 구현한다"
+    rationale: "현재 저장소에는 하네스 응답 자체를 파싱하는 런타임이 없으므로, 먼저 계약 일관성을 검증하는 정적 게이트를 만드는 편이 안전하다."
+  - id: "HARNESS-VNEXT-004-D2"
+    decision: "validate:harness-contract를 모든 packet의 공통 defaults에 넣는다"
+    rationale: "허위 PASS 금지와 evidence 상태 규칙은 특정 packet 유형만의 문제가 아니라 하네스 전체 불변조건이기 때문이다."
+
+risks:
+  - id: "HARNESS-VNEXT-004-R1"
+    risk: "하네스 truthfulness contract는 연결됐지만, 실제 응답 산출물이 output schema를 생성/검증하는 런타임은 아직 없다."
+    mitigation: "다음 packet에서 bootstrap/cockpit 또는 eval runner가 output schema를 실제로 소비하도록 연결한다."
+  - id: "HARNESS-VNEXT-004-R2"
+    risk: "commit:guard:verify가 현재 FAIL로 남는 이유는 기존 smoke baseline 7건 실패다."
+    mitigation: "하네스 packet과 분리된 baseline recovery packet에서 smoke failures를 수습한 뒤 재검증한다."

@@ -53,3 +53,40 @@ plugins:
       dashboard: "billing-dashboard"
       alert_group: "billing-alerts"
       expected_status: "inactive"
+
+  - plugin_id: "video-plugin"
+    owner: "video-team"
+    rollback:
+      strategy: "disable_flag"
+      disable_flags:
+        - "video.enabled"
+        - "video.upload.enabled"
+        - "video.transcode.enabled"
+        - "video.admin.enabled"
+      trigger_conditions:
+        - "error_rate > 1%"
+        - "authz 오류 발생"
+        - "INV-V002 상태 전이 위반 감지"
+    verification:
+      dashboard: "video-dashboard"
+      alert_group: "video-alerts"
+      expected_status: "inactive"
+
+  - plugin_id: "system-api-plugin"
+    owner: "platform-team"
+    rollback:
+      strategy: "disable_flag"
+      disable_flags:
+        - "system_api.enabled"
+        - "system_api.sse_stream.enabled"
+        - "system_api.flag_toggle_ui.enabled"
+        - "system_api.rollback_ui.enabled"
+      trigger_conditions:
+        - "system_api 엔드포인트 error_rate > 1%"
+        - "system.admin 권한 우회 감지"
+        - "SSE 연결 무한 누적"
+      rollback_note: "WOS_FLAG_SYSTEM_API_ENABLED=false → 서버 재시작으로 즉시 차단"
+    verification:
+      dashboard: "system-api-dashboard"
+      alert_group: "system-api-alerts"
+      expected_status: "inactive"

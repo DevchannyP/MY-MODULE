@@ -78,38 +78,38 @@ describe('Task.create()', () => {
 
 describe('Task.transitionTo()', () => {
   test('PENDING → IN_PROGRESS 성공', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
+    const task    = Task.create({ title: '작업', assignee_id: 'u1' });
     task.pullDomainEvents();
-    task.transitionTo('IN_PROGRESS');
-    assert.equal(task.status, 'IN_PROGRESS');
-    const events = task.pullDomainEvents();
+    const updated = task.transitionTo('IN_PROGRESS');
+    assert.equal(updated.status, 'IN_PROGRESS');
+    const events = updated.pullDomainEvents();
     assert.equal(events[0].event_type, 'TaskStatusChanged');
     assert.equal(events[0].payload.old_status, 'PENDING');
     assert.equal(events[0].payload.new_status, 'IN_PROGRESS');
   });
 
   test('IN_PROGRESS → DONE 성공', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
-    task.transitionTo('IN_PROGRESS');
-    task.transitionTo('DONE');
+    let task = Task.create({ title: '작업', assignee_id: 'u1' });
+    task = task.transitionTo('IN_PROGRESS');
+    task = task.transitionTo('DONE');
     assert.equal(task.status, 'DONE');
   });
 
   test('[INV002] DONE → IN_PROGRESS 불가', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
-    task.transitionTo('IN_PROGRESS');
-    task.transitionTo('DONE');
+    let task = Task.create({ title: '작업', assignee_id: 'u1' });
+    task = task.transitionTo('IN_PROGRESS');
+    task = task.transitionTo('DONE');
     assert.throws(() => task.transitionTo('IN_PROGRESS'), /\[INV002\]/);
   });
 });
 
 describe('Task.reassign()', () => {
   test('담당자 변경 성공', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'user-a' });
+    const task    = Task.create({ title: '작업', assignee_id: 'user-a' });
     task.pullDomainEvents();
-    task.reassign('user-b');
-    assert.equal(task.assignee_id, 'user-b');
-    const events = task.pullDomainEvents();
+    const updated = task.reassign('user-b');
+    assert.equal(updated.assignee_id, 'user-b');
+    const events = updated.pullDomainEvents();
     assert.equal(events[0].event_type, 'TaskReassigned');
     assert.equal(events[0].payload.old_assignee_id, 'user-a');
     assert.equal(events[0].payload.new_assignee_id, 'user-b');
@@ -136,10 +136,10 @@ describe('Task.toSnapshot()', () => {
 
 describe('Task.reconstitute()', () => {
   test('스냅샷에서 복원된 작업은 동일한 상태를 가진다', () => {
-    const original = Task.create({ title: '복원 테스트', assignee_id: 'u1' });
-    original.transitionTo('IN_PROGRESS');
-    const snap = original.toSnapshot();
-    const restored = Task.reconstitute(snap);
+    const created   = Task.create({ title: '복원 테스트', assignee_id: 'u1' });
+    const original  = created.transitionTo('IN_PROGRESS');
+    const snap      = original.toSnapshot();
+    const restored  = Task.reconstitute(snap);
     assert.equal(restored.id, original.id);
     assert.equal(restored.status, 'IN_PROGRESS');
     assert.equal(restored.assignee_id, 'u1');

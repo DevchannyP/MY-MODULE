@@ -1,12 +1,17 @@
 # Workflow OS - 도메인 맵
 # Stage B 진입 전 반드시 확정해야 하는 도메인 구성도.
 version: "0.1.0"
-last_updated: "2026-03-17"
+last_updated: "2026-03-25"
 
 domains:
   - id: "productivity"
     name: "생산성 관리"
     description: "업무 효율화를 위한 작업·일정·협업 관련 도메인 영역"
+    version: "0.1.0"
+    status: active
+    ejection_ready: false
+    ejected_to: null
+    migration_status: monolith
     bounded_contexts:
       - id: "task-tracking"
         name: "작업 추적"
@@ -26,6 +31,67 @@ domains:
           - "INV003: 마감일은 생성 시점보다 과거일 수 없다"
         ubiquitous_language:
           - "glossary.yaml의 domain_terms 섹션 참조"
+
+  - id: "billing"
+    name: "정산 관리"
+    description: "인보이스, 결제, 정산 예외를 관리하는 금융 도메인 영역"
+    version: "0.1.0"
+    status: active
+    ejection_ready: false
+    ejected_to: null
+    migration_status: monolith
+    bounded_contexts:
+      - id: "billing-core"
+        name: "정산 코어"
+        modules: ["billing.home", "billing.invoice", "billing.payment", "billing.exception"]
+        contracts:
+          - path: "domains/billing/contracts/capability.yaml"
+            type: "capability"
+          - path: "domains/billing/contracts/ui-contract.yaml"
+            type: "ui"
+          - path: "domains/billing/contracts/openapi.yaml"
+            type: "http"
+          - path: "domains/billing/contracts/events.schema.json"
+            type: "events"
+        invariants:
+          - "INV-B001: invoice.total = sum(lineItems[i].amount)"
+          - "INV-B002: 인보이스 상태는 허용된 전이만 가능하다"
+          - "INV-B003: PAID 인보이스는 삭제할 수 없다"
+          - "INV-B004: 라인 항목 금액은 0 초과여야 한다"
+          - "INV-B005: DISPUTED → PAID는 관리자 승인 없이 불가하다"
+          - "INV-B006: 결제 금액과 인보이스 총액이 다르면 MISMATCH로 분류해야 한다"
+        ubiquitous_language:
+          - "domains/billing/domain-spec.md의 Ubiquitous Language 섹션 참조"
+
+  - id: "video"
+    name: "콘텐츠 관리"
+    description: "영상 업로드·트랜스코딩·재생을 관리하는 미디어 도메인 영역"
+    version: "0.1.0"
+    status: active
+    ejection_ready: false
+    ejected_to: null
+    migration_status: monolith
+    bounded_contexts:
+      - id: "video-content"
+        name: "비디오 콘텐츠"
+        modules: ["video"]
+        contracts:
+          - path: "domains/video/contract/capability.yaml"
+            type: "capability"
+          - path: "domains/video/contract/ui-contract.yaml"
+            type: "ui"
+          - path: "domains/video/contract/openapi.yaml"
+            type: "http"
+          - path: "domains/video/contract/events.schema.json"
+            type: "events"
+        invariants:
+          - "INV-V001: 영상 파일 크기는 0 초과여야 한다"
+          - "INV-V002: Video 상태는 허용된 전이만 가능하다 (UPLOADED→READY→ARCHIVED)"
+          - "INV-V003: ARCHIVED 영상은 트랜스코딩할 수 없다"
+          - "INV-V004: 동시에 RUNNING 상태인 TranscodeJob은 영상당 1개로 제한한다"
+          - "INV-V005: TranscodeJob 완료 시 output_rendition_ref가 반드시 있어야 한다"
+        ubiquitous_language:
+          - "domains/video/contract/capability.yaml의 ubiquitous_language 섹션 참조"
 
 composition_policies:
   - rule: "동일 도메인 내 컨텍스트 간 통신은 이벤트 계약(events.schema.json)을 통해서만 허용"

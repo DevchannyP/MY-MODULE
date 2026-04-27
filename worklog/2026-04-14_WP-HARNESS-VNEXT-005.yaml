@@ -1,0 +1,50 @@
+wp_id: "WP-HARNESS-VNEXT-005"
+goal: "Harness vNext Phase 3 offline eval runner와 case file baseline을 추가한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PASS"
+
+context: |
+  Phase 2까지는 truthfulness contract와 validation bundle이 연결됐지만,
+  eval plane은 아직 golden set 파일을 저장하는 수준에 머물렀다.
+  최소한 golden set과 baseline metrics를 읽고 artifact를 생성하는 offline runner가 필요하다.
+
+root_cause: |
+  evals/golden/harness-core.jsonl과 evals/metrics/baseline.json은 존재하지만,
+  이를 읽어 결과를 남기는 runner와 smoke test가 없었다.
+
+fix_applied: |
+  mode별 case file을 evals/cases 아래에 추가하고,
+  golden set + baseline metrics를 읽어 artifact를 생성하는 run-harness-evals.js를 구현했다.
+  또한 harnessEvals smoke test를 추가해 report artifact가 실제로 생성되는지 검증했다.
+
+files_created:
+  - "evals/cases/research.jsonl"
+  - "evals/cases/build.jsonl"
+  - "evals/cases/debug.jsonl"
+  - "evals/cases/policy.jsonl"
+  - "scripts/run-harness-evals.js"
+  - "src/tests/smoke/harnessEvals.smoke.test.js"
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-005.yaml"
+
+files_modified:
+  - "package.json"
+
+validation:
+  eval_harness_json: "PASS"
+  harness_evals_smoke: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-005-D1"
+    decision: "Phase 3의 첫 구현은 모델 호출 grader가 아니라 offline dataset audit runner로 시작한다"
+    rationale: "네트워크/모델 의존이 없는 baseline runner부터 넣어야 CI와 로컬 검증에서 항상 재현 가능하다."
+  - id: "HARNESS-VNEXT-005-D2"
+    decision: "mode별 case file은 golden set을 참조하는 얇은 manifest로 구성한다"
+    rationale: "중복 데이터를 여러 jsonl에 복제하는 대신, 우선 어떤 케이스가 어떤 mode 묶음에 속하는지부터 명시하는 편이 drift를 줄인다."
+
+risks:
+  - id: "HARNESS-VNEXT-005-R1"
+    risk: "현재 eval runner는 dataset integrity와 coverage만 보고하며, 실제 모델 출력 품질은 아직 채점하지 않는다."
+    mitigation: "다음 단계에서 grader와 schema violation/retry metric 수집을 추가한다."

@@ -1,0 +1,7 @@
+{
+  "name": "@my-module/productivity",
+  "version": "0.1.0",
+  "private": true,
+  "description": "productivity 도메인 모듈",
+  "workflowOS": { "domain_id": "productivity", "ejection_ready": false }
+}

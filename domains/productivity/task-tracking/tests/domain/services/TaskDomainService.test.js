@@ -19,15 +19,15 @@ function pastDate() {
 
 describe('TaskDomainService.isTerminal()', () => {
   test('DONE은 terminal', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
-    task.transitionTo('IN_PROGRESS');
-    task.transitionTo('DONE');
+    let task = Task.create({ title: '작업', assignee_id: 'u1' });
+    task = task.transitionTo('IN_PROGRESS');
+    task = task.transitionTo('DONE');
     assert.equal(TaskDomainService.isTerminal(task), true);
   });
 
   test('CANCELLED는 terminal', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
-    task.transitionTo('CANCELLED');
+    let task = Task.create({ title: '작업', assignee_id: 'u1' });
+    task = task.transitionTo('CANCELLED');
     assert.equal(TaskDomainService.isTerminal(task), true);
   });
 
@@ -37,8 +37,8 @@ describe('TaskDomainService.isTerminal()', () => {
   });
 
   test('IN_PROGRESS는 terminal이 아님', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
-    task.transitionTo('IN_PROGRESS');
+    let task = Task.create({ title: '작업', assignee_id: 'u1' });
+    task = task.transitionTo('IN_PROGRESS');
     assert.equal(TaskDomainService.isTerminal(task), false);
   });
 });
@@ -50,15 +50,15 @@ describe('TaskDomainService.canReassign()', () => {
   });
 
   test('IN_PROGRESS 상태는 담당자 변경 가능', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
-    task.transitionTo('IN_PROGRESS');
+    let task = Task.create({ title: '작업', assignee_id: 'u1' });
+    task = task.transitionTo('IN_PROGRESS');
     assert.equal(TaskDomainService.canReassign(task), true);
   });
 
   test('DONE 상태는 담당자 변경 불가', () => {
-    const task = Task.create({ title: '작업', assignee_id: 'u1' });
-    task.transitionTo('IN_PROGRESS');
-    task.transitionTo('DONE');
+    let task = Task.create({ title: '작업', assignee_id: 'u1' });
+    task = task.transitionTo('IN_PROGRESS');
+    task = task.transitionTo('DONE');
     assert.equal(TaskDomainService.canReassign(task), false);
   });
 });

@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflow-os/contracts/harness/intake.schema.json",
+  "title": "Workflow OS MPO Intake Packet Schema",
+  "description": "Master Plan Orchestrator v1.0 intake packet contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "goal",
+    "context",
+    "constraints",
+    "done_when",
+    "work_mode",
+    "verification",
+    "packet_type",
+    "risk_level",
+    "trust_level",
+    "evidence_required",
+    "interactive_class"
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "minItems": 1
+    }
+  },
+  "properties": {
+    "goal": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "context": {
+      "$ref": "#/$defs/stringList"
+    },
+    "constraints": {
+      "$ref": "#/$defs/stringList"
+    },
+    "done_when": {
+      "$ref": "#/$defs/stringList"
+    },
+    "work_mode": {
+      "type": "string",
+      "enum": [
+        "Research",
+        "Build",
+        "Debug",
+        "Operate",
+        "Policy"
+      ]
+    },
+    "verification": {
+      "$ref": "#/$defs/stringList"
+    },
+    "packet_type": {
+      "type": "string",
+      "enum": [
+        "feature",
+        "bugfix",
+        "refactor",
+        "docs",
+        "ops",
+        "spike"
+      ]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "trust_level": {
+      "type": "string",
+      "enum": [
+        "trusted",
+        "untrusted",
+        "mixed"
+      ]
+    },
+    "evidence_required": {
+      "type": "string",
+      "enum": [
+        "minimal",
+        "standard",
+        "strict"
+      ]
+    },
+    "interactive_class": {
+      "type": "string",
+      "enum": [
+        "batch",
+        "interactive",
+        "realtime"
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "Research",
+        "Build",
+        "Debug",
+        "Operate",
+        "Policy"
+      ]
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    }
+  }
+}

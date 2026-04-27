@@ -1,0 +1,10 @@
+updated_at: '2026-04-16T22:31:17'
+enabled: true
+cycle_minutes: 45
+enter_seconds: 12
+workers:
+- name: Worker A
+  plan_id: plan-alpha
+  role_id: operator
+  role_label: Operator
+  prompt: Send the current packet.

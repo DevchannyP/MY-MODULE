@@ -1,0 +1,89 @@
+wp_id: "WP-RUN-002"
+goal: "배포 환경 smoke를 실제 실행 가능한 runner와 workflow_dispatch 경로로 승격한다."
+completed: true
+completed_at: "2026-03-20"
+tier: "governance"
+
+files_created:
+  - path: "scripts/run_deployment_smoke.js"
+    purpose: "Executable deployment-environment smoke runner with JSON artifact output"
+  - path: "src/tests/smoke/runDeploymentSmoke.test.js"
+    purpose: "Regression coverage for the smoke runner against a live local server"
+  - path: ".github/workflows/deployment-smoke.yml"
+    purpose: "Operator-triggered GitHub Actions entry point for deployed runtime smoke"
+  - path: "worklog/2026-03-20_WP-RUN-002.yaml"
+    purpose: "Structured evidence for the runtime smoke runner packet"
+
+files_modified:
+  - path: "package.json"
+    change: "Added smoke:deployment script for repository-standard invocation"
+  - path: "docs/how-to/run-stage-d.md"
+    change: "Clarified that deployment smoke is no longer manual-only and now has a workflow_dispatch path"
+  - path: "docs/how-to/run-stage-e.md"
+    change: "Replaced manual-only checklist wording with executable smoke runner guidance and residual manual checks"
+  - path: "docs/reference/quality-gates.md"
+    change: "Documented the separation between always-on CI gates and operator-triggered deployment smoke"
+  - path: "memory/current-state.yaml"
+    change: "Promoted deployment-environment-smoke-runner to a working capability and reduced KI-RUN-001 to deployment binding gap"
+  - path: "memory/current-wp.yaml"
+    change: "Recorded WP-RUN-002 completion status and validation contract"
+  - path: "memory/checkpoint.yaml"
+    change: "Added WP-RUN-002 to completed packets and updated verification summary"
+  - path: "memory/wp-queue.yaml"
+    change: "Marked WP-RUN-002 done with result text"
+  - path: "memory/next-actions.yaml"
+    change: "Returned next action queue to NONE after packet completion"
+  - path: "scripts/reconcile_state.py"
+    change: "Mapped the new runtime capability to its CAP group for future reconciliation fallback"
+
+validation:
+  layer1_schema:
+    - cmd: "node --check scripts/run_deployment_smoke.js"
+      result: "PASS"
+    - cmd: "node scripts/run_deployment_smoke.js --help"
+      result: "PASS"
+  layer2_runtime:
+    - cmd: "npm run test:e2e-smoke"
+      result: "PASS (required escalated permissions because sandbox blocks local port binding)"
+    - cmd: "node scripts/run_deployment_smoke.js --base-url http://127.0.0.1:3010 --task-write-permissions task:read,task:write --task-read-permissions task:read --output artifacts/deployment-smoke/manual-validation.json"
+      result: "PASS (required escalated permissions because sandbox blocks local loopback calls to the temporary server)"
+  layer3_repo:
+    - cmd: "npm run validate:requirements"
+      result: "PASS"
+    - cmd: "npm run test:contract"
+      result: "PASS"
+    - cmd: "npm test"
+      result: "PASS"
+    - cmd: "npm run lint"
+      result: "PASS (failed once on ESLint no-undef for fetch/AbortController, then fixed by binding Node globals explicitly)"
+  layer4_state:
+    - cmd: "npm run wp:reconcile"
+      result: "PASS"
+
+artifacts:
+  - path: "artifacts/deployment-smoke/manual-validation.json"
+    note: "Local proof that the deployment smoke runner emits a PASS artifact against a live HTTP endpoint"
+
+benchmark_sources:
+  - source: "GitHub Docs - Contexts reference"
+    url: "https://docs.github.com/en/actions/reference/workflows-and-actions/contexts"
+    adopted: "workflow_dispatch inputs are consumed through the inputs context, so the deployment-smoke workflow uses explicit inputs instead of hidden constants"
+  - source: "GitHub Docs - Deployments and environments"
+    url: "https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments"
+    adopted: "kept deployment smoke operator-triggered because environment secrets and variables only apply to jobs that explicitly reference an environment, and this repo still lacks a concrete deployment environment registry"
+
+decisions:
+  - id: "RUN-002-D1"
+    decision: "Make the deployed smoke runner executable but keep disabled-route verification optional per target environment"
+    rationale: "Some deployments will have all relevant features enabled, so forcing a flag-off assertion would create false negatives. The runner records SKIPPED truthfully when no disabled route is supplied."
+  - id: "RUN-002-D2"
+    decision: "Use a standalone workflow_dispatch workflow instead of adding deployment smoke to quality-gates.yml"
+    rationale: "The repository has no canonical deployed target in git, so always-on CI would either fail spuriously or require hidden environment coupling."
+
+risks:
+  - id: "RUN-002-R1"
+    risk: "Deployment smoke is still not bound to an actual deployment event or environment registry."
+    mitigation: "Keep KI-RUN-001 open at low severity and treat deployment binding as the next runtime hardening candidate."
+  - id: "RUN-002-R2"
+    risk: "Log trace_id presence is still an operator check outside the HTTP runner."
+    mitigation: "The runner records this as a pending manual check in its JSON artifact and Stage E docs."

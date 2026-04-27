@@ -2,9 +2,43 @@
 # 마스터 UI 포털의 메뉴 구조
 # 기술 용어 금지. 도메인 언어만 사용.
 version: "0.2.0"
-last_updated: "2026-03-18"
+last_updated: "2026-03-21"
 
 navigation_groups:
+  - id: "system"
+    label: "System OS"
+    icon: "monitoring"
+    order: 0
+    items:
+      - plugin_id: "system-api-plugin"
+        label: "대시보드"
+        route: "/"
+        feature_flag: "system_api.enabled"
+      - plugin_id: "system-api-plugin"
+        label: "카탈로그"
+        route: "/catalog"
+        feature_flag: "system_api.enabled"
+      - plugin_id: "system-api-plugin"
+        label: "피처 플래그"
+        route: "/flags"
+        feature_flag: "system_api.flag_toggle_ui.enabled"
+      - plugin_id: "system-api-plugin"
+        label: "감사 로그"
+        route: "/audit"
+        feature_flag: "system_api.enabled"
+      - plugin_id: "system-api-plugin"
+        label: "품질 게이트"
+        route: "/quality"
+        feature_flag: "system_api.enabled"
+      - plugin_id: "system-api-plugin"
+        label: "라이프사이클"
+        route: "/lifecycle"
+        feature_flag: "system_api.enabled"
+      - plugin_id: "system-api-plugin"
+        label: "롤백 콘솔"
+        route: "/rollback"
+        feature_flag: "system_api.rollback_ui.enabled"
+
   - id: "productivity"
     label: "생산성 관리"              # 도메인 포털 메뉴 그룹 이름
     icon: "briefcase"
@@ -39,6 +73,18 @@ navigation_groups:
         route: "/billing/exceptions"
         feature_flag: "billing.exception.enabled"
         required_permission: "billing.admin"
+
+  - id: "content"
+    label: "콘텐츠 관리"
+    icon: "video_library"
+    order: 3
+    items:
+      - plugin_id: "video-plugin"
+        label: "비디오 관리"
+        route: "/videos"
+        feature_flag: "video.enabled"
+        # feature_flag: false → 메뉴 미노출.
+        # Stage D PASS + flag: true 전환 후 노출.
 
 # ── 탐색 구조 설명 ──────────────────────────────────────────────────────
 # 생산성 관리

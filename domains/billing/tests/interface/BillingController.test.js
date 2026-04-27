@@ -66,6 +66,22 @@ describe('[BillingController] 알 수 없는 라우트', () => {
     const res = await ctrl.handle({ method: 'DELETE', path: '/billing/unknown', caller: FULL_CALLER });
     assert.equal(res.status, 404);
   });
+
+  test('[회귀] 404 응답은 RFC 9457 Problem Details 구조를 따른다', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({ method: 'DELETE', path: '/billing/unknown', caller: FULL_CALLER });
+    assert.equal(res.status, 404);
+    assert.equal(res.body.status, 404);
+    assert.equal(res.body.title, 'Not Found');
+    assert.ok(typeof res.body.type === 'string');
+  });
+
+  test('[회귀] unknown route 404에도 instance가 포함된다', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({ method: 'DELETE', path: '/billing/unknown', caller: FULL_CALLER });
+    assert.equal(res.status, 404);
+    assert.equal(res.body.instance, '/billing/unknown');
+  });
 });
 
 // ── 2. GET /billing/invoices ──────────────────────────────────────────────────
@@ -94,6 +110,42 @@ describe('[BillingController] GET /billing/invoices', () => {
     assert.ok('invoice_id' in res.body.items[0]);
     assert.ok('status'     in res.body.items[0]);
     assert.ok('total'      in res.body.items[0]);
+  });
+
+  test('[회귀] invalid amount_min → 400', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET',
+      path: '/billing/invoices',
+      query: { amount_min: 'NaN-ish' },
+      caller: READ_CALLER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
+  });
+
+  test('[회귀] validation error에도 instance가 포함된다', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET',
+      path: '/billing/invoices',
+      query: { amount_min: 'NaN-ish' },
+      caller: READ_CALLER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.instance, '/billing/invoices');
+  });
+
+  test('[회귀] page_size > 100 → 400', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET',
+      path: '/billing/invoices',
+      query: { page_size: '101' },
+      caller: READ_CALLER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
   });
 });
 

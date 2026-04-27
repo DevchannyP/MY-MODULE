@@ -1,0 +1,169 @@
+# Master Shell - Project Intake Canvas
+# 새 프로젝트 시작 전에 마스터 UI가 질문을 통해 blueprint/profile/recipe를 추천한다.
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+questions:
+  - id: "primary_goal"
+    title: "이번 프로젝트의 1차 목표는 무엇인가?"
+    prompt: "프로젝트 시작 단계에서 가장 중요한 초점 하나를 고른다."
+    options:
+      - id: "plan-and-learn"
+        label: "기획·학습 중심"
+        description: "먼저 구조를 배우고 기획서를 읽으며 방향을 잡는다."
+        boosts:
+          blueprints: { master-os-ai-studio: 4 }
+          profiles: { master-os-shell: 3 }
+          recipes: { planner-first-hybrid: 4 }
+      - id: "module-extension"
+        label: "기존 플랫폼 확장"
+        description: "새 bounded context나 기능 모듈을 추가한다."
+        boosts:
+          blueprints: { domain-module-extension: 4 }
+          profiles: { workflow-domain-module: 4 }
+          recipes: { contract-first-module-builder: 4 }
+      - id: "stateful-ops"
+        label: "운영 가능한 서비스화"
+        description: "상태 저장과 운영 안전장치를 갖춘 서비스로 발전시킨다."
+        boosts:
+          blueprints: { stateful-workflow-service: 4 }
+          profiles: { stateful-domain-module: 4 }
+          recipes: { stateful-ops-guarded: 4 }
+
+  - id: "interaction_mode"
+    title: "AI를 어떻게 다루고 싶은가?"
+    prompt: "주로 문서·기획 중심인지, 도구 호출 중심인지 고른다."
+    options:
+      - id: "document-first"
+        label: "문서 먼저"
+        description: "requirements, memory, planner를 먼저 읽고 싶다."
+        boosts:
+          blueprints: { master-os-ai-studio: 2 }
+          profiles: { master-os-shell: 2 }
+          recipes: { planner-first-hybrid: 3 }
+      - id: "contract-first"
+        label: "계약 먼저"
+        description: "새 기능을 계약과 모듈 경계부터 설계하고 싶다."
+        boosts:
+          blueprints: { domain-module-extension: 2 }
+          profiles: { workflow-domain-module: 2 }
+          recipes: { contract-first-module-builder: 3 }
+      - id: "ops-first"
+        label: "운영 먼저"
+        description: "배포 안정성과 가드레일을 가장 먼저 잡고 싶다."
+        boosts:
+          blueprints: { stateful-workflow-service: 2 }
+          profiles: { stateful-domain-module: 2 }
+          recipes: { stateful-ops-guarded: 3 }
+
+  - id: "delivery_shape"
+    title: "결과물을 어떤 형태로 전달할 것인가?"
+    prompt: "주요 산출물 형태를 고른다."
+    options:
+      - id: "planner-artifact"
+        label: "Planner 중심"
+        description: "정적 planner artifact와 학습형 GUI가 중요하다."
+        boosts:
+          blueprints: { master-os-ai-studio: 3 }
+          profiles: { master-os-shell: 3 }
+          recipes: { planner-first-hybrid: 2 }
+      - id: "module-package"
+        label: "모듈 패키지 중심"
+        description: "재사용 가능한 모듈과 계약이 더 중요하다."
+        boosts:
+          blueprints: { domain-module-extension: 3 }
+          profiles: { workflow-domain-module: 3 }
+          recipes: { contract-first-module-builder: 2 }
+      - id: "service-runtime"
+        label: "서비스 런타임 중심"
+        description: "실행 가능한 서비스와 운영 증적이 더 중요하다."
+        boosts:
+          blueprints: { stateful-workflow-service: 3 }
+          profiles: { stateful-domain-module: 3 }
+          recipes: { stateful-ops-guarded: 2 }
+
+  - id: "core_change_policy"
+    title: "코어와 확장 경계를 어떻게 가져갈 것인가?"
+    prompt: "시스템 OS 코어를 고정할지, 모듈/런타임 확장을 우선할지 고른다."
+    options:
+      - id: "core-fixed-edge-extend"
+        label: "코어 고정, edge 확장"
+        description: "마스터 OS 코어는 보호하고 planner, adapter, packet 흐름만 강화한다."
+        boosts:
+          blueprints: { master-os-ai-studio: 4 }
+          profiles: { master-os-shell: 4 }
+          recipes: { planner-first-hybrid: 3 }
+      - id: "module-first-extension"
+        label: "모듈 확장 우선"
+        description: "새 bounded context와 계약을 먼저 늘리고 조합으로 확장한다."
+        boosts:
+          blueprints: { domain-module-extension: 4 }
+          profiles: { workflow-domain-module: 4 }
+          recipes: { contract-first-module-builder: 3 }
+      - id: "runtime-hardening"
+        label: "런타임 안전 우선"
+        description: "서비스 운영성과 안전장치를 우선 설계한다."
+        boosts:
+          blueprints: { stateful-workflow-service: 4 }
+          profiles: { stateful-domain-module: 4 }
+          recipes: { stateful-ops-guarded: 3 }
+
+  - id: "learning_surface"
+    title: "어떤 학습 surface가 가장 중요한가?"
+    prompt: "GUI 학습, 계약/코드 이해, 운영 런북 중 핵심 학습면을 고른다."
+    options:
+      - id: "gui-learning-live-ops"
+        label: "GUI 학습 + 실시간 로그"
+        description: "planner, guided learning, live ops feed를 함께 읽는 구조가 중요하다."
+        boosts:
+          blueprints: { master-os-ai-studio: 4 }
+          profiles: { master-os-shell: 3 }
+          recipes: { planner-first-hybrid: 3 }
+      - id: "contract-code-study"
+        label: "계약 + 코드 학습"
+        description: "bounded context, port, adapter, capability를 중심으로 익힌다."
+        boosts:
+          blueprints: { domain-module-extension: 3 }
+          profiles: { workflow-domain-module: 3 }
+          recipes: { contract-first-module-builder: 3 }
+      - id: "ops-runbook-learning"
+        label: "운영 런북 학습"
+        description: "관측, smoke, rollout, rollback을 먼저 이해한다."
+        boosts:
+          blueprints: { stateful-workflow-service: 3 }
+          profiles: { stateful-domain-module: 3 }
+          recipes: { stateful-ops-guarded: 3 }
+
+  - id: "context_budget_priority"
+    title: "문맥 예산은 얼마나 엄격하게 관리할 것인가?"
+    prompt: "토큰 효율과 성능을 위해 읽기 범위를 얼마나 강하게 제한할지 고른다."
+    options:
+      - id: "strict-minimum-context"
+        label: "최소 문맥 엄수"
+        description: "작업단위마다 필요한 파일만 읽고 lock/reread를 강하게 쓴다."
+        boosts:
+          blueprints: { master-os-ai-studio: 3 }
+          profiles: { master-os-shell: 3 }
+          recipes: { planner-first-hybrid: 4 }
+      - id: "balanced-context"
+        label: "균형 문맥"
+        description: "계획과 구현 모두를 보되, 실행 전후로 읽기 범위를 나눈다."
+        boosts:
+          blueprints: { domain-module-extension: 3 }
+          profiles: { workflow-domain-module: 3 }
+          recipes: { contract-first-module-builder: 3 }
+      - id: "execution-heavy-context"
+        label: "실행 우선 문맥"
+        description: "운영과 검증 때문에 더 넓은 문맥을 허용하되 가드레일을 둔다."
+        boosts:
+          blueprints: { stateful-workflow-service: 3 }
+          profiles: { stateful-domain-module: 3 }
+          recipes: { stateful-ops-guarded: 4 }
+
+defaults:
+  primary_goal: "plan-and-learn"
+  interaction_mode: "document-first"
+  delivery_shape: "planner-artifact"
+  core_change_policy: "core-fixed-edge-extend"
+  learning_surface: "gui-learning-live-ops"
+  context_budget_priority: "strict-minimum-context"

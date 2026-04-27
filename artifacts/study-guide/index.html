@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workflow OS 학습 가이드</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5efe4;
+    --bg-card: #fffdf8;
+    --bg-card2: #fbf6ec;
+    --border: #ddcfb9;
+    --text: #1f2937;
+    --text-muted: #667085;
+    --accent: #0f766e;
+    --accent-light: #1d4ed8;
+    --green: #0f766e;
+    --yellow: #b45309;
+    --red: #c2410c;
+    --sidebar-w: 260px;
+    --shadow: 0 18px 40px rgba(66, 51, 32, 0.08);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(15,118,110,0.13), transparent 20%),
+      linear-gradient(180deg, #fcf8f0 0%, var(--bg) 100%);
+    color: var(--text);
+    font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  nav#sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar-logo {
+    padding: 24px 18px 16px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo small {
+    display: block;
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  nav#sidebar ul {
+    list-style: none;
+    padding: 8px 0;
+    flex: 1;
+  }
+
+  nav#sidebar ul li a {
+    display: block;
+    padding: 10px 18px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.15s, background 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  nav#sidebar ul li a:hover,
+  nav#sidebar ul li a.active {
+    color: var(--text);
+    background: rgba(29,78,216,0.08);
+    border-left-color: var(--accent-light);
+  }
+
+  .sidebar-footer {
+    padding: 12px 16px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 28px 40px 56px;
+    max-width: 1160px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+    padding: 14px 18px;
+    border-radius: 999px;
+    background: rgba(255, 253, 248, 0.9);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 16px;
+    z-index: 40;
+    backdrop-filter: blur(10px);
+  }
+
+  .topbar strong { display: block; }
+  .topbar span { color: var(--text-muted); font-size: 12px; }
+
+  .topbar-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topbar-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    background: white;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(249,241,226,0.96));
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    border-radius: 26px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(15,118,110,0.08);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.04em;
+  }
+
+  .page-subtitle {
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .overview-card {
+    background: rgba(255,255,255,0.88);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .overview-card span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .overview-card strong {
+    font-size: 28px;
+    letter-spacing: -0.04em;
+  }
+
+  section { margin-bottom: 64px; }
+
+  section h2 {
+    font-size: 23px;
+    font-weight: 700;
+    color: var(--accent-light);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 24px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+  }
+
+  .level-group { margin-bottom: 28px; }
+
+  .level-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .milestone-card,
+  .adr-card,
+  .domain-card,
+  .lesson-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+  }
+
+  .milestone-card {
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .milestone-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .ms-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .ms-id {
+    font-family: "JetBrains Mono", "D2Coding", monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-card2);
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+
+  .ms-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .ms-objective { color: var(--text-muted); font-size: 13px; margin-bottom: 8px; }
+  .prereq { font-size: 12px; color: var(--yellow); margin-bottom: 8px; }
+  .proof-section { margin-top: 10px; }
+  .proof-section strong { font-size: 12px; color: var(--text-muted); }
+  .proof-list { margin-top: 6px; padding-left: 20px; }
+  .proof-list li { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+
+  .adr-card {
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .adr-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+
+  .adr-num {
+    font-family: "JetBrains Mono", "D2Coding", monospace;
+    font-size: 12px;
+    color: var(--accent-light);
+    background: rgba(29,78,216,0.08);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(29,78,216,0.18);
+  }
+
+  .adr-title { font-size: 16px; font-weight: 700; color: var(--text); flex: 1; }
+
+  .adr-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  .status-accepted { background: rgba(15,118,110,0.1); color: var(--green); border: 1px solid rgba(15,118,110,0.18); }
+  .status-archived { background: rgba(102,112,133,0.1); color: var(--text-muted); border: 1px solid var(--border); }
+  .status-other    { background: rgba(180,83,9,0.1); color: var(--yellow); border: 1px solid rgba(180,83,9,0.18); }
+
+  .adr-date { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+
+  .adr-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .adr-section {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .adr-section h4 {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .adr-content { font-size: 13px; color: var(--text); }
+  .adr-content p { margin-bottom: 8px; }
+  .adr-content ul { padding-left: 18px; margin-bottom: 8px; }
+  .adr-content li { margin-bottom: 4px; }
+  .adr-content pre { background: #f4ecdd; padding: 10px; border-radius: 8px; overflow-x: auto; font-size: 12px; margin: 8px 0; }
+  .adr-content code { background: rgba(180,83,9,0.1); padding: 1px 4px; border-radius: 6px; font-family: "JetBrains Mono", "D2Coding", monospace; font-size: 12px; }
+  .adr-content pre code { background: transparent; padding: 0; }
+  .adr-content em { color: var(--text-muted); }
+
+  .domain-card {
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .domain-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+
+  .domain-key {
+    font-family: "JetBrains Mono", "D2Coding", monospace;
+    font-size: 12px;
+    background: rgba(15,118,110,0.1);
+    color: var(--green);
+    border: 1px solid rgba(15,118,110,0.18);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .domain-name { font-size: 16px; font-weight: 700; }
+  .domain-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+
+  .cap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+
+  .cap-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .cap-table td {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .cap-table tr:hover td { background: rgba(255,255,255,0.65); }
+
+  .cap-table code,
+  .domain-invs code,
+  .domain-events code {
+    background: rgba(180,83,9,0.1);
+    padding: 1px 5px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-family: "JetBrains Mono", "D2Coding", monospace;
+  }
+
+  .type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .type-command { background: rgba(194,65,12,0.1); color: var(--red); border: 1px solid rgba(194,65,12,0.18); }
+  .type-query { background: rgba(29,78,216,0.1); color: var(--accent-light); border: 1px solid rgba(29,78,216,0.18); }
+
+  .domain-invs, .domain-events {
+    font-size: 13px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--bg-card2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .domain-invs ul { padding-left: 18px; margin-top: 6px; }
+  .domain-invs li { margin-bottom: 4px; }
+
+  .lesson-card {
+    border-left: 3px solid var(--yellow);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+
+  .lesson-header { font-weight: 700; color: var(--yellow); margin-bottom: 8px; }
+
+  .empty {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+  }
+
+  @media (max-width: 980px) {
+    nav#sidebar {
+      position: static;
+      width: 100%;
+      height: auto;
+    }
+
+    body {
+      display: block;
+    }
+
+    main {
+      margin-left: 0;
+      padding: 20px 16px 40px;
+      max-width: none;
+    }
+
+    .topbar {
+      display: block;
+    }
+
+    .topbar-links {
+      margin-top: 12px;
+    }
+
+    .overview-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .adr-sections {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    Workflow OS
+    <small>한국어 학습 가이드</small>
+  </div>
+  <ul>
+    <li><a href="#roadmap">학습 로드맵</a></li>
+    <li><a href="#adrs">아키텍처 결정 트레일</a></li>
+    <li><a href="#capabilities">도메인 역량 탐색</a></li>
+    <li><a href="#lessons">교훈 모음</a></li>
+  </ul>
+  <div class="sidebar-footer">생성일: 2026-04-23</div>
+</nav>
+
+<main>
+  <div class="topbar">
+    <div>
+      <strong>Workflow OS 학습 화면</strong>
+      <span>ADR, 로드맵, 도메인 역량을 한국어 중심으로 정리한 온보딩 화면</span>
+    </div>
+    <div class="topbar-links">
+      <a href="../index.html">홈</a>
+      <a href="../master-planner/index.html">플래너</a>
+      <a href="../catalog-site/index.html">카탈로그</a>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="eyebrow">신규 참여자 추천 시작점</div>
+    <h1 class="page-title">Workflow OS 학습 가이드</h1>
+    <p class="page-subtitle">아키텍처 패턴, 도메인 역량, 결정 이력을 한국어 중심으로 탐색하세요. 로드맵부터 보고, 필요한 순간에 ADR과 도메인 역량으로 깊이를 더하면 됩니다.</p>
+    <div class="overview-grid">
+      <div class="overview-card"><span>학습 단계</span><strong>0</strong></div>
+      <div class="overview-card"><span>ADR 문서</span><strong>11</strong></div>
+      <div class="overview-card"><span>도메인 역량</span><strong>3</strong></div>
+      <div class="overview-card"><span>교훈 항목</span><strong>7</strong></div>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <h2>학습 로드맵</h2>
+    <div class="level-group">
+      <h3 class="level-title"><span class="badge" style="background:#388bfd20;color:#388bfd;border:1px solid #388bfd40">기초</span> 기초 단계</h3><div class="milestone-card">
+        <div class="ms-header">
+          <span class="ms-id">foundation-01</span>
+          <span class="ms-title">Workflow OS 기본 구조 이해</span>
+        </div>
+        <p class="ms-objective">requirements, memory, planner, plugin-registry가 어떤 역할을 하는지 설명할 수 있다.</p>
+        
+        <div class="proof-section"><strong>증명 방법</strong><ul class="proof-list"><li>대시보드와 요구사항 탭만 보고 현재 프로젝트 구조를 설명한다.</li><li>도메인 탭에서 adapter/profile 의미를 해설한다.</li></ul></div>
+      </div></div><div class="level-group">
+      <h3 class="level-title"><span class="badge" style="background:#3fb95020;color:#3fb950;border:1px solid #3fb95040">견습</span> 견습 단계</h3><div class="milestone-card">
+        <div class="ms-header">
+          <span class="ms-id">bootstrap-01</span>
+          <span class="ms-title">새 프로젝트 시작 블루프린트 선택</span>
+        </div>
+        <p class="ms-objective">프로젝트 시작 질문지를 바탕으로 적절한 blueprint/profile/recipe를 선택할 수 있다.</p>
+        <div class="prereq">선행 조건: foundation-01</div>
+        <div class="proof-section"><strong>증명 방법</strong><ul class="proof-list"><li>intake 질문에 답하고 추천 조합을 읽어 설명한다.</li></ul></div>
+      </div><div class="milestone-card">
+        <div class="ms-header">
+          <span class="ms-id">module-01</span>
+          <span class="ms-title">모듈 확장 경로 이해</span>
+        </div>
+        <p class="ms-objective">새 bounded context를 추가할 때 계약 우선 확장 흐름을 적용할 수 있다.</p>
+        <div class="prereq">선행 조건: foundation-01</div>
+        <div class="proof-section"><strong>증명 방법</strong><ul class="proof-list"><li>Stage A → contract → plugin-registry → smoke 순서를 설명한다.</li></ul></div>
+      </div></div><div class="level-group">
+      <h3 class="level-title"><span class="badge" style="background:#d2992220;color:#d29922;border:1px solid #d2992240">실무</span> 실무 단계</h3><div class="milestone-card">
+        <div class="ms-header">
+          <span class="ms-id">runtime-01</span>
+          <span class="ms-title">운영 안전장치 이해</span>
+        </div>
+        <p class="ms-objective">timeout, drain, idempotency, rate limit, observability가 왜 transport에 있어야 하는지 설명할 수 있다.</p>
+        <div class="prereq">선행 조건: foundation-01, module-01</div>
+        <div class="proof-section"><strong>증명 방법</strong><ul class="proof-list"><li>server wiring smoke가 무엇을 보장하는지 설명한다.</li></ul></div>
+      </div></div><div class="level-group">
+      <h3 class="level-title"><span class="badge" style="background:#f8514920;color:#f85149;border:1px solid #f8514940">숙련</span> 숙련 단계</h3><div class="milestone-card">
+        <div class="ms-header">
+          <span class="ms-id">mastery-01</span>
+          <span class="ms-title">마스터 OS 설계 선택을 설명</span>
+        </div>
+        <p class="ms-objective">왜 특정 blueprint/profile/recipe/adapters 조합이 선택됐는지 근거를 들어 설명할 수 있다.</p>
+        <div class="prereq">선행 조건: bootstrap-01, runtime-01</div>
+        <div class="proof-section"><strong>증명 방법</strong><ul class="proof-list"><li>scorecard, compatibility matrix, relations map을 함께 사용해 선택 이유를 설명한다.</li></ul></div>
+      </div></div>
+  </section>
+
+  <section id="adrs">
+    <h2>아키텍처 결정 트레일</h2>
+    <div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0001</span>
+        <span class="adr-title">ADR NNNN: [제목]</span>
+        <span class="adr-status status-other">[상태]</span>
+      </div>
+      <div class="adr-date">날짜: YYYY-MM-DD</div>
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><p>소프트웨어 아키텍처 결정을 추적하지 않으면 나중에 "왜 이렇게 했지?"를 알 수 없다.</p>
+<p>특히 Workflow OS처럼 Stage 기반으로 반복 실행하는 구조에서는 결정의 근거가 중요하다.</p>
+<p>[왜 이 결정이 필요했는가?]</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><ul>
+<li>모든 구조적 판단은 <code>docs/adr/</code> 아래에 ADR(Architecture Decision Record)을 작성한다.</li>
+<li>ADR 없이 구조 변경을 진행하지 않는다 (constraints.yaml C004).</li>
+<li>파일명 형식: <code>NNNN-제목.md</code> (예: <code>0001-record-architecture-decisions.md</code>)</li>
+<li>상태 값: <code>제안됨 | 수락됨 | 거부됨 | 대체됨 | 폐기됨</code></li>
+</ul>
+<p>[무엇을 결정했는가?]</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><p>[이 결정의 영향은?]</p>
+<ul>
+<li>모든 아키텍처 결정이 추적 가능해진다.</li>
+<li>새 팀원이 결정 근거를 이해할 수 있다.</li>
+<li>Stage 재실행 시 이전 결정을 참조할 수 있다.</li>
+</ul></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0002</span>
+        <span class="adr-title">ADR 0002: 권한 강제(Permission Enforcement) 레이어 결정</span>
+        <span class="adr-status status-accepted">수락됨 (Accepted)</span>
+      </div>
+      <div class="adr-date">날짜: 2026-03-17</div>
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><p><code>capability.yaml</code>의 각 capability는 <code>permissions_required</code> 필드를 정의한다.</p>
+<p>예: <code>create-task: permissions_required: ["task:write"]</code></p>
+<p>그러나 Stage E 적대적 검증 결과, <code>CreateTaskUseCase.execute()</code>는 호출자의 권한을 검사하지 않고 실행된다. 즉, task:read 권한만 가진 사용자도 UseCase를 직접 호출하면 작업을 생성할 수 있다.</p>
+<p>이는 구조적 보안 갭이다. 권한 강제를 어느 레이어에서 할 것인지 결정이 필요하다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><p>권한 강제는 <strong>interface 레이어(HTTP 컨트롤러/미들웨어)</strong> 에서 수행한다.</p>
+<ul>
+<li><strong>UseCase 레이어</strong>: 권한 검사 없음. 도메인 규칙(불변조건)만 강제한다.</li>
+<li><strong>interface 레이어 (미구현, 향후)</strong>: JWT/세션에서 role을 추출하고, capability.yaml의 <code>permissions_required</code>와 대조하여 접근을 허용/거부한다.</li>
+<li><strong>도메인 서비스</strong>: 도메인 규칙(INV001~INV004)만 알고, 인증/인가를 모른다 (C002 준수).</li>
+</ul>
+<p><pre><code>HTTP 요청</p>
+<p>    ↓</p>
+<p>[interface 레이어] ← 권한 강제 (role 검사, capability permissions_required 대조)</p>
+<p>    ↓ (허용된 경우만)</p>
+<p>[application UseCase] ← 도메인 규칙만 강제 (INV001~INV004)</p>
+<p>    ↓</p>
+<p>[domain entity/service]</p>
+<p></code></pre></p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><p>1. UseCase는 단순하게 유지된다 (권한 파라미터 불필요).</p>
+<p>2. interface 레이어가 보안 경계(security boundary) 역할을 한다.</p>
+<p>3. 테스트 시 UseCase를 직접 호출하면 권한 검사 없이 실행됨을 인지해야 한다.</p>
+<p>4. interface 레이어 구현 전까지 authn-authz 게이트는 NOT_CONFIGURED 상태를 유지한다.</p></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0003</span>
+        <span class="adr-title">ADR 0003: 낙관적 잠금(Optimistic Locking) 정책</span>
+        <span class="adr-status status-accepted">수락됨 (Accepted)</span>
+      </div>
+      <div class="adr-date">날짜: 2026-03-17</div>
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><p>Stage E 동시성 테스트(E-5)에서 확인한 사항:</p>
+<ul>
+<li>순차 실행에서는 INV002가 올바르게 동작한다.</li>
+<li>그러나 실제 분산 환경에서 두 클라이언트가 동일한 task를 동시에 읽고 각각 상태 전이를 시도하면 <strong>lost update</strong> 문제가 발생할 수 있다.</li>
+</ul>
+<p>  - Client A: 읽기 (IN_PROGRESS) → DONE으로 전이 시도</p>
+<p>  - Client B: 읽기 (IN_PROGRESS, stale) → CANCELLED로 전이 시도</p>
+<p>  - 두 번째 저장이 첫 번째를 덮어쓰면 의도하지 않은 최종 상태가 된다.</p>
+<ul>
+<li>현재 <code>InMemoryTaskRepository</code>는 version 필드가 없어 낙관적 잠금이 불가능하다.</li>
+</ul></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><p>프로덕션 저장소(DB 어댑터) 구현 시 <strong>낙관적 잠금(version 필드)</strong> 을 적용한다.</p>
+<p><pre><code>Task snapshot에 version: number 필드 추가</p>
+<p>저장 시: WHERE id = ? AND version = ? 조건으로 UPDATE</p>
+<p>충돌 시: 409 Conflict 응답 → 클라이언트 재시도</p>
+<p></code></pre></p>
+<p><code>InMemoryTaskRepository</code>는 개발/테스트 전용이므로 현재 잠금 미적용을 허용한다.</p>
+<p>단, 프로덕션 DB 어댑터 구현 시 반드시 낙관적 잠금을 포함해야 한다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><p>1. 현재 <code>InMemoryTaskRepository</code> 변경 없음 (개발/테스트 전용).</p>
+<p>2. 향후 <code>src/infrastructure/DbTaskRepository.js</code> 구현 시 version 필드 필수.</p>
+<p>3. <code>Task.toSnapshot()</code>에 <code>version</code> 필드 추가 필요 (프로덕션 전환 시).</p>
+<p>4. 이 결정은 Stage D <code>integration-tests</code> 게이트에 낙관적 잠금 테스트를 포함시키는 것으로 이어진다.</p></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0004</span>
+        <span class="adr-title">ADR 0004: Billing Admin Approval Workflow for DISPUTED→PAID</span>
+        <span class="adr-status status-other">미정</span>
+      </div>
+      
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0005</span>
+        <span class="adr-title">ADR 0005: Invoice Total as Computed Value (INV-B001)</span>
+        <span class="adr-status status-other">미정</span>
+      </div>
+      
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0006</span>
+        <span class="adr-title">ADR 0006: Payment Sync Retry Policy</span>
+        <span class="adr-status status-other">미정</span>
+      </div>
+      
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0007</span>
+        <span class="adr-title">ADR 0007: Git 브랜치 및 커밋 거버넌스</span>
+        <span class="adr-status status-accepted">수락됨 (Accepted)</span>
+      </div>
+      <div class="adr-date">날짜: 2026-03-19</div>
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><p>Workflow OS 코어는 앞으로 여러 도메인과 여러 저장소를 연결하는 기준 저장소가 된다.</p>
+<p>이 저장소에서 브랜치 전략이 흔들리면 다음 문제가 생긴다.</p>
+<p>1. 어떤 변경이 어떤 의도로 들어왔는지 추적이 어렵다.</p>
+<p>2. memory, ADR, worklog, 코드가 서로 다른 시점으로 어긋난다.</p>
+<p>3. 다른 프로젝트와 연결할 때 release evidence를 남기기 어렵다.</p>
+<p>4. 자동화 에이전트가 안전하게 작은 단위 커밋을 만들기 어렵다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><p>Git 운영 기준을 아래처럼 고정한다.</p>
+<p>### 1. 기본 브랜치</p>
+<ul>
+<li>trunk 브랜치는 <code>main</code>이다.</li>
+<li><code>main</code>은 직접 실험하는 공간이 아니라, 검증을 통과한 결과만 합치는 기준선이다.</li>
+</ul>
+<p>### 2. 작업 브랜치</p>
+<p>작업 브랜치는 짧게 살고, 목적이 이름에 드러나야 한다.</p>
+<ul>
+<li><code>feat/core-...</code></li>
+<li><code>fix/core-...</code></li>
+<li><code>docs/core-...</code></li>
+<li><code>chore/core-...</code></li>
+</ul>
+<p>예:</p>
+<ul>
+<li><code>feat/core-release-evidence</code></li>
+<li><code>docs/core-git-governance</code></li>
+<li><code>fix/core-contract-validator</code></li>
+</ul>
+<p>### 3. 커밋 전략</p>
+<ul>
+<li>커밋은 "파일 묶음"이 아니라 "의미 단위"로 나눈다.</li>
+<li>한 커밋은 하나의 이유를 설명할 수 있어야 한다.</li>
+<li>커밋 메시지는 Conventional Commits 스타일을 따른다.</li>
+</ul>
+<p>예:</p>
+<ul>
+<li><code>feat(core): add release evidence generator</code></li>
+<li><code>docs(vcs): define branch and pr workflow</code></li>
+<li><code>fix(quality): align dependency scan status</code></li>
+</ul>
+<p>### 4. PR 기준</p>
+<p>PR에는 반드시 아래가 함께 있어야 한다.</p>
+<p>1. 코드 또는 스크립트 변경</p>
+<p>2. 관련 memory 갱신</p>
+<p>3. 필요한 ADR 또는 참조 문서 갱신</p>
+<p>4. 검증 명령과 결과</p>
+<p>5. release evidence 또는 그 경로</p>
+<p>### 5. 작업 로그 기준</p>
+<p>작업 로그는 "무엇을 바꿨다"에서 끝내지 않는다.</p>
+<p>아래 흐름으로 남긴다.</p>
+<p>1. 왜 이 작업이 필요한가</p>
+<p>2. 이전 상태의 문제는 무엇인가</p>
+<p>3. 어떤 파일을 바꿨는가</p>
+<p>4. 핵심 코드는 어떤 생각으로 설계했는가</p>
+<p>5. 검증 결과는 무엇인가</p>
+<p>6. 다음 작업은 무엇인가</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><p>1. 코어 저장소의 변경 이력이 다른 저장소와 연결하기 쉬운 형태가 된다.</p>
+<p>2. 자동화 에이전트도 작은 단위 커밋을 안전하게 만들 수 있다.</p>
+<p>3. PR과 release evidence를 기준으로 추적 가능한 운영 흐름이 생긴다.</p></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0008</span>
+        <span class="adr-title">ADR 0008: 온라인 Advisory Feed 연동 전략</span>
+        <span class="adr-status status-accepted">수락됨 (Accepted)</span>
+      </div>
+      <div class="adr-date">날짜: 2026-03-19</div>
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><p>현재 코어 저장소는 <code>scan:dependencies</code>로 다음을 오프라인에서 검증한다.</p>
+<p>1. <code>package.json</code> 과 <code>package-lock.json</code> 이 같은 말을 하는가</p>
+<p>2. runtime dependency 가 새로 들어오지 않았는가</p>
+<p>3. 잠긴 패키지에 <code>integrity</code> 와 <code>license</code> 가 있는가</p>
+<p>이 검증은 재현 가능하고 빠르다.</p>
+<p>하지만 외부에서 새로 공개된 CVE 정보는 스스로 알 수 없다.</p>
+<p>그래서 다음 단계에서는 온라인 advisory feed 가 필요하다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><p>dependency scan 을 두 층으로 나눈다.</p>
+<p>### 1. 오프라인 baseline 층</p>
+<ul>
+<li>명령: <code>npm run scan:dependencies</code></li>
+<li>목적: 잠금, 무결성, runtime dependency 유입 통제</li>
+<li>특징: 네트워크 없이도 항상 재현 가능</li>
+</ul>
+<p>### 2. 온라인 advisory 층</p>
+<ul>
+<li>1차 후보: <code>npm audit --audit-level=high --omit=dev</code></li>
+<li>보강 후보: GitHub Advisory DB, Snyk</li>
+<li>목적: 외부에 공개된 신규 CVE 정보를 반영</li>
+<li>특징: 네트워크와 advisory source 상태에 영향을 받음</li>
+</ul></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><p>1. 오프라인 baseline 과 온라인 advisory scan 의 역할이 섞이지 않는다.</p>
+<p>2. 네트워크 장애와 실제 취약점 발견을 구분해서 다룰 수 있다.</p>
+<p>3. 다른 프로젝트와 연결할 때도 같은 보안 운영 모델을 재사용할 수 있다.</p></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0009</span>
+        <span class="adr-title">ADR 0009: GitHub Branch Protection 기준선</span>
+        <span class="adr-status status-accepted">수락됨 (Accepted)</span>
+      </div>
+      <div class="adr-date">날짜: 2026-03-19</div>
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><p>지금 저장소에는 아래 규칙이 이미 있다.</p>
+<p>1. <code>main</code> 은 기준선 브랜치다.</p>
+<p>2. 작업은 짧은 브랜치에서 한다.</p>
+<p>3. PR 에 검증과 memory/worklog 가 함께 들어와야 한다.</p>
+<p>하지만 이 규칙이 GitHub 원격 설정과 연결되지 않으면 이런 문제가 생긴다.</p>
+<p>1. 문서에는 "main 직접 푸시 금지"라고 적혀 있어도 실제 저장소에서는 가능할 수 있다.</p>
+<p>2. required checks 가 없으면 검증 실패 상태로도 병합될 수 있다.</p>
+<p>3. 다른 프로젝트가 이 저장소 규칙을 재사용할 때 원격 보호 기준이 빠질 수 있다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><p>GitHub branch protection 을 두 층으로 다룬다.</p>
+<p>### 1. 저장소 내부 기준선</p>
+<p>저장소 안에는 아래를 정책 파일로 고정한다.</p>
+<ul>
+<li>보호 대상 브랜치: <code>main</code></li>
+<li>직접 푸시: 금지</li>
+<li>required PR reviews: 최소 1</li>
+<li>required checks:</li>
+</ul>
+<p>  - <code>lint</code></p>
+<p>  - <code>test:contract</code></p>
+<p>  - <code>type-check</code></p>
+<p>  - <code>test</code></p>
+<p>  - <code>scan:dependencies</code></p>
+<p>  - <code>check:advisory-policy</code></p>
+<p>  - <code>generate:release-evidence</code></p>
+<ul>
+<li>force push: 금지</li>
+<li>branch deletion: 금지</li>
+</ul>
+<p>### 2. 원격 GitHub 설정 층</p>
+<p>실제 branch protection 적용은 GitHub 저장소 설정에서 수행한다.</p>
+<p>이 저장소는 그 설정이 따라야 할 기준선을 문서와 policy file 로 제공한다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><p>1. 저장소 내부 규칙과 GitHub 원격 보호 규칙이 같은 문장을 보게 된다.</p>
+<p>2. 다른 프로젝트도 이 policy file 을 복사해서 같은 보호 모델을 적용할 수 있다.</p>
+<p>3. 자동화 에이전트가 "어떤 checks 가 main 병합 전에 필수인가"를 명확히 알 수 있다.</p></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0010</span>
+        <span class="adr-title">0010. [placeholder] test artifact ADR</span>
+        <span class="adr-status status-archived">archived</span>
+      </div>
+      
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><p>대안 2를 선택한다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><ul>
+<li>긍정적:</li>
+</ul>
+<p>  - placeholder 산출물이 실제 운영 ADR 로 해석되지 않는다.</p>
+<ul>
+<li>부정적 (trade-off):</li>
+</ul>
+<p>  - 비운영 파일이 저장소에 남는다.</p>
+<ul>
+<li>후속 작업:</li>
+</ul>
+<p>  - ADR 0011 규칙에 따라 generator 가 같은 placeholder 입력을 다시 만들지 않게 한다.</p></div>
+        </div>
+      </div>
+    </div><div class="adr-card">
+      <div class="adr-header">
+        <span class="adr-num">ADR-0011</span>
+        <span class="adr-title">0011. Canonical truthfulness for legacy and placeholder surfaces</span>
+        <span class="adr-status status-accepted">accepted</span>
+      </div>
+      
+      <div class="adr-sections">
+        <div class="adr-section">
+          <h4>상황 (맥락)</h4>
+          <div class="adr-content"><em>내용 없음</em></div>
+        </div>
+        <div class="adr-section">
+          <h4>결정</h4>
+          <div class="adr-content"><p>대안 3을 채택한다.</p>
+<p>구체 규칙은 다음과 같다.</p>
+<p>1. 현재 실행 상태는 root <code>memory/</code> 가 단일 canonical surface 로 유지한다.</p>
+<p>2. legacy planning surface 는 현재 queue 와 충돌하는 미완료 신호를 남기지 않는다.</p>
+<p>3. placeholder 또는 test artifact ADR 은 삭제하지 않되 <code>archived</code> 또는 동등한 비운영 상태로 명시한다.</p>
+<p>4. ADR 생성기는 reserved placeholder 입력을 거부해 같은 오염을 재발시키지 않는다.</p></div>
+        </div>
+        <div class="adr-section">
+          <h4>결과</h4>
+          <div class="adr-content"><ul>
+<li>긍정적:</li>
+</ul>
+<p>  - root queue 가 비어 있을 때 legacy queue 도 같은 사실을 오도 없이 전달한다.</p>
+<p>  - placeholder ADR 이 실제 운영 ADR 집합과 구분된다.</p>
+<p>  - ADR 생성기가 reserved 입력을 차단해 재발 가능성이 줄어든다.</p>
+<ul>
+<li>부정적 (trade-off):</li>
+</ul>
+<p>  - archived artifact 파일은 저장소에 계속 남는다.</p>
+<ul>
+<li>후속 작업:</li>
+</ul>
+<p>  - legacy/detail surface 를 추가할 때도 canonical truthfulness 규칙을 같은 방식으로 적용한다.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="capabilities">
+    <h2>도메인 역량 탐색</h2>
+    <div class="domain-card">
+      <div class="domain-header">
+        <span class="domain-key">task-management</span>
+        <span class="domain-name">작업 관리</span>
+      </div>
+      <p class="domain-desc">작업을 생성·조회·할당·상태 전이·완료하는 생산성 관리 기능</p>
+      <table class="cap-table">
+        <thead><tr><th>역량 ID / 설명</th><th>유형</th><th>필요 권한</th><th>불변조건</th></tr></thead>
+        <tbody><tr>
+        <td><strong>create-task</strong><br><small>새 작업을 생성한다. 담당자와 제목은 필수이며, 마감일은 현재 이후여야 한다.</small></td>
+        <td><span class="type-badge type-command">커맨드</span></td>
+        <td><code>task:write</code></td>
+        <td><code>[object Object]</code></td>
+      </tr><tr>
+        <td><strong>get-task</strong><br><small>작업 ID로 단일 작업의 상세 정보를 조회한다.</small></td>
+        <td><span class="type-badge type-query">쿼리</span></td>
+        <td><code>task:read</code></td>
+        <td></td>
+      </tr><tr>
+        <td><strong>list-tasks</strong><br><small>담당자·상태·마감일 기준으로 작업 목록을 조회한다.</small></td>
+        <td><span class="type-badge type-query">쿼리</span></td>
+        <td><code>task:read</code></td>
+        <td></td>
+      </tr><tr>
+        <td><strong>transition-task-status</strong><br><small>작업 상태를 다음 허용된 상태로 전이한다.</small></td>
+        <td><span class="type-badge type-command">커맨드</span></td>
+        <td><code>task:write</code></td>
+        <td><code>[object Object]</code></td>
+      </tr><tr>
+        <td><strong>reassign-task</strong><br><small>작업의 담당자를 다른 사람으로 변경한다. DONE 상태 작업은 변경 불가.</small></td>
+        <td><span class="type-badge type-command">커맨드</span></td>
+        <td><code>task:write</code></td>
+        <td><code>[object Object]</code> <code>[object Object]</code></td>
+      </tr></tbody>
+      </table>
+      
+      <div class="domain-events"><strong>발행 이벤트</strong><br><code>{&quot;id&quot;:&quot;TaskCreated&quot;,&quot;name&quot;:&quot;작업 생성됨&quot;,&quot;schema&quot;:&quot;domains/productivity/task-tracking/contract/events.schema.json&quot;,&quot;triggers&quot;:&quot;create-task capability 호출 성공 시&quot;}</code> <code>{&quot;id&quot;:&quot;TaskStatusChanged&quot;,&quot;name&quot;:&quot;작업 상태 변경됨&quot;,&quot;schema&quot;:&quot;domains/productivity/task-tracking/contract/events.schema.json&quot;,&quot;triggers&quot;:&quot;transition-task-status capability 호출 성공 시&quot;}</code> <code>{&quot;id&quot;:&quot;TaskReassigned&quot;,&quot;name&quot;:&quot;작업 담당자 변경됨&quot;,&quot;schema&quot;:&quot;domains/productivity/task-tracking/contract/events.schema.json&quot;,&quot;triggers&quot;:&quot;reassign-task capability 호출 성공 시&quot;}</code></div>
+    </div><div class="domain-card">
+      <div class="domain-header">
+        <span class="domain-key">billing</span>
+        <span class="domain-name">billing</span>
+      </div>
+      
+      
+      <div class="domain-invs">
+        <strong>도메인 불변조건</strong>
+        <ul><li><code>INV-B001</code> invoice.total = sum(lineItems[i].amount)</li><li><code>INV-B002</code> 인보이스 상태 역전이 불가 (DRAFT→PENDING→PAID/CANCELLED/DISPUTED만 허용)</li><li><code>INV-B003</code> PAID 인보이스 삭제 불가</li><li><code>INV-B004</code> 라인 항목 금액 &gt; 0</li><li><code>INV-B005</code> DISPUTED→PAID는 관리자 승인 필요</li><li><code>INV-B006</code> 결제금액 ≠ 인보이스총액이면 MISMATCH 분류</li></ul>
+      </div>
+      <div class="domain-events"><strong>발행 이벤트</strong><br><code>InvoiceCreated</code> <code>InvoiceStatusChanged</code> <code>InvoiceTotalMismatchDetected</code> <code>PaymentMismatchDetected</code> <code>BillingExceptionApproved</code> <code>BillingExceptionRejected</code></div>
+    </div><div class="domain-card">
+      <div class="domain-header">
+        <span class="domain-key">video</span>
+        <span class="domain-name">video</span>
+      </div>
+      
+      
+      <div class="domain-invs">
+        <strong>도메인 불변조건</strong>
+        <ul><li><code>INV-V001</code> Video는 title, uploader_id, original_file_ref를 반드시 가진다.</li><li><code>INV-V002</code> Video 상태는 UPLOADED→PROCESSING→READY→ARCHIVED 단방향 전이만 허용. FAILED는 UPLOADED에서만 진입 가능.</li><li><code>INV-V003</code> AccessPolicy가 PRIVATE이면 uploader_id만 재생 가능하다.</li><li><code>INV-V004</code> 동시에 하나의 RUNNING 상태 TranscodeJob만 허용된다.</li><li><code>INV-V005</code> COMPLETED 상태의 TranscodeJob은 output_rendition_ref가 반드시 존재해야 한다.</li></ul>
+      </div>
+      <div class="domain-events"><strong>발행 이벤트</strong><br><code>VideoUploaded</code> <code>VideoProcessingStarted</code> <code>VideoReady</code> <code>VideoAccessPolicyChanged</code> <code>VideoArchived</code> <code>TranscodeJobStarted</code> <code>TranscodeJobCompleted</code> <code>TranscodeJobFailed</code></div>
+    </div>
+  </section>
+
+  <section id="lessons">
+    <h2>교훈 모음</h2>
+    <div class="lesson-card">
+      <div class="lesson-header">LESSON-001</div>
+      <p>{&quot;id&quot;:&quot;LESSON-001&quot;,&quot;discovered_at&quot;:&quot;2026-03-18&quot;,&quot;domain&quot;:&quot;billing&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;test-coverage-gap&quot;,&quot;what_happened&quot;:&quot;billing testScore가 96%로 고정됨.\nhealth-dashboard가 src/*.js 파일 수 대비 *.test.js 파일 수로 비율을 계산하는데,\nport 인터페이스 파일 3개(InvoiceRepository, BillingExceptionRepository, PaymentRepository)에\n대응하는 테스트 파일이 없어서 비율이 23/24 = 96%로 산정됨.&quot;,&quot;lesson&quot;:&quot;포트 인터페이스(abstract class) 파일도 src 파일로 카운트된다.\nInMemory 구현체가 포트 계약을 완전히 이행하는지 검증하는 계약 테스트를\nBillingPorts.contract.test.js로 추가하면 24/24 = 100% 달성.&quot;,&quot;applies_to&quot;:&quot;health-dashboard testScore, port interface coverage&quot;,&quot;fix&quot;:&quot;domains/billing/tests/application/ports/BillingPorts.contract.test.js 추가&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-002</div>
+      <p>{&quot;id&quot;:&quot;LESSON-002&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;video&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;contract-guard-gap&quot;,&quot;what_happened&quot;:&quot;video 도메인이 Stage A~E 완전 구현(500+ 테스트 PASS)되었음에도\nvalidate_contract_drift.py의 main()에서 validate_video()가 호출되지 않아\n계약 드리프트 검증에서 video가 완전히 누락됨.\n\&quot;계약이 깨지면 빌드가 멈춘다\&quot; 원칙이 billing/task-management에만 적용되고\nvideo에는 미적용 상태였음.&quot;,&quot;lesson&quot;:&quot;새 도메인을 Stage A~E로 온보딩할 때, validate_contract_drift.py에\n해당 도메인의 validate_[domain]() 함수를 추가하고 main()에서 호출해야 한다.\n이를 누락하면 Stage D 품질 게이트가 사실상 불완전한 상태가 된다.\n도메인 추가 체크리스트에 이 항목을 반드시 포함해야 한다.&quot;,&quot;applies_to&quot;:&quot;contract drift validation, domain onboarding checklist&quot;,&quot;fix&quot;:&quot;validate_contract_drift.py에 validate_video() 추가 + main()에서 호출&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-003</div>
+      <p>{&quot;id&quot;:&quot;LESSON-003&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;security-consistency&quot;,&quot;what_happened&quot;:&quot;audit-chain.js는 SHA-256을 사용하는데, export_context_lock.py와\ncheck_context_drift.py, wp_scheduler.py, project_status.js는 SHA1을 사용.\n보안 일관성 위반이지만 테스트가 이를 잡지 못하고 있었음.\ncontextDrift smoke 테스트도 SHA1 픽스처를 사용하고 있었음.&quot;,&quot;lesson&quot;:&quot;해시 함수는 저장소 전체에서 단일 표준을 사용해야 한다.\n이 저장소의 표준은 SHA-256. 새 스크립트가 파일 해시를 계산할 때는\n반드시 hashlib.sha256()을 사용하고 필드명을 sha256으로 통일해야 한다.\nsmoke 테스트 픽스처도 64자 SHA-256 값 형식으로 맞춰야 한다.&quot;,&quot;applies_to&quot;:&quot;export_context_lock.py, check_context_drift.py, any file-hashing script&quot;,&quot;fix&quot;:&quot;4개 파일 SHA1→SHA256 전환, contextDrift 테스트 픽스처 갱신&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-004</div>
+      <p>{&quot;id&quot;:&quot;LESSON-004&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;D&quot;,&quot;root_cause_category&quot;:&quot;estimation-accuracy&quot;,&quot;what_happened&quot;:&quot;export_context_lock.py, export_context_bundle.py, wp_scheduler.py가\n4 bytes/token으로 토큰 수를 추정함.\n이 저장소는 한국어와 영어가 혼용되어 있으며, 한국어 UTF-8 문자는\n3 bytes/char이지만 LLM 토크나이저에서 약 1.5 tokens/char 소비 → 2 bytes/token.\n4 bytes/token 기준으로 한국어 파일의 토큰 수를 ~33% 과소추정함.&quot;,&quot;lesson&quot;:&quot;한국어/영어 혼용 저장소에서는 3 bytes/token을 보수적 추정값으로 사용해야 한다.\n과소추정은 컨텍스트 예산 초과 위험으로 이어진다.\n정확한 토큰 카운트가 필요하면 tiktoken 같은 실제 토크나이저를 사용해야 하지만,\n보수적 상수 3은 합리적인 근사값이다.&quot;,&quot;applies_to&quot;:&quot;estimate_tokens_from_bytes, token budget planning&quot;,&quot;fix&quot;:&quot;3개 파일의 byte_count / 4 → byte_count / 3 변경&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-005</div>
+      <p>{&quot;id&quot;:&quot;LESSON-005&quot;,&quot;discovered_at&quot;:&quot;2026-03-18&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;C&quot;,&quot;root_cause_category&quot;:&quot;git-hygiene&quot;,&quot;what_happened&quot;:&quot;artifacts/decision-apply/history/ 디렉토리에 런타임 실행 로그 52건+이\ngit untracked 상태로 쌓여 있었음. .gitignore가 \&quot;artifacts/는 의도적으로 추적\&quot;이라는\n주석만 있고 history/ 서브디렉토리를 명시적으로 제외하지 않았음.\n이를 커밋하면 git history가 런타임 로그로 오염되고 무한 증가함.&quot;,&quot;lesson&quot;:&quot;artifacts/ 디렉토리에서 latest/ (현재 상태 대표 스냅샷)만 커밋하고,\nhistory/ (런타임 실행 로그)는 .gitignore로 제외해야 한다.\n새 artifacts/ 서브디렉토리를 만들 때는 항상 history/ 제외 규칙을\n.gitignore에 함께 추가해야 한다.&quot;,&quot;applies_to&quot;:&quot;.gitignore, artifacts directory management&quot;,&quot;fix&quot;:&quot;.gitignore에 artifacts/decision-apply/history/, artifacts/promotion-pipeline/history/ 추가&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-006</div>
+      <p>{&quot;id&quot;:&quot;LESSON-006&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;video&quot;,&quot;stage&quot;:&quot;C&quot;,&quot;root_cause_category&quot;:&quot;event-registry-gap&quot;,&quot;what_happened&quot;:&quot;video 도메인이 Stage A~E 완전 구현(500+ 테스트 PASS)되었음에도\ncontracts/events/registry.yaml에 video 이벤트 8개가 전혀 등록되지 않았음.\nvalidate_event_registry()도 task/billing만 커버리지 검사하고 video를 누락.\n결과적으로 중앙 이벤트 레지스트리가 video 도메인을 완전히 모르는 상태였음.&quot;,&quot;lesson&quot;:&quot;새 도메인을 온보딩할 때, contracts/events/registry.yaml에\n해당 도메인의 모든 events_emitted 항목을 등록해야 한다.\n또한 validate_event_registry()에 해당 도메인의 커버리지 검사를 추가해야 한다.\n도메인 추가 체크리스트에 이 두 항목을 반드시 포함해야 한다.&quot;,&quot;applies_to&quot;:&quot;contracts/events/registry.yaml, validate_event_registry, domain onboarding checklist&quot;,&quot;fix&quot;:&quot;contracts/events/registry.yaml에 video 이벤트 8개 등록.\nvalidate_contract_drift.py의 validate_event_registry()에 video_events_schema 로드 및\nregistry_video_defs 카운팅, missing_video 오류 검사 추가.&quot;}</p>
+    </div><div class="lesson-card">
+      <div class="lesson-header">LESSON-007</div>
+      <p>{&quot;id&quot;:&quot;LESSON-007&quot;,&quot;discovered_at&quot;:&quot;2026-03-25&quot;,&quot;domain&quot;:&quot;core&quot;,&quot;stage&quot;:&quot;C&quot;,&quot;root_cause_category&quot;:&quot;rollout-stale&quot;,&quot;what_happened&quot;:&quot;모든 도메인(billing, video, task-management)이 Stage D+E+B_review PASS 완료 후에도\nfeature_flags.yaml과 plugin-registry.yaml의 status가 inactive, percentage: 0으로 남아 있었음.\nCLAUDE.md 규칙: \&quot;B_review PASS → full(100%)\&quot;가 자동 적용되지 않은 채 방치됨.\n운영 관점에서 검증 완료 도메인이 실제로는 비활성화된 모순 상태였음.&quot;,&quot;lesson&quot;:&quot;Stage E + B_review PASS 직후, 반드시 다음을 수행해야 한다:\n1. master-shell/feature-flags/flags.yaml의 해당 플러그인 flags를 true로 변경\n2. master-shell/plugin-registry/registry.yaml의 status를 active로 변경\n3. rollout.current_phase: full, percentage: 100으로 갱신\n4. master-shell/catalog/domains.yaml의 status와 note도 갱신&quot;,&quot;applies_to&quot;:&quot;feature-flags/flags.yaml, plugin-registry/registry.yaml, catalog/domains.yaml&quot;,&quot;fix&quot;:&quot;3개 도메인 flags true, status active, rollout 100% 갱신 (2026-03-25)&quot;}</p>
+    </div>
+  </section>
+
+  <section id="references">
+    <h2>국내/외 공식 레퍼런스</h2>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Workflow OS 설계에 사용된 국제 표준 및 프레임워크 공식 참고 자료입니다.</p>
+    <ul style="padding-left:20px;line-height:2;font-size:14px;">
+      <li>NIST SP 800-218 — Secure Software Development Framework (SSDF)</li>
+      <li>NIST SP 800-161 — Software Bill of Materials (SBOM)</li>
+      <li>SLSA (Supply chain Levels for Software Artifacts) — slsa.dev</li>
+      <li>OpenTelemetry Semantic Conventions — opentelemetry.io</li>
+      <li>OpenAPI 3.1 Specification — spec.openapis.org</li>
+      <li>RFC 7807 — Problem Details for HTTP APIs</li>
+      <li>OWASP API Security Top 10 — owasp.org</li>
+      <li>JSON Schema 2020-12 — json-schema.org</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  const links = document.querySelectorAll('nav#sidebar a');
+  const sections = document.querySelectorAll('main section[id]');
+
+  function setActive() {
+    let current = '';
+    sections.forEach(function(s) {
+      const top = s.getBoundingClientRect().top;
+      if (top <= 80) current = s.id;
+    });
+    links.forEach(function(a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', setActive, { passive: true });
+  setActive();
+})();
+</script>
+</body>
+</html>

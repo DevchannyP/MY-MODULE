@@ -1,0 +1,69 @@
+# Workflow OS - Requirements: video
+# 이 파일만 교체하면 Stage A→E 전체가 반복 실행된다.
+# Schema: requirements/requirements.schema.json
+
+version: "0.1.0"
+
+module:
+  id: "video"
+  name: "비디오 관리"
+  domain: "video"
+  bounded_context: "video-content"
+  owner: "video-team"
+  description: |
+    영상 업로드·트랜스코딩·재생·아카이브 생명주기를 관리하는 미디어 도메인.
+    비동기 트랜스코딩 파이프라인 중심 (RISK-V002: UseCase는 Job ID만 즉시 반환).
+    Video 상태: UPLOADING→PROCESSING→READY→ARCHIVED (단방향, INV-V002).
+    동시 RUNNING TranscodeJob 최대 1개 제한 (INV-V004).
+    PRIVATE 영상은 업로더 본인·admin만 접근 (INV-V003).
+
+stage: "D"
+
+contracts:
+  http: "domains/video/contract/openapi.yaml"
+  events: "domains/video/contract/events.schema.json"
+  ui: "domains/video/contract/ui-contract.yaml"
+  capability: "domains/video/contract/capability.yaml"
+
+nfr:
+  latency_p99_ms: 500
+  availability_percent: 99.5
+  rpo_minutes: 60
+  rto_minutes: 60
+
+quality_gates:
+  correctness:
+    - "unit-tests"
+    - "contract-tests"
+    - "integration-tests"
+    - "e2e-smoke"
+  code_health:
+    - "lint"
+    - "type-check"
+    - "static-analysis"
+  security:
+    - "secret-scan"
+    - "dependency-scan"
+    - "authn-authz-regression"
+    - "input-validation"
+  supply_chain:
+    - "sbom"
+    - "provenance-evidence"
+    - "rollback-verification"
+    - "observability-check"
+
+composition:
+  depends_on: []
+  provides:
+    - "domains/video/contract/capability.yaml"
+
+feature_flags:
+  video.enabled: true
+  video.upload.enabled: true
+  video.transcode.enabled: true
+  video.admin.enabled: true
+
+routing:
+  entry_point: "/videos"
+  navigation_group: "content"
+  plugin_slot: "main-content"

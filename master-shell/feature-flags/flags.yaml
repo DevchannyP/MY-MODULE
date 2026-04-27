@@ -1,33 +1,61 @@
 # Master Shell - Feature Flags (전역)
 # 플러그인별 feature flag를 여기에 전역 등록한다.
-# 기본값은 반드시 false (안전한 쪽).
+# 기본값은 반드시 false (안전한 쪽). 활성화는 런타임 환경 설정에서 오버라이드한다.
 # 변경은 Stage C 범위. 활성화는 Stage D PASS 후.
-version: "0.2.0"
-last_updated: "2026-03-18"
+version: "0.4.1"
+last_updated: "2026-04-14"
 
 global_flags:
   enable_experimental_features: false
   enable_debug_mode: false
+  harness_routing_frontier_research: false
+  harness_routing_mini_build: false
+  harness_prompt_caching_enabled: false
+  harness_batch_eval_enabled: false
 
 plugin_flags:
-  # task-management 플러그인
-  enable_task_management: false         # true: 마스터 UI 메뉴 노출 + 플러그인 활성화
-                                        # false: 마스터 UI 미노출 (Stage D PASS 전)
-  enable_bulk_assign: false             # true: 작업 목록에서 여러 작업을 동시에 담당자 변경
-                                        # false: 단일 작업 담당자 변경만 허용 (기본)
+  # system-api 플러그인 — 기본값 false (Stage D/E PASS 후 활성화)
+  system_api.enabled: false
+  system_api.sse_stream.enabled: false
+  system_api.flag_toggle_ui.enabled: false
+  system_api.rollback_ui.enabled: false
 
-  # billing 플러그인
-  billing.enabled: false               # true: 정산 도메인 전체 활성화 (홈 화면 노출)
-  billing.invoice.enabled: false       # true: 인보이스 목록·상세 활성화
-  billing.payment.enabled: false       # true: 결제상태 추적 화면 활성화
-  billing.exception.enabled: false     # true: 정산 예외처리 화면 활성화 (billing.admin 전용)
+  # task-management 플러그인 — 기본값 false, 런타임 활성화는 env 오버라이드 사용
+  enable_task_management: false
+  enable_bulk_assign: false
 
+  # billing 플러그인 — 기본값 false
+  billing.enabled: false
+  billing.invoice.enabled: false
+  billing.payment.enabled: false
+  billing.exception.enabled: false
+
+  # video 플러그인 — 기본값 false
+  video.enabled: false
+  video.upload.enabled: false
+  video.transcode.enabled: false
+  video.admin.enabled: false
+
+# ── 환경 변수 오버라이드 (런타임 활성화) ────────────────────────────────
+# .env 또는 OS 환경 변수로 yaml 기본값을 코드 변경 없이 덮어쓸 수 있다.
+# 변환 규칙: 플래그 키의 dot/hyphen → underscore, 대문자, WOS_FLAG_ 접두어
+#
+# 예시 (.env 또는 export):
+#   WOS_FLAG_ENABLE_TASK_MANAGEMENT=true
+#   WOS_FLAG_BILLING_ENABLED=true
+#   WOS_FLAG_VIDEO_ENABLED=true
+#   WOS_FLAG_VIDEO_UPLOAD_ENABLED=true
+#
+# 주의: yaml에 선언되지 않은 키는 env로도 생성되지 않는다 (phantom flag 방지).
+# 적용 시 서버 stderr에 "[FeatureFlagProvider] ENV override: ..." 로그 출력됨.
+#
 # ── 활성화 절차 ──────────────────────────────────────────────────────────
 # 1. Stage D 품질 게이트 전체 PASS
-# 2. enable_task_management: true (내부 환경 먼저)
+# 2. .env에 WOS_FLAG_ENABLE_TASK_MANAGEMENT=true 추가 (즉시 활성화, 코드 변경 불필요)
+#    또는 이 파일에서 enable_task_management: true 로 직접 변경 (영구 정책 변경 시)
 # 3. plugin-registry의 rollout.percentage를 10으로 상향 (canary)
 # 4. 모니터링 후 이상 없으면 100으로 상향
 # 5. plugin status: inactive → active 변경
 #
 # 긴급 비활성화:
-# enable_task_management: false 로 즉시 변경 → 코드 배포 없이 기능 비활성화
+# .env에 WOS_FLAG_ENABLE_TASK_MANAGEMENT=false → 서버 재시작만으로 즉시 비활성화

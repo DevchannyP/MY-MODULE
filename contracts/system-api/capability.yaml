@@ -1,0 +1,99 @@
+# Capability Contract - System API (UI-OS Integration)
+# 코드 내부를 읽지 않고도 System OS API의 기능 범위와 권한 요구를 파악하기 위한 선언.
+
+module_key: system-api
+version: "0.1.0"
+
+capabilities:
+  # 시스템 헬스
+  - id: can.read.system.health
+    description: "전체 도메인 건강도 및 인프라 상태 조회"
+    required_permissions: [domain.viewer]
+    screens: [system.dashboard]
+    http_operations: [getSystemHealth]
+
+  # 피처 플래그
+  - id: can.read.system.flags
+    description: "전체 피처 플래그 목록 및 상태 조회"
+    required_permissions: [domain.viewer]
+    screens: [system.flags]
+    http_operations: [listFeatureFlags]
+
+  - id: can.toggle.system.flag
+    description: "피처 플래그 활성/비활성 토글"
+    required_permissions: [system.admin]
+    screens: [system.flags]
+    http_operations: [toggleFeatureFlag]
+    invariants:
+      - INV-SYS-001
+      - INV-SYS-004
+
+  # 도메인 카탈로그
+  - id: can.read.system.catalog
+    description: "등록된 도메인 카탈로그 조회 (라우트, 계약, 어댑터 프로필)"
+    required_permissions: [domain.viewer]
+    screens: [system.catalog]
+    http_operations: [getDomainCatalog]
+
+  # 감사 로그
+  - id: can.read.system.audit
+    description: "SHA-256 해시 체인 감사 로그 조회"
+    required_permissions: [domain.viewer]
+    screens: [system.audit]
+    http_operations: [getAuditLog]
+
+  # 품질 게이트
+  - id: can.read.system.quality-gate
+    description: "전 도메인 품질 게이트 상태 조회"
+    required_permissions: [domain.viewer]
+    screens: [system.quality]
+    http_operations: [getQualityGateStatus]
+
+  # 롤백
+  - id: can.trigger.system.rollback
+    description: "특정 도메인 롤백 트리거 (피처 플래그 비활성화)"
+    required_permissions: [system.admin]
+    screens: [system.rollback]
+    http_operations: [triggerDomainRollback]
+    invariants:
+      - INV-SYS-002
+      - INV-SYS-005
+
+  # 도메인 라이프사이클
+  - id: can.read.system.lifecycle
+    description: "도메인별 Stage A~E 라이프사이클 상태 조회"
+    required_permissions: [domain.viewer]
+    screens: [system.lifecycle]
+    http_operations: [getDomainLifecycle]
+
+  # SSE 이벤트 구독
+  - id: can.subscribe.system.events
+    description: "실시간 시스템 이벤트 스트림 구독 (SSE)"
+    required_permissions: [domain.viewer]
+    screens: [system.dashboard, system.catalog, system.flags, system.audit, system.quality]
+    http_operations: [subscribeSystemEvents]
+
+required_permissions:
+  - domain.viewer
+  - system.admin
+
+invariants:
+  - id: INV-SYS-001
+    description: "플래그 토글은 system.admin 권한을 가진 사용자만 수행할 수 있다"
+  - id: INV-SYS-002
+    description: "롤백 트리거는 system.admin 권한을 가진 사용자만 수행할 수 있다"
+  - id: INV-SYS-003
+    description: "system_api.enabled=false일 때 모든 /api/v1/system/* 경로는 404를 반환한다"
+  - id: INV-SYS-004
+    description: "flag_toggle_ui.enabled=false일 때 PATCH /api/v1/system/flags/:id 요청은 503을 반환한다"
+  - id: INV-SYS-005
+    description: "rollback_ui.enabled=false일 때 POST /api/v1/system/rollback/:domain 요청은 503을 반환한다"
+
+events_emitted:
+  - system.health.updated
+  - system.flag.toggled
+  - system.rollback.triggered
+  - system.quality-gate.updated
+  - system.domain.lifecycle-changed
+
+events_consumed: []

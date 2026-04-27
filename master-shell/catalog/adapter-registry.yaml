@@ -1,0 +1,139 @@
+# Master Shell - Adapter Registry
+# 마스터 OS에서 프로젝트별 아키텍처를 교체 가능한 어댑터 집합으로 표현한다.
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+principles:
+  - "포트는 도메인 내부에, 어댑터는 외부에 둔다."
+  - "마스터 UI는 계약과 메타데이터를 읽고, 모듈 코드를 직접 결합하지 않는다."
+  - "동일 포트에는 복수 어댑터를 허용해 기술 교체 비용을 낮춘다."
+  - "AI 툴링도 adapter로 취급해 MCP, file-search, web-search를 교체 가능하게 유지한다."
+
+adapters:
+  - id: "master-ui-plugin-shell"
+    name: "마스터 UI 플러그인 쉘"
+    layer: "ingress"
+    direction: "inbound"
+    kind: "ui-shell"
+    protocol: "ui-contract"
+    description: "ui-contract.yaml만 읽어 각 도메인을 마스터 UI에 탑재하는 GUI 어댑터"
+    swappable_with: ["master-ui-static-planner"]
+
+  - id: "master-ui-static-planner"
+    name: "정적 Planner UI 생성기"
+    layer: "ingress"
+    direction: "inbound"
+    kind: "planner"
+    protocol: "html-artifact"
+    description: "requirements, memory, worklog를 읽어 기획/학습용 정적 화면을 생성하는 planner 어댑터"
+    swappable_with: ["master-ui-plugin-shell"]
+
+  - id: "http-problem-details"
+    name: "HTTP Problem Details Transport"
+    layer: "ingress"
+    direction: "inbound"
+    kind: "transport"
+    protocol: "http+rfc9457"
+    description: "RFC 9457 Problem Details, ETag, rate limit, idempotency를 포함한 HTTP 어댑터"
+    swappable_with: ["async-event-gateway"]
+
+  - id: "feature-flag-provider"
+    name: "Feature Flag Provider"
+    layer: "policy"
+    direction: "cross-cutting"
+    kind: "control-plane"
+    protocol: "openfeature-compatible"
+    description: "targeting, rollout, stale detection, hook 평가를 담당하는 feature flag 어댑터"
+    swappable_with: ["remote-flag-service"]
+
+  - id: "planner-state-memory"
+    name: "Workflow Memory State"
+    layer: "orchestration"
+    direction: "cross-cutting"
+    kind: "state"
+    protocol: "yaml-memory"
+    description: "current-state, wp-queue, checkpoint를 읽고 세션 흐름을 조립하는 메모리 어댑터"
+    swappable_with: ["remote-state-registry"]
+
+  - id: "openai-responses-agent"
+    name: "OpenAI Responses Agent"
+    layer: "ai"
+    direction: "outbound"
+    kind: "llm-runtime"
+    protocol: "responses-api"
+    description: "tool calling, retrieval, MCP를 포함하는 AI orchestration 런타임 어댑터"
+    swappable_with: ["local-llm-adapter"]
+
+  - id: "remote-mcp-connector"
+    name: "Remote MCP Connector"
+    layer: "ai"
+    direction: "outbound"
+    kind: "tool-connector"
+    protocol: "mcp"
+    description: "원격 문서/툴 서버를 AI에 연결해 planner와 runtime을 확장하는 어댑터"
+    swappable_with: ["function-calling-bridge"]
+
+  - id: "observability-otel"
+    name: "OpenTelemetry Observability"
+    layer: "observability"
+    direction: "cross-cutting"
+    kind: "telemetry"
+    protocol: "otel+trace-context"
+    description: "traceparent, structured logs, RED metrics를 유지하는 관측 어댑터"
+    swappable_with: ["stdout-json-logger"]
+
+  - id: "repository-inmemory"
+    name: "In-Memory Repository"
+    layer: "egress"
+    direction: "outbound"
+    kind: "storage"
+    protocol: "repository-port"
+    description: "도메인 테스트와 smoke를 위한 메모리 저장소 어댑터"
+    swappable_with: ["repository-sqlite"]
+
+  - id: "repository-sqlite"
+    name: "SQLite Repository"
+    layer: "egress"
+    direction: "outbound"
+    kind: "storage"
+    protocol: "repository-port"
+    description: "태스크 도메인에서 사용하는 영속 저장소 어댑터"
+    swappable_with: ["repository-inmemory"]
+
+adapter_profiles:
+  - id: "master-os-shell"
+    name: "마스터 OS 쉘"
+    architecture_pattern: "ports-and-adapters"
+    intent: "하나의 마스터 UI에서 AI 흐름, 기획, 도메인 포털, 운영 정보를 통합한다."
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "master-ui-static-planner"
+      - "feature-flag-provider"
+      - "planner-state-memory"
+      - "openai-responses-agent"
+      - "remote-mcp-connector"
+      - "observability-otel"
+      - "http-problem-details"
+
+  - id: "workflow-domain-module"
+    name: "워크플로우 도메인 모듈"
+    architecture_pattern: "ports-and-adapters"
+    intent: "도메인 코어를 격리하고 transport, storage, observability를 교체 가능한 어댑터로 유지한다."
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
+
+  - id: "stateful-domain-module"
+    name: "상태 저장형 도메인 모듈"
+    architecture_pattern: "ports-and-adapters"
+    intent: "테스트용 메모리 저장소와 영속 저장소를 모두 지원하는 모듈 확장 프로파일."
+    adapter_refs:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
+      - "repository-sqlite"

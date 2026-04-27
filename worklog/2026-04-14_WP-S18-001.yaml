@@ -1,0 +1,49 @@
+wp_id: "WP-S18-001"
+goal: "PostgresTaskRepository 어댑터 스켈레톤 — 포트 계약 구현 + 연결 없는 구조 테스트"
+completed: true
+completed_at: "2026-04-14"
+tier: "domain"
+result: "PASS"
+
+context: |
+  Spiral 18의 첫 packet은 SQLite에서 PostgreSQL로 옮겨 갈 수 있는 교체 가능 어댑터 경계를 만드는 단계다.
+  현재 task-tracking은 InMemory/SQLite 구현체만 존재했고, Postgres 전환 경로는 문서에만 있었다.
+
+root_cause: |
+  TaskRepository 포트는 이미 고정돼 있었지만, PostgreSQL 쪽 구현체와 no-DB 구조 테스트가 없어
+  이후 DB_TYPE 라우팅이나 psql DDL 작업을 붙일 최소 스켈레톤이 비어 있었다.
+
+fix_applied: |
+  PostgresTaskRepository를 추가해 client.query(sql, params) 주입형 어댑터 스켈레톤을 만들었다.
+  save/findById/findAll 전체 포트 메서드를 구현했고, optimistic lock 규칙도 SQLite와 동일한 의미로 유지했다.
+  실 PostgreSQL 연결 없이 FakePgClient로 SQL 형태와 포트 동작을 검증하는 계약 테스트를 추가했다.
+
+files_created:
+  - "domains/productivity/task-tracking/src/infrastructure/PostgresTaskRepository.js"
+  - "domains/productivity/task-tracking/tests/infrastructure/PostgresTaskRepository.contract.test.js"
+  - "worklog/2026-04-14_WP-S18-001.yaml"
+
+files_modified:
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/next-actions.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  postgres_contract_test: "PASS"
+  sqlite_repository_tests: "PASS"
+  wp_validate: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "WP-S18-001-D1"
+    decision: "pg 라이브러리 연결/Pool 생성은 하지 않고 client.query 주입 계약만 고정한다"
+    rationale: "이 packet의 목표는 구조적 교체 가능성 확보이며, 실제 연결과 DI wiring은 WP-S18-002 범위다."
+  - id: "WP-S18-001-D2"
+    decision: "optimistic lock semantics를 SQLite 구현과 동일하게 유지한다"
+    rationale: "어댑터 교체 시 도메인/유스케이스 동작이 달라지면 안 되므로 저장 충돌 의미를 맞춰 둔다."
+
+risks:
+  - id: "WP-S18-001-R1"
+    risk: "현재 SQL은 구조 테스트용이며 실제 PostgreSQL DDL/인덱스/트랜잭션 경계는 아직 검증되지 않았다."
+    mitigation: "WP-S18-002에서 DB_TYPE wiring, WP-S18-003에서 PostgreSQL DDL 및 schema validation을 이어서 수행한다."

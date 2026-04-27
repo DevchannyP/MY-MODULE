@@ -1,0 +1,28 @@
+archetype: approval-workflow
+description: "승인 플로우 — 상태 머신 내장"
+risk_level_default: HIGH
+preset_state_machine:
+  initial_state: DRAFT
+  states: [DRAFT, PENDING_REVIEW, APPROVED, REJECTED, CANCELLED]
+  terminal_states: [APPROVED, REJECTED, CANCELLED]
+  transitions:
+    - { from: DRAFT, to: PENDING_REVIEW, action: submit }
+    - { from: PENDING_REVIEW, to: APPROVED, action: approve, requires_approval: true }
+    - { from: PENDING_REVIEW, to: REJECTED, action: reject }
+    - { from: [DRAFT, PENDING_REVIEW], to: CANCELLED, action: cancel }
+preset_invariants:
+  - id: INV-APPR-001
+    description: "터미널 상태에서 다른 상태로 전이할 수 없다"
+    severity: P0
+    enforcement: domain-entity
+    test_required: true
+  - id: INV-APPR-002
+    description: "승인은 관리자 권한이 있는 사용자만 수행할 수 있다"
+    severity: P0
+    enforcement: use-case
+    test_required: true
+  - id: INV-APPR-003
+    description: "요청자 본인은 자신의 요청을 승인할 수 없다"
+    severity: P1
+    enforcement: use-case
+    test_required: true

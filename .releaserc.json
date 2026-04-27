@@ -1,0 +1,35 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    ["@semantic-release/commit-analyzer", {
+      "preset": "conventionalcommits",
+      "releaseRules": [
+        { "type": "feat",   "release": "minor" },
+        { "type": "fix",    "release": "patch" },
+        { "type": "perf",   "release": "patch" },
+        { "type": "stage",  "release": "patch" },
+        { "type": "report", "release": false },
+        { "type": "docs",   "release": false },
+        { "breaking": true, "release": "major" }
+      ]
+    }],
+    ["@semantic-release/release-notes-generator", {
+      "preset": "conventionalcommits",
+      "presetConfig": {
+        "types": [
+          { "type": "feat",   "section": "기능 추가" },
+          { "type": "fix",    "section": "버그 수정" },
+          { "type": "stage",  "section": "Stage 실행" },
+          { "type": "perf",   "section": "성능 개선" },
+          { "type": "docs",   "section": "문서",   "hidden": false },
+          { "type": "report", "section": "학습보고서", "hidden": false }
+        ]
+      }
+    }],
+    ["@semantic-release/changelog", {
+      "changelogFile": "CHANGELOG.md",
+      "changelogTitle": "# Changelog — Workflow OS"
+    }],
+    "@semantic-release/git"
+  ]
+}

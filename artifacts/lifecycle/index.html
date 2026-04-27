@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>라이프사이클 — Workflow OS</title>
+<link rel="stylesheet" href="/shared/shell.css">
+
+<script src="/shared/shell.js"></script>
+</head>
+<body>
+<header class="wf-shell-header" data-component="nav-header">
+  <div class="wf-shell-header__brand">
+    <a href="/" class="wf-shell-header__logo">Workflow OS</a>
+  </div>
+  <nav class="wf-shell-header__nav" role="navigation" aria-label="주 메뉴">
+      <a href="/" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">대시보드</a>
+      <a href="/catalog" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">카탈로그</a>
+      <a href="/flags" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">피처 플래그</a>
+      <a href="/audit" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">감사 로그</a>
+      <a href="/quality" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">품질 게이트</a>
+      <a href="/lifecycle" class="wf-nav-link wf-nav-link--active wf-nav-link--disabled" aria-disabled="true" tabindex="-1">라이프사이클</a>
+      <a href="/rollback" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">롤백 콘솔</a>
+      <a href="/tasks" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">작업 관리</a>
+      <a href="/billing" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산관리 홈</a>
+      <a href="/billing/invoices" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">인보이스 목록</a>
+      <a href="/billing/payments" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">결제상태 추적</a>
+      <a href="/billing/exceptions" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산 예외처리</a>
+      <a href="/videos" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">비디오 관리</a>
+  </nav>
+  <div class="wf-shell-header__status">
+    <span class="wf-sse-indicator wf-sse-indicator--offline"
+          data-sse-indicator
+          title="System OS 실시간 연결 상태"
+          aria-label="실시간 연결 끊김">●</span>
+  </div>
+</header>
+<span data-sse-connect="/api/v1/system/events" hidden aria-hidden="true"></span>
+<main class="wf-page" id="main-content">
+
+  <div class="wf-status-bar">
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">전체 도메인</span>
+      <span class="wf-status-item__value">4</span>
+    </div>
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">Stage E 완료</span>
+      <span class="wf-status-item__value" style="color:var(--wf-color-pass);">1</span>
+    </div>
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">분리 가능</span>
+      <span class="wf-status-item__value" style="color:var(--wf-color-accent);">0</span>
+    </div>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-section__title">도메인 Stage 파이프라인</div>
+    <div class="wf-grid wf-grid--2">
+    <div class="wf-card">
+      <div class="wf-card__title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>작업 관리</span>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span class="wf-badge wf-badge--stage">Stage A</span>
+          
+        </div>
+      </div>
+      <div class="wf-pipeline" style="margin-top:.75rem;"><span class="wf-pipeline-stage wf-pipeline-stage--pass"
+                    title="A: PASS"
+                    data-stage="A">A</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="B: PENDING"
+                    data-stage="B">B</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="C: PENDING"
+                    data-stage="C">C</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="D: PENDING"
+                    data-stage="D">D</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="E: PENDING"
+                    data-stage="E">E</span></div>
+    </div>
+    <div class="wf-card">
+      <div class="wf-card__title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>정산관리</span>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span class="wf-badge wf-badge--stage">Stage B</span>
+          
+        </div>
+      </div>
+      <div class="wf-pipeline" style="margin-top:.75rem;"><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="A: PENDING"
+                    data-stage="A">A</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pass"
+                    title="B: PASS"
+                    data-stage="B">B</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="C: PENDING"
+                    data-stage="C">C</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="D: PENDING"
+                    data-stage="D">D</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="E: PENDING"
+                    data-stage="E">E</span></div>
+    </div>
+    <div class="wf-card">
+      <div class="wf-card__title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>비디오 관리</span>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span class="wf-badge wf-badge--stage">Stage E</span>
+          
+        </div>
+      </div>
+      <div class="wf-pipeline" style="margin-top:.75rem;"><span class="wf-pipeline-stage wf-pipeline-stage--pass"
+                    title="A: PASS"
+                    data-stage="A">A</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pass"
+                    title="B: PASS"
+                    data-stage="B">B</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="C: PENDING"
+                    data-stage="C">C</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pass"
+                    title="D: PASS"
+                    data-stage="D">D</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pass"
+                    title="E: PASS"
+                    data-stage="E">E</span></div>
+    </div>
+    <div class="wf-card">
+      <div class="wf-card__title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>System OS</span>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span class="wf-badge wf-badge--stage">Stage A</span>
+          
+        </div>
+      </div>
+      <div class="wf-pipeline" style="margin-top:.75rem;"><span class="wf-pipeline-stage wf-pipeline-stage--pass"
+                    title="A: PASS"
+                    data-stage="A">A</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="B: PENDING"
+                    data-stage="B">B</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="C: PENDING"
+                    data-stage="C">C</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="D: PENDING"
+                    data-stage="D">D</span><span class="wf-pipeline-arrow" aria-hidden="true">›</span><span class="wf-pipeline-stage wf-pipeline-stage--pending"
+                    title="E: PENDING"
+                    data-stage="E">E</span></div>
+    </div></div>
+  </div>
+
+  <div class="wf-section">
+    <div class="wf-section__title">범례</div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:.82rem;color:var(--wf-color-neutral);">
+      <span><span class="wf-pipeline-stage wf-pipeline-stage--pass" style="display:inline-flex;width:1.5rem;height:1.5rem;font-size:.65rem;">✓</span> PASS</span>
+      <span><span class="wf-pipeline-stage wf-pipeline-stage--current" style="display:inline-flex;width:1.5rem;height:1.5rem;font-size:.65rem;">▶</span> 현재 진행</span>
+      <span><span class="wf-pipeline-stage" style="display:inline-flex;width:1.5rem;height:1.5rem;font-size:.65rem;border:2px solid var(--wf-color-border);">?</span> 미착수</span>
+    </div>
+  </div>
+</main>
+</body>
+</html>

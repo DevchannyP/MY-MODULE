@@ -1,0 +1,37 @@
+wp_id: "WP-2026-03-19-07"
+goal: "Add a real server wiring smoke baseline that verifies HTTP transport and controller composition together."
+completed: true
+files_created:
+  - path: "src/server/createServer.js"
+    purpose: "Framework-free HTTP transport adapter that composes existing controllers behind a real server"
+  - path: "src/tests/smoke/serverWiring.smoke.test.js"
+    purpose: "Network-level smoke baseline for health, task flow, and billing permission rejection"
+  - path: "worklog/2026-03-19_WP-07.yaml"
+    purpose: "Structured evidence for server wiring smoke baseline"
+files_modified:
+  - path: "src/index.js"
+    change: "Turned the repository entrypoint into an actual server bootstrap without require-time side effects"
+  - path: "package.json"
+    change: "Extended test:e2e-smoke to include repository-level server wiring smoke"
+  - path: "docs/reference/quality-gates.md"
+    change: "Updated e2e smoke documentation from controller-only baseline to controller plus network-level server wiring baseline"
+  - path: "docs/how-to/run-stage-d.md"
+    change: "Documented that Stage D e2e smoke now includes network-level server wiring coverage"
+validation:
+  lint: "pass"
+  tests: "pass"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "The new server wiring baseline is in-repo only; it does not yet cover external deployment/runtime environment drift."
+  - "Smoke validation needs a local port bind, so sandboxed environments may require explicit approval to rerun it."
+decisions:
+  - "Keep the HTTP server framework-free and compose existing controllers and in-memory adapters instead of adding runtime dependencies."
+  - "Place network smoke under src/tests/smoke so repository-level transport coverage stays separate from domain-local controller smoke."
+commands:
+  - "node --check src/server/createServer.js"
+  - "node --check src/tests/smoke/serverWiring.smoke.test.js"
+  - "node -e \"const mod=require('./src/index.js'); console.log(Object.keys(mod).sort().join(','));\""
+  - "npm run test:e2e-smoke"
+  - "npm run validate:requirements"
+  - "npm run lint"

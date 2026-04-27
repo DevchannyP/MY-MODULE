@@ -1,0 +1,89 @@
+name: Deployment Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment_name:
+        description: "Target GitHub environment declared in master-shell/operations/deployment-environments.yaml"
+        required: true
+        type: choice
+        options:
+          - internal
+          - canary
+          - production
+      base_url_override:
+        description: "Break-glass override when the selected GitHub environment has not been provisioned yet"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deployment-smoke:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Resolve deployment target
+        id: resolve_target
+        env:
+          DEPLOYMENT_BASE_URL: ${{ vars.DEPLOYMENT_BASE_URL }}
+          TASK_WRITE_PERMISSIONS: ${{ vars.TASK_WRITE_PERMISSIONS }}
+          TASK_READ_PERMISSIONS: ${{ vars.TASK_READ_PERMISSIONS }}
+          FLAG_OFF_PATH: ${{ vars.FLAG_OFF_PATH }}
+          FLAG_OFF_PERMISSIONS: ${{ vars.FLAG_OFF_PERMISSIONS }}
+        run: |
+          mkdir -p artifacts/deployment-smoke
+          python3 scripts/resolve_deployment_target.py \
+            --environment "${{ inputs.environment_name }}" \
+            --base-url-override "${{ inputs.base_url_override }}" \
+            --github-output "$GITHUB_OUTPUT" \
+            --json-output artifacts/deployment-smoke/target-resolution.json
+
+      - name: Run deployment smoke
+        env:
+          BASE_URL: ${{ steps.resolve_target.outputs.base_url }}
+          TASK_WRITE_PERMISSIONS: ${{ steps.resolve_target.outputs.task_write_permissions }}
+          TASK_READ_PERMISSIONS: ${{ steps.resolve_target.outputs.task_read_permissions }}
+          FLAG_OFF_PATH: ${{ steps.resolve_target.outputs.flag_off_path }}
+          FLAG_OFF_PERMISSIONS: ${{ steps.resolve_target.outputs.flag_off_permissions }}
+        run: |
+          args=(
+            --base-url "$BASE_URL"
+            --task-write-permissions "$TASK_WRITE_PERMISSIONS"
+            --task-read-permissions "$TASK_READ_PERMISSIONS"
+            --flag-off-permissions "$FLAG_OFF_PERMISSIONS"
+          )
+          if [ -n "$FLAG_OFF_PATH" ]; then
+            args+=(--flag-off-path "$FLAG_OFF_PATH")
+          fi
+          npm run smoke:deployment -- "${args[@]}"
+
+      - name: Upload deployment smoke artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployment-smoke-${{ github.run_id }}
+          path: |
+            artifacts/deployment-smoke/latest.json
+            artifacts/deployment-smoke/target-resolution.json
+          retention-days: 30
+          if-no-files-found: error

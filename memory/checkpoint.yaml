@@ -1,0 +1,79 @@
+schema_version: "2"
+session_date: "2026-03-20"
+
+wps_completed:
+  - "WP-2026-03-19-01"
+  - "WP-2026-03-19-02"
+  - "WP-2026-03-19-03"
+  - "WP-2026-03-19-04"
+  - "WP-2026-03-19-05"
+  - "WP-2026-03-19-06"
+  - "WP-2026-03-19-07"
+  - "WP-2026-03-19-08"
+  - "WP-2026-03-19-09"
+  - "WP-2026-03-19-10"
+  - "WP-ARCH-001"
+  - "WP-ARCH-002"
+  - "WP-ARCH-003"
+  - "WP-ARCH-004"
+  - "WP-GOV-001"
+  - "WP-GOV-002"
+  - "WP-DOM-001"
+  - "WP-DOM-002"
+  - "WP-ERR-001"
+  - "WP-FLAG-001"
+  - "WP-EVT-001"
+  - "WP-OBS-001"
+  - "WP-PERSIST-001"
+  - "WP-META-001"
+  - "WP-DOC-001"
+  - "WP-EVID-001"
+  - "WP-RUN-001"
+  - "WP-RUN-002"
+  - "WP-DOC-002"
+  - "WP-RUN-003"
+  - "WP-RUN-004"
+  - "WP-NFR-001"
+  - "WP-COMMIT-001"
+
+wps_partial: []
+
+wps_not_started: []
+
+verification_summary:
+  total_commands_run: 82
+  passed: 74
+  failed: 8
+  skipped: 0
+  note: |
+    8 failures are in-session transient failures during WP development cycles
+    (e.g., ESLint globals, missing script stubs) that were immediately fixed.
+    All current gates pass. Gate pass rate reflects development-cycle history.
+
+next_session:
+  protocol_version: "2"
+  start_by_reading:
+    - "memory/checkpoint.yaml"
+    - "memory/current-wp.yaml"
+    - "memory/current-state.yaml"
+  then_run:
+    - "npm run wp:next"
+    - "npm run wp:reconcile"
+  first_wp: "NONE"
+  first_wp_tier: "none"
+  context_needed: |
+    Session 2026-03-20 fully closed:
+    - wp:reconcile => Satisfied 18 / Scheduled 0 / Uncovered 0
+    - wp:gaps => 0 gaps (NFR gap detector logic fixed in WP-NFR-001)
+    - All completed WP work committed to git (WP-COMMIT-001)
+    - 255 tests pass, 0 failures
+    - branch: chore/core-git-governance-activation
+
+    Queue is empty. Known low-severity open item:
+    - KI-RUN-001: remote deployment environment audit evidence still
+      needs operator collection outside git.
+
+    Next session: run wp:next → confirm 0 ready WPs → either
+    (a) open a PR to merge this branch to main, or
+    (b) define a new WP from any newly discovered gap (wp:gaps --gen).
+    The highest ROI next action is PR review and merge to main.

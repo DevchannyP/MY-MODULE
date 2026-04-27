@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+"""
+Requirements Gap Detector — compares requirements.yaml against implemented
+capabilities and auto-generates skeleton WPs for uncovered requirements.
+
+Inspired by: BDD spec-first (Gherkin → test skeleton), Shape Up appetite-scoping,
+             Pact consumer-driven contracts (contract as source of truth).
+
+Usage:
+  python3 scripts/requirements_gap.py          # text gap report
+  python3 scripts/requirements_gap.py --json   # machine-readable
+  python3 scripts/requirements_gap.py --gen    # generate skeleton WP YAML
+  python3 scripts/requirements_gap.py --strict # exit 1 if any gap found
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+import glob
+from pathlib import Path
+from datetime import date
+
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# Maps quality gate IDs to the capability IDs they are covered by
+GATE_CAPABILITY_MAP: dict[str, str] = {
+    "unit-tests": "requirements-validation",
+    "contract-tests": "contract-drift-validation",
+    "integration-tests": "server-wiring-smoke",
+    "e2e-smoke": "server-wiring-smoke",
+    "lint": "quality-gate-baseline",
+    "type-check": "quality-gate-baseline",
+    "static-analysis": "quality-gate-baseline",
+    "secret-scan": "quality-gate-baseline",
+    "dependency-scan": "quality-gate-baseline",
+    "authn-authz-regression": "quality-gate-baseline",
+    "input-validation": "quality-gate-baseline",
+    "sbom": "quality-gate-ci",
+    "provenance-evidence": "quality-gate-ci",
+    "rollback-verification": "quality-gate-baseline",
+    "observability-check": "quality-gate-baseline",
+}
+
+
+def load_yaml(path: Path) -> dict:
+    with open(path, encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+def load_requirements() -> dict:
+    """Load the canonical task-management requirements file (backward-compat)."""
+    return load_yaml(ROOT / "requirements" / "requirements.yaml")
+
+
+def discover_domain_requirements() -> list[tuple[Path, dict]]:
+    """Return (path, data) for every requirements/*.yaml that declares a module.id."""
+    results: list[tuple[Path, dict]] = []
+    req_dir = ROOT / "requirements"
+    for path in sorted(req_dir.glob("*.yaml")):
+        try:
+            data = load_yaml(path)
+            if isinstance(data, dict) and data.get("module", {}).get("id"):
+                results.append((path, data))
+        except Exception:
+            pass
+    return results
+
+
+def load_current_state() -> dict:
+    p = ROOT / "memory" / "current-state.yaml"
+    return load_yaml(p) if p.exists() else {}
+
+
+def load_worklogs() -> list[dict]:
+    wls: list[dict] = []
+    for path in sorted(glob.glob(str(ROOT / "worklog" / "*.yaml"))):
+        try:
+            data = load_yaml(Path(path))
+            if data:
+                wls.append(data)
+        except Exception:
+            pass
+    return wls
+
+
+def working_capability_ids(state: dict) -> set[str]:
+    return {c["id"] for c in state.get("working_capabilities", []) if "id" in c}
+
+
+def check_gaps(req: dict, state: dict) -> list[dict]:
+    gaps: list[dict] = []
+    working = working_capability_ids(state)
+
+    # 1. Contract files exist on disk
+    contracts = req.get("contracts", {})
+    for ctype, cpath in contracts.items():
+        if not (ROOT / cpath).exists():
+            gaps.append({
+                "type": "missing_contract_file",
+                "severity": "high",
+                "description": f"Contract file not found on disk: {cpath}",
+                "suggested_wp_goal": f"{ctype} 계약 파일 {Path(cpath).name} 생성 및 검증",
+                "tier": "domain",
+            })
+
+    # 2. Quality gate capabilities covered
+    quality_gates = req.get("quality_gates", {})
+    seen_caps: set[str] = set()
+    for category, gates in quality_gates.items():
+        for gate in gates:
+            cap = GATE_CAPABILITY_MAP.get(gate)
+            if cap and cap not in working and cap not in seen_caps:
+                seen_caps.add(cap)
+                gaps.append({
+                    "type": "unimplemented_gate",
+                    "severity": "medium",
+                    "description": f"Gate '{gate}' ({category}) maps to capability '{cap}' not in working_capabilities",
+                    "suggested_wp_goal": f"{cap} 품질 게이트 구현 및 CI 연결",
+                    "tier": "governance",
+                })
+
+    # 3. desired_state reconciliation (Kubernetes-style)
+    desired = state.get("desired_state", {})
+    for cap_id, description in desired.items():
+        if cap_id not in working:
+            gaps.append({
+                "type": "desired_state_gap",
+                "severity": "medium",
+                "description": f"Desired capability '{cap_id}' not yet working: {description}",
+                "suggested_wp_goal": f"{cap_id} 구현 — {description}",
+                "tier": "domain",
+            })
+
+    # 4. NFR has baseline coverage
+    # Use GATE_CAPABILITY_MAP to resolve gate names → capability IDs, then check working.
+    # Both "observability-check" and "rollback-verification" map to "quality-gate-baseline".
+    nfr = req.get("nfr", {})
+    nfr_gates = {"observability-check", "rollback-verification"}
+    missing_nfr: set[str] = set()
+    for gate in nfr_gates:
+        cap = GATE_CAPABILITY_MAP.get(gate)
+        if cap is None or cap not in working:
+            missing_nfr.add(gate)
+    if missing_nfr:
+        gaps.append({
+            "type": "nfr_coverage_gap",
+            "severity": "low",
+            "description": f"NFR latency={nfr.get('latency_p99_ms')}ms / avail={nfr.get('availability_percent')}% "
+                           f"lacks enforcement via: {missing_nfr}",
+            "suggested_wp_goal": "NFR 기준선 observability 및 rollback 검증 강화",
+            "tier": "governance",
+        })
+
+    return gaps
+
+
+def generate_wp_skeleton(gap: dict, idx: int, req_path: str = "requirements/requirements.yaml") -> dict:
+    today = date.today().isoformat()
+    return {
+        "id": f"WP-{today}-AUTO-{idx:02d}",
+        "goal": gap["suggested_wp_goal"],
+        "status": "pending",
+        "tier": gap.get("tier", "domain"),
+        "depends_on": [],
+        "context_budget": {
+            "tier_reads": ["memory/checkpoint.yaml", "memory/current-wp.yaml"],
+            "context_reads": [req_path],
+            "estimated_turns": 2,
+        },
+        "source": "requirements_gap_auto",
+        "gap_type": gap["type"],
+    }
+
+
+def _report_module(req: dict, gaps: list[dict], req_rel: str, *,
+                   as_json: bool, gen_wps: bool, wp_offset: int = 0) -> int:
+    """Print report for a single module. Returns number of gaps."""
+    module_id = req.get("module", {}).get("id", "unknown")
+
+    if as_json:
+        result: dict = {
+            "module": module_id,
+            "requirements_file": req_rel,
+            "stage": req.get("stage"),
+            "gap_count": len(gaps),
+            "gaps": gaps,
+        }
+        if gen_wps:
+            result["generated_wps"] = [
+                generate_wp_skeleton(g, wp_offset + i + 1, req_rel)
+                for i, g in enumerate(gaps)
+            ]
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        return len(gaps)
+
+    W = 62
+    print(f"\n{'='*W}")
+    print(f"  Requirements Gap Detector")
+    print(f"  Module : {module_id}")
+    print(f"  File   : {req_rel}")
+    print(f"  Stage  : {req.get('stage', '?')}")
+    print(f"{'='*W}")
+
+    if not gaps:
+        print("  No gaps. All requirements have working capability coverage.")
+    else:
+        print(f"  {len(gaps)} gap(s) found:\n")
+        for i, gap in enumerate(gaps, 1):
+            sev = gap["severity"].upper()
+            print(f"  [{i}] [{sev}] {gap['type']}")
+            print(f"       {gap['description']}")
+            print(f"       Suggested WP: {gap['suggested_wp_goal']}")
+            print()
+
+    if gen_wps and gaps:
+        print("\n  --- Generated WP Skeletons (add to wp-queue.yaml) ---\n")
+        for i, gap in enumerate(gaps, 1):
+            wp = generate_wp_skeleton(gap, wp_offset + i, req_rel)
+            print(yaml.dump(wp, allow_unicode=True, default_flow_style=False))
+
+    print(f"{'='*W}")
+    return len(gaps)
+
+
+def main() -> None:
+    as_json = "--json" in sys.argv
+    gen_wps = "--gen" in sys.argv
+    strict = "--strict" in sys.argv
+    # --module <id> limits scanning to a single module
+    module_filter: str | None = None
+    if "--module" in sys.argv:
+        idx = sys.argv.index("--module")
+        if idx + 1 < len(sys.argv):
+            module_filter = sys.argv[idx + 1]
+
+    state = load_current_state()
+    domain_files = discover_domain_requirements()
+
+    if not domain_files:
+        print("No domain requirements files found in requirements/", file=sys.stderr)
+        sys.exit(1)
+
+    if module_filter:
+        domain_files = [(p, d) for p, d in domain_files
+                        if d.get("module", {}).get("id") == module_filter]
+        if not domain_files:
+            print(f"Module '{module_filter}' not found in requirements/", file=sys.stderr)
+            sys.exit(1)
+
+    total_gaps = 0
+    all_results: list[dict] = []
+    wp_offset = 0
+
+    for path, req in domain_files:
+        req_rel = str(path.relative_to(ROOT))
+        gaps = check_gaps(req, state)
+
+        if as_json:
+            module_id = req.get("module", {}).get("id", "unknown")
+            result: dict = {
+                "module": module_id,
+                "requirements_file": req_rel,
+                "stage": req.get("stage"),
+                "gap_count": len(gaps),
+                "gaps": gaps,
+            }
+            if gen_wps:
+                result["generated_wps"] = [
+                    generate_wp_skeleton(g, wp_offset + i + 1, req_rel)
+                    for i, g in enumerate(gaps)
+                ]
+            all_results.append(result)
+        else:
+            _report_module(req, gaps, req_rel, as_json=False, gen_wps=gen_wps, wp_offset=wp_offset)
+
+        total_gaps += len(gaps)
+        wp_offset += len(gaps)
+
+    if as_json:
+        print(json.dumps({"domains": len(domain_files), "total_gaps": total_gaps, "results": all_results},
+                         indent=2, ensure_ascii=False))
+    else:
+        if len(domain_files) > 1:
+            print(f"\n  TOTAL: {total_gaps} gap(s) across {len(domain_files)} domain(s)\n")
+
+    if strict and total_gaps:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

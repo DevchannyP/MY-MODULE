@@ -1,0 +1,57 @@
+# Master Shell - Learning Mastery Map
+# GUI만 보더라도 어떤 순서로 공부해야 하는지 단계별 숙련 로드맵을 제공한다.
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+milestones:
+  - id: "foundation-01"
+    title: "Workflow OS 기본 구조 이해"
+    level: "foundation"
+    track_ref: "master-os-foundation"
+    prerequisites: []
+    objective: "requirements, memory, planner, plugin-registry가 어떤 역할을 하는지 설명할 수 있다."
+    proof:
+      - "대시보드와 요구사항 탭만 보고 현재 프로젝트 구조를 설명한다."
+      - "도메인 탭에서 adapter/profile 의미를 해설한다."
+
+  - id: "bootstrap-01"
+    title: "새 프로젝트 시작 블루프린트 선택"
+    level: "apprentice"
+    track_ref: "project-bootstrap"
+    prerequisites:
+      - "foundation-01"
+    objective: "프로젝트 시작 질문지를 바탕으로 적절한 blueprint/profile/recipe를 선택할 수 있다."
+    proof:
+      - "intake 질문에 답하고 추천 조합을 읽어 설명한다."
+
+  - id: "module-01"
+    title: "모듈 확장 경로 이해"
+    level: "apprentice"
+    track_ref: "module-extension-lab"
+    prerequisites:
+      - "foundation-01"
+    objective: "새 bounded context를 추가할 때 계약 우선 확장 흐름을 적용할 수 있다."
+    proof:
+      - "Stage A → contract → plugin-registry → smoke 순서를 설명한다."
+
+  - id: "runtime-01"
+    title: "운영 안전장치 이해"
+    level: "practitioner"
+    track_ref: "runtime-operations"
+    prerequisites:
+      - "foundation-01"
+      - "module-01"
+    objective: "timeout, drain, idempotency, rate limit, observability가 왜 transport에 있어야 하는지 설명할 수 있다."
+    proof:
+      - "server wiring smoke가 무엇을 보장하는지 설명한다."
+
+  - id: "mastery-01"
+    title: "마스터 OS 설계 선택을 설명"
+    level: "mastery"
+    track_ref: "master-os-foundation"
+    prerequisites:
+      - "bootstrap-01"
+      - "runtime-01"
+    objective: "왜 특정 blueprint/profile/recipe/adapters 조합이 선택됐는지 근거를 들어 설명할 수 있다."
+    proof:
+      - "scorecard, compatibility matrix, relations map을 함께 사용해 선택 이유를 설명한다."

@@ -1,0 +1,1042 @@
+# =============================================================================
+# Workflow OS — Master UI × System OS 완전 통합 개선 계획
+# =============================================================================
+# plan_id:    UI-OS-INTEGRATION-v1.0
+# created_at: 2026-03-30
+# owner:      Workflow OS 설계자
+# north_star: >
+#   마스터 UI의 모든 페이지가 시스템 OS의 실시간 상태를 반영하고,
+#   사용자가 UI를 통해 도메인 라이프사이클·피처 플래그·롤백·품질 게이트를
+#   단일 창에서 직접 조작할 수 있는 살아있는 운영 포털을 만든다.
+# =============================================================================
+
+meta:
+  version: "1.0.0"
+  status: "ROLLOUT-IN-PROGRESS"
+  execution_mode: "sequential-within-track / parallel-across-tracks"
+  delivered_now:
+    - "홈에 통합 통제 센터 진입 링크 추가"
+    - "artifacts/mindmap/index.html 를 통합 통제 허브로 승격"
+    - "상단 상태바 + 좌측 통제 네비 + 하단 계획표 + 모듈 생성 dry-run/create UI 연결"
+    - "planning-studio scaffold-preview / scaffold-create 서버 경로 추가"
+  guardrails:
+    - "계약 없는 API 추가 금지 — 모든 신규 엔드포인트는 Stage A 계약 먼저"
+    - "기존 570/570 테스트를 깨지 않는다"
+    - "domains/ 코드는 UI 관련 변경에서 건드리지 않는다 (contracts-only)"
+    - "구조 판단 변경 시 ADR 필수"
+    - "품질 게이트 FAIL 상태에서 다음 WP로 넘어가지 않는다"
+
+# =============================================================================
+# 현황 진단 (As-Is)
+# =============================================================================
+current_state_diagnosis:
+  master_ui:
+    home_dashboard:
+      path: "artifacts/index.html"
+      size: "674KB"
+      status: "정적 HTML — 빌드 시점 스냅샷만 반영. 실시간 연결 없음."
+      gaps:
+        - "시스템 실시간 상태(헬스 점수, 플래그, 감사 로그) 미반영"
+        - "페이지 간 통합 네비게이션 없음 (각 HTML이 고립)"
+        - "사용자 롤 기반 뷰 분기 없음"
+        - "인터랙티브 컨트롤 전무 (모든 것 읽기 전용)"
+    catalog_site:
+      path: "artifacts/catalog-site/index.html"
+      status: "정적 HTML — nav.yaml/registry.yaml 빌드 시점 반영"
+      gaps:
+        - "홈 대시보드와 스타일·네비게이션 단절"
+        - "계약 파일 클릭 → 실제 YAML 내용 인라인 미지원"
+        - "실시간 헬스 배지 없음"
+    study_guide:
+      path: "artifacts/study-guide/index.html"
+      status: "정적 교육 가이드"
+      gaps:
+        - "홈/카탈로그와 스타일 불일치"
+        - "실제 도메인 데이터와 연동 없음"
+
+  system_os:
+    live_data:
+      health_scores: "master-shell/observability/health-scores.yaml — 파일 기반, UI 미노출"
+      feature_flags: "master-shell/feature-flags/flags.yaml — YAML만 존재, UI 토글 없음"
+      audit_chain: "worklog/audit-chain.jsonl — 파일 기반, UI 미노출"
+      quality_gate: "npm test 결과 — 터미널 전용, UI 미노출"
+    api_layer:
+      status: "HTTP API 서버 존재 (createServer.js) — 도메인 API만 제공"
+      gaps:
+        - "/api/v1/system/* 엔드포인트 전무"
+        - "SSE/WebSocket 실시간 스트림 없음"
+        - "UI용 통합 데이터 집계 레이어 없음"
+    persistence:
+      status: "InMemory 전용 — SQLite 어댑터 정의만 됨, 자동 연결 없음"
+    observability:
+      status: "config.yaml 정의 완료, 실제 백엔드 엔드포인트 미연결"
+
+# =============================================================================
+# 목표 상태 (To-Be)
+# =============================================================================
+target_state:
+  unified_portal:
+    description: >
+      모든 artifact 페이지가 공통 헤더·사이드바·디자인 시스템을 공유하고
+      실시간 시스템 상태를 자동 갱신하는 단일 운영 포털
+  live_integration:
+    description: >
+      /api/v1/system/* REST + SSE 스트림이 시스템 OS 상태를 UI에 실시간 공급
+  interactive_ops:
+    description: >
+      UI에서 피처 플래그 토글, 롤백 트리거, 도메인 라이프사이클 전환을
+      권한 검증 후 직접 실행 가능
+  quality_visibility:
+    description: >
+      품질 게이트 결과, 감사 로그, 워크 패킷 진행 상태가 UI에 실시간 노출
+
+# =============================================================================
+# 작업 패킷 (Work Packets) — Stage A → E 순서
+# =============================================================================
+work_packets:
+
+  # ---------------------------------------------------------------------------
+  # PHASE 1: 계약 설계 (Stage A)
+  # ---------------------------------------------------------------------------
+
+  - id: "WP-UI-001"
+    phase: 1
+    stage: "A"
+    track: "UI-CONTRACT"
+    title: "UI-OS 통합 계약 4종 설계"
+    priority: 1
+    status: "READY"
+    depends_on: []
+    agent: "architect"
+    thinking: "ultrathink"
+    description: >
+      시스템 OS가 UI에 노출할 데이터의 계약을 정의한다.
+      이 계약이 모든 후속 구현의 소스 오브 트루스가 된다.
+    deliverables:
+      - path: "contracts/system-api/capability.yaml"
+        content: >
+          System OS UI API 능력 선언
+          — getHealth, getFlags, getCatalog, getAuditLog, getQualityGate,
+            toggleFlag, triggerRollback, getDomainLifecycle
+          각 능력의 권한(system.admin, domain.viewer) 명시
+      - path: "contracts/system-api/openapi.yaml"
+        content: >
+          GET  /api/v1/system/health         → SystemHealthResponse
+          GET  /api/v1/system/flags          → FeatureFlagListResponse
+          PATCH /api/v1/system/flags/:id     → FeatureFlagUpdateResponse
+          GET  /api/v1/system/catalog        → DomainCatalogResponse
+          GET  /api/v1/system/audit?limit=N  → AuditLogResponse
+          GET  /api/v1/system/quality-gate   → QualityGateStatusResponse
+          POST /api/v1/system/rollback/:domain → RollbackResponse
+          GET  /api/v1/system/lifecycle      → DomainLifecycleResponse
+          GET  /api/v1/system/events         → SSE stream (text/event-stream)
+      - path: "contracts/system-api/events.schema.json"
+        content: >
+          SSE 이벤트 스키마:
+          system.health.updated, system.flag.toggled, system.rollback.triggered,
+          system.quality-gate.updated, system.domain.lifecycle-changed
+      - path: "contracts/ui-shell/ui-contract.yaml"
+        content: >
+          UI Shell 화면 계약:
+          - DashboardHome: 헬스 점수 위젯, 도메인 카드, 최근 감사 로그
+          - CatalogBrowser: 도메인 카탈로그 + 계약 인라인 뷰어
+          - FeatureFlagPanel: 플래그 목록 + 권한 기반 토글
+          - AuditLogViewer: 시계열 감사 로그 + 필터
+          - QualityGateDashboard: 게이트 결과 히스토리 + 트렌드
+          - DomainLifecycleMap: 도메인 Stage 진행 비주얼라이저
+          - RollbackConsole: 롤백 트리거 + 확인 다이얼로그
+    success_criteria:
+      - "contracts/system-api/ 하위 4개 파일 생성 완료"
+      - "모든 능력에 permission 필드 명시"
+      - "openapi.yaml 응답 스키마 완전 정의"
+      - "SSE 이벤트 스키마 JSON Schema 검증 가능"
+    gate_check:
+      - "node scripts/validate-contracts.js PASS"
+      - "계약 파일 YAML/JSON 문법 검증 PASS"
+
+  # ---------------------------------------------------------------------------
+  # PHASE 2: 조합 설계 (Stage B)
+  # ---------------------------------------------------------------------------
+
+  - id: "WP-UI-002"
+    phase: 2
+    stage: "B"
+    track: "UI-COMPOSITION"
+    title: "UI Shell 조합 아키텍처 설계"
+    priority: 2
+    status: "READY"
+    depends_on: ["WP-UI-001"]
+    agent: "architect"
+    thinking: "ultrathink"
+    description: >
+      UI Shell이 System API 계약을 어떻게 소비하는지,
+      공통 디자인 시스템 컴포넌트는 어떻게 구성하는지,
+      실시간 업데이트 플로우(SSE → DOM 갱신)는 어떤 패턴인지 설계한다.
+    deliverables:
+      - path: "memory/stageB/ui-shell-composition.yaml"
+        content: >
+          조합 결정:
+          1. 공통 UI Shell 레이어: scripts/lib/ui-shell.js (CSS 토큰 + 공통 헤더)
+          2. 데이터 어댑터 패턴: scripts/lib/system-api-client.js
+             — fetch + SSE 구독 래퍼, 재시도 3회, 타임아웃 5s
+          3. 렌더 엔진: 바닐라 JS 템플릿 리터럴 (프레임워크 의존성 0)
+          4. SSE 연결 방식: EventSource → DOM 이벤트 디스패치 패턴
+          5. 권한 분기: UI는 API 응답의 permitted 필드로 컨트롤 렌더링 결정
+          6. 공통 컴포넌트 목록:
+             - NavHeader (로고, 도메인 상태 배지, 사용자 롤 표시)
+             - HealthScoreWidget (점수 게이지 + 트렌드 화살표)
+             - DomainCard (이름, stage, 헬스, 플래그 상태)
+             - AuditLogRow (타임스탬프, 액션, 결과, 배우)
+             - QualityGateBadge (PASS/FAIL, 게이트 명)
+             - FlagToggle (스위치 + 권한 비활성화)
+             - RollbackButton (확인 모달 포함)
+          7. 빌드 파이프라인: build-static-ui.js에 ui-shell.js 번들 단계 추가
+      - path: "docs/adr/0012-ui-shell-composition-strategy.md"
+        content: >
+          ADR-0012: UI Shell을 별도 프레임워크 없이 바닐라 JS로 구현하는 결정
+          — 이유: 의존성 최소화, SSR 불필요, 정적 배포 유지, 기존 빌드 파이프라인 호환
+    success_criteria:
+      - "memory/stageB/ui-shell-composition.yaml 완성"
+      - "ADR-0012 생성 완료"
+      - "node scripts/validate:composition PASS (UI Shell 어댑터 등록 포함)"
+    gate_check:
+      - "node scripts/validate:composition PASS"
+
+  # ---------------------------------------------------------------------------
+  # PHASE 3: 마스터 셸 등록 (Stage C)
+  # ---------------------------------------------------------------------------
+
+  - id: "WP-UI-003"
+    phase: 3
+    stage: "C"
+    track: "MASTER-SHELL"
+    title: "마스터 셸에 UI Shell API 플러그인 등록"
+    priority: 3
+    status: "READY"
+    depends_on: ["WP-UI-002"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      System API를 마스터 셸 플러그인으로 공식 등록하고
+      UI Shell 어댑터를 adapter-registry에 추가한다.
+    deliverables:
+      - path: "master-shell/plugin-registry/registry.yaml"
+        change: >
+          system-api-plugin 추가:
+            id: system-api-plugin
+            version: "1.0.0"
+            entry_point: /
+            feature_flag: system_api.enabled
+            adapter_refs: [master-ui-plugin-shell, http-problem-details, feature-flag-provider, observability-otel]
+            ui_contract: contracts/ui-shell/ui-contract.yaml
+            capability_contract: contracts/system-api/capability.yaml
+            openapi_contract: contracts/system-api/openapi.yaml
+            events_contract: contracts/system-api/events.schema.json
+            observability:
+              dashboard: system-api-dashboard
+              alert_group: system-api-alerts
+      - path: "master-shell/navigation/nav.yaml"
+        change: >
+          system 그룹 추가:
+            group: system
+            label: "시스템 운영"
+            items:
+              - id: system-dashboard, route: /, label: "운영 대시보드", flag: system_api.enabled
+              - id: system-catalog, route: /catalog, label: "도메인 카탈로그", flag: system_api.enabled
+              - id: system-flags, route: /flags, label: "피처 플래그", flag: system_api.enabled, permission: system.admin
+              - id: system-audit, route: /audit, label: "감사 로그", flag: system_api.enabled
+              - id: system-quality, route: /quality, label: "품질 게이트", flag: system_api.enabled
+              - id: system-lifecycle, route: /lifecycle, label: "도메인 라이프사이클", flag: system_api.enabled
+      - path: "master-shell/feature-flags/flags.yaml"
+        change: >
+          system_api.enabled: true
+          system_api.sse_stream.enabled: true
+          system_api.rollback_ui.enabled: false  # Stage E PASS 후 활성화
+          system_api.flag_toggle_ui.enabled: false  # Stage E PASS 후 활성화
+      - path: "master-shell/observability/config.yaml"
+        change: >
+          system-api 대시보드 + 경보 규칙 추가
+    success_criteria:
+      - "node scripts/validate:composition PASS (system-api-plugin 포함)"
+      - "nav.yaml ↔ flags.yaml 동기화 PASS"
+      - "기존 adapter-registry 프로파일과의 정합성 PASS"
+    gate_check:
+      - "node scripts/validate:composition PASS"
+      - "node scripts/validate-contracts.js PASS"
+
+  # ---------------------------------------------------------------------------
+  # PHASE 4: 구현 (Stage D) — 하위 WP는 병렬 가능
+  # ---------------------------------------------------------------------------
+
+  - id: "WP-UI-004"
+    phase: 4
+    stage: "D"
+    track: "LIVE-DATA-API"
+    title: "System OS Live Data API 서버 구현"
+    priority: 4
+    status: "READY"
+    depends_on: ["WP-UI-003"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      createServer.js에 /api/v1/system/* 엔드포인트를 추가하고
+      SSE 스트림 엔드포인트를 구현한다.
+      모든 응답은 WP-UI-001에서 정의한 openapi.yaml 계약을 준수한다.
+    implementation_details:
+      new_files:
+        - path: "src/server/systemApiRouter.js"
+          responsibility: >
+            System API 라우터 — 8개 엔드포인트 구현
+            각 핸들러는 master-shell YAML 파일을 읽어 응답 생성
+            SSE 핸들러: EventEmitter 기반 실시간 이벤트 브로드캐스트
+        - path: "src/server/SystemStateAggregator.js"
+          responsibility: >
+            여러 YAML 소스(health-scores, flags, audit-chain, quality-gate)를
+            단일 응답 객체로 집계하는 서비스 레이어
+            — health-scores.yaml 파싱
+            — flags.yaml 파싱
+            — audit-chain.jsonl 마지막 N건 파싱
+            — npm test 결과 캐시 (1분 TTL)
+        - path: "src/server/SseEventBus.js"
+          responsibility: >
+            파일 시스템 감시자(fs.watch) → SSE 클라이언트 브로드캐스터
+            감시 대상: health-scores.yaml, flags.yaml, audit-chain.jsonl
+            이벤트 형식: system.health.updated, system.flag.toggled 등
+      modified_files:
+        - path: "src/server/createServer.js"
+          change: "systemApiRouter 마운트 — app.use('/api/v1/system', systemApiRouter)"
+      permissions:
+        - "PATCH /flags/:id — system.admin 필요, 미인증 시 403"
+        - "POST /rollback/:domain — system.admin 필요"
+        - "GET 엔드포인트 — system_api.enabled 플래그 활성화 시 공개"
+    test_requirements:
+      - path: "src/tests/smoke/systemApi.smoke.test.js"
+        scenarios:
+          - "GET /api/v1/system/health → 200 + 헬스 스키마 검증"
+          - "GET /api/v1/system/flags → 200 + 플래그 배열 검증"
+          - "PATCH /api/v1/system/flags/:id 미인증 → 403"
+          - "GET /api/v1/system/catalog → 200 + 도메인 배열"
+          - "GET /api/v1/system/audit?limit=5 → 200 + 최대 5건"
+          - "GET /api/v1/system/quality-gate → 200 + gate 배열"
+          - "POST /api/v1/system/rollback/billing 미인증 → 403"
+          - "GET /api/v1/system/events → 200 + content-type: text/event-stream"
+    success_criteria:
+      - "8개 엔드포인트 모두 smoke PASS"
+      - "미인증 변이 요청 → 403 PASS"
+      - "SSE 연결 → 이벤트 스트림 수신 PASS"
+      - "기존 570/570 테스트 회귀 없음"
+    gate_check:
+      - "npm test PASS (570+ tests)"
+      - "npm run lint PASS"
+      - "node scripts/validate-contracts.js PASS"
+
+  - id: "WP-UI-005"
+    phase: 4
+    stage: "D"
+    track: "UI-SHELL-FOUNDATION"
+    title: "공통 UI Shell 컴포넌트 라이브러리 구현"
+    priority: 4
+    status: "READY"
+    depends_on: ["WP-UI-003"]
+    parallel_with: ["WP-UI-004"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      모든 artifact HTML 페이지가 공유할 공통 CSS 디자인 시스템,
+      네비게이션 헤더, 기본 위젯 컴포넌트를 구현한다.
+    implementation_details:
+      new_files:
+        - path: "scripts/lib/ui-shell.js"
+          responsibility: >
+            공통 UI Shell 코드 생성기
+            generateShellHeader(config): 공통 네비게이션 HTML 반환
+            generateDesignSystem(): CSS 변수 + 기본 클래스 반환
+            공통 레이아웃 템플릿 (사이드바, 메인 콘텐츠, 상태 바)
+        - path: "artifacts/shared/shell.css"
+          responsibility: >
+            디자인 토큰 (색상, 타이포그래피, 간격, 반응형 브레이크포인트)
+            공통 컴포넌트 스타일 (카드, 배지, 버튼, 토글, 모달)
+            테마: 다크/라이트 모드 CSS 미디어 쿼리
+        - path: "artifacts/shared/shell.js"
+          responsibility: >
+            클라이언트 사이드 공통 로직:
+            - SSE 구독 관리자 (자동 재연결 지원)
+            - 헬스 배지 자동 갱신
+            - 권한 기반 요소 표시/숨김
+            - 토스트 알림 (시스템 이벤트 수신 시)
+            - 로딩 스켈레톤
+      design_system:
+        color_tokens:
+          - "--wf-color-pass: #22c55e"
+          - "--wf-color-fail: #ef4444"
+          - "--wf-color-warn: #f59e0b"
+          - "--wf-color-neutral: #64748b"
+          - "--wf-color-bg: #0f172a"
+          - "--wf-color-surface: #1e293b"
+          - "--wf-color-border: #334155"
+          - "--wf-color-text: #f1f5f9"
+          - "--wf-color-accent: #6366f1"
+        typography:
+          - "--wf-font-mono: 'JetBrains Mono', 'Fira Code', monospace"
+          - "--wf-font-sans: 'Inter', system-ui, sans-serif"
+        nav_header_content:
+          - "Workflow OS 로고"
+          - "도메인 헬스 요약 배지 (실시간)"
+          - "현재 페이지 표시"
+          - "빠른 링크: Dashboard / Catalog / Flags / Audit / Quality"
+          - "시스템 상태 표시등 (SSE 연결 여부)"
+    success_criteria:
+      - "shell.css 토큰 정의 완료"
+      - "shell.js SSE 구독 로직 동작 확인"
+      - "generateShellHeader() 단위 테스트 PASS"
+    gate_check:
+      - "npm run lint PASS"
+
+  - id: "WP-UI-006"
+    phase: 4
+    stage: "D"
+    track: "DASHBOARD"
+    title: "실시간 운영 대시보드 홈 재구현"
+    priority: 5
+    status: "READY"
+    depends_on: ["WP-UI-004", "WP-UI-005"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      artifacts/index.html을 정적 HTML에서 실시간 데이터를 소비하는
+      살아있는 운영 대시보드로 재구현한다.
+      generate-ui-home.js가 SSE 구독 코드를 포함한 HTML을 생성하도록 변경한다.
+    ui_sections:
+      header:
+        - "공통 NavHeader (WP-UI-005)"
+        - "시스템 전체 상태 표시등 (HEALTHY / DEGRADED / DOWN)"
+      hero_status_bar:
+        - "총 도메인 수"
+        - "전체 테스트 수 / PASS 수 (실시간)"
+        - "마지막 품질 게이트 실행 시각"
+        - "활성 피처 플래그 수"
+        - "SSE 연결 상태 인디케이터"
+      domain_cards_grid:
+        per_card:
+          - "도메인명 + 아이콘"
+          - "현재 Stage (A/B/C/D/E) 뱃지"
+          - "헬스 점수 게이지 (0~100, 색상 코딩)"
+          - "트렌드 화살표 (↑/↓/→)"
+          - "피처 플래그 상태 도트"
+          - "롤아웃 퍼센트 진행 바"
+          - "마지막 배포 시각"
+          - "빠른 링크: 계약 / 테스트 결과 / 롤백"
+      quality_gate_summary:
+        - "최근 품질 게이트 실행 결과 5건 타임라인"
+        - "각 게이트별 PASS/FAIL 도트 (단위/계약/lint/authz/smoke)"
+      recent_audit_log:
+        - "최근 감사 로그 10건 (타임스탬프, 액션, 결과, 도메인)"
+        - "필터: 도메인 / 액션 타입 / 결과"
+        - "'더 보기' → /audit 페이지 링크"
+      system_health_chart:
+        - "도메인별 헬스 점수 바 차트 (SVG 인라인)"
+        - "시간 축: 최근 7회 게이트 실행 기준"
+      quick_actions:
+        - "모든 UI 재생성 버튼 (npm run ui:build 트리거)"
+        - "품질 게이트 실행 버튼 (system.admin 전용)"
+        - "감사 로그 다운로드 버튼"
+    realtime_behavior:
+      - "페이지 로드 시 /api/v1/system/events SSE 구독"
+      - "system.health.updated → 도메인 카드 헬스 점수 즉시 갱신"
+      - "system.flag.toggled → 해당 도메인 플래그 도트 색상 변경"
+      - "system.quality-gate.updated → 품질 게이트 타임라인 선두에 추가"
+      - "SSE 연결 끊김 → 5초 재연결 시도 + 상태 표시등 점멸"
+    success_criteria:
+      - "모든 섹션 렌더링 완료"
+      - "SSE 이벤트 수신 시 DOM 갱신 확인"
+      - "npm run ui:build PASS"
+    gate_check:
+      - "node scripts/generate-ui-home.js PASS"
+      - "npm run lint PASS"
+
+  - id: "WP-UI-007"
+    phase: 4
+    stage: "D"
+    track: "CATALOG"
+    title: "도메인 카탈로그 사이트 강화"
+    priority: 5
+    status: "READY"
+    depends_on: ["WP-UI-004", "WP-UI-005"]
+    parallel_with: ["WP-UI-006"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      artifacts/catalog-site/index.html을 공통 Shell과 연동하고
+      계약 파일 인라인 뷰어, 실시간 헬스 배지를 추가한다.
+    enhancements:
+      common_shell:
+        - "WP-UI-005 NavHeader 통합 (홈, 카탈로그, 플래그, 감사, 품질 링크)"
+        - "shell.css 디자인 시스템 적용 (기존 스타일 마이그레이션)"
+      domain_card_enhancements:
+        - "헬스 점수 실시간 배지 (SSE 구독)"
+        - "피처 플래그 상태 실시간 도트"
+        - "계약 파일 클릭 → 사이드 패널에서 YAML/JSON 인라인 뷰어"
+        - "계약 버전 + 마지막 변경 날짜 표시"
+        - "adapter profile 카드 (현재 어댑터 조합 시각화)"
+      contract_inline_viewer:
+        - "사이드 패널 레이아웃 (슬라이드 인 애니메이션)"
+        - "YAML 신택스 하이라이팅 (기본 CSS 기반)"
+        - "계약 간 교차 링크 (capability → openapi → events)"
+      search_filter:
+        - "도메인명 텍스트 검색"
+        - "Stage 필터 (A/B/C/D/E)"
+        - "헬스 점수 정렬 (높음/낮음)"
+        - "피처 플래그 상태 필터 (활성/비활성)"
+    success_criteria:
+      - "공통 NavHeader 통합 완료"
+      - "계약 인라인 뷰어 동작 확인"
+      - "SSE 배지 갱신 확인"
+    gate_check:
+      - "node scripts/generate-catalog-site.js PASS"
+
+  - id: "WP-UI-008"
+    phase: 4
+    stage: "D"
+    track: "FEATURE-FLAGS"
+    title: "피처 플래그 인터랙티브 관리 패널"
+    priority: 5
+    status: "READY"
+    depends_on: ["WP-UI-004", "WP-UI-005"]
+    parallel_with: ["WP-UI-006", "WP-UI-007"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      /flags 페이지를 추가한다. 피처 플래그 목록을 보여주고
+      system.admin 권한이 있으면 토글할 수 있다.
+      system_api.flag_toggle_ui.enabled 플래그가 false면 읽기 전용으로 표시.
+    ui_layout:
+      header: "공통 NavHeader"
+      flag_list:
+        per_flag:
+          - "플래그 ID + 설명"
+          - "현재 값 (true/false) 토글 스위치"
+          - "연결된 도메인/플러그인"
+          - "마지막 변경 시각 + 변경자"
+          - "롤아웃 퍼센트 (해당 시)"
+          - "의존 플래그 표시"
+        group_by: "도메인 그룹 (system / productivity / billing / content)"
+      toggle_flow:
+        - "토글 클릭 → 확인 모달 (변경 내용 + 영향 범위 표시)"
+        - "확인 → PATCH /api/v1/system/flags/:id 호출"
+        - "성공 → SSE system.flag.toggled 이벤트 → 모든 페이지 즉시 갱신"
+        - "실패 → 에러 토스트 + 롤백"
+      permission_guard:
+        - "system.admin 없음 → 토글 비활성화 + 잠금 아이콘 표시"
+        - "system_api.flag_toggle_ui.enabled false → '관리자 전용' 배너"
+    new_file: "artifacts/flags/index.html"
+    success_criteria:
+      - "플래그 목록 전체 렌더링"
+      - "권한 없는 토글 시도 → UI 차단"
+      - "토글 → API 호출 → SSE 이벤트 흐름 단위 테스트 PASS"
+    gate_check:
+      - "npm run lint PASS"
+
+  - id: "WP-UI-009"
+    phase: 4
+    stage: "D"
+    track: "AUDIT-LOG"
+    title: "감사 로그 뷰어 페이지"
+    priority: 5
+    status: "READY"
+    depends_on: ["WP-UI-004", "WP-UI-005"]
+    parallel_with: ["WP-UI-006", "WP-UI-007", "WP-UI-008"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      /audit 페이지에서 worklog/audit-chain.jsonl의 내용을
+      페이지네이션과 필터를 갖춰 브라우저에서 볼 수 있도록 구현한다.
+    ui_layout:
+      header: "공통 NavHeader"
+      filter_bar:
+        - "도메인 선택 멀티셀렉트"
+        - "Stage 필터 (A/B/C/D/E)"
+        - "결과 필터 (PASS/FAIL/PARTIAL)"
+        - "날짜 범위 선택기"
+        - "텍스트 검색 (액션 내용)"
+      log_timeline:
+        per_entry:
+          - "타임스탬프 (상대시간 + 절대시간 툴팁)"
+          - "시퀀스 번호"
+          - "도메인 + Stage 배지"
+          - "액션 설명"
+          - "결과 (PASS 초록 / FAIL 빨강)"
+          - "SHA-256 해시 (앞 8자 + 클릭 시 전체)"
+          - "해시 체인 검증 도트 (이전 해시와 연결 확인)"
+        layout: "수직 타임라인 (시간 역순)"
+      pagination:
+        - "페이지당 50건"
+        - "무한 스크롤 옵션"
+      export:
+        - "CSV 다운로드 버튼"
+        - "JSONL 다운로드 버튼"
+      realtime:
+        - "SSE 구독 → 신규 로그 항목 타임라인 선두에 추가 (애니메이션)"
+    new_file: "artifacts/audit/index.html"
+    success_criteria:
+      - "필터 동작 확인"
+      - "페이지네이션 동작 확인"
+      - "해시 체인 검증 시각화"
+      - "SSE 실시간 추가 확인"
+    gate_check:
+      - "npm run lint PASS"
+
+  - id: "WP-UI-010"
+    phase: 4
+    stage: "D"
+    track: "QUALITY-GATE"
+    title: "품질 게이트 현황판 페이지"
+    priority: 6
+    status: "READY"
+    depends_on: ["WP-UI-004", "WP-UI-005"]
+    parallel_with: ["WP-UI-006", "WP-UI-007", "WP-UI-008", "WP-UI-009"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      /quality 페이지에서 각 도메인의 품질 게이트 현황을
+      시각적으로 보여주는 현황판을 구현한다.
+    ui_layout:
+      header: "공통 NavHeader"
+      overall_score_gauge:
+        - "전체 시스템 품질 점수 큰 게이지"
+        - "570/570 테스트 PASS 진행 바"
+        - "마지막 게이트 실행 시각"
+      gate_matrix:
+        description: "도메인 × 게이트 항목 교차표"
+        rows: ["task-management", "billing", "video", "system-api"]
+        columns:
+          - "단위 테스트"
+          - "계약 드리프트"
+          - "lint/static-analysis"
+          - "authz regression"
+          - "e2e smoke"
+          - "공급망"
+          - "관측성"
+          - "롤백"
+        cell_display: "PASS 초록 체크 / FAIL 빨강 X / SKIP 회색 대시"
+      gate_history_chart:
+        - "도메인별 헬스 점수 시계열 꺾은선 그래프 (SVG 인라인)"
+        - "X축: 최근 10회 게이트 실행"
+        - "Y축: 헬스 점수 0~100"
+      failure_drill_down:
+        - "FAIL 셀 클릭 → 상세 오류 메시지 사이드 패널"
+        - "관련 감사 로그 항목 링크"
+    new_file: "artifacts/quality/index.html"
+    success_criteria:
+      - "게이트 매트릭스 전체 렌더링"
+      - "SVG 차트 렌더링 확인"
+      - "FAIL 드릴다운 동작 확인"
+    gate_check:
+      - "npm run lint PASS"
+
+  - id: "WP-UI-011"
+    phase: 4
+    stage: "D"
+    track: "LIFECYCLE"
+    title: "도메인 라이프사이클 비주얼라이저 페이지"
+    priority: 6
+    status: "READY"
+    depends_on: ["WP-UI-004", "WP-UI-005"]
+    parallel_with: ["WP-UI-010"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      /lifecycle 페이지에서 각 도메인의 Stage A~E 진행 상황과
+      다음 Action을 시각적 파이프라인 뷰로 보여준다.
+    ui_layout:
+      header: "공통 NavHeader"
+      pipeline_view:
+        per_domain:
+          - "도메인명 + 아이콘"
+          - "Stage A → B → C → D → E 파이프라인 바"
+          - "각 Stage: PASS (초록 채움) / CURRENT (파란 점멸) / PENDING (회색)"
+          - "각 Stage 클릭 → 해당 Stage 메모리 파일 내용 팝업"
+          - "다음 Action 강조 표시"
+          - "최근 Stage 완료 시각"
+      ejectable_status:
+        - "헬스 점수 100 도메인 → '분리 가능' 배지 (초록)"
+        - "분리 가능 도메인 목록 + 분리 체크리스트 링크"
+      dependency_graph:
+        - "도메인 간 계약 의존 관계 SVG 다이어그램"
+        - "화살표: 계약 참조 방향"
+        - "노드 색상: 헬스 점수 기반"
+    new_file: "artifacts/lifecycle/index.html"
+    success_criteria:
+      - "파이프라인 뷰 렌더링"
+      - "SVG 의존 그래프 렌더링"
+    gate_check:
+      - "npm run lint PASS"
+
+  - id: "WP-UI-012"
+    phase: 4
+    stage: "D"
+    track: "ROLLBACK-CONSOLE"
+    title: "롤백 콘솔 페이지 (system.admin 전용)"
+    priority: 7
+    status: "READY"
+    depends_on: ["WP-UI-004", "WP-UI-005"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      system.admin 권한자가 도메인 롤백을 UI에서 직접 트리거할 수 있는
+      콘솔 페이지를 구현한다. system_api.rollback_ui.enabled 플래그 제어.
+    ui_layout:
+      header: "공통 NavHeader + system.admin 필수 배너"
+      domain_rollback_list:
+        per_domain:
+          - "도메인명 + 현재 플래그 상태"
+          - "마지막 배포 시각 + 버전"
+          - "롤백 플레이북 링크 (rollback-playbook.yaml 인라인)"
+          - "롤백 버튼 (빨간색, 확인 모달 필수)"
+      rollback_modal:
+        - "영향 범위 경고 (영향받는 라우트 목록)"
+        - "롤백 후 플래그 상태 미리보기"
+        - "확인 텍스트 입력 ('ROLLBACK [도메인명]' 타이핑)"
+        - "실행 버튼"
+      rollback_history:
+        - "이전 롤백 이력 (시각, 도메인, 실행자, 결과)"
+    permission_guard:
+      - "system.admin 없음 → 403 페이지 리다이렉트"
+      - "system_api.rollback_ui.enabled false → '비활성 기능' 안내"
+    new_file: "artifacts/rollback/index.html"
+    success_criteria:
+      - "권한 없는 접근 → 403 처리"
+      - "확인 텍스트 불일치 → 버튼 비활성화"
+      - "롤백 API 호출 → SSE 이벤트 수신 흐름"
+    gate_check:
+      - "npm run lint PASS"
+
+  - id: "WP-UI-013"
+    phase: 4
+    stage: "D"
+    track: "PERSISTENCE"
+    title: "실제 DB 어댑터 자동 연결 (환경 기반)"
+    priority: 7
+    status: "READY"
+    depends_on: ["WP-UI-003"]
+    parallel_with: ["WP-UI-006", "WP-UI-007"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      DB_TYPE 환경변수(sqlite|inmemory)에 따라 서버 기동 시
+      자동으로 적절한 리포지토리 어댑터를 선택하도록 createServer.js를 수정한다.
+    implementation_details:
+      new_file: "src/infrastructure/RepositoryFactory.js"
+      logic: >
+        process.env.DB_TYPE === 'sqlite'
+          ? SQLiteTaskRepository (SQLiteInvoiceRepository, SQLiteVideoRepository)
+          : InMemory* 어댑터
+        DB_PATH 환경변수로 SQLite 파일 경로 지정 (기본: ./data/workflow.db)
+      migration: "서버 기동 시 자동 마이그레이션 실행 (migrate:latest)"
+      health_check: "/api/v1/system/health 응답에 persistence.type, persistence.status 필드 추가"
+    success_criteria:
+      - "DB_TYPE=sqlite 기동 → SQLite 어댑터 자동 연결"
+      - "DB_TYPE 미설정 → InMemory 폴백"
+      - "기존 570/570 테스트 회귀 없음"
+    gate_check:
+      - "npm test PASS"
+
+  - id: "WP-UI-014"
+    phase: 4
+    stage: "D"
+    track: "OBSERVABILITY"
+    title: "관측성 엔드포인트 실연결 (환경 기반)"
+    priority: 7
+    status: "READY"
+    depends_on: ["WP-UI-003"]
+    parallel_with: ["WP-UI-013"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      OTEL_EXPORTER_OTLP_ENDPOINT 환경변수를 읽어
+      실제 OpenTelemetry Collector에 메트릭/트레이스를 전송하도록 구성한다.
+      미설정 시 콘솔 익스포터로 폴백.
+    implementation_details:
+      modified_file: "src/infrastructure/telemetry.js"
+      logic: >
+        OTEL_EXPORTER_OTLP_ENDPOINT 환경변수 존재 시 → OTLPTraceExporter 사용
+        미설정 → ConsoleSpanExporter 폴백
+        OTEL_SERVICE_NAME 환경변수로 서비스명 지정 (기본: workflow-os)
+      health_check: "/api/v1/system/health에 observability.exporter, observability.endpoint 필드 추가"
+    success_criteria:
+      - "환경변수 기반 익스포터 전환 동작 확인"
+      - "기존 570/570 테스트 회귀 없음"
+    gate_check:
+      - "npm test PASS"
+
+  - id: "WP-UI-015"
+    phase: 4
+    stage: "D"
+    track: "BUILD-PIPELINE"
+    title: "UI 빌드 파이프라인 통합 강화"
+    priority: 7
+    status: "READY"
+    depends_on: ["WP-UI-005", "WP-UI-006", "WP-UI-007"]
+    agent: "implementer"
+    thinking: "normal"
+    description: >
+      build-static-ui.js를 업데이트해 새 페이지들을 빌드 파이프라인에 포함시키고
+      생성된 HTML에 공통 Shell 자산(CSS/JS)을 주입한다.
+    changes:
+      - "scripts/build-static-ui.js: 신규 페이지 생성기 추가"
+      - "artifacts/shared/ 디렉토리 생성 및 shell.css/shell.js 복사"
+      - "각 HTML 파일에 <link rel='stylesheet' href='/shared/shell.css'> 주입"
+      - "각 HTML 파일에 <script src='/shared/shell.js'></script> 주입"
+      - "generate-ui-home.js: SSE 연결 코드 포함"
+      - "package.json: ui:build 스크립트가 모든 페이지 커버하도록 수정"
+    new_pages:
+      - "artifacts/flags/index.html (WP-UI-008)"
+      - "artifacts/audit/index.html (WP-UI-009)"
+      - "artifacts/quality/index.html (WP-UI-010)"
+      - "artifacts/lifecycle/index.html (WP-UI-011)"
+      - "artifacts/rollback/index.html (WP-UI-012)"
+    success_criteria:
+      - "npm run ui:build PASS (7개 HTML 페이지 생성)"
+      - "각 페이지에 shell.css/shell.js 포함 확인"
+      - "NavHeader가 모든 페이지에 동일하게 렌더링"
+    gate_check:
+      - "npm run ui:build PASS"
+      - "npm run lint PASS"
+
+  # ---------------------------------------------------------------------------
+  # PHASE 5: 적대적 검증 (Stage E)
+  # ---------------------------------------------------------------------------
+
+  - id: "WP-UI-016"
+    phase: 5
+    stage: "E"
+    track: "ADVERSARIAL"
+    title: "UI-OS 통합 적대적 검증"
+    priority: 8
+    status: "READY"
+    depends_on: ["WP-UI-012", "WP-UI-013", "WP-UI-014", "WP-UI-015"]
+    agent: "adversary"
+    thinking: "ultrathink"
+    description: >
+      UI-OS 통합 전체에 대한 적대적 테스트 벡터를 실행한다.
+      권한 경계, 동시성, 성능, 입력 주입 등 7개 벡터를 검증한다.
+    test_vectors:
+      - id: "VEC-UI-001"
+        name: "권한 경계 우회 시도"
+        scenarios:
+          - "system.admin 없이 PATCH /flags/:id 직접 호출 → 403"
+          - "system.admin 없이 POST /rollback/:domain 직접 호출 → 403"
+          - "rollback_ui.enabled=false 시 롤백 버튼 클릭 → UI 차단"
+          - "flag_toggle_ui.enabled=false 시 토글 클릭 → UI 차단"
+      - id: "VEC-UI-002"
+        name: "SSE 스트림 안정성"
+        scenarios:
+          - "SSE 연결 강제 끊김 → 5초 이내 재연결 성공"
+          - "SSE 연결 중 서버 재시작 → 클라이언트 자동 재구독"
+          - "다수 SSE 클라이언트 동시 연결 (10명) → 메모리 누수 없음"
+      - id: "VEC-UI-003"
+        name: "플래그 토글 동시성"
+        scenarios:
+          - "두 admin이 동시에 같은 플래그 토글 → 마지막 쓰기 우선, 충돌 오류 없음"
+          - "토글 중 SSE 이벤트 중복 발생 없음"
+      - id: "VEC-UI-004"
+        name: "감사 로그 대용량"
+        scenarios:
+          - "audit-chain.jsonl 10,000건 이상 → 페이지 렌더링 3초 이내"
+          - "필터 적용 시 응답 1초 이내"
+      - id: "VEC-UI-005"
+        name: "XSS/인젝션 방어"
+        scenarios:
+          - "감사 로그 액션 내용에 <script> 태그 → 이스케이프 처리"
+          - "플래그 ID에 특수문자 → API 입력 검증 거부"
+          - "도메인명에 경로 트래버설 문자 → 거부"
+      - id: "VEC-UI-006"
+        name: "DB 어댑터 장애 격리"
+        scenarios:
+          - "SQLite 파일 권한 오류 → InMemory 폴백 + 헬스 엔드포인트에 경고 표시"
+          - "DB 연결 실패 시 기존 API 엔드포인트 영향 없음"
+      - id: "VEC-UI-007"
+        name: "시스템 API 플래그 오프"
+        scenarios:
+          - "system_api.enabled=false → /api/v1/system/* 전체 404"
+          - "system_api.enabled=false → UI 페이지에 '준비 중' 안내"
+    success_criteria:
+      - "7개 벡터 전체 PASS"
+      - "기존 570/570 테스트 회귀 없음"
+      - "XSS 취약점 0건"
+      - "권한 우회 0건"
+    gate_check:
+      - "npm test PASS (전체 회귀)"
+      - "node scripts/validate-contracts.js PASS"
+      - "node scripts/architecture-fitness.js PASS"
+
+  # ---------------------------------------------------------------------------
+  # PHASE 6: 리뷰 및 마무리 (B_review + Observer)
+  # ---------------------------------------------------------------------------
+
+  - id: "WP-UI-017"
+    phase: 6
+    stage: "B_review"
+    track: "REVIEW"
+    title: "UI-OS 통합 Cross-Model 리뷰"
+    priority: 9
+    status: "READY"
+    depends_on: ["WP-UI-016"]
+    agent: "reviewer"
+    model: "opus"
+    thinking: "ultrathink"
+    description: >
+      전체 UI-OS 통합 구현에 대한 Cross-Model 독립 리뷰.
+      계약 충실도, semver 영향, 보안 경계, 사용자 경험 일관성을 검토한다.
+    review_checklist:
+      - "모든 신규 API가 openapi.yaml 계약과 일치하는가"
+      - "권한 검사가 서버 사이드에서 강제되는가 (UI 우회 불가)"
+      - "SSE 구독 클리어업이 메모리 누수 없이 동작하는가"
+      - "공통 NavHeader가 모든 페이지에서 동일하게 동작하는가"
+      - "롤백 트리거에 충분한 확인 단계가 있는가"
+      - "감사 로그 해시 체인 검증이 UI에서 올바르게 시각화되는가"
+      - "기존 도메인 API 계약에 변경이 없는가"
+    semver_impact: "minor (신규 기능 추가, 하위 호환)"
+    success_criteria:
+      - "B_review PASS 또는 CONDITIONAL_PASS (P2 이하만 잔여)"
+      - "P0/P1 지적 0건"
+
+  - id: "WP-UI-018"
+    phase: 6
+    stage: "observer"
+    track: "VERIFICATION"
+    title: "Observer 독립 검증"
+    priority: 10
+    status: "READY"
+    depends_on: ["WP-UI-017"]
+    agent: "observer"
+    description: >
+      Dual-Observer 프로토콜: 모든 생성 파일 실제 존재 확인,
+      테스트 수 일치 확인, ESLint 직접 재실행, 계약 드리프트 직접 검증.
+    checks:
+      - "artifacts/flags/index.html 존재 확인"
+      - "artifacts/audit/index.html 존재 확인"
+      - "artifacts/quality/index.html 존재 확인"
+      - "artifacts/lifecycle/index.html 존재 확인"
+      - "artifacts/rollback/index.html 존재 확인"
+      - "artifacts/shared/shell.css 존재 확인"
+      - "artifacts/shared/shell.js 존재 확인"
+      - "contracts/system-api/ 4개 파일 존재 확인"
+      - "src/server/systemApiRouter.js 존재 확인"
+      - "npm test 직접 재실행 → 전체 PASS"
+      - "npm run lint 직접 재실행 → 0 errors"
+      - "MISMATCH 0건이어야 최종 PASS"
+
+  - id: "WP-UI-019"
+    phase: 6
+    stage: "commit"
+    track: "FINALIZE"
+    title: "통합 Conventional Commit 및 메모리 갱신"
+    priority: 11
+    status: "READY"
+    depends_on: ["WP-UI-018"]
+    description: >
+      모든 검증 PASS 후 Conventional Commit으로 커밋하고
+      memory/L0-hot 상태를 갱신한다.
+    commit_message: |
+      feat(ui-os-integration): Master UI × System OS 완전 통합
+
+      - System OS Live Data API (/api/v1/system/*) 구현
+      - 공통 UI Shell (NavHeader, DesignSystem, SSE Client) 구현
+      - 실시간 운영 대시보드 재구현 (SSE 구독)
+      - 도메인 카탈로그 강화 (계약 인라인 뷰어, 실시간 배지)
+      - 피처 플래그 관리 패널 (system.admin 권한 기반)
+      - 감사 로그 뷰어 (해시 체인 시각화)
+      - 품질 게이트 현황판 (게이트 매트릭스 + 트렌드 차트)
+      - 도메인 라이프사이클 비주얼라이저
+      - 롤백 콘솔 (확인 플로우 + system.admin 전용)
+      - DB 어댑터 자동 연결 (환경변수 기반)
+      - 관측성 엔드포인트 실연결 (OTLP 환경변수 기반)
+
+      Gate: PASS
+      Tests: 570+ PASS
+      INV: 모든 기존 INV 유지
+    commit_footer: |
+      Stage: D+E+B_review
+      Risk: MEDIUM
+    memory_updates:
+      - "memory/L0-hot/current-state.yaml: ui_integration 섹션 추가"
+      - "memory/L0-hot/next-actions.yaml: Phase 2 운영 연동 우선순위로 갱신"
+      - "memory/project/lessons-learned.yaml: UI-OS 통합 교훈 추가"
+
+# =============================================================================
+# 실행 순서 요약
+# =============================================================================
+execution_summary:
+  sequential_phases:
+    - phase: 1
+      wps: ["WP-UI-001"]
+      note: "계약 없이 구현 불가. 반드시 먼저 완료."
+    - phase: 2
+      wps: ["WP-UI-002"]
+      note: "조합 설계는 계약 완료 후."
+    - phase: 3
+      wps: ["WP-UI-003"]
+      note: "마스터 셸 등록은 조합 설계 완료 후."
+    - phase: 4
+      parallel_groups:
+        - group: "A (API + Shell 기반)"
+          wps: ["WP-UI-004", "WP-UI-005"]
+          note: "두 WP 병렬 실행 가능"
+        - group: "B (페이지 구현)"
+          wps: ["WP-UI-006", "WP-UI-007", "WP-UI-008", "WP-UI-009", "WP-UI-010", "WP-UI-011"]
+          depends_on_group: "A"
+          note: "WP-004+005 완료 후 6개 WP 병렬 실행 가능"
+        - group: "C (인프라 + 빌드)"
+          wps: ["WP-UI-012", "WP-UI-013", "WP-UI-014", "WP-UI-015"]
+          depends_on_group: "B"
+          note: "그룹 B 완료 후 실행"
+    - phase: 5
+      wps: ["WP-UI-016"]
+      note: "모든 구현 완료 후 적대적 검증"
+    - phase: 6
+      sequential: ["WP-UI-017", "WP-UI-018", "WP-UI-019"]
+      note: "리뷰 → Observer → 커밋 순서 유지"
+
+  total_work_packets: 19
+  estimated_new_files: 15
+  estimated_modified_files: 8
+  new_pages: 5
+  new_api_endpoints: 8
+
+# =============================================================================
+# 피처 플래그 활성화 전략
+# =============================================================================
+feature_flag_activation:
+  system_api.enabled:
+    trigger: "WP-UI-004 Stage D PASS"
+    rollout: "internal(5%) → beta(20%) → full(100%)"
+  system_api.sse_stream.enabled:
+    trigger: "WP-UI-004 Stage D PASS + SSE 벡터 PASS"
+    rollout: "full(100%)"
+  system_api.flag_toggle_ui.enabled:
+    trigger: "WP-UI-016 VEC-UI-001 + VEC-UI-003 PASS"
+    rollout: "system.admin 전용 내부(0% → 100%)"
+  system_api.rollback_ui.enabled:
+    trigger: "WP-UI-017 B_review PASS"
+    rollout: "system.admin 전용 내부(0% → 100%)"
+
+# =============================================================================
+# 리스크 등록
+# =============================================================================
+risks:
+  - id: "R-UI-001"
+    description: "SSE 브라우저 최대 연결 수 한계 (크롬: 도메인당 6개)"
+    mitigation: "단일 SSE 연결로 모든 이벤트 멀티플렉싱"
+    severity: "medium"
+  - id: "R-UI-002"
+    description: "정적 HTML과 Live API 서버 동시 실행 환경 의존성"
+    mitigation: "API 서버 미기동 시 UI가 정적 모드로 폴백 (graceful degradation)"
+    severity: "low"
+  - id: "R-UI-003"
+    description: "롤백 UI 오용으로 인한 의도치 않은 서비스 중단"
+    mitigation: "이중 확인(텍스트 입력 + 모달) + system.admin 전용 + rollback_ui.enabled 플래그"
+    severity: "high"
+  - id: "R-UI-004"
+    description: "audit-chain.jsonl 크기 증가에 따른 API 응답 지연"
+    mitigation: "limit 파라미터 강제, 서버 사이드 페이지네이션, 인덱스 캐시"
+    severity: "medium"

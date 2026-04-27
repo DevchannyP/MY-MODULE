@@ -1,0 +1,45 @@
+wp_id: "WP-ARCH-003"
+goal: "desired_state와 actual capabilities 간 자동 reconciliation 스크립트를 구현한다"
+completed: true
+completed_at: "2026-03-19"
+tier: "arch"
+
+files_created:
+  - scripts/reconcile_state.py
+  - worklog/2026-03-19_WP-ARCH-003.yaml   # this file
+
+files_modified:
+  - memory/wp-queue.yaml        # covers_capability 필드를 5개 WP에 추가 + WP-ARCH-003 done 처리
+  - memory/current-state.yaml   # desired-state-reconciliation 신규 working_capability 추가
+  - package.json                # wp:reconcile, wp:reconcile:apply 스크립트 추가
+
+validation:
+  layer1_schema:
+    - cmd: "python3 scripts/wp_scheduler.py --validate"
+      result: "DAG OK — no referential integrity issues"
+  layer2_contract:
+    - cmd: "python3 scripts/reconcile_state.py"
+      result: "Satisfied=3, Scheduled=5, Uncovered=0 — 모든 desired_state가 WP에 매핑됨"
+  layer3_scenario:
+    - scenario: "covers_capability 없는 WP와의 Korean goal 매칭 실패 재현 후 수정"
+      result: "명시적 covers_capability 필드 추가로 언어 독립적 매핑 확립"
+    - cmd: "python3 scripts/reconcile_state.py --json | python3 -c \"import json,sys; d=json.load(sys.stdin); assert d['uncovered']==0\""
+      result: "PASS"
+
+decisions:
+  - id: "ARCH-003-D1"
+    decision: "keyword 매칭 대신 covers_capability 필드 우선 사용"
+    rationale: "한국어 goal 문자열에서 영어 capability ID 키워드를 매칭하면 필연적으로 오탐/미탐 발생. 명시 선언이 Pact consumer-driven contract 원칙과도 일치 (계약은 명시적이어야 한다)."
+  - id: "ARCH-003-D2"
+    decision: "Satisfied / Scheduled / Uncovered 3-tier 상태로 표현"
+    rationale: "Kubernetes Ready/NotReady 2-tier보다 세분화. Scheduled는 '언젠가 될 것'을 명확히 하여 불필요한 WP 중복 생성을 방지."
+
+risks:
+  - id: "ARCH-003-R1"
+    risk: "covers_capability 필드 없는 레거시 WP는 Uncovered로 잘못 보고될 수 있다"
+    mitigation: "새 WP 정의 시 covers_capability를 필수 항목으로 CLAUDE.md에 추가 권장. 기존 WP는 이번 세션에서 모두 커버됨."
+
+benchmark_references:
+  - Kubernetes: "spec.desired vs status.actual, controller reconciliation loop, condition types (True/False/Unknown)"
+  - Argo CD: "sync status (Synced/OutOfSync/Unknown), health status per resource"
+  - Pact: "provider verification — explicit contract declaration over implicit behaviour"

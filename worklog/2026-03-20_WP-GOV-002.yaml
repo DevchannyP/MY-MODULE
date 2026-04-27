@@ -1,0 +1,43 @@
+wp_id: "WP-GOV-002"
+goal: "Branch protection policy validation을 CI quality gate와 운영 문서에 연결한다."
+completed: true
+completed_at: "2026-03-20"
+tier: "governance"
+
+files_created:
+  - path: "worklog/2026-03-20_WP-GOV-002.yaml"
+    purpose: "Structured evidence for branch protection CI enforcement"
+
+files_modified:
+  - path: ".github/workflows/quality-gates.yml"
+    change: "Added branch protection policy validation to the quality-and-security job"
+  - path: "docs/reference/quality-gates.md"
+    change: "Aligned CI truth surface with release-evidence workflow and branch protection baseline enforcement"
+  - path: "docs/how-to/run-git-workflow.md"
+    change: "Aligned branch naming and PR guidance with Work Packet-based governance and the enforced branch protection gate"
+
+validation:
+  layer1_schema:
+    - cmd: "python3 scripts/validate_branch_protection_policy.py"
+      result: "PASS"
+  layer2_contract:
+    - cmd: "npm run wp:validate"
+      result: "PASS"
+    - cmd: "npm run wp:reconcile"
+      result: "PASS — branch-protection-ci remains the only governance capability still scheduled before state promotion"
+  layer3_scenario:
+    - cmd: "rg -n \"branch protection|check:branch-protection-policy\" .github/workflows/quality-gates.yml docs/reference/quality-gates.md docs/how-to/run-git-workflow.md -S"
+      result: "PASS"
+
+decisions:
+  - id: "GOV-002-D1"
+    decision: "Validate the repository branch protection baseline in CI, not the remote GitHub API state"
+    rationale: "The repository can truthfully enforce its own policy file and required checks without claiming remote settings are fully automated."
+  - id: "GOV-002-D2"
+    decision: "Standardize branch naming on Work Packet-oriented branches"
+    rationale: "A one-packet-per-branch baseline keeps commit scope small and maps directly to queue/worklog evidence."
+
+risks:
+  - id: "GOV-002-R1"
+    risk: "Remote GitHub branch protection settings can still drift from the repository policy file"
+    mitigation: "Keep the validator, policy file, and operator checklist aligned; remote API verification remains outside repository scope."

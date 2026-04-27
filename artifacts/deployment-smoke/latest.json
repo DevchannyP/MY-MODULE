@@ -1,0 +1,529 @@
+{
+  "schema_version": "1",
+  "generated_at_utc": "2026-03-30T14:45:12.176Z",
+  "overall_status": "PASS",
+  "target": {
+    "base_url": "http://127.0.0.1:3100",
+    "live_path": "/livez",
+    "startup_path": "/startupz",
+    "ready_path": "/readyz",
+    "health_path": "/health",
+    "tasks_path": "/tasks",
+    "billing_invoices_path": "/billing/invoices",
+    "videos_path": "/videos",
+    "flag_off_path": null
+  },
+  "inputs": {
+    "task_write_permissions": [
+      "task:read",
+      "task:write"
+    ],
+    "task_read_permissions": [
+      "task:read"
+    ],
+    "billing_denied_permissions": [],
+    "video_write_permissions": [
+      "video:read",
+      "video:write"
+    ],
+    "video_read_permissions": [
+      "video:read"
+    ],
+    "flag_off_permissions": [
+      "task:read"
+    ],
+    "require_flag_off": false,
+    "timeout_ms": 8000,
+    "user_id": "smoke-user",
+    "reviewers_approved": 1
+  },
+  "slo_policy": {
+    "path": "master-shell/observability/slo-policy.json",
+    "deployment_protection": {
+      "required_reviewers_min": 1,
+      "smoke_must_pass": true,
+      "error_budget_policy": "block-on-failure"
+    },
+    "budgets": {
+      "health": {
+        "latency_budget_ms": 200
+      },
+      "task-management-plugin": {
+        "latency_budget_ms": 400,
+        "availability_percent": 99.9,
+        "error_budget_percent": 0.1
+      },
+      "billing-plugin": {
+        "latency_budget_ms": 500,
+        "availability_percent": 99.9,
+        "error_budget_percent": 0.1
+      },
+      "video-plugin": {
+        "latency_budget_ms": 700,
+        "availability_percent": 99.5,
+        "error_budget_percent": 0.5
+      },
+      "system-api-plugin": {
+        "latency_budget_ms": 300,
+        "availability_percent": 99.9,
+        "error_budget_percent": 1
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "deployment-protection",
+      "name": "Deployment protection inputs satisfy the policy gate",
+      "status": "PASS",
+      "duration_ms": 1,
+      "slo": null,
+      "protection_gate": {
+        "required_reviewers_min": 1,
+        "reviewers_approved": 1,
+        "smoke_must_pass": true,
+        "error_budget_policy": "block-on-failure"
+      }
+    },
+    {
+      "id": "livez",
+      "name": "Liveness probe returns 200",
+      "status": "PASS",
+      "duration_ms": 28,
+      "slo": {
+        "budget_id": "health",
+        "latency_budget_ms": 200,
+        "availability_percent": null,
+        "error_budget_percent": null
+      },
+      "request": {
+        "method": "GET",
+        "path": "/livez"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "cache-control": "private, max-age=0, must-revalidate",
+          "connection": "keep-alive",
+          "content-length": "104",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "etag": "\"b5580dee36f6765ecc4aa60a3e3525f764b76bce5ffd678cd502302bf5a3fdae\"",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-971fae1bca5f4129ab787a1aa0c635ca-43c1bc0fdaa04a58-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "971fae1bca5f4129ab787a1aa0c635ca"
+        },
+        "body": {
+          "status": "alive",
+          "service": "my-module",
+          "transport": "http",
+          "traceId": "971fae1bca5f4129ab787a1aa0c635ca"
+        },
+        "duration_ms": 26
+      }
+    },
+    {
+      "id": "startupz",
+      "name": "Startup probe returns 200",
+      "status": "PASS",
+      "duration_ms": 3,
+      "slo": {
+        "budget_id": "health",
+        "latency_budget_ms": 200,
+        "availability_percent": null,
+        "error_budget_percent": null
+      },
+      "request": {
+        "method": "GET",
+        "path": "/startupz"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "cache-control": "private, max-age=0, must-revalidate",
+          "connection": "keep-alive",
+          "content-length": "206",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "etag": "\"1a628471b4937e771c5a27da8af4fcf8820f83ffb2faaec31bfdf874055df77b\"",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-5f5153b7ae254036bee79733fa7acdbc-207ab8d2d75f43e8-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "5f5153b7ae254036bee79733fa7acdbc"
+        },
+        "body": {
+          "status": "started",
+          "started_at": "2026-03-30T14:44:51.104Z",
+          "service": "my-module",
+          "traceId": "5f5153b7ae254036bee79733fa7acdbc",
+          "lifecycle": {
+            "phase": "serving",
+            "drain_started_at": null,
+            "shutdown_reason": null
+          }
+        },
+        "duration_ms": 3
+      }
+    },
+    {
+      "id": "readyz",
+      "name": "Readiness probe returns 200 and loaded runtime dependencies",
+      "status": "PASS",
+      "duration_ms": 1,
+      "slo": {
+        "budget_id": "health",
+        "latency_budget_ms": 200,
+        "availability_percent": null,
+        "error_budget_percent": null
+      },
+      "request": {
+        "method": "GET",
+        "path": "/readyz"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "cache-control": "private, max-age=0, must-revalidate",
+          "connection": "keep-alive",
+          "content-length": "267",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "etag": "\"3fe88c9a27a2e594a800fc58a3e3c2153fce587342229fb01674f4e3419f2875\"",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-9ab732a4d1384b63a7ff829b4c9dd8e2-9007e8f7ef88486c-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "9ab732a4d1384b63a7ff829b4c9dd8e2"
+        },
+        "body": {
+          "status": "ready",
+          "service": "my-module",
+          "feature_flags": {
+            "flagsLoaded": true,
+            "metadataLoaded": true,
+            "errors": [],
+            "flagCount": 0,
+            "metadataCount": 0
+          },
+          "traceId": "9ab732a4d1384b63a7ff829b4c9dd8e2",
+          "lifecycle": {
+            "phase": "serving",
+            "drain_started_at": null,
+            "shutdown_reason": null
+          }
+        },
+        "duration_ms": 1
+      }
+    },
+    {
+      "id": "health",
+      "name": "Health endpoint returns 200 and exposes runtime trace ID",
+      "status": "PASS",
+      "duration_ms": 1,
+      "slo": {
+        "budget_id": "health",
+        "latency_budget_ms": 200,
+        "availability_percent": null,
+        "error_budget_percent": null
+      },
+      "request": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "cache-control": "private, max-age=0, must-revalidate",
+          "connection": "keep-alive",
+          "content-length": "283",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "etag": "\"43242bec7816f0b89651f06e4c6f1c8148a8dc0f479e28ed39db04d9c66f9ff3\"",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-b8da952c0c064357ba73173008d1156e-8ce66147ebe64691-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "b8da952c0c064357ba73173008d1156e"
+        },
+        "body": {
+          "status": "ok",
+          "service": "my-module",
+          "transport": "http",
+          "feature_flags": {
+            "flagsLoaded": true,
+            "metadataLoaded": true,
+            "errors": [],
+            "flagCount": 0,
+            "metadataCount": 0
+          },
+          "traceId": "b8da952c0c064357ba73173008d1156e",
+          "lifecycle": {
+            "phase": "serving",
+            "drain_started_at": null,
+            "shutdown_reason": null
+          }
+        },
+        "duration_ms": 1
+      }
+    },
+    {
+      "id": "task-create",
+      "name": "Task create path works with write permissions",
+      "status": "PASS",
+      "duration_ms": 5,
+      "slo": {
+        "budget_id": "task-management-plugin",
+        "latency_budget_ms": 400,
+        "availability_percent": 99.9,
+        "error_budget_percent": 0.1
+      },
+      "request": {
+        "method": "POST",
+        "path": "/tasks"
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "53",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-10332b9719c74d639c7cec4b7be0b8d8-8d30c917b57b4f5e-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "29",
+          "x-ratelimit-reset": "1774881972",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "10332b9719c74d639c7cec4b7be0b8d8"
+        },
+        "body": {
+          "task_id": "task-1774881912213-1",
+          "status": "PENDING"
+        },
+        "duration_ms": 4
+      },
+      "task_id": "task-1774881912213-1",
+      "health_trace_id": "b8da952c0c064357ba73173008d1156e"
+    },
+    {
+      "id": "task-read",
+      "name": "Task read path returns the created task",
+      "status": "PASS",
+      "duration_ms": 1,
+      "slo": {
+        "budget_id": "task-management-plugin",
+        "latency_budget_ms": 400,
+        "availability_percent": 99.9,
+        "error_budget_percent": 0.1
+      },
+      "request": {
+        "method": "GET",
+        "path": "/tasks/task-1774881912213-1"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "cache-control": "private, max-age=0, must-revalidate",
+          "connection": "keep-alive",
+          "content-length": "255",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "etag": "\"9d5615eed4c0006c3610557a2c64576dc88b82f699236df36cd96c8185b91d73\"",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-752bce32c3094c9a90767b818d8f55d5-f190066aaf8a4f28-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-ratelimit-limit": "120",
+          "x-ratelimit-remaining": "119",
+          "x-ratelimit-reset": "1774881972",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "752bce32c3094c9a90767b818d8f55d5"
+        },
+        "body": {
+          "task_id": "task-1774881912213-1",
+          "title": "deployment-smoke-1774881912210",
+          "assignee_id": "deployment-smoke-user",
+          "due_date": "2026-04-29",
+          "description": null,
+          "status": "PENDING",
+          "created_at": "2026-03-30T14:45:12.213Z",
+          "updated_at": "2026-03-30T14:45:12.213Z"
+        },
+        "duration_ms": 1
+      }
+    },
+    {
+      "id": "billing-permission-denied",
+      "name": "Billing write path rejects missing permissions",
+      "status": "PASS",
+      "duration_ms": 2,
+      "slo": {
+        "budget_id": "billing-plugin",
+        "latency_budget_ms": 500,
+        "availability_percent": 99.9,
+        "error_budget_percent": 0.1
+      },
+      "request": {
+        "method": "POST",
+        "path": "/billing/invoices"
+      },
+      "response": {
+        "status": 403,
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "326",
+          "content-type": "application/problem+json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-a264f706bfb0466580cfe7b31afa6c46-acc54ec5c80340ae-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "28",
+          "x-ratelimit-reset": "1774881972",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "a264f706bfb0466580cfe7b31afa6c46"
+        },
+        "body": {
+          "type": "https://workflow-os/errors/forbidden",
+          "title": "Forbidden",
+          "status": 403,
+          "detail": "Forbidden: billing.write 권한이 필요합니다",
+          "message": "Forbidden: billing.write 권한이 필요합니다",
+          "instance": "/billing/invoices",
+          "correlationId": "deployment-smoke",
+          "code": "FORBIDDEN",
+          "correlation_id": "deployment-smoke"
+        },
+        "duration_ms": 2
+      }
+    },
+    {
+      "id": "video-upload",
+      "name": "Video upload path works with write permissions",
+      "status": "PASS",
+      "duration_ms": 1,
+      "slo": {
+        "budget_id": "video-plugin",
+        "latency_budget_ms": 700,
+        "availability_percent": 99.5,
+        "error_budget_percent": 0.5
+      },
+      "request": {
+        "method": "POST",
+        "path": "/videos"
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "368",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-80bc555b294443cb943d34cfbcc8c43b-404021e4a62d4d72-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-ratelimit-limit": "30",
+          "x-ratelimit-remaining": "27",
+          "x-ratelimit-reset": "1774881972",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "80bc555b294443cb943d34cfbcc8c43b"
+        },
+        "body": {
+          "video_id": "75e651c4-bb6f-4650-975f-168895365257",
+          "title": "deployment-smoke-video-1774881912218",
+          "uploader_id": "smoke-user",
+          "original_file_ref": "s3://deployment-smoke/video.mp4",
+          "status": "UPLOADED",
+          "access_policy": "PRIVATE",
+          "description": null,
+          "duration_seconds": null,
+          "file_size_bytes": 0,
+          "created_at": "2026-03-30T14:45:12.219Z",
+          "updated_at": "2026-03-30T14:45:12.219Z"
+        },
+        "duration_ms": 1
+      },
+      "video_id": "75e651c4-bb6f-4650-975f-168895365257"
+    },
+    {
+      "id": "video-list",
+      "name": "Video list path returns the uploaded video for the same caller",
+      "status": "PASS",
+      "duration_ms": 2,
+      "slo": {
+        "budget_id": "video-plugin",
+        "latency_budget_ms": 700,
+        "availability_percent": 99.5,
+        "error_budget_percent": 0.5
+      },
+      "request": {
+        "method": "GET",
+        "path": "/videos"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "cache-control": "private, max-age=0, must-revalidate",
+          "connection": "keep-alive",
+          "content-length": "414",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Mon, 30 Mar 2026 14:45:12 GMT",
+          "etag": "\"ab68b953011949d9dbe8e5fb82949d4482449f6f79876f239d3884b5ee97e196\"",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-868f4b13058b4244841683858e6a7c2d-49ab83b7c8f34fbc-01",
+          "x-correlation-id": "deployment-smoke",
+          "x-ratelimit-limit": "120",
+          "x-ratelimit-remaining": "118",
+          "x-ratelimit-reset": "1774881972",
+          "x-request-id": "deployment-smoke",
+          "x-trace-id": "868f4b13058b4244841683858e6a7c2d"
+        },
+        "body": {
+          "items": [
+            {
+              "video_id": "75e651c4-bb6f-4650-975f-168895365257",
+              "title": "deployment-smoke-video-1774881912218",
+              "uploader_id": "smoke-user",
+              "original_file_ref": "s3://deployment-smoke/video.mp4",
+              "status": "UPLOADED",
+              "access_policy": "PRIVATE",
+              "description": null,
+              "duration_seconds": null,
+              "file_size_bytes": 0,
+              "created_at": "2026-03-30T14:45:12.219Z",
+              "updated_at": "2026-03-30T14:45:12.219Z"
+            }
+          ],
+          "total": 1,
+          "page": 1,
+          "page_size": 20
+        },
+        "duration_ms": 2
+      }
+    },
+    {
+      "id": "flag-off-route",
+      "name": "Configured disabled route stays hidden with 404",
+      "status": "SKIPPED",
+      "reason": "No --flag-off-path supplied for this environment."
+    }
+  ],
+  "pending_manual_checks": [
+    "Confirm deployed platform logs retain trace_id or equivalent correlation for the smoke requests.",
+    "If the target environment includes a disabled feature route, rerun with --flag-off-path to capture the 404 assertion."
+  ],
+  "slo_gate": {
+    "status": "PASS",
+    "policy": "block-on-failure",
+    "budgets_checked": [
+      "health",
+      "task-management-plugin",
+      "billing-plugin",
+      "video-plugin",
+      "system-api-plugin"
+    ]
+  },
+  "output_path": "artifacts/deployment-smoke/latest.json"
+}

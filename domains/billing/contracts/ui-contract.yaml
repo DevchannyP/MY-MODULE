@@ -1,15 +1,41 @@
 # UI Contract - Billing Domain
 # 모든 billing 화면의 마운트 계약을 한 파일에 정의한다.
 # 마스터 UI 쉘은 이 파일을 기준으로 라우팅과 플러그인 등록을 수행한다.
+version: "0.1.0"
+module_id: "billing"
+name: "정산관리"
+description: "인보이스, 결제, 정산 예외를 운영자가 한 화면 계층에서 확인하고 처리하는 도메인 포털"
+
+entry_points:
+  - route: /billing
+    label: 정산 홈
+    description: "이번 주 정산 상태와 예외 건수를 요약해 보는 운영 시작 화면"
+  - route: /billing/invoices
+    label: 인보이스 목록
+    description: "고객별 청구 상태와 금액 범위를 기준으로 인보이스를 탐색한다"
+  - route: /billing/exceptions
+    label: 정산 예외처리
+    description: "불일치, 분쟁, 동기화 실패를 우선순위별로 검토하고 승인 또는 거절한다"
 
 screens:
   - module_key: billing.home
     route: /billing
     mount: BillingHomePage
     title: 정산관리 홈
+    description: "핵심 KPI, 미결 인보이스, 예외 현황을 한 번에 파악하는 운영 대시보드"
     nav_group: 정산
     permissions:
       - billing.read
+    data_requirements:
+      - source: getBillingSummary
+        fields: [total_invoices, pending_count, disputed_count, open_exceptions, month_total]
+    actions:
+      - id: review-pending-invoices
+        label: 미결 인보이스 보기
+        triggers: 인보이스 목록 화면으로 이동
+      - id: review-open-exceptions
+        label: 예외 건 검토
+        triggers: 예외처리 화면으로 이동
     shared_dependencies:
       - react
       - design-system
@@ -23,9 +49,20 @@ screens:
     route: /billing/invoices
     mount: InvoiceListPage
     title: 인보이스 목록
+    description: "청구 상태, 고객, 금액 범위, 만기일로 인보이스를 필터링해 운영 이슈를 찾는 화면"
     nav_group: 정산
     permissions:
       - billing.read
+    data_requirements:
+      - source: listInvoices
+        fields: [invoice_id, customer_id, status, total, due_date, total_invariant_valid]
+    actions:
+      - id: open-invoice-detail
+        label: 상세 보기
+        triggers: 인보이스 상세 화면으로 이동
+      - id: create-invoice
+        label: 인보이스 생성
+        triggers: createInvoice API 호출
     shared_dependencies:
       - react
       - design-system
@@ -39,9 +76,20 @@ screens:
     route: /billing/invoices/:invoice_id
     mount: InvoiceDetailPage
     title: 인보이스 상세
+    description: "단일 인보이스의 라인 항목, 총액 불변조건, 상태 이력을 확인하고 상태를 전이하는 화면"
     nav_group: null
     permissions:
       - billing.read
+    data_requirements:
+      - source: getInvoice
+        fields: [invoice_id, customer_id, status, total, line_items, total_invariant_valid, due_date, notes]
+    actions:
+      - id: transition-status
+        label: 상태 전이
+        triggers: transitionInvoiceStatus API 호출
+      - id: add-line-item
+        label: 라인 항목 추가
+        triggers: addLineItem API 호출
     shared_dependencies:
       - react
       - design-system
@@ -55,9 +103,20 @@ screens:
     route: /billing/payments
     mount: PaymentStatusPage
     title: 결제상태 추적
+    description: "결제 동기화 상태와 금액 mismatch 여부를 조회하고 재동기화를 시작하는 화면"
     nav_group: 정산
     permissions:
       - billing.read
+    data_requirements:
+      - source: listPayments
+        fields: [payment_id, invoice_id, amount, status, synced_at, mismatch_delta]
+    actions:
+      - id: inspect-payment
+        label: 결제 상세 확인
+        triggers: getPayment API 호출
+      - id: retry-payment-sync
+        label: 동기화 재시도
+        triggers: retryPaymentSync API 호출
     shared_dependencies:
       - react
       - design-system
@@ -71,9 +130,20 @@ screens:
     route: /billing/exceptions
     mount: BillingExceptionsPage
     title: 정산 예외처리
+    description: "정산 예외를 유형과 상태별로 분류해 승인, 거절, 후속 조치를 수행하는 관리자 화면"
     nav_group: 정산
     permissions:
       - billing.admin
+    data_requirements:
+      - source: listBillingExceptions
+        fields: [exception_id, invoice_id, payment_id, exception_type, status, reason, created_at]
+    actions:
+      - id: approve-exception
+        label: 승인
+        triggers: approveBillingException API 호출
+      - id: reject-exception
+        label: 거절
+        triggers: rejectBillingException API 호출
     shared_dependencies:
       - react
       - design-system

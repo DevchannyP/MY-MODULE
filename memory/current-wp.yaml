@@ -1,0 +1,41 @@
+as_of: '2026-04-27'
+id: WP-HO-015
+goal: memory 원자 갱신 보장 — current-state/current-wp/next-actions가 같은 완료 시점으로 갱신
+type: infra
+stage: in_progress
+status: in_progress
+tier: infra
+spiral: 20
+created_at: '2026-04-27'
+depends_on:
+- WP-HO-012
+covers_capability: handoff-memory-atomicity
+scope_in:
+- scripts/session_end.py
+- scripts/generate_apply_checkpoint.py
+- memory/current-state.yaml
+- memory/current-wp.yaml
+- memory/next-actions.yaml
+- docs/reference/memory-schema.md
+scope_out:
+- domains/
+- src/
+- artifacts/master-planner/index.html
+done_when:
+- 완료 시 current-state, current-wp, next-actions가 서로 다른 WP를 가리키지 않는다.
+- 원자성 실패 시 완료 선언이 차단된다.
+verification:
+- npm run session:end
+- npm run wp:reconcile
+- npm run project:status
+context_budget:
+  tier_reads:
+  - scripts/session_end.py
+  - scripts/generate_apply_checkpoint.py
+  context_reads:
+  - docs/reference/memory-schema.md
+  estimated_turns: 3
+  max_new_files: 0
+  max_modified_files: 5
+rollback_plan: session_end.py에서 MEMORY_TRIAD 상수와 verify/atomic 함수를 제거하면 이전 상태로 돌아간다.
+next_unlock: WP-HO-014 — 다음 SPIRAL-20 handoff 체인 항목

@@ -143,6 +143,28 @@ describe('GET /tasks — 권한', () => {
     });
     assert.equal(res.status, 200);
   });
+
+  it('[회귀] invalid page_size → 400', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET', path: '/tasks',
+      query: { page_size: '0' },
+      caller: READER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.code, 'VALIDATION_ERROR');
+  });
+
+  it('[회귀] validation error에도 instance가 포함된다', async () => {
+    const { ctrl } = makeCtrl();
+    const res = await ctrl.handle({
+      method: 'GET', path: '/tasks',
+      query: { page_size: '0' },
+      caller: READER,
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.body.instance, '/tasks');
+  });
 });
 
 // ── 4. GET /tasks/{task_id} — 권한·조회 ──────────────────────────────────────

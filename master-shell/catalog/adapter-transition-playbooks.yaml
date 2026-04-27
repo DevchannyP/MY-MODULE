@@ -1,0 +1,56 @@
+# Master Shell - Adapter Transition Playbooks
+# profile 간 전환 시 코어를 유지하며 edge adapter만 바꾸는 절차를 정의한다.
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+transitions:
+  - id: "shell-to-module"
+    title: "Master Shell에서 Domain Module로 분리"
+    from_profile: "master-os-shell"
+    to_profile: "workflow-domain-module"
+    preserve_essence: "마스터 UI와 planner 코어는 유지하고, 새 도메인만 격리 모듈로 분리한다."
+    benchmark_refs:
+      - "miro-ai-diagramming"
+      - "figjam-strategy-planning"
+    triggers:
+      - "새 bounded context를 독립 계약으로 올려야 한다."
+      - "기획 surface와 구현 surface를 분리해야 한다."
+    validation_commands:
+      - "npm run validate:composition"
+      - "npm run validate:contracts"
+      - "npm run test:e2e-smoke"
+
+  - id: "module-to-stateful"
+    title: "Workflow Domain Module에서 Stateful Module로 승격"
+    from_profile: "workflow-domain-module"
+    to_profile: "stateful-domain-module"
+    preserve_essence: "도메인 포트는 유지하고 저장소/운영 adapter만 강화한다."
+    benchmark_refs:
+      - "linear-cycles"
+      - "clova-safe-ai-lifecycle"
+      - "openai-agentkit-observability"
+    triggers:
+      - "메모리 저장소만으로는 상태 보존 요구를 충족하지 못한다."
+      - "배포 smoke와 observability 기준을 더 강하게 요구한다."
+    validation_commands:
+      - "npm run validate:composition"
+      - "npm run smoke:deployment"
+      - "npm run test:e2e-smoke"
+      - "npm run check:observability"
+
+  - id: "stateful-to-shell-view"
+    title: "Stateful Module을 Master Shell 학습 surface에 편입"
+    from_profile: "stateful-domain-module"
+    to_profile: "master-os-shell"
+    preserve_essence: "서비스화된 모듈을 코어 마스터 UI에 연결하되, 기존 서비스 경계는 유지한다."
+    benchmark_refs:
+      - "figjam-project-status-template"
+      - "openai-file-search-context"
+      - "miro-ai-diagramming"
+    triggers:
+      - "운영 중인 모듈을 planner/learning surface에서도 읽히게 해야 한다."
+      - "GUI에서 module, log, quality gate를 함께 복기하고 싶다."
+    validation_commands:
+      - "npm run validate:composition"
+      - "npm run planner"
+      - "npm run test:e2e-smoke"

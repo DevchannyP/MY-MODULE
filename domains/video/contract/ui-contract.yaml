@@ -1,0 +1,169 @@
+# UI Contract - Video Domain
+# 모든 video 화면의 마운트 계약을 한 파일에 정의한다.
+# 마스터 UI 쉘은 이 파일을 기준으로 라우팅과 플러그인 등록을 수행한다.
+version: "0.1.0"
+module_id: "video"
+name: "비디오 관리"
+description: "영상 업로드부터 접근정책, 트랜스코딩 운영, 관리자 보관 처리까지 다루는 콘텐츠 운영 포털"
+
+entry_points:
+  - route: /videos
+    label: 영상 목록
+    description: "공개 범위와 처리 상태를 기준으로 전체 영상을 탐색한다"
+  - route: /videos/upload
+    label: 영상 업로드
+    description: "새 영상을 등록하고 접근정책을 설정한다"
+  - route: /videos/transcode
+    label: 트랜스코딩 현황
+    description: "작업 큐와 실패 건을 점검하고 재처리 대상을 추적한다"
+
+screens:
+  - module_key: video.home
+    route: /videos
+    mount: VideoHomePage
+    title: 영상 목록
+    description: "상태, 업로더, 공개범위를 기준으로 영상을 탐색하고 상세 화면으로 이동하는 기본 허브"
+    nav_group: 영상관리
+    permissions:
+      - video:read
+    data_requirements:
+      - source: listVideos
+        fields: [video_id, title, uploader_id, status, access_policy, duration_seconds, file_size_bytes]
+    actions:
+      - id: open-video-detail
+        label: 영상 상세 보기
+        triggers: VideoDetailPage로 이동
+      - id: open-upload
+        label: 업로드 화면 열기
+        triggers: VideoUploadPage로 이동
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: video.enabled
+    observability_tags:
+      - domain:video
+      - screen:home
+
+  - module_key: video.detail
+    route: /videos/:videoId
+    mount: VideoDetailPage
+    title: 영상 상세
+    description: "개별 영상의 메타데이터, 렌디션, 접근정책, 트랜스코딩 이력을 확인하는 상세 화면"
+    nav_group: null
+    permissions:
+      - video:read
+    data_requirements:
+      - source: getVideo
+        fields: [video_id, title, uploader_id, status, access_policy, renditions, duration_seconds, file_size_bytes]
+    actions:
+      - id: change-access-policy
+        label: 접근정책 변경
+        triggers: changeAccessPolicy API 호출
+      - id: archive-video
+        label: 아카이브
+        triggers: archiveVideo API 호출
+    shared_dependencies:
+      - react
+      - design-system
+      - video-player
+    error_boundary: default
+    feature_flag: video.enabled
+    observability_tags:
+      - domain:video
+      - screen:detail
+
+  - module_key: video.upload
+    route: /videos/upload
+    mount: VideoUploadPage
+    title: 영상 업로드
+    description: "새 영상을 등록하고 제목, 원본 파일 참조, 접근정책을 입력하는 작성 화면"
+    nav_group: 영상관리
+    permissions:
+      - video:write
+    data_requirements:
+      - source: uploadVideo
+        fields: [title, original_file_ref, access_policy, description]
+    actions:
+      - id: submit-upload
+        label: 업로드 시작
+        triggers: uploadVideo API 호출
+    shared_dependencies:
+      - react
+      - design-system
+      - file-uploader
+    error_boundary: default
+    feature_flag: video.upload.enabled
+    observability_tags:
+      - domain:video
+      - screen:upload
+
+  - module_key: video.transcode
+    route: /videos/transcode
+    mount: TranscodeStatusPage
+    title: 트랜스코딩 현황
+    description: "비동기 트랜스코딩 작업의 진행률과 실패 원인을 보고 재시작 대상을 정리하는 운영 화면"
+    nav_group: 영상관리
+    permissions:
+      - video:write
+    data_requirements:
+      - source: getTranscodeJob
+        fields: [job_id, video_id, status, target_format, target_resolution, progress_percent, error_message]
+    actions:
+      - id: start-transcode
+        label: 트랜스코딩 시작
+        triggers: startTranscodeJob API 호출
+      - id: inspect-job
+        label: 작업 상세 확인
+        triggers: getTranscodeJob API 호출
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: video.transcode.enabled
+    observability_tags:
+      - domain:video
+      - screen:transcode
+
+  - module_key: video.admin
+    route: /videos/admin
+    mount: VideoAdminPage
+    title: 영상 관리자
+    description: "민감 영상, 보관 처리, 내부 공개 정책을 운영자가 최종 점검하는 관리자 전용 화면"
+    nav_group: 영상관리
+    permissions:
+      - video:admin
+    data_requirements:
+      - source: listVideos
+        fields: [video_id, title, status, access_policy, uploader_id]
+    actions:
+      - id: review-private-videos
+        label: 비공개 영상 검토
+        triggers: video.home 필터 preset 적용
+      - id: archive-ready-video
+        label: READY 영상 보관
+        triggers: archiveVideo API 호출
+    shared_dependencies:
+      - react
+      - design-system
+    error_boundary: default
+    feature_flag: video.admin.enabled
+    observability_tags:
+      - domain:video
+      - screen:admin
+
+design_tokens:
+  color_scheme: video
+  accent: "#e53935"
+
+invariant_display:
+  # 상태 전이 위반 시 UI 배지 스타일
+  invalid_transition_badge:
+    color: error
+    label: "전이 불가"
+    tooltip: "현재 상태에서 허용되지 않는 전이입니다"
+  # 동시 Job 제한 위반 시 UI 배지 스타일
+  concurrent_job_badge:
+    color: warning
+    label: "진행 중인 Job 존재"
+    tooltip: "이미 RUNNING 상태의 트랜스코딩 작업이 있습니다"

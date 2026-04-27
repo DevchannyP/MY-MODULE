@@ -1,0 +1,33 @@
+# Video 도메인 — Stage E 적대/운영 검증
+# 생성일: 2026-04-14
+
+domain_id: "video"
+stage: "E"
+status: "PASS"
+
+adversarial_checks:
+  - command: "node --test domains/video/tests/adversarial/stageE_adversarial.test.js"
+    result: "PASS"
+    purpose: "권한 우회, 상태 전이 위반, 잘못된 입력 회귀 방어"
+  - command: "node --test domains/video/tests/interface/VideoController.uploaderId.security.test.js"
+    result: "PASS"
+    purpose: "body.uploader_id spoofing 차단"
+  - command: "node --test src/tests/smoke/perRouteRateLimit.smoke.test.js"
+    result: "PASS"
+    purpose: "video upload 경로 rate limit 보호"
+
+operational_surface:
+  plugin_registry_rollout: "full-100"
+  plugin_registry_status: "active"
+  repo_default_flags: "false-by-default"
+  runtime_activation: "WOS_FLAG_VIDEO_ENABLED 및 세부 플래그 env override"
+
+release_readiness:
+  contract_surface: "PASS"
+  adversarial_surface: "PASS"
+  runtime_wiring: "PASS"
+  note: "저장소는 release-ready 기준선을 충족하지만 실제 노출 여부는 운영 환경 flag 값에 의해 결정된다."
+
+notes: |
+  - repo-local truth는 '안전한 기본값(false)'과 '운영 환경 오버라이드'를 동시에 유지한다.
+  - registry상 active/full 선언과 기본 flag false는 모순이 아니라 배포 환경 제어 전제를 의미한다.

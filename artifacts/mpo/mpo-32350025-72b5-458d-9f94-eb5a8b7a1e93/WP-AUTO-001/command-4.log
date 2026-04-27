@@ -1,0 +1,3 @@
+$ node scripts/validate-harness-contract.js
+
+harness contract validation PASS

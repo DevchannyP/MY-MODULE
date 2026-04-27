@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/workflow-os/video/events.schema.json",
+  "title": "Video Domain Events Schema",
+  "definitions": {
+    "EventEnvelope": {
+      "type": "object",
+      "required": ["event_id", "event_type", "domain", "occurred_at", "correlation_id", "payload"],
+      "properties": {
+        "event_id": { "type": "string" },
+        "event_type": { "type": "string" },
+        "domain": { "type": "string", "const": "video" },
+        "occurred_at": { "type": "string", "format": "date-time" },
+        "correlation_id": { "type": "string" }
+      }
+    },
+    "VideoUploaded": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "VideoUploaded" },
+            "payload": {
+              "type": "object",
+              "required": ["video_id", "title", "uploader_id", "original_file_ref"],
+              "properties": {
+                "video_id": { "type": "string" },
+                "title": { "type": "string" },
+                "uploader_id": { "type": "string" },
+                "original_file_ref": { "type": "string" },
+                "access_policy": { "type": "string", "enum": ["PUBLIC", "PRIVATE", "INTERNAL"] }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "VideoProcessingStarted": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "VideoProcessingStarted" },
+            "payload": {
+              "type": "object",
+              "required": ["video_id", "job_id"],
+              "properties": {
+                "video_id": { "type": "string" },
+                "job_id": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "VideoReady": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "VideoReady" },
+            "payload": {
+              "type": "object",
+              "required": ["video_id", "rendition_count"],
+              "properties": {
+                "video_id": { "type": "string" },
+                "rendition_count": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "VideoAccessPolicyChanged": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "VideoAccessPolicyChanged" },
+            "payload": {
+              "type": "object",
+              "required": ["video_id", "from_policy", "to_policy", "changed_by"],
+              "properties": {
+                "video_id": { "type": "string" },
+                "from_policy": { "type": "string", "enum": ["PUBLIC", "PRIVATE", "INTERNAL"] },
+                "to_policy": { "type": "string", "enum": ["PUBLIC", "PRIVATE", "INTERNAL"] },
+                "changed_by": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "VideoArchived": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "VideoArchived" },
+            "payload": {
+              "type": "object",
+              "required": ["video_id", "archived_by"],
+              "properties": {
+                "video_id": { "type": "string" },
+                "archived_by": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TranscodeJobStarted": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "TranscodeJobStarted" },
+            "payload": {
+              "type": "object",
+              "required": ["job_id", "video_id", "target_format", "target_resolution"],
+              "properties": {
+                "job_id": { "type": "string" },
+                "video_id": { "type": "string" },
+                "target_format": { "type": "string", "enum": ["MP4", "HLS", "DASH"] },
+                "target_resolution": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TranscodeJobCompleted": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "TranscodeJobCompleted" },
+            "payload": {
+              "type": "object",
+              "required": ["job_id", "video_id", "output_rendition_ref"],
+              "properties": {
+                "job_id": { "type": "string" },
+                "video_id": { "type": "string" },
+                "output_rendition_ref": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TranscodeJobFailed": {
+      "allOf": [
+        { "$ref": "#/definitions/EventEnvelope" },
+        {
+          "properties": {
+            "event_type": { "const": "TranscodeJobFailed" },
+            "payload": {
+              "type": "object",
+              "required": ["job_id", "video_id", "error_message"],
+              "properties": {
+                "job_id": { "type": "string" },
+                "video_id": { "type": "string" },
+                "error_message": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/VideoUploaded" },
+    { "$ref": "#/definitions/VideoProcessingStarted" },
+    { "$ref": "#/definitions/VideoReady" },
+    { "$ref": "#/definitions/VideoAccessPolicyChanged" },
+    { "$ref": "#/definitions/VideoArchived" },
+    { "$ref": "#/definitions/TranscodeJobStarted" },
+    { "$ref": "#/definitions/TranscodeJobCompleted" },
+    { "$ref": "#/definitions/TranscodeJobFailed" }
+  ]
+}

@@ -1,0 +1,180 @@
+# Workflow OS — Event Registry
+# 모든 도메인 이벤트의 중앙 목록. AsyncAPI Event Catalog 패턴.
+# Benchmark: AsyncAPI 3.0 (CNCF), Confluent Schema Registry, AWS EventBridge schema registry
+
+schema_version: "1"
+envelope: "contracts/events/envelope.schema.json"
+
+events:
+  # ── Productivity / Task-Tracking ──────────────────────────────────────────
+  - type: "com.workflow-os.task.created.v1"
+    source: "//workflow-os/productivity/task-tracking"
+    version: "1"
+    status: "active"
+    description: "작업이 생성됐을 때 발행"
+    schema: "domains/productivity/task-tracking/contract/events.schema.json#/definitions/TaskCreated"
+    produced_by:
+      - "domains/productivity/task-tracking/src/application/CreateTaskUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.task.status-changed.v1"
+    source: "//workflow-os/productivity/task-tracking"
+    version: "1"
+    status: "active"
+    description: "작업 상태가 전이됐을 때 발행"
+    schema: "domains/productivity/task-tracking/contract/events.schema.json#/definitions/TaskStatusChanged"
+    produced_by:
+      - "domains/productivity/task-tracking/src/application/TransitionTaskStatusUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.task.reassigned.v1"
+    source: "//workflow-os/productivity/task-tracking"
+    version: "1"
+    status: "active"
+    description: "작업 담당자가 변경됐을 때 발행"
+    schema: "domains/productivity/task-tracking/contract/events.schema.json#/definitions/TaskReassigned"
+    produced_by:
+      - "domains/productivity/task-tracking/src/application/ReassignTaskUseCase.js"
+    consumed_by: []
+
+  # ── Billing ───────────────────────────────────────────────────────────────
+  - type: "com.workflow-os.billing.invoice-created.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "인보이스가 생성됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/InvoiceCreated"
+    produced_by:
+      - "domains/billing/src/application/CreateInvoiceUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.invoice-status-changed.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "인보이스 상태가 전이됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/InvoiceStatusChanged"
+    produced_by:
+      - "domains/billing/src/application/TransitionInvoiceStatusUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.invoice-total-mismatch-detected.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "인보이스 총액 불일치가 감지됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/InvoiceTotalMismatchDetected"
+    produced_by:
+      - "domains/billing/src/application/CreateInvoiceUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.payment-mismatch-detected.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "결제 금액과 인보이스 총액 불일치가 감지됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/PaymentMismatchDetected"
+    produced_by:
+      - "domains/billing/src/application/GetBillingSummaryUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.exception-approved.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "정산 예외가 승인됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/BillingExceptionApproved"
+    produced_by:
+      - "domains/billing/src/application/ApproveBillingExceptionUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.billing.exception-rejected.v1"
+    source: "//workflow-os/billing"
+    version: "1"
+    status: "active"
+    description: "정산 예외가 거부됐을 때 발행"
+    schema: "domains/billing/contracts/events.schema.json#/definitions/BillingExceptionRejected"
+    produced_by:
+      - "domains/billing/src/application/RejectBillingExceptionUseCase.js"
+    consumed_by: []
+
+  # ── Video ──────────────────────────────────────────────────────────────────
+  - type: "com.workflow-os.video.uploaded.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "비디오가 업로드됐을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/VideoUploaded"
+    produced_by:
+      - "domains/video/src/application/UploadVideoUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.video.processing-started.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "비디오 처리가 시작됐을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/VideoProcessingStarted"
+    produced_by:
+      - "domains/video/src/application/StartTranscodeJobUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.video.ready.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "비디오가 재생 가능한 상태가 됐을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/VideoReady"
+    produced_by:
+      - "domains/video/src/application/StartTranscodeJobUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.video.access-policy-changed.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "비디오 접근 정책이 변경됐을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/VideoAccessPolicyChanged"
+    produced_by:
+      - "domains/video/src/application/ChangeAccessPolicyUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.video.archived.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "비디오가 아카이브됐을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/VideoArchived"
+    produced_by:
+      - "domains/video/src/application/ArchiveVideoUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.video.transcode-job-started.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "트랜스코드 작업이 시작됐을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/TranscodeJobStarted"
+    produced_by:
+      - "domains/video/src/application/StartTranscodeJobUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.video.transcode-job-completed.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "트랜스코드 작업이 완료됐을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/TranscodeJobCompleted"
+    produced_by:
+      - "domains/video/src/application/StartTranscodeJobUseCase.js"
+    consumed_by: []
+
+  - type: "com.workflow-os.video.transcode-job-failed.v1"
+    source: "//workflow-os/video"
+    version: "1"
+    status: "active"
+    description: "트랜스코드 작업이 실패했을 때 발행"
+    schema: "domains/video/contract/events.schema.json#/definitions/TranscodeJobFailed"
+    produced_by:
+      - "domains/video/src/application/StartTranscodeJobUseCase.js"
+    consumed_by: []

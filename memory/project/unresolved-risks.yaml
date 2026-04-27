@@ -1,5 +1,8 @@
 # Workflow OS - 미해결 리스크 목록
-as_of: "2026-03-18"
+# STATUS: legacy detail surface
+# root memory/current-state.yaml 의 known_issues 가 canonical summary 이다.
+# 이 파일은 상세 리스크 메모를 보존하며, root issue 와 충돌할 경우 root memory 가 우선한다.
+as_of: "2026-03-19"
 
 risks:
   - id: "R-PLAT-001"
@@ -78,14 +81,51 @@ risks:
   - id: "R-PLAT-007"
     category: "security"
     severity: "medium"
-    status: "open"
+    status: "mitigated"
     owner: "core-platform"
-    description: "dependency-scan 스크립트가 아직 placeholder이며, 상태 문서와 실제 판정 근거의 정밀도가 부족하다."
-    impact: "의존성 변경 시 보안 회귀를 자동으로 설명 가능한 형태로 판정하지 못할 수 있다"
+    description: "dependency-scan baseline 은 실동작화됐지만, 현재는 오프라인 lockfile 검증 중심이다."
+    impact: "저장소 내부 유입 통제와 무결성은 탐지되지만, 외부 advisory DB 기반 CVE 탐지는 아직 연결되지 않았다"
     mitigation:
       - "lockfile 기반 dependency baseline validator 도입"
       - "runtime/dev dependency 분리 판정"
       - "quality gate 문서와 current-state 판정 근거 일치화"
+
+  - id: "R-PLAT-009"
+    category: "security"
+    severity: "medium"
+    status: "mitigated"
+    owner: "core-platform"
+    description: "online advisory 전략은 문서화됐지만, 실제 provider 실행은 아직 CI/GitHub 환경에 연결되지 않았다."
+    impact: "차단 규칙은 정해졌지만, 실제 온라인 advisory 데이터는 Phase 2 연동 전까지 자동 수집되지 않는다"
+    mitigation:
+      - "오프라인 baseline 과 온라인 advisory scan 역할 분리"
+      - "ADR 0008 로 blocking policy 고정"
+      - "Phase 2 에 npm audit 또는 동등한 advisory feed 연동"
+      - "차단 정책과 허용 예외를 ADR 또는 정책 문서로 고정"
+
+  - id: "R-PLAT-010"
+    category: "operations"
+    severity: "medium"
+    status: "mitigated"
+    owner: "core-platform"
+    description: "branch protection 기준선은 저장소 안에 고정됐지만, 실제 GitHub 원격 적용은 아직 수동 설정에 의존한다."
+    impact: "required checks 와 보호 규칙의 기준선은 명확하지만, 원격 저장소 설정이 어긋나면 실제 강제력이 약해질 수 있다"
+    mitigation:
+      - "branch protection 기준선 문서화"
+      - "required checks 와 merge policy 체크리스트 추가"
+      - "원격 GitHub 설정과 저장소 내부 규칙 역할 분리"
+
+  - id: "R-PLAT-011"
+    category: "operations"
+    severity: "medium"
+    status: "open"
+    owner: "core-platform"
+    description: "GitHub 원격 branch protection 의 실제 설정값을 저장소 안에서 자동 비교하는 단계는 아직 없다."
+    impact: "정책 파일과 실제 GitHub 설정이 장기적으로 드리프트할 수 있다"
+    mitigation:
+      - "branch protection policy file 유지"
+      - "원격 설정 점검 절차 문서화"
+      - "가능한 환경에서 GitHub API 기반 drift check 추가"
 
   - id: "R-PLAT-008"
     category: "operations"

@@ -1,0 +1,84 @@
+{
+  "as_of_utc": "2026-04-18T00:00:00.000Z",
+  "repository": "my-module",
+  "baseline_id": "harness-spiral19-baseline-2026-04-18",
+  "prompt_version": "phase0-baseline-candidate",
+  "source_commands": [
+    "npm run project:status",
+    "npm run session:bootstrap -- --json",
+    "node scripts/run-harness-evals.js",
+    "python3 scripts/validate_contract_drift.py",
+    "node scripts/validate-harness-contract.js"
+  ],
+  "observed_state": {
+    "current_wp": "WP-RUN-004",
+    "current_wp_type": "governance",
+    "current_wp_stage": "E",
+    "requirements_stage": "D",
+    "current_lane_hint": "verify",
+    "estimated_context_tokens": 6203,
+    "validation_command_count": 9,
+    "spiral": 19
+  },
+  "golden_set": {
+    "path": "evals/golden/harness-core.jsonl",
+    "case_count": 10,
+    "modes_present": ["Research", "Build", "Debug", "Operate", "Policy"],
+    "packet_types_present": ["arch", "governance", "meta", "shell", "executor"]
+  },
+  "measured_metrics": {
+    "estimated_context_tokens": {
+      "value": 6203,
+      "unit": "tokens",
+      "source": "project:status current_wp_context_budget.estimated_tokens"
+    },
+    "validation_command_count": {
+      "value": 9,
+      "unit": "commands",
+      "source": "session:bootstrap validation_profile.commands length"
+    },
+    "schema_violation_rate": {
+      "value": 0.0,
+      "unit": "ratio",
+      "measurement_scope": "offline_golden_set",
+      "source": "validate_contract_drift.py validate_harness_contracts() — Draft202012Validator against 10 golden records",
+      "eval_run_id": "c294ec5b-0a88-47da-9ef2-937fae480a3c",
+      "note": "0/10 golden records have input schema violations. Live-model schema_violation_rate requires grader extension."
+    },
+    "false_pass_count": {
+      "value": 0,
+      "unit": "count",
+      "measurement_scope": "offline_golden_set",
+      "source": "run-harness-evals.js false_pass_forbidden gate — all 10 records validated",
+      "eval_run_id": "c294ec5b-0a88-47da-9ef2-937fae480a3c",
+      "note": "0 cases where false_pass_forbidden=true were incorrectly passed. Live grading requires model-output evaluation."
+    }
+  },
+  "pending_metrics": {
+    "average_input_tokens": {
+      "value": null,
+      "unit": "tokens",
+      "status": "pending_telemetry_extension"
+    },
+    "average_output_tokens": {
+      "value": null,
+      "unit": "tokens",
+      "status": "pending_telemetry_extension"
+    },
+    "p95_latency_ms": {
+      "value": null,
+      "unit": "ms",
+      "status": "pending_runtime_capture"
+    },
+    "retry_rate": {
+      "value": null,
+      "unit": "ratio",
+      "status": "pending_eval_runner"
+    }
+  },
+  "notes": [
+    "Spiral 19 baseline promotes schema_violation_rate and false_pass_count from pending to measured.",
+    "Offline golden set scope: these metrics measure golden record correctness, not live model output.",
+    "Remaining pending metrics require live model grader (telemetry + runtime capture)."
+  ]
+}

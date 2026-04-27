@@ -1,0 +1,32 @@
+wp_id: "WP-2026-03-19-09"
+goal: "Align HOW_TO_USE.md with the real Work Packet operating model and remove legacy autopilot commands."
+completed: true
+files_created:
+  - path: "worklog/2026-03-19_WP-09.yaml"
+    purpose: "Structured evidence for HOW_TO_USE truthfulness cleanup"
+files_modified:
+  - path: "HOW_TO_USE.md"
+    change: "Removed legacy autopilot commands and replaced them with queue-driven Work Packet guidance"
+  - path: "memory/current-state.yaml"
+    change: "Recorded HOW_TO_USE truthfulness as a working capability and narrowed remaining documentation risk"
+  - path: "memory/wp-queue.yaml"
+    change: "Marked WP-2026-03-19-09 done and advanced WP-2026-03-19-07"
+  - path: "memory/next-actions.yaml"
+    change: "Selected WP-2026-03-19-07 as the next packet"
+  - path: "memory/checkpoint.yaml"
+    change: "Included WP-2026-03-19-09 in completed packets and updated next-session context"
+validation:
+  lint: "skip"
+  tests: "skip"
+  requirements: "pass"
+  contract: "skip"
+risks:
+  - "Legacy project-only artifacts such as memory/project/master-prompt.md still exist and may describe the old operating model."
+  - "Runtime truthfulness still depends on WP-2026-03-19-07 because network-level server smoke does not exist yet."
+decisions:
+  - "Teach queue-driven Work Packet sequencing instead of command-style autopilot examples."
+  - "Keep root memory as the primary operator surface and mention legacy project memory only as compatibility detail."
+commands:
+  - "rg -n \"A \\[도메인명\\]|계속|Stage A~E 전체 자동 실행|자동 체이닝|memory/project/|검토$\" HOW_TO_USE.md -S"
+  - "npm run project:status"
+  - "npm run validate:requirements"

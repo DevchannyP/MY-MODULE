@@ -1,98 +1,182 @@
 # Workflow OS - my-module
 
-**목적**: requirements/requirements.yaml 하나만 교체하면 격리 모듈 생성→도메인 조합→마스터 UI 편입→품질 게이트→적대적 검증의 전체 사이클이 반복 가능한 저장소 운영체제.
+`my-module`은 계약 중심 Workflow OS 코어 저장소다.
+하나의 마스터 OS 위에서 AI 기획, 학습, 실행 packet, 도메인 모듈 조합, 운영 증적을 함께 다루는 것을 목표로 한다.
 
----
+이 저장소의 기본 원칙은 아래 3가지다.
 
-## 빠른 시작
+1. 코어는 고정하고 edge 계획과 모듈만 안전하게 확장한다.
+2. 작은 Work Packet 단위로 필요한 파일만 읽어 토큰 비용과 변경 리스크를 줄인다.
+3. 코드, 계약, memory, worklog, release evidence를 함께 맞춰야 완료로 본다.
 
-### 1. 요구사항 입력
+## 프로젝트 개요
 
-```yaml
-# requirements/requirements.yaml
-module:
-  id: "your-module-id"
-  name: "도메인 언어로 된 이름"
-  domain: "your-domain"
-  bounded_context: "your-context"
-stage: "A"
-```
+- 목적: 계약 기반 모듈 생성·조합·검증·운영을 위한 Workflow OS 코어 플랫폼
+- 운영 모델: Stage 일괄 실행이 아니라 Work Packet 반복 사이클
+- 현재 주요 모듈: `task-management`, `billing`, `video`
+- 현재 주요 surface: `master planner`, `project status`, `quality gates`, `promotion/context pipeline`
 
-### 2. Stage A 실행
+## 기술 스택
 
-docs/how-to/run-stage-a.md 참조
+- Runtime: Node.js, Python 3
+- 테스트: Node test runner, smoke/property/adversarial tests
+- 정적 검증: ESLint, custom validators
+- 계약/메모리: YAML, JSON, OpenAPI, event schema
+- 저장소 거버넌스: GitHub Actions, branch protection baseline, release evidence artifacts
 
-### 3. 다음 Stage 순서대로 진행
+## 디렉토리 구조
 
-A → B → C → D → (필요 시 E)
-
----
-
-## 저장소 구조
-
-```
+```text
 my-module/
-├── requirements/          # 요구사항 (이것만 교체하면 전체 재실행 가능)
-│   ├── requirements.yaml  # ← 주 설정 파일
-│   ├── glossary.yaml      # 도메인 용어 사전
-│   ├── domain-map.yaml    # 도메인 구성도
-│   ├── constraints.yaml   # 아키텍처 제약
-│   └── nfr.yaml           # 비기능 요구사항
-├── docs/
-│   ├── explanation/       # WHY 중심 개념 문서
-│   ├── reference/         # WHAT 중심 참조 문서
-│   ├── how-to/            # HOW 중심 절차 문서
-│   ├── tutorial/          # 학습용 예제/퀴즈
-│   └── adr/               # 아키텍처 결정 기록
-├── templates/             # 모듈/계약/플러그인 템플릿
-├── domains/               # 도메인 모듈 (Stage A 이후 생성)
-├── master-shell/          # 마스터 UI 포털 설정
-│   ├── plugin-registry/   # 등록된 플러그인 목록
-│   ├── navigation/        # 도메인 포털 네비게이션
-│   ├── feature-flags/     # 기능 플래그
-│   ├── observability/     # 관측성 설정
-│   └── catalog/           # 도메인 카탈로그
-├── memory/                # Stage별 산출물 스냅샷
-│   ├── stageA/
-│   ├── stageB/
-│   ├── stageC/
-│   └── project/           # 현재 상태, 리스크, 다음 작업
-└── worklog/               # 실행 로그, 리뷰, 수정, 릴리즈 노트
+├── requirements/          # 입력 진실원, 제약, 도메인 맵
+├── domains/               # 도메인 구현, 계약, 테스트
+├── master-shell/          # plugin registry, catalog, flags, observability
+├── scripts/               # 검증기, 생성기, status/packet utilities
+├── docs/                  # reference / how-to / adr / troubleshooting
+├── memory/                # root session state + stage snapshots + legacy fallback
+├── worklog/               # Work Packet evidence
+├── artifacts/             # generated planner / release / provisioning / pipeline artifacts
+└── .github/               # PR template and workflow metadata
 ```
 
-## 핵심 규칙 (constraints.yaml 참조)
+## 실행 방법
 
-| 규칙 | 설명 |
-|------|------|
-| C001 | 모듈 간 직접 코드 참조 금지 |
-| C002 | 도메인 코어는 UI/DB/프레임워크 모름 |
-| C003 | 각 모듈은 최소 1개 이상의 public contract 필수 |
-| C004 | 구조 판단은 ADR 없이 지나가지 않음 |
-| C005 | 품질 게이트 FAIL이면 완료 선언 불가 |
+### 1. 현재 상태 읽기
 
-## Stage 진입 조건
+```bash
+sed -n '1,160p' memory/checkpoint.yaml
+sed -n '1,200p' memory/current-state.yaml
+sed -n '1,200p' memory/current-wp.yaml
+sed -n '1,220p' memory/wp-queue.yaml
+```
 
-| Stage | 트리거 |
-|-------|--------|
-| A | bounded context / 용어 / 권한 / 불변조건 / contract 변경 |
-| B | stageA memory / domain-map / 화면 구성 / composition 변경 |
-| C | plugin registry / navigation / feature flag / rollout 변경 |
-| D | 구현 완료 또는 수정 후 검증 필요 |
-| E | 반복 실패 / 수동 개입 증가 / 구조 단순화 필요 |
+### 2. 기준선 검증
 
-## 현재 상태
+```bash
+npm run validate:requirements
+npm run lint
+npm run validate:composition
+npm run test:contract
+npm test
+```
 
-**phase**: skeleton-initialized (2026-03-17)
+### 3. 런타임/상태 확인
 
-Stage A~E 모두 NOT_STARTED. requirements/requirements.yaml에 실제 모듈 정보를 입력하고 Stage A를 실행하면 된다.
+```bash
+npm run project:status
+npm run test:e2e-smoke
+python3 scripts/generate-master-planner.py --silent
+```
 
-→ memory/project/next-actions.yaml 참조
+## 빌드 및 테스트 방법
 
-## 관련 문서
+```bash
+npm run validate:requirements
+npm run lint
+npm run test:contract
+npm test
+npm run test:e2e-smoke
+npm run db:migrate:test
+```
 
-- **개념 이해**: docs/explanation/workflow-os-concept.md
-- **라우팅 규칙**: docs/reference/routing-rules.md
-- **Stage A 실행**: docs/how-to/run-stage-a.md
-- **현재 상태**: memory/project/current-state.yaml
-- **다음 작업**: memory/project/next-actions.yaml
-- **미해결 리스크**: memory/project/unresolved-risks.yaml
+추가 검증:
+
+```bash
+npm run type-check
+npm run scan:dependencies
+npm run check:advisory-policy
+npm run check:branch-protection-policy
+npm run generate:release-evidence
+```
+
+## 핵심 기능 / 모듈
+
+- `master planner`
+  프로젝트 시작 전 질문지, Planning Studio, Context Packet, Benchmark Action Pack, Live Ops Feed를 한 surface에서 읽는다.
+- `project status`
+  현재 Work Packet, Stage route 상태, promotion/context readiness, 필수 개선 3가지를 구조화해 출력한다.
+- `domain modules`
+  `task-management`, `billing`, `video`는 계약과 구현, smoke, authz, adversarial 검증을 포함한다.
+- `promotion/context pipeline`
+  context lock, drift, reread, handoff bundle, promotion decision, apply checkpoint를 artifact 단위로 관리한다.
+
+## 자주 발생하는 오류와 대응
+
+자세한 내용은 [troubleshooting.md](/root/workspace/my-module/docs/troubleshooting.md)를 본다.
+
+빠른 체크:
+
+- `validate:requirements FAIL`
+  `requirements/requirements.yaml`, `requirements/constraints.yaml`, 경로 참조를 먼저 확인한다.
+- `validate:composition FAIL`
+  `master-shell/plugin-registry/registry.yaml`, navigation, feature flags, catalog 연결을 확인한다.
+- `test:contract FAIL`
+  계약 파일과 구현/registry produced_by 경로가 어긋난 것이다.
+- `test:e2e-smoke FAIL`
+  서버 바인딩, feature flag, transport guardrail, runtime script 경로를 먼저 확인한다.
+- `project:status` 값이 비정상
+  `memory/current-wp.yaml`과 `memory/wp-queue.yaml`의 canonical packet 정합성을 먼저 확인한다.
+
+## 설정 / 환경 주의사항
+
+- root `memory/*.yaml`이 canonical 상태 surface다.
+- `memory/project/*`는 일부 레거시 스크립트와 문서 호환용 fallback이다.
+- `artifacts/`는 생성 산출물이므로 변경 목적을 설명할 수 있을 때만 Git 반영한다.
+- `npm run test:e2e-smoke`는 로컬 포트 바인딩이 가능한 환경에서 실행해야 한다.
+- `db:migrate:test`는 Node의 experimental SQLite warning이 보일 수 있으나 현재 기준선에서는 정상이다.
+- 원격 GitHub deployment environment 실증 증적은 여전히 operator-collected 항목이 있다.
+
+## Git 브랜치 전략
+
+요약만 적고, 상세 규칙은 [branch-strategy.md](/root/workspace/my-module/docs/branch-strategy.md)를 따른다.
+
+- `main`: 항상 안정 기준선. 직접 push 금지.
+- `develop`: 다음 통합 기준선. 제한적 직접 push 또는 PR-only 정책 중 하나로 운영.
+- `feature/*`: 일반 기능/개선
+- `fix/*`, `bugfix/*`: 핵심 오류 수정
+- `hotfix/*`: `main` 긴급 수정
+- `release/*`: 배포 직전 안정화
+- `recovery/*`: 롤백/복구
+- `sandbox/*`: 실험/고위험 검토
+
+현재 권장 작업 브랜치 패턴:
+
+```bash
+fix/core-<short-topic>
+feature/core-<short-topic>
+docs/core-<short-topic>
+```
+
+## 기여 / 작업 규칙
+
+- 변경은 가능한 한 작은 Work Packet 또는 작은 Git 커밋 단위로 쪼갠다.
+- 코드만 고치지 말고 contract, memory, worklog, docs 영향도 같이 확인한다.
+- root memory를 먼저 맞추고 legacy memory는 필요 시만 보조 갱신한다.
+- 완료 선언 전 최소 검증 명령과 rollback 포인트를 설명 가능해야 한다.
+- `main`에 직접 push하지 않는다.
+
+## 배포 / 반영 절차
+
+1. 작업 브랜치 생성
+2. 의미 단위별로 수정과 커밋 분리
+3. 기준선 검증 실행
+4. release evidence 생성 필요 여부 확인
+5. 원격 브랜치 push
+6. PR 생성
+7. 리뷰/required checks 통과 후 병합
+
+배포 직전 체크리스트는 [release-checklist.md](/root/workspace/my-module/docs/release-checklist.md)를 따른다.
+
+## 문서 위치 안내
+
+- 브랜치 전략: [branch-strategy.md](/root/workspace/my-module/docs/branch-strategy.md)
+- 개발/작업 흐름: [development-guide.md](/root/workspace/my-module/docs/development-guide.md)
+- AI 하네스 업그레이드 계획: [ai-harness-upgrade-plan.md](/root/workspace/my-module/docs/explanation/ai-harness-upgrade-plan.md)
+- 반복 프롬프트: [repeatable-cli-master-prompt.md](/root/workspace/my-module/docs/how-to/repeatable-cli-master-prompt.md)
+- 하네스 자료사전: [ai-harness-data-dictionary.md](/root/workspace/my-module/docs/reference/ai-harness-data-dictionary.md)
+- 검증 프로파일: [validation-profiles.md](/root/workspace/my-module/docs/reference/validation-profiles.md)
+- 트러블슈팅: [troubleshooting.md](/root/workspace/my-module/docs/troubleshooting.md)
+- 릴리즈 체크리스트: [release-checklist.md](/root/workspace/my-module/docs/release-checklist.md)
+- Git 거버넌스 기준: [git-governance.md](/root/workspace/my-module/docs/reference/git-governance.md)
+- Memory 스키마: [memory-schema.md](/root/workspace/my-module/docs/reference/memory-schema.md)
+- 품질 게이트: [quality-gates.md](/root/workspace/my-module/docs/reference/quality-gates.md)

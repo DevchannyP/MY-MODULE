@@ -1,0 +1,65 @@
+wp_id: "WP-HARNESS-VNEXT-014"
+goal: "provider port와 null/live adapter skeleton을 runtime에 연결한다."
+completed: true
+completed_at: "2026-04-15"
+tier: "arch"
+result: "PASS"
+
+context: |
+  KI-HARNESS-001의 남은 핵심은 계약만 있는 provider adapter를 실제 runtime invoke path에 연결하는 것이었다.
+  기존 /api/automation/optimize-prompt는 planning snapshot을 읽은 뒤 local string prompt만 반환했고,
+  HarnessRuntimeRouter가 계산한 route snapshot은 실제 provider selection에 사용되지 않았다.
+
+root_cause: |
+  control-center optimize-prompt 경로와 harness routing/telemetry/eval plane이 분리돼 있어
+  운영자가 보는 route snapshot과 실제 prompt generation path가 어긋나고 있었다.
+  또한 live provider 자격증명이 없는 환경에서 안전한 offline fallback 경로가 runtime surface에 연결돼 있지 않았다.
+
+fix_applied: |
+  HarnessProviderAdapter, NullHarnessProvider, OpenAIResponsesProvider skeleton을 통해
+  /api/automation/optimize-prompt가 HarnessRuntimeRouter snapshot을 실제 provider input으로 사용하도록 바꿨다.
+  응답은 기존 prompt 필드를 유지하면서 provider metadata와 harness_runtime snapshot을 확장 필드로 추가한다.
+  provider invocation은 telemetry metric/log와 eval artifact에 기록되고,
+  live secret이 없을 때는 null provider fallback으로 구조화 종료된다.
+
+files_created:
+  - "memory/stageD/harness-provider-adapter.yaml"
+  - "src/tests/unit/harnessProviderAdapter.test.js"
+  - "worklog/2026-04-15_WP-HARNESS-VNEXT-014.yaml"
+
+files_modified:
+  - "src/server/createServer.js"
+  - "src/infrastructure/ai/HarnessProviderAdapter.js"
+  - "src/infrastructure/ai/NullHarnessProvider.js"
+  - "src/infrastructure/ai/OpenAIResponsesProvider.js"
+  - "src/tests/smoke/controlCenterObservability.smoke.test.js"
+  - "src/tests/smoke/dynamicFrontendServer.smoke.test.js"
+  - "memory/current-state.yaml"
+  - "memory/current-wp.yaml"
+  - "memory/next-actions.yaml"
+  - "memory/wp-queue.yaml"
+
+validation:
+  harness_provider_adapter_unit: "PASS"
+  control_center_observability_smoke: "PASS"
+  dynamic_frontend_server_smoke: "PASS"
+  validate_harness_contract: "PASS"
+  check_harness_routing: "PASS"
+  wp_validate: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-014-D1"
+    decision: "optimize-prompt response는 backward-compatible하게 prompt를 유지하고 provider/harness_runtime를 확장 필드로만 추가한다"
+    rationale: "기존 OpenAPI/UI consumer를 깨지 않으면서 runtime observability를 노출해야 하기 때문이다."
+  - id: "HARNESS-VNEXT-014-D2"
+    decision: "live provider secret이 없는 기본 환경은 null provider를 정상 경로로 사용한다"
+    rationale: "sandbox/local 환경에서 기능을 끄는 대신 구조화된 offline fallback을 유지해야 smoke와 운영 surface가 안정적이기 때문이다."
+
+risks:
+  - id: "HARNESS-VNEXT-014-R1"
+    risk: "auth/rate-limit/timeout/schema mismatch를 모두 Stage E 관점으로 닫지는 못했다."
+    mitigation: "WP-HARNESS-VNEXT-015에서 provider failure mode adversarial validation과 rollback 기준을 추가한다."
+  - id: "HARNESS-VNEXT-014-R2"
+    risk: "OpenAIResponsesProvider는 skeleton 단계이며 실제 network integration은 환경 변수/secret 가용성에 의존한다."
+    mitigation: "null provider가 기본 경로를 유지하고, live path는 explicit provider selection + secret presence에서만 사용된다."

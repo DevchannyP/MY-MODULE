@@ -1,0 +1,159 @@
+{
+  "schema_version": "1",
+  "flags": {
+    "enable_experimental_features": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "실험 기능 전역 토글"
+    },
+    "enable_debug_mode": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "개발/운영 디버그 모드 전역 토글"
+    },
+    "enable_task_management": {
+      "owner": "productivity-team",
+      "stage": "released",
+      "expires_on": "2026-12-31",
+      "description": "작업 관리 플러그인 전체 노출 및 라우팅 활성화",
+      "rollout": {
+        "percentage": 100,
+        "bucket_by": "userId"
+      }
+    },
+    "enable_bulk_assign": {
+      "owner": "productivity-team",
+      "stage": "internal",
+      "expires_on": "2026-09-30",
+      "description": "작업 일괄 담당자 변경 실험 기능"
+    },
+    "billing.enabled": {
+      "owner": "platform-team",
+      "stage": "released",
+      "expires_on": "2026-12-31",
+      "description": "정산 도메인 전체 활성화",
+      "rollout": {
+        "percentage": 100,
+        "bucket_by": "userId"
+      }
+    },
+    "billing.invoice.enabled": {
+      "owner": "platform-team",
+      "stage": "released",
+      "expires_on": "2026-12-31",
+      "description": "인보이스 목록/상세 UI 및 API 활성화"
+    },
+    "billing.payment.enabled": {
+      "owner": "platform-team",
+      "stage": "released",
+      "expires_on": "2026-12-31",
+      "description": "결제상태 추적 UI 및 API 활성화"
+    },
+    "billing.exception.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "정산 예외처리 관리자 기능 활성화",
+      "allow": {
+        "permissions_any": [
+          "billing.admin"
+        ]
+      }
+    },
+    "video.enabled": {
+      "owner": "video-team",
+      "stage": "released",
+      "expires_on": "2026-12-31",
+      "description": "비디오 도메인 전체 활성화",
+      "rollout": {
+        "percentage": 100,
+        "bucket_by": "userId"
+      }
+    },
+    "video.upload.enabled": {
+      "owner": "video-team",
+      "stage": "released",
+      "expires_on": "2026-12-31",
+      "description": "비디오 업로드 기능 활성화"
+    },
+    "video.transcode.enabled": {
+      "owner": "video-team",
+      "stage": "internal",
+      "expires_on": "2026-10-31",
+      "description": "트랜스코딩 기능 활성화",
+      "allow": {
+        "permissions_any": [
+          "video:write",
+          "video:admin"
+        ]
+      }
+    },
+    "video.admin.enabled": {
+      "owner": "video-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "비디오 관리자 기능 활성화",
+      "allow": {
+        "permissions_any": [
+          "video:admin"
+        ]
+      }
+    },
+    "system_api.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "System OS UI API 전체 활성화"
+    },
+    "system_api.sse_stream.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "System OS SSE 실시간 스트림 활성화"
+    },
+    "system_api.flag_toggle_ui.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "피처 플래그 UI 토글 활성화 (system.admin 전용)",
+      "allow": {
+        "permissions_any": ["system.admin"]
+      }
+    },
+    "system_api.rollback_ui.enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "롤백 콘솔 UI 활성화 (system.admin 전용)",
+      "allow": {
+        "permissions_any": ["system.admin"]
+      }
+    },
+    "harness_routing_frontier_research": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 frontier research 라우팅 모드"
+    },
+    "harness_routing_mini_build": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 mini/build 라우팅 모드"
+    },
+    "harness_prompt_caching_enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 프롬프트 캐싱 활성화"
+    },
+    "harness_batch_eval_enabled": {
+      "owner": "platform-team",
+      "stage": "internal",
+      "expires_on": "2026-12-31",
+      "description": "하네스 배치 eval 활성화"
+    }
+  }
+}

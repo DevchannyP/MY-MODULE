@@ -1,0 +1,7 @@
+{
+  "name": "@my-module/video",
+  "version": "0.1.0",
+  "private": true,
+  "description": "video 도메인 모듈",
+  "workflowOS": { "domain_id": "video", "ejection_ready": false }
+}

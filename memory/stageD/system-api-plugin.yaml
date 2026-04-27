@@ -1,0 +1,64 @@
+# Stage D Memory - system-api 플러그인 runtime/static wiring
+# 생성일: 2026-04-15
+
+module_id: "system-os"
+plugin_id: "system-api-plugin"
+stage: "D"
+status: "PASS"
+
+implementation_surface:
+  runtime_entrypoint: "src/server/createServer.js:/api/v1/system/*"
+  controller: "src/infrastructure/SystemApiController.js"
+  static_shell_source: "scripts/generate-mindmap.js"
+  stage_c_memory_ref: "memory/stageC/system-api-plugin.yaml"
+
+runtime_alignment:
+  root_gate: "system_api.enabled"
+  subfeature_gates:
+    sse_stream: "system_api.sse_stream.enabled"
+    flag_toggle_ui: "system_api.flag_toggle_ui.enabled"
+    rollback_ui: "system_api.rollback_ui.enabled"
+  behavior:
+    default_false_surface: "system_api.enabled=false일 때 /api/v1/system/*는 404로 비노출된다."
+    sse_disabled_surface: "system_api.sse_stream.enabled=false일 때 /api/v1/system/events는 503 FEATURE_DISABLED를 반환한다."
+    admin_actions: "flag toggle / rollback는 runtime flag provider와 system.admin 권한을 함께 따른다."
+
+catalog_alignment:
+  domain_id: "system"
+  routes:
+    - "/"
+    - "/catalog"
+    - "/flags"
+    - "/audit"
+    - "/quality"
+    - "/lifecycle"
+    - "/rollback"
+  contracts:
+    capability: "contracts/system-api/capability.yaml"
+    openapi: "contracts/system-api/openapi.yaml"
+    ui: "contracts/ui-shell/ui-contract.yaml"
+    events: "contracts/system-api/events.schema.json"
+  adapter_profile: "master-os-shell"
+
+quality_bundle:
+  runtime_smoke:
+    command: "node --test src/tests/smoke/systemApiRuntime.smoke.test.js"
+    result: "PASS"
+    coverage_note: "system_api.enabled root gate, sub-feature 503 surface, SSE mount를 검증한다."
+  dynamic_frontend_smoke:
+    command: "node --test src/tests/smoke/dynamicFrontendServer.smoke.test.js"
+    result: "PASS"
+    coverage_note: "기존 dynamic UI/runtime surface 회귀가 없는지 확인한다."
+  composition_gate:
+    command: "npm run validate:composition"
+    result: "PASS"
+    coverage_note: "registry/nav/catalog/flags/observability 조합 정합성을 유지한다."
+  lint:
+    command: "npm run lint"
+    result: "PASS"
+    coverage_note: "runtime/controller/static-shell source 변경이 lint 기준을 깨지 않는다."
+
+notes: |
+  - createServer가 SystemApiController를 실제 HTTP runtime에 연결해 system_api.enabled 기준으로 전체 surface를 gate한다.
+  - SystemApiController는 raw flags.yaml만이 아니라 runtime flag provider truth를 우선 사용해 list/toggle/rollback gating을 계산한다.
+  - generate-mindmap.js는 system_api.enabled와 system_api.sse_stream.enabled 기본값을 false로 고정해 static shell source도 Stage C safe default와 일치한다.

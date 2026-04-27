@@ -1,0 +1,6023 @@
+$ npm test
+
+> my-module@0.2.0 test
+> node --test 'domains/**/tests/**/*.test.js' 'src/tests/unit/**/*.test.js'
+
+TAP version 13
+# Subtest: [Stage E] INV-B001: total 불변조건 우회 불가
+    # Subtest: total 필드는 getter-only — setter가 없다
+    ok 1 - total 필드는 getter-only — setter가 없다
+      ---
+      duration_ms: 0.98727
+      type: 'test'
+      ...
+    # Subtest: lineItems 배열은 동결되어 외부 변형이 거부된다 (Object.freeze)
+    ok 2 - lineItems 배열은 동결되어 외부 변형이 거부된다 (Object.freeze)
+      ---
+      duration_ms: 0.78583
+      type: 'test'
+      ...
+    1..2
+ok 1 - [Stage E] INV-B001: total 불변조건 우회 불가
+  ---
+  duration_ms: 2.357002
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-B002: terminal 상태에서 전이 시도
+    # Subtest: PAID 인보이스에서 PENDING으로 되돌리기 불가
+    ok 1 - PAID 인보이스에서 PENDING으로 되돌리기 불가
+      ---
+      duration_ms: 1.571851
+      type: 'test'
+      ...
+    # Subtest: CANCELLED 인보이스에서 PENDING으로 되돌리기 불가
+    ok 2 - CANCELLED 인보이스에서 PENDING으로 되돌리기 불가
+      ---
+      duration_ms: 0.299606
+      type: 'test'
+      ...
+    1..2
+ok 2 - [Stage E] INV-B002: terminal 상태에서 전이 시도
+  ---
+  duration_ms: 2.02889
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-B005: 관리자 승인 우회 불가
+    # Subtest: TransitionInvoiceStatusUseCase로 DISPUTED→PAID 시도하면 FORBIDDEN
+    ok 1 - TransitionInvoiceStatusUseCase로 DISPUTED→PAID 시도하면 FORBIDDEN
+      ---
+      duration_ms: 0.214404
+      type: 'test'
+      ...
+    # Subtest: 도메인 서비스: hasAdminApproval=false이면 INV-B005 오류
+    ok 2 - 도메인 서비스: hasAdminApproval=false이면 INV-B005 오류
+      ---
+      duration_ms: 0.197354
+      type: 'test'
+      ...
+    # Subtest: billing.admin 없는 사용자의 ApproveBillingExceptionUseCase 호출 → FORBIDDEN
+    ok 3 - billing.admin 없는 사용자의 ApproveBillingExceptionUseCase 호출 → FORBIDDEN
+      ---
+      duration_ms: 0.450249
+      type: 'test'
+      ...
+    1..3
+ok 3 - [Stage E] INV-B005: 관리자 승인 우회 불가
+  ---
+  duration_ms: 1.078592
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-B004: 라인 항목 음수/0 금액 거부
+    # Subtest: unitPrice 0원이면 거부
+    ok 1 - unitPrice 0원이면 거부
+      ---
+      duration_ms: 0.184794
+      type: 'test'
+      ...
+    # Subtest: unitPrice 음수이면 거부
+    ok 2 - unitPrice 음수이면 거부
+      ---
+      duration_ms: 0.147002
+      type: 'test'
+      ...
+    # Subtest: unitPrice -999이면 거부
+    ok 3 - unitPrice -999이면 거부
+      ---
+      duration_ms: 0.277386
+      type: 'test'
+      ...
+    1..3
+ok 4 - [Stage E] INV-B004: 라인 항목 음수/0 금액 거부
+  ---
+  duration_ms: 0.797996
+  type: 'suite'
+  ...
+# Subtest: [Stage E] 이중 승인 방어
+    # Subtest: 이미 APPROVED된 예외 항목에 재승인 시도하면 오류
+    ok 1 - 이미 APPROVED된 예외 항목에 재승인 시도하면 오류
+      ---
+      duration_ms: 0.243385
+      type: 'test'
+      ...
+    # Subtest: 병렬 승인 시도 — 두 번째 승인은 CONFLICT, 이벤트는 1번만 발행
+    ok 2 - 병렬 승인 시도 — 두 번째 승인은 CONFLICT, 이벤트는 1번만 발행
+      ---
+      duration_ms: 0.557591
+      type: 'test'
+      ...
+    1..2
+ok 5 - [Stage E] 이중 승인 방어
+  ---
+  duration_ms: 0.922828
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-B003: PAID 인보이스 삭제 불가
+    # Subtest: PAID 인보이스 delete 시도하면 CONFLICT
+    ok 1 - PAID 인보이스 delete 시도하면 CONFLICT
+      ---
+      duration_ms: 0.196914
+      type: 'test'
+      ...
+    1..1
+ok 6 - [Stage E] INV-B003: PAID 인보이스 삭제 불가
+  ---
+  duration_ms: 0.253335
+  type: 'suite'
+  ...
+# Subtest: [Stage E] GAP-B001: 비-DISPUTED 인보이스 approve 오류 코드 검증
+    # Subtest: PAID 인보이스에 approve 시도 → CONFLICT (not 500)
+    ok 1 - PAID 인보이스에 approve 시도 → CONFLICT (not 500)
+      ---
+      duration_ms: 0.248285
+      type: 'test'
+      ...
+    # Subtest: CANCELLED 인보이스에 approve 시도 → CONFLICT (not 500)
+    ok 2 - CANCELLED 인보이스에 approve 시도 → CONFLICT (not 500)
+      ---
+      duration_ms: 0.117482
+      type: 'test'
+      ...
+    # Subtest: PENDING 인보이스에 approve 시도 → CONFLICT (not 500)
+    ok 3 - PENDING 인보이스에 approve 시도 → CONFLICT (not 500)
+      ---
+      duration_ms: 0.193264
+      type: 'test'
+      ...
+    1..3
+ok 7 - [Stage E] GAP-B001: 비-DISPUTED 인보이스 approve 오류 코드 검증
+  ---
+  duration_ms: 0.670104
+  type: 'suite'
+  ...
+# Subtest: [Stage E] GAP-B002: 단일통화 제약 — 빈 인보이스 total 통화
+    # Subtest: 빈 인보이스 total은 KRW 0 (단일통화 전제)
+    ok 1 - 빈 인보이스 total은 KRW 0 (단일통화 전제)
+      ---
+      duration_ms: 0.127733
+      type: 'test'
+      ...
+    # Subtest: 라인 항목 통화와 total 통화가 일치한다
+    ok 2 - 라인 항목 통화와 total 통화가 일치한다
+      ---
+      duration_ms: 0.097561
+      type: 'test'
+      ...
+    # Subtest: 혼합 통화 라인 항목은 add()에서 오류 — 단일통화 전제 유지
+    ok 3 - 혼합 통화 라인 항목은 add()에서 오류 — 단일통화 전제 유지
+      ---
+      duration_ms: 0.100842
+      type: 'test'
+      ...
+    1..3
+ok 8 - [Stage E] GAP-B002: 단일통화 제약 — 빈 인보이스 total 통화
+  ---
+  duration_ms: 0.414358
+  type: 'suite'
+  ...
+# Subtest: AddLineItemUseCase
+    # Subtest: 라인 항목 추가 성공 → total 합산 반영 (INV-B001)
+    ok 1 - 라인 항목 추가 성공 → total 합산 반영 (INV-B001)
+      ---
+      duration_ms: 1.49674
+      type: 'test'
+      ...
+    # Subtest: Money 인스턴스 직접 전달 성공
+    ok 2 - Money 인스턴스 직접 전달 성공
+      ---
+      duration_ms: 0.255395
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 3 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.605803
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 invoiceId → NOT_FOUND
+    ok 4 - 존재하지 않는 invoiceId → NOT_FOUND
+      ---
+      duration_ms: 0.191254
+      type: 'test'
+      ...
+    # Subtest: INV-B004: 0원 라인 항목 → 거부
+    ok 5 - INV-B004: 0원 라인 항목 → 거부
+      ---
+      duration_ms: 0.204104
+      type: 'test'
+      ...
+    # Subtest: INV-B004: 음수 금액 → 거부
+    ok 6 - INV-B004: 음수 금액 → 거부
+      ---
+      duration_ms: 0.178994
+      type: 'test'
+      ...
+    # Subtest: 여러 라인 항목 누적 → total 합산
+    ok 7 - 여러 라인 항목 누적 → total 합산
+      ---
+      duration_ms: 0.233465
+      type: 'test'
+      ...
+    1..7
+ok 9 - AddLineItemUseCase
+  ---
+  duration_ms: 4.083361
+  type: 'suite'
+  ...
+# Subtest: ApproveBillingExceptionUseCase (INV-B005)
+    # Subtest: billing.admin으로 DISPUTED→PAID 전이 성공
+    ok 1 - billing.admin으로 DISPUTED→PAID 전이 성공
+      ---
+      duration_ms: 1.619702
+      type: 'test'
+      ...
+    # Subtest: BillingExceptionApproved 이벤트 발행
+    ok 2 - BillingExceptionApproved 이벤트 발행
+      ---
+      duration_ms: 0.260906
+      type: 'test'
+      ...
+    # Subtest: INV-B005: billing.admin 없으면 FORBIDDEN
+    ok 3 - INV-B005: billing.admin 없으면 FORBIDDEN
+      ---
+      duration_ms: 0.512141
+      type: 'test'
+      ...
+    # Subtest: reason 없으면 VALIDATION_ERROR
+    ok 4 - reason 없으면 VALIDATION_ERROR
+      ---
+      duration_ms: 0.261515
+      type: 'test'
+      ...
+    # Subtest: 이미 처리된 예외는 CONFLICT
+    ok 5 - 이미 처리된 예외는 CONFLICT
+      ---
+      duration_ms: 0.335437
+      type: 'test'
+      ...
+    # Subtest: INV-B002: DISPUTED가 아닌 인보이스에 연결된 예외 승인 시 오류
+    ok 6 - INV-B002: DISPUTED가 아닌 인보이스에 연결된 예외 승인 시 오류
+      ---
+      duration_ms: 0.193354
+      type: 'test'
+      ...
+    1..6
+ok 10 - ApproveBillingExceptionUseCase (INV-B005)
+  ---
+  duration_ms: 4.01208
+  type: 'suite'
+  ...
+# Subtest: CreateInvoiceUseCase
+    # Subtest: billing.write 권한으로 DRAFT 인보이스 생성 성공
+    ok 1 - billing.write 권한으로 DRAFT 인보이스 생성 성공
+      ---
+      duration_ms: 1.219714
+      type: 'test'
+      ...
+    # Subtest: InvoiceCreated 이벤트를 발행한다
+    ok 2 - InvoiceCreated 이벤트를 발행한다
+      ---
+      duration_ms: 0.182844
+      type: 'test'
+      ...
+    # Subtest: billing.write 없으면 FORBIDDEN
+    ok 3 - billing.write 없으면 FORBIDDEN
+      ---
+      duration_ms: 0.413218
+      type: 'test'
+      ...
+    # Subtest: customerId 없으면 VALIDATION_ERROR
+    ok 4 - customerId 없으면 VALIDATION_ERROR
+      ---
+      duration_ms: 0.150843
+      type: 'test'
+      ...
+    1..4
+ok 11 - CreateInvoiceUseCase
+  ---
+  duration_ms: 2.735864
+  type: 'suite'
+  ...
+# Subtest: GetBillingSummaryUseCase
+    # Subtest: 빈 저장소 → 모든 count 0
+    ok 1 - 빈 저장소 → 모든 count 0
+      ---
+      duration_ms: 4.02018
+      type: 'test'
+      ...
+    # Subtest: 인보이스 2개 생성 → total_invoices=2
+    ok 2 - 인보이스 2개 생성 → total_invoices=2
+      ---
+      duration_ms: 0.857377
+      type: 'test'
+      ...
+    # Subtest: PENDING 인보이스 → pending_count 반영
+    ok 3 - PENDING 인보이스 → pending_count 반영
+      ---
+      duration_ms: 0.393568
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 4 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.638362
+      type: 'test'
+      ...
+    # Subtest: billing.write는 billing.read 없이 summary 조회 불가 → FORBIDDEN
+    ok 5 - billing.write는 billing.read 없이 summary 조회 불가 → FORBIDDEN
+      ---
+      duration_ms: 0.155333
+      type: 'test'
+      ...
+    # Subtest: [NFR async-first] 4개 조회가 Promise.all 병렬 실행 — 단일 execute 호출로 5개 필드 일관 반환
+    ok 6 - [NFR async-first] 4개 조회가 Promise.all 병렬 실행 — 단일 execute 호출로 5개 필드 일관 반환
+      ---
+      duration_ms: 0.329736
+      type: 'test'
+      ...
+    1..6
+ok 12 - GetBillingSummaryUseCase
+  ---
+  duration_ms: 8.797431
+  type: 'suite'
+  ...
+# Subtest: GetInvoiceListUseCase
+    # Subtest: 빈 저장소 → items=[], total=0
+    ok 1 - 빈 저장소 → items=[], total=0
+      ---
+      duration_ms: 0.797196
+      type: 'test'
+      ...
+    # Subtest: 인보이스 3개 → total=3, items 반환
+    ok 2 - 인보이스 3개 → total=3, items 반환
+      ---
+      duration_ms: 0.875957
+      type: 'test'
+      ...
+    # Subtest: customerId 필터 동작
+    ok 3 - customerId 필터 동작
+      ---
+      duration_ms: 0.247235
+      type: 'test'
+      ...
+    # Subtest: status 필터: PENDING만 반환
+    ok 4 - status 필터: PENDING만 반환
+      ---
+      duration_ms: 0.452899
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션: pageSize=1
+    ok 5 - 페이지네이션: pageSize=1
+      ---
+      duration_ms: 0.292845
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 6 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.545901
+      type: 'test'
+      ...
+    1..6
+ok 13 - GetInvoiceListUseCase
+  ---
+  duration_ms: 4.134102
+  type: 'suite'
+  ...
+# Subtest: GetPaymentUseCase
+    # Subtest: billing.read 없으면 FORBIDDEN
+    ok 1 - billing.read 없으면 FORBIDDEN
+      ---
+      duration_ms: 1.034201
+      type: 'test'
+      ...
+    # Subtest: billing.write만 있으면 FORBIDDEN
+    ok 2 - billing.write만 있으면 FORBIDDEN
+      ---
+      duration_ms: 0.139713
+      type: 'test'
+      ...
+    # Subtest: paymentId 누락 → VALIDATION_ERROR
+    ok 3 - paymentId 누락 → VALIDATION_ERROR
+      ---
+      duration_ms: 1.050181
+      type: 'test'
+      ...
+    # Subtest: 존재하는 paymentId → Payment 반환
+    ok 4 - 존재하는 paymentId → Payment 반환
+      ---
+      duration_ms: 0.453259
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 paymentId → NOT_FOUND
+    ok 5 - 존재하지 않는 paymentId → NOT_FOUND
+      ---
+      duration_ms: 0.131293
+      type: 'test'
+      ...
+    1..5
+ok 14 - GetPaymentUseCase
+  ---
+  duration_ms: 3.745425
+  type: 'suite'
+  ...
+# Subtest: ListPaymentsUseCase
+    # Subtest: billing.read 없으면 FORBIDDEN
+    ok 1 - billing.read 없으면 FORBIDDEN
+      ---
+      duration_ms: 1.154763
+      type: 'test'
+      ...
+    # Subtest: billing.write만 있으면 FORBIDDEN (read 없음)
+    ok 2 - billing.write만 있으면 FORBIDDEN (read 없음)
+      ---
+      duration_ms: 0.145253
+      type: 'test'
+      ...
+    # Subtest: 빈 저장소 → items=[], total=0
+    ok 3 - 빈 저장소 → items=[], total=0
+      ---
+      duration_ms: 1.176864
+      type: 'test'
+      ...
+    # Subtest: 결제 1건 저장 후 조회 → items.length=1
+    ok 4 - 결제 1건 저장 후 조회 → items.length=1
+      ---
+      duration_ms: 0.46905
+      type: 'test'
+      ...
+    # Subtest: invoiceId 필터 → 해당 invoice 결제만 반환
+    ok 5 - invoiceId 필터 → 해당 invoice 결제만 반환
+      ---
+      duration_ms: 0.186583
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션 — pageSize=1, page=2 → 두 번째 항목
+    ok 6 - 페이지네이션 — pageSize=1, page=2 → 두 번째 항목
+      ---
+      duration_ms: 0.193414
+      type: 'test'
+      ...
+    1..6
+ok 15 - ListPaymentsUseCase
+  ---
+  duration_ms: 4.783705
+  type: 'suite'
+  ...
+# Subtest: RejectBillingExceptionUseCase
+    # Subtest: 정상 거부 → status=REJECTED, 이벤트 발행
+    ok 1 - 정상 거부 → status=REJECTED, 이벤트 발행
+      ---
+      duration_ms: 1.350048
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 (NO_PERM) → FORBIDDEN
+    ok 2 - 권한 없음 (NO_PERM) → FORBIDDEN
+      ---
+      duration_ms: 0.613663
+      type: 'test'
+      ...
+    # Subtest: billing.write만으로는 불가 (billing.admin 필요)
+    ok 3 - billing.write만으로는 불가 (billing.admin 필요)
+      ---
+      duration_ms: 0.190644
+      type: 'test'
+      ...
+    # Subtest: reason 누락 → VALIDATION_ERROR
+    ok 4 - reason 누락 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.136992
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 exceptionId → NOT_FOUND
+    ok 5 - 존재하지 않는 exceptionId → NOT_FOUND
+      ---
+      duration_ms: 0.172874
+      type: 'test'
+      ...
+    # Subtest: 이미 처리된 예외 항목 거부 → CONFLICT
+    ok 6 - 이미 처리된 예외 항목 거부 → CONFLICT
+      ---
+      duration_ms: 0.253925
+      type: 'test'
+      ...
+    # Subtest: correlationId가 이벤트 페이로드에 포함됨
+    ok 7 - correlationId가 이벤트 페이로드에 포함됨
+      ---
+      duration_ms: 0.229035
+      type: 'test'
+      ...
+    1..7
+ok 16 - RejectBillingExceptionUseCase
+  ---
+  duration_ms: 3.860818
+  type: 'suite'
+  ...
+# Subtest: RetryPaymentSyncUseCase
+    # Subtest: billing.write 없으면 FORBIDDEN
+    ok 1 - billing.write 없으면 FORBIDDEN
+      ---
+      duration_ms: 1.082292
+      type: 'test'
+      ...
+    # Subtest: billing.read만 있으면 FORBIDDEN (write 필요)
+    ok 2 - billing.read만 있으면 FORBIDDEN (write 필요)
+      ---
+      duration_ms: 0.149053
+      type: 'test'
+      ...
+    # Subtest: paymentId 누락 → VALIDATION_ERROR
+    ok 3 - paymentId 누락 → VALIDATION_ERROR
+      ---
+      duration_ms: 1.068411
+      type: 'test'
+      ...
+    # Subtest: 존재하는 paymentId → Payment 반환 (ADR-0006 Phase 2 전 기본 동작)
+    ok 4 - 존재하는 paymentId → Payment 반환 (ADR-0006 Phase 2 전 기본 동작)
+      ---
+      duration_ms: 0.487499
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 paymentId → NOT_FOUND
+    ok 5 - 존재하지 않는 paymentId → NOT_FOUND
+      ---
+      duration_ms: 0.172674
+      type: 'test'
+      ...
+    1..5
+ok 17 - RetryPaymentSyncUseCase
+  ---
+  duration_ms: 4.00888
+  type: 'suite'
+  ...
+# Subtest: TransitionInvoiceStatusUseCase
+    # Subtest: DRAFT → PENDING 전이 성공
+    ok 1 - DRAFT → PENDING 전이 성공
+      ---
+      duration_ms: 1.185554
+      type: 'test'
+      ...
+    # Subtest: InvoiceStatusChanged 이벤트 발행
+    ok 2 - InvoiceStatusChanged 이벤트 발행
+      ---
+      duration_ms: 0.233285
+      type: 'test'
+      ...
+    # Subtest: INV-B005: DISPUTED→PAID는 이 유스케이스에서 FORBIDDEN
+    ok 3 - INV-B005: DISPUTED→PAID는 이 유스케이스에서 FORBIDDEN
+      ---
+      duration_ms: 0.762695
+      type: 'test'
+      ...
+    # Subtest: billing.write 없으면 FORBIDDEN
+    ok 4 - billing.write 없으면 FORBIDDEN
+      ---
+      duration_ms: 0.226354
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 invoiceId면 NOT_FOUND
+    ok 5 - 존재하지 않는 invoiceId면 NOT_FOUND
+      ---
+      duration_ms: 0.121902
+      type: 'test'
+      ...
+    # Subtest: INV-B002: 허용되지 않는 전이는 도메인에서 오류
+    ok 6 - INV-B002: 허용되지 않는 전이는 도메인에서 오류
+      ---
+      duration_ms: 0.255425
+      type: 'test'
+      ...
+    1..6
+ok 18 - TransitionInvoiceStatusUseCase
+  ---
+  duration_ms: 3.802515
+  type: 'suite'
+  ...
+# Subtest: InMemoryInvoiceRepository satisfies InvoiceRepository port interface
+ok 19 - InMemoryInvoiceRepository satisfies InvoiceRepository port interface
+  ---
+  duration_ms: 0.664253
+  type: 'test'
+  ...
+# Subtest: InMemoryBillingExceptionRepository satisfies BillingExceptionRepository port interface
+ok 20 - InMemoryBillingExceptionRepository satisfies BillingExceptionRepository port interface
+  ---
+  duration_ms: 0.212404
+  type: 'test'
+  ...
+# Subtest: InMemoryPaymentRepository satisfies PaymentRepository port interface
+ok 21 - InMemoryPaymentRepository satisfies PaymentRepository port interface
+  ---
+  duration_ms: 0.103202
+  type: 'test'
+  ...
+# Subtest: BillingException Entity
+    # Subtest: create → OPEN 상태 생성
+    ok 1 - create → OPEN 상태 생성
+      ---
+      duration_ms: 0.951588
+      type: 'test'
+      ...
+    # Subtest: approve() → APPROVED 상태 + 불변 패턴(새 인스턴스)
+    ok 2 - approve() → APPROVED 상태 + 불변 패턴(새 인스턴스)
+      ---
+      duration_ms: 0.251175
+      type: 'test'
+      ...
+    # Subtest: reject() → REJECTED 상태 + 불변 패턴
+    ok 3 - reject() → REJECTED 상태 + 불변 패턴
+      ---
+      duration_ms: 0.151603
+      type: 'test'
+      ...
+    # Subtest: [회귀] 이중 approve 시도 → code=CONFLICT (HTTP 409 보장)
+    ok 4 - [회귀] 이중 approve 시도 → code=CONFLICT (HTTP 409 보장)
+      ---
+      duration_ms: 0.172254
+      type: 'test'
+      ...
+    # Subtest: [회귀] 이중 reject 시도 → code=CONFLICT (HTTP 409 보장)
+    ok 5 - [회귀] 이중 reject 시도 → code=CONFLICT (HTTP 409 보장)
+      ---
+      duration_ms: 1.107622
+      type: 'test'
+      ...
+    # Subtest: [회귀] approve 후 reject 시도 → code=CONFLICT
+    ok 6 - [회귀] approve 후 reject 시도 → code=CONFLICT
+      ---
+      duration_ms: 0.148443
+      type: 'test'
+      ...
+    # Subtest: 유효하지 않은 exceptionType → 생성 오류
+    ok 7 - 유효하지 않은 exceptionType → 생성 오류
+      ---
+      duration_ms: 0.431428
+      type: 'test'
+      ...
+    # Subtest: toJSON() → snake_case 구조 검증
+    ok 8 - toJSON() → snake_case 구조 검증
+      ---
+      duration_ms: 0.619543
+      type: 'test'
+      ...
+    1..8
+ok 22 - BillingException Entity
+  ---
+  duration_ms: 4.948259
+  type: 'suite'
+  ...
+# Subtest: Invoice Entity
+    # Subtest: Invoice.create()
+        # Subtest: DRAFT 상태로 생성된다
+        ok 1 - DRAFT 상태로 생성된다
+          ---
+          duration_ms: 0.744055
+          type: 'test'
+          ...
+        # Subtest: customerId 없으면 오류
+        ok 2 - customerId 없으면 오류
+          ---
+          duration_ms: 0.366587
+          type: 'test'
+          ...
+        # Subtest: 생성 직후 lineItems는 빈 배열
+        ok 3 - 생성 직후 lineItems는 빈 배열
+          ---
+          duration_ms: 0.115562
+          type: 'test'
+          ...
+        1..3
+    ok 1 - Invoice.create()
+      ---
+      duration_ms: 1.766455
+      type: 'suite'
+      ...
+    # Subtest: INV-B001: total 계산 불변조건
+        # Subtest: 라인 항목이 없으면 total은 0
+        ok 1 - 라인 항목이 없으면 total은 0
+          ---
+          duration_ms: 0.183704
+          type: 'test'
+          ...
+        # Subtest: 라인 항목 합산이 total과 일치한다
+        ok 2 - 라인 항목 합산이 total과 일치한다
+          ---
+          duration_ms: 0.235645
+          type: 'test'
+          ...
+        # Subtest: total은 항상 계산값 — setter 없음
+        ok 3 - total은 항상 계산값 — setter 없음
+          ---
+          duration_ms: 0.157583
+          type: 'test'
+          ...
+        1..3
+    ok 2 - INV-B001: total 계산 불변조건
+      ---
+      duration_ms: 1.349217
+      type: 'suite'
+      ...
+    # Subtest: addLineItem()
+        # Subtest: DRAFT 상태에서 라인 항목 추가 성공
+        ok 1 - DRAFT 상태에서 라인 항목 추가 성공
+          ---
+          duration_ms: 0.274456
+          type: 'test'
+          ...
+        # Subtest: INV-B004: unitPrice가 0이면 거부
+        ok 2 - INV-B004: unitPrice가 0이면 거부
+          ---
+          duration_ms: 0.170844
+          type: 'test'
+          ...
+        # Subtest: INV-B004: 음수 단가 거부
+        ok 3 - INV-B004: 음수 단가 거부
+          ---
+          duration_ms: 0.168994
+          type: 'test'
+          ...
+        # Subtest: INV-B002: PENDING 상태에서는 라인 항목 추가 불가
+        ok 4 - INV-B002: PENDING 상태에서는 라인 항목 추가 불가
+          ---
+          duration_ms: 0.298336
+          type: 'test'
+          ...
+        # Subtest: quantity < 1이면 오류
+        ok 5 - quantity < 1이면 오류
+          ---
+          duration_ms: 0.123552
+          type: 'test'
+          ...
+        1..5
+    ok 3 - addLineItem()
+      ---
+      duration_ms: 1.329927
+      type: 'suite'
+      ...
+    # Subtest: INV-B002: transitionTo()
+        # Subtest: DRAFT → PENDING 성공
+        ok 1 - DRAFT → PENDING 성공
+          ---
+          duration_ms: 0.117102
+          type: 'test'
+          ...
+        # Subtest: DRAFT → PAID 실패 (허용되지 않은 전이)
+        ok 2 - DRAFT → PAID 실패 (허용되지 않은 전이)
+          ---
+          duration_ms: 0.081381
+          type: 'test'
+          ...
+        # Subtest: PAID → PENDING 실패 (terminal)
+        ok 3 - PAID → PENDING 실패 (terminal)
+          ---
+          duration_ms: 1.045158
+          type: 'test'
+          ...
+        # Subtest: 상태 전이 후 새 Invoice 인스턴스 반환 (불변 패턴)
+        ok 4 - 상태 전이 후 새 Invoice 인스턴스 반환 (불변 패턴)
+          ---
+          duration_ms: 0.151613
+          type: 'test'
+          ...
+        1..4
+    ok 4 - INV-B002: transitionTo()
+      ---
+      duration_ms: 1.556008
+      type: 'suite'
+      ...
+    # Subtest: 에러 코드 회귀 테스트
+        # Subtest: [회귀] INV-B002 라인항목 DRAFT 외 → code=CONFLICT
+        ok 1 - [회귀] INV-B002 라인항목 DRAFT 외 → code=CONFLICT
+          ---
+          duration_ms: 0.169913
+          type: 'test'
+          ...
+        # Subtest: [회귀] INV-B004 음수 단가 → code=VALIDATION_ERROR
+        ok 2 - [회귀] INV-B004 음수 단가 → code=VALIDATION_ERROR
+          ---
+          duration_ms: 0.135222
+          type: 'test'
+          ...
+        # Subtest: [회귀] INV-B002 허용되지 않은 전이 → code=CONFLICT
+        ok 3 - [회귀] INV-B002 허용되지 않은 전이 → code=CONFLICT
+          ---
+          duration_ms: 0.093362
+          type: 'test'
+          ...
+        # Subtest: [회귀] quantity < 1 → code=VALIDATION_ERROR
+        ok 4 - [회귀] quantity < 1 → code=VALIDATION_ERROR
+          ---
+          duration_ms: 0.094772
+          type: 'test'
+          ...
+        1..4
+    ok 5 - 에러 코드 회귀 테스트
+      ---
+      duration_ms: 0.596722
+      type: 'suite'
+      ...
+    # Subtest: 불변 패턴 검증
+        # Subtest: addLineItem은 새 Invoice를 반환한다
+        ok 1 - addLineItem은 새 Invoice를 반환한다
+          ---
+          duration_ms: 0.106302
+          type: 'test'
+          ...
+        1..1
+    ok 6 - 불변 패턴 검증
+      ---
+      duration_ms: 0.151743
+      type: 'suite'
+      ...
+    1..6
+ok 23 - Invoice Entity
+  ---
+  duration_ms: 8.554208
+  type: 'suite'
+  ...
+# Subtest: Payment Entity
+    # Subtest: Payment.create → PENDING 상태, amount/invoiceId 보존
+    ok 1 - Payment.create → PENDING 상태, amount/invoiceId 보존
+      ---
+      duration_ms: 1.292406
+      type: 'test'
+      ...
+    # Subtest: amount JSON 형태로 전달해도 Money 인스턴스로 변환됨
+    ok 2 - amount JSON 형태로 전달해도 Money 인스턴스로 변환됨
+      ---
+      duration_ms: 0.197034
+      type: 'test'
+      ...
+    # Subtest: isMismatch() — MISMATCH 상태에서만 true
+    ok 3 - isMismatch() — MISMATCH 상태에서만 true
+      ---
+      duration_ms: 0.129503
+      type: 'test'
+      ...
+    # Subtest: isFailed() — FAILED 상태에서만 true
+    ok 4 - isFailed() — FAILED 상태에서만 true
+      ---
+      duration_ms: 4.725914
+      type: 'test'
+      ...
+    # Subtest: 유효하지 않은 status → 생성 오류
+    ok 5 - 유효하지 않은 status → 생성 오류
+      ---
+      duration_ms: 1.033475
+      type: 'test'
+      ...
+    # Subtest: toJSON() → snake_case 직렬화 구조 검증
+    ok 6 - toJSON() → snake_case 직렬화 구조 검증
+      ---
+      duration_ms: 0.173884
+      type: 'test'
+      ...
+    # Subtest: INV-B006: mismatchDelta가 있으면 toJSON에 포함됨
+    ok 7 - INV-B006: mismatchDelta가 있으면 toJSON에 포함됨
+      ---
+      duration_ms: 0.179353
+      type: 'test'
+      ...
+    # Subtest: [회귀] mismatchDelta JSON 스냅샷도 Money 인스턴스로 재구성된다
+    ok 8 - [회귀] mismatchDelta JSON 스냅샷도 Money 인스턴스로 재구성된다
+      ---
+      duration_ms: 0.614062
+      type: 'test'
+      ...
+    # Subtest: 모든 유효한 PAYMENT_STATUSES 값으로 Payment 생성 가능
+    ok 9 - 모든 유효한 PAYMENT_STATUSES 값으로 Payment 생성 가능
+      ---
+      duration_ms: 0.207924
+      type: 'test'
+      ...
+    1..9
+ok 24 - Payment Entity
+  ---
+  duration_ms: 9.735179
+  type: 'suite'
+  ...
+# Subtest: BillingEvents 팩토리
+    # Subtest: invoiceCreated — 필수 필드 존재 + domain=billing
+    ok 1 - invoiceCreated — 필수 필드 존재 + domain=billing
+      ---
+      duration_ms: 1.449059
+      type: 'test'
+      ...
+    # Subtest: invoiceStatusChanged — from/to/changedBy 포함
+    ok 2 - invoiceStatusChanged — from/to/changedBy 포함
+      ---
+      duration_ms: 0.191334
+      type: 'test'
+      ...
+    # Subtest: billingExceptionApproved — exceptionId/invoiceId/approvedBy/reason 포함
+    ok 3 - billingExceptionApproved — exceptionId/invoiceId/approvedBy/reason 포함
+      ---
+      duration_ms: 0.132133
+      type: 'test'
+      ...
+    # Subtest: billingExceptionRejected — rejectedBy 포함
+    ok 4 - billingExceptionRejected — rejectedBy 포함
+      ---
+      duration_ms: 0.112912
+      type: 'test'
+      ...
+    # Subtest: paymentMismatchDetected — paymentAmount/invoiceTotal 포함
+    ok 5 - paymentMismatchDetected — paymentAmount/invoiceTotal 포함
+      ---
+      duration_ms: 0.171533
+      type: 'test'
+      ...
+    # Subtest: correlationId 미전달 시 자동 생성됨
+    ok 6 - correlationId 미전달 시 자동 생성됨
+      ---
+      duration_ms: 0.166443
+      type: 'test'
+      ...
+    # Subtest: 각 이벤트마다 고유한 event_id 생성
+    ok 7 - 각 이벤트마다 고유한 event_id 생성
+      ---
+      duration_ms: 0.253415
+      type: 'test'
+      ...
+    1..7
+ok 25 - BillingEvents 팩토리
+  ---
+  duration_ms: 3.252195
+  type: 'suite'
+  ...
+# Subtest: BillingDomainService
+    # Subtest: INV-B006: detectMismatch()
+        # Subtest: 결제 금액 = 인보이스 합계이면 isMismatch=false
+        ok 1 - 결제 금액 = 인보이스 합계이면 isMismatch=false
+          ---
+          duration_ms: 1.00355
+          type: 'test'
+          ...
+        # Subtest: 결제 금액 ≠ 인보이스 합계이면 isMismatch=true
+        ok 2 - 결제 금액 ≠ 인보이스 합계이면 isMismatch=true
+          ---
+          duration_ms: 0.172534
+          type: 'test'
+          ...
+        1..2
+    ok 1 - INV-B006: detectMismatch()
+      ---
+      duration_ms: 1.665633
+      type: 'suite'
+      ...
+    # Subtest: INV-B005: canTransitionDisputedToPaid()
+        # Subtest: DISPUTED + 관리자 승인 있으면 true
+        ok 1 - DISPUTED + 관리자 승인 있으면 true
+          ---
+          duration_ms: 0.367118
+          type: 'test'
+          ...
+        # Subtest: DISPUTED + 관리자 승인 없으면 오류 (INV-B005)
+        ok 2 - DISPUTED + 관리자 승인 없으면 오류 (INV-B005)
+          ---
+          duration_ms: 0.474539
+          type: 'test'
+          ...
+        # Subtest: DISPUTED이 아닌 상태에서 호출하면 오류
+        ok 3 - DISPUTED이 아닌 상태에서 호출하면 오류
+          ---
+          duration_ms: 0.083482
+          type: 'test'
+          ...
+        1..3
+    ok 2 - INV-B005: canTransitionDisputedToPaid()
+      ---
+      duration_ms: 1.337706
+      type: 'suite'
+      ...
+    # Subtest: resolvePaymentStatus()
+        # Subtest: 동기화 성공 + 금액 일치 → SUCCESS
+        ok 1 - 동기화 성공 + 금액 일치 → SUCCESS
+          ---
+          duration_ms: 0.260645
+          type: 'test'
+          ...
+        # Subtest: 동기화 성공 + 금액 불일치 → MISMATCH
+        ok 2 - 동기화 성공 + 금액 불일치 → MISMATCH
+          ---
+          duration_ms: 0.268606
+          type: 'test'
+          ...
+        # Subtest: 동기화 실패 → FAILED
+        ok 3 - 동기화 실패 → FAILED
+          ---
+          duration_ms: 0.094932
+          type: 'test'
+          ...
+        1..3
+    ok 3 - resolvePaymentStatus()
+      ---
+      duration_ms: 0.905728
+      type: 'suite'
+      ...
+    1..3
+ok 26 - BillingDomainService
+  ---
+  duration_ms: 5.112602
+  type: 'suite'
+  ...
+# Subtest: InvoiceStatus
+    # Subtest: INV-B002: 허용된 전이 규칙
+        # Subtest: DRAFT → PENDING 허용
+        ok 1 - DRAFT → PENDING 허용
+          ---
+          duration_ms: 1.00576
+          type: 'test'
+          ...
+        # Subtest: DRAFT → PAID 불허
+        ok 2 - DRAFT → PAID 불허
+          ---
+          duration_ms: 0.955299
+          type: 'test'
+          ...
+        # Subtest: PENDING → PAID 허용
+        ok 3 - PENDING → PAID 허용
+          ---
+          duration_ms: 0.138832
+          type: 'test'
+          ...
+        # Subtest: PENDING → CANCELLED 허용
+        ok 4 - PENDING → CANCELLED 허용
+          ---
+          duration_ms: 0.120823
+          type: 'test'
+          ...
+        # Subtest: PENDING → DISPUTED 허용
+        ok 5 - PENDING → DISPUTED 허용
+          ---
+          duration_ms: 0.092172
+          type: 'test'
+          ...
+        # Subtest: PAID → 어떤 상태로도 전이 불가 (terminal)
+        ok 6 - PAID → 어떤 상태로도 전이 불가 (terminal)
+          ---
+          duration_ms: 0.139912
+          type: 'test'
+          ...
+        # Subtest: CANCELLED → 어떤 상태로도 전이 불가 (terminal)
+        ok 7 - CANCELLED → 어떤 상태로도 전이 불가 (terminal)
+          ---
+          duration_ms: 0.155463
+          type: 'test'
+          ...
+        # Subtest: DISPUTED → PAID 허용 (도메인 수준; INV-B005 관리자 승인은 서비스 계층)
+        ok 8 - DISPUTED → PAID 허용 (도메인 수준; INV-B005 관리자 승인은 서비스 계층)
+          ---
+          duration_ms: 0.090951
+          type: 'test'
+          ...
+        # Subtest: DISPUTED → CANCELLED 허용
+        ok 9 - DISPUTED → CANCELLED 허용
+          ---
+          duration_ms: 0.249955
+          type: 'test'
+          ...
+        # Subtest: DISPUTED → DRAFT 불허
+        ok 10 - DISPUTED → DRAFT 불허
+          ---
+          duration_ms: 0.245765
+          type: 'test'
+          ...
+        1..10
+    ok 1 - INV-B002: 허용된 전이 규칙
+      ---
+      duration_ms: 4.129023
+      type: 'suite'
+      ...
+    # Subtest: isTerminal()
+        # Subtest: PAID는 terminal
+        ok 1 - PAID는 terminal
+          ---
+          duration_ms: 0.127332
+          type: 'test'
+          ...
+        # Subtest: CANCELLED는 terminal
+        ok 2 - CANCELLED는 terminal
+          ---
+          duration_ms: 0.064821
+          type: 'test'
+          ...
+        # Subtest: DRAFT는 terminal이 아님
+        ok 3 - DRAFT는 terminal이 아님
+          ---
+          duration_ms: 0.053061
+          type: 'test'
+          ...
+        1..3
+    ok 2 - isTerminal()
+      ---
+      duration_ms: 0.346687
+      type: 'suite'
+      ...
+    # Subtest: 유효성
+        # Subtest: 잘못된 값으로 생성하면 오류
+        ok 1 - 잘못된 값으로 생성하면 오류
+          ---
+          duration_ms: 0.394368
+          type: 'test'
+          ...
+        # Subtest: InvoiceStatus 인스턴스와 문자열 비교
+        ok 2 - InvoiceStatus 인스턴스와 문자열 비교
+          ---
+          duration_ms: 0.111852
+          type: 'test'
+          ...
+        1..2
+    ok 3 - 유효성
+      ---
+      duration_ms: 0.601692
+      type: 'suite'
+      ...
+    1..3
+ok 27 - InvoiceStatus
+  ---
+  duration_ms: 5.627872
+  type: 'suite'
+  ...
+# Subtest: Money.multiply() — 금융 연산
+    # Subtest: 정수 배수 곱셈
+    ok 1 - 정수 배수 곱셈
+      ---
+      duration_ms: 0.642203
+      type: 'test'
+      ...
+    # Subtest: 소수 배수 곱셈 → Math.round 적용
+    ok 2 - 소수 배수 곱셈 → Math.round 적용
+      ---
+      duration_ms: 0.135672
+      type: 'test'
+      ...
+    # Subtest: factor=0 → VALIDATION_ERROR
+    ok 3 - factor=0 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.579552
+      type: 'test'
+      ...
+    # Subtest: factor 음수 → VALIDATION_ERROR
+    ok 4 - factor 음수 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.101863
+      type: 'test'
+      ...
+    # Subtest: factor Infinity → VALIDATION_ERROR
+    ok 5 - factor Infinity → VALIDATION_ERROR
+      ---
+      duration_ms: 0.084982
+      type: 'test'
+      ...
+    # Subtest: multiply 후 원본 불변 (freeze 보장)
+    ok 6 - multiply 후 원본 불변 (freeze 보장)
+      ---
+      duration_ms: 0.828027
+      type: 'test'
+      ...
+    # Subtest: multiply 결과로 add 연산 가능 (체이닝)
+    ok 7 - multiply 결과로 add 연산 가능 (체이닝)
+      ---
+      duration_ms: 0.143793
+      type: 'test'
+      ...
+    1..7
+ok 28 - Money.multiply() — 금융 연산
+  ---
+  duration_ms: 3.361847
+  type: 'suite'
+  ...
+# Subtest: Money
+    # Subtest: 생성
+        # Subtest: 유효한 값으로 생성된다
+        ok 1 - 유효한 값으로 생성된다
+          ---
+          duration_ms: 2.065011
+          type: 'test'
+          ...
+        # Subtest: currency를 대문자로 정규화한다
+        ok 2 - currency를 대문자로 정규화한다
+          ---
+          duration_ms: 0.125092
+          type: 'test'
+          ...
+        # Subtest: amount가 숫자가 아니면 오류
+        ok 3 - amount가 숫자가 아니면 오류
+          ---
+          duration_ms: 0.315866
+          type: 'test'
+          ...
+        # Subtest: currency가 3자리가 아니면 오류
+        ok 4 - currency가 3자리가 아니면 오류
+          ---
+          duration_ms: 0.134702
+          type: 'test'
+          ...
+        # Subtest: Infinity는 거부한다
+        ok 5 - Infinity는 거부한다
+          ---
+          duration_ms: 0.090342
+          type: 'test'
+          ...
+        1..5
+    ok 1 - 생성
+      ---
+      duration_ms: 3.383688
+      type: 'suite'
+      ...
+    # Subtest: INV-B004: isPositive()
+        # Subtest: 0은 양수가 아니다
+        ok 1 - 0은 양수가 아니다
+          ---
+          duration_ms: 0.225774
+          type: 'test'
+          ...
+        # Subtest: 음수는 양수가 아니다
+        ok 2 - 음수는 양수가 아니다
+          ---
+          duration_ms: 0.133592
+          type: 'test'
+          ...
+        # Subtest: 양수는 true
+        ok 3 - 양수는 true
+          ---
+          duration_ms: 0.188914
+          type: 'test'
+          ...
+        1..3
+    ok 2 - INV-B004: isPositive()
+      ---
+      duration_ms: 0.755085
+      type: 'suite'
+      ...
+    # Subtest: add()
+        # Subtest: 같은 통화끼리 더한다
+        ok 1 - 같은 통화끼리 더한다
+          ---
+          duration_ms: 0.197754
+          type: 'test'
+          ...
+        # Subtest: 다른 통화끼리 더하면 오류
+        ok 2 - 다른 통화끼리 더하면 오류
+          ---
+          duration_ms: 0.288886
+          type: 'test'
+          ...
+        1..2
+    ok 3 - add()
+      ---
+      duration_ms: 0.607402
+      type: 'suite'
+      ...
+    # Subtest: delta()
+        # Subtest: 두 금액 차이의 절댓값을 반환한다
+        ok 1 - 두 금액 차이의 절댓값을 반환한다
+          ---
+          duration_ms: 0.137483
+          type: 'test'
+          ...
+        1..1
+    ok 4 - delta()
+      ---
+      duration_ms: 0.241864
+      type: 'suite'
+      ...
+    # Subtest: equals()
+        # Subtest: 같은 금액과 통화면 true
+        ok 1 - 같은 금액과 통화면 true
+          ---
+          duration_ms: 0.109543
+          type: 'test'
+          ...
+        # Subtest: 금액이 다르면 false
+        ok 2 - 금액이 다르면 false
+          ---
+          duration_ms: 0.054001
+          type: 'test'
+          ...
+        # Subtest: Money가 아닌 값이면 false
+        ok 3 - Money가 아닌 값이면 false
+          ---
+          duration_ms: 0.051641
+          type: 'test'
+          ...
+        1..3
+    ok 5 - equals()
+      ---
+      duration_ms: 0.292596
+      type: 'suite'
+      ...
+    # Subtest: 직렬화
+        # Subtest: toJSON / fromJSON 왕복 변환
+        ok 1 - toJSON / fromJSON 왕복 변환
+          ---
+          duration_ms: 0.120003
+          type: 'test'
+          ...
+        1..1
+    ok 6 - 직렬화
+      ---
+      duration_ms: 1.205599
+      type: 'suite'
+      ...
+    1..6
+ok 29 - Money
+  ---
+  duration_ms: 6.962344
+  type: 'suite'
+  ...
+# Subtest: InMemoryInvoiceRepository — 계약 테스트
+    # Subtest: save → findById 반환
+    ok 1 - save → findById 반환
+      ---
+      duration_ms: 0.797866
+      type: 'test'
+      ...
+    # Subtest: 없는 ID → findById null 반환
+    ok 2 - 없는 ID → findById null 반환
+      ---
+      duration_ms: 0.087002
+      type: 'test'
+      ...
+    # Subtest: findAll 빈 저장소 → total=0
+    ok 3 - findAll 빈 저장소 → total=0
+      ---
+      duration_ms: 0.104222
+      type: 'test'
+      ...
+    # Subtest: findAll status 필터 — DRAFT만 반환
+    ok 4 - findAll status 필터 — DRAFT만 반환
+      ---
+      duration_ms: 0.146503
+      type: 'test'
+      ...
+    # Subtest: findAll 페이지네이션 — page=2, pageSize=1
+    ok 5 - findAll 페이지네이션 — page=2, pageSize=1
+      ---
+      duration_ms: 0.076492
+      type: 'test'
+      ...
+    # Subtest: INV-B003: PAID 인보이스 delete → CONFLICT 오류
+    ok 6 - INV-B003: PAID 인보이스 delete → CONFLICT 오류
+      ---
+      duration_ms: 0.709969
+      type: 'test'
+      ...
+    # Subtest: 없는 ID delete → NOT_FOUND 오류
+    ok 7 - 없는 ID delete → NOT_FOUND 오류
+      ---
+      duration_ms: 0.137893
+      type: 'test'
+      ...
+    # Subtest: DRAFT 인보이스 delete → 성공
+    ok 8 - DRAFT 인보이스 delete → 성공
+      ---
+      duration_ms: 0.203254
+      type: 'test'
+      ...
+    # Subtest: amountMin 필터 — total >= amountMin인 인보이스만
+    ok 9 - amountMin 필터 — total >= amountMin인 인보이스만
+      ---
+      duration_ms: 0.568041
+      type: 'test'
+      ...
+    1..9
+ok 30 - InMemoryInvoiceRepository — 계약 테스트
+  ---
+  duration_ms: 3.886273
+  type: 'suite'
+  ...
+# Subtest: InMemoryPaymentRepository — 계약 테스트
+    # Subtest: save → findById 반환
+    ok 1 - save → findById 반환
+      ---
+      duration_ms: 0.393188
+      type: 'test'
+      ...
+    # Subtest: 없는 ID → findById null 반환
+    ok 2 - 없는 ID → findById null 반환
+      ---
+      duration_ms: 0.085162
+      type: 'test'
+      ...
+    # Subtest: findAll 빈 저장소 → total=0
+    ok 3 - findAll 빈 저장소 → total=0
+      ---
+      duration_ms: 0.097482
+      type: 'test'
+      ...
+    # Subtest: invoiceId 필터 — 해당 invoice의 결제만
+    ok 4 - invoiceId 필터 — 해당 invoice의 결제만
+      ---
+      duration_ms: 0.170584
+      type: 'test'
+      ...
+    # Subtest: status 필터 — PENDING만 반환
+    ok 5 - status 필터 — PENDING만 반환
+      ---
+      duration_ms: 0.094002
+      type: 'test'
+      ...
+    # Subtest: findAll 페이지네이션 — page=1, pageSize=1
+    ok 6 - findAll 페이지네이션 — page=1, pageSize=1
+      ---
+      duration_ms: 0.115893
+      type: 'test'
+      ...
+    1..6
+ok 31 - InMemoryPaymentRepository — 계약 테스트
+  ---
+  duration_ms: 1.814216
+  type: 'suite'
+  ...
+# Subtest: InMemoryBillingExceptionRepository — 계약 테스트
+    # Subtest: save → findById 반환
+    ok 1 - save → findById 반환
+      ---
+      duration_ms: 0.220885
+      type: 'test'
+      ...
+    # Subtest: 없는 ID → findById null 반환
+    ok 2 - 없는 ID → findById null 반환
+      ---
+      duration_ms: 0.046941
+      type: 'test'
+      ...
+    # Subtest: findAll 빈 저장소 → total=0
+    ok 3 - findAll 빈 저장소 → total=0
+      ---
+      duration_ms: 0.148443
+      type: 'test'
+      ...
+    # Subtest: status 필터 — OPEN만 반환
+    ok 4 - status 필터 — OPEN만 반환
+      ---
+      duration_ms: 0.177424
+      type: 'test'
+      ...
+    # Subtest: findAll 페이지네이션 — page=2, pageSize=1
+    ok 5 - findAll 페이지네이션 — page=2, pageSize=1
+      ---
+      duration_ms: 0.098412
+      type: 'test'
+      ...
+    1..5
+ok 32 - InMemoryBillingExceptionRepository — 계약 테스트
+  ---
+  duration_ms: 0.807766
+  type: 'suite'
+  ...
+# Subtest: PostgresInvoiceRepository: client.query 없으면 TypeError
+ok 33 - PostgresInvoiceRepository: client.query 없으면 TypeError
+  ---
+  duration_ms: 1.363198
+  type: 'test'
+  ...
+# Subtest: PostgresInvoiceRepository: save → findById 왕복 (fake client)
+ok 34 - PostgresInvoiceRepository: save → findById 왕복 (fake client)
+  ---
+  duration_ms: 0.96561
+  type: 'test'
+  ...
+# Subtest: PostgresInvoiceRepository: delete — PAID 거부 (INV-B003)
+ok 35 - PostgresInvoiceRepository: delete — PAID 거부 (INV-B003)
+  ---
+  duration_ms: 0.643288
+  type: 'test'
+  ...
+# Subtest: PostgresPaymentRepository: save → findById 왕복 (fake client)
+ok 36 - PostgresPaymentRepository: save → findById 왕복 (fake client)
+  ---
+  duration_ms: 0.559085
+  type: 'test'
+  ...
+# Subtest: PostgresBillingExceptionRepository: save → findById 왕복 (fake client)
+ok 37 - PostgresBillingExceptionRepository: save → findById 왕복 (fake client)
+  ---
+  duration_ms: 0.53363
+  type: 'test'
+  ...
+# Subtest: PostgresBillingExceptionRepository: approve upsert (fake client)
+ok 38 - PostgresBillingExceptionRepository: approve upsert (fake client)
+  ---
+  duration_ms: 0.366913
+  type: 'test'
+  ...
+# (node:50542) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SQLiteInvoiceRepository: save → findById 왕복
+ok 39 - SQLiteInvoiceRepository: save → findById 왕복
+  ---
+  duration_ms: 2.064171
+  type: 'test'
+  ...
+# Subtest: SQLiteInvoiceRepository: findById 없으면 null
+ok 40 - SQLiteInvoiceRepository: findById 없으면 null
+  ---
+  duration_ms: 0.636943
+  type: 'test'
+  ...
+# Subtest: SQLiteInvoiceRepository: findAll 페이지네이션
+ok 41 - SQLiteInvoiceRepository: findAll 페이지네이션
+  ---
+  duration_ms: 1.235525
+  type: 'test'
+  ...
+# Subtest: SQLiteInvoiceRepository: upsert — status 갱신
+ok 42 - SQLiteInvoiceRepository: upsert — status 갱신
+  ---
+  duration_ms: 0.716325
+  type: 'test'
+  ...
+# Subtest: SQLiteInvoiceRepository: delete — PAID는 삭제 불가 (INV-B003)
+ok 43 - SQLiteInvoiceRepository: delete — PAID는 삭제 불가 (INV-B003)
+  ---
+  duration_ms: 1.243524
+  type: 'test'
+  ...
+# Subtest: SQLiteInvoiceRepository: delete — DRAFT는 삭제 가능
+ok 44 - SQLiteInvoiceRepository: delete — DRAFT는 삭제 가능
+  ---
+  duration_ms: 0.596432
+  type: 'test'
+  ...
+# Subtest: SQLitePaymentRepository: save → findById 왕복
+ok 45 - SQLitePaymentRepository: save → findById 왕복
+  ---
+  duration_ms: 0.897567
+  type: 'test'
+  ...
+# Subtest: SQLitePaymentRepository: findAll by invoiceId
+ok 46 - SQLitePaymentRepository: findAll by invoiceId
+  ---
+  duration_ms: 0.929469
+  type: 'test'
+  ...
+# Subtest: SQLiteBillingExceptionRepository: save → findById 왕복
+ok 47 - SQLiteBillingExceptionRepository: save → findById 왕복
+  ---
+  duration_ms: 1.053021
+  type: 'test'
+  ...
+# Subtest: SQLiteBillingExceptionRepository: approve 후 upsert
+ok 48 - SQLiteBillingExceptionRepository: approve 후 upsert
+  ---
+  duration_ms: 0.920558
+  type: 'test'
+  ...
+# Subtest: [BillingController] 알 수 없는 라우트
+    # Subtest: 매핑되지 않은 경로 → 404
+    ok 1 - 매핑되지 않은 경로 → 404
+      ---
+      duration_ms: 1.047801
+      type: 'test'
+      ...
+    # Subtest: [회귀] 404 응답은 RFC 9457 Problem Details 구조를 따른다
+    ok 2 - [회귀] 404 응답은 RFC 9457 Problem Details 구조를 따른다
+      ---
+      duration_ms: 0.176593
+      type: 'test'
+      ...
+    # Subtest: [회귀] unknown route 404에도 instance가 포함된다
+    ok 3 - [회귀] unknown route 404에도 instance가 포함된다
+      ---
+      duration_ms: 0.111382
+      type: 'test'
+      ...
+    1..3
+ok 49 - [BillingController] 알 수 없는 라우트
+  ---
+  duration_ms: 2.032341
+  type: 'suite'
+  ...
+# Subtest: [BillingController] GET /billing/invoices
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.216524
+      type: 'test'
+      ...
+    # Subtest: billing.write만 있어도 → 403
+    ok 2 - billing.write만 있어도 → 403
+      ---
+      duration_ms: 0.112322
+      type: 'test'
+      ...
+    # Subtest: billing.read → 200 + 목록 구조
+    ok 3 - billing.read → 200 + 목록 구조
+      ---
+      duration_ms: 0.876268
+      type: 'test'
+      ...
+    # Subtest: [회귀] invalid amount_min → 400
+    ok 4 - [회귀] invalid amount_min → 400
+      ---
+      duration_ms: 0.201774
+      type: 'test'
+      ...
+    # Subtest: [회귀] validation error에도 instance가 포함된다
+    ok 5 - [회귀] validation error에도 instance가 포함된다
+      ---
+      duration_ms: 0.239975
+      type: 'test'
+      ...
+    # Subtest: [회귀] page_size > 100 → 400
+    ok 6 - [회귀] page_size > 100 → 400
+      ---
+      duration_ms: 0.317086
+      type: 'test'
+      ...
+    1..6
+ok 50 - [BillingController] GET /billing/invoices
+  ---
+  duration_ms: 2.347537
+  type: 'suite'
+  ...
+# Subtest: [BillingController] POST /billing/invoices
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.384718
+      type: 'test'
+      ...
+    # Subtest: billing.read만 → 403
+    ok 2 - billing.read만 → 403
+      ---
+      duration_ms: 0.238695
+      type: 'test'
+      ...
+    # Subtest: billing.write → 201 + Invoice body
+    ok 3 - billing.write → 201 + Invoice body
+      ---
+      duration_ms: 0.401198
+      type: 'test'
+      ...
+    # Subtest: customer_id 누락 → 400
+    ok 4 - customer_id 누락 → 400
+      ---
+      duration_ms: 0.170574
+      type: 'test'
+      ...
+    1..4
+ok 51 - [BillingController] POST /billing/invoices
+  ---
+  duration_ms: 2.205894
+  type: 'suite'
+  ...
+# Subtest: [BillingController] GET /billing/invoices/:invoice_id
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.192314
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 ID → 404
+    ok 2 - 존재하지 않는 ID → 404
+      ---
+      duration_ms: 0.112233
+      type: 'test'
+      ...
+    # Subtest: 존재하는 인보이스 → 200 + Invoice body
+    ok 3 - 존재하는 인보이스 → 200 + Invoice body
+      ---
+      duration_ms: 0.179954
+      type: 'test'
+      ...
+    1..3
+ok 52 - [BillingController] GET /billing/invoices/:invoice_id
+  ---
+  duration_ms: 0.591922
+  type: 'suite'
+  ...
+# Subtest: [BillingController] PATCH /billing/invoices/:invoice_id/status
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.231574
+      type: 'test'
+      ...
+    # Subtest: billing.read만 → 403
+    ok 2 - billing.read만 → 403
+      ---
+      duration_ms: 0.119062
+      type: 'test'
+      ...
+    # Subtest: billing.write → 200 + 새 상태
+    ok 3 - billing.write → 200 + 새 상태
+      ---
+      duration_ms: 0.212375
+      type: 'test'
+      ...
+    # Subtest: DISPUTED→PAID는 billing.write로 불가 → 403
+    ok 4 - DISPUTED→PAID는 billing.write로 불가 → 403
+      ---
+      duration_ms: 0.245915
+      type: 'test'
+      ...
+    # Subtest: 허용되지 않는 역전이 → 409
+    ok 5 - 허용되지 않는 역전이 → 409
+      ---
+      duration_ms: 0.157343
+      type: 'test'
+      ...
+    1..5
+ok 53 - [BillingController] PATCH /billing/invoices/:invoice_id/status
+  ---
+  duration_ms: 1.081122
+  type: 'suite'
+  ...
+# Subtest: [BillingController] POST /billing/invoices/:invoice_id/line-items
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.269915
+      type: 'test'
+      ...
+    # Subtest: billing.write → 200 + 라인 항목 추가된 Invoice
+    ok 2 - billing.write → 200 + 라인 항목 추가된 Invoice
+      ---
+      duration_ms: 0.99133
+      type: 'test'
+      ...
+    # Subtest: 0원 라인 항목 → 400 (INV-B004)
+    ok 3 - 0원 라인 항목 → 400 (INV-B004)
+      ---
+      duration_ms: 0.196144
+      type: 'test'
+      ...
+    1..3
+ok 54 - [BillingController] POST /billing/invoices/:invoice_id/line-items
+  ---
+  duration_ms: 1.564452
+  type: 'suite'
+  ...
+# Subtest: [BillingController] GET /billing/payments
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.200344
+      type: 'test'
+      ...
+    # Subtest: billing.read → 200 + 목록 구조
+    ok 2 - billing.read → 200 + 목록 구조
+      ---
+      duration_ms: 0.270315
+      type: 'test'
+      ...
+    1..2
+ok 55 - [BillingController] GET /billing/payments
+  ---
+  duration_ms: 0.546281
+  type: 'suite'
+  ...
+# Subtest: [BillingController] GET /billing/payments/:payment_id
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.224705
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 결제 → 404
+    ok 2 - 존재하지 않는 결제 → 404
+      ---
+      duration_ms: 0.205704
+      type: 'test'
+      ...
+    # Subtest: billing.read → 200 + Payment body
+    ok 3 - billing.read → 200 + Payment body
+      ---
+      duration_ms: 0.151093
+      type: 'test'
+      ...
+    1..3
+ok 56 - [BillingController] GET /billing/payments/:payment_id
+  ---
+  duration_ms: 0.680284
+  type: 'suite'
+  ...
+# Subtest: [BillingController] POST /billing/payments/:payment_id/sync
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.225415
+      type: 'test'
+      ...
+    # Subtest: billing.read만 → 403
+    ok 2 - billing.read만 → 403
+      ---
+      duration_ms: 0.115053
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 결제 → 404
+    ok 3 - 존재하지 않는 결제 → 404
+      ---
+      duration_ms: 0.080772
+      type: 'test'
+      ...
+    # Subtest: billing.write → 200 + Payment body
+    ok 4 - billing.write → 200 + Payment body
+      ---
+      duration_ms: 0.097722
+      type: 'test'
+      ...
+    1..4
+ok 57 - [BillingController] POST /billing/payments/:payment_id/sync
+  ---
+  duration_ms: 0.625992
+  type: 'suite'
+  ...
+# Subtest: [BillingController] GET /billing/exceptions
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.139723
+      type: 'test'
+      ...
+    # Subtest: billing.read만 → 403 (admin 필요)
+    ok 2 - billing.read만 → 403 (admin 필요)
+      ---
+      duration_ms: 0.123202
+      type: 'test'
+      ...
+    # Subtest: billing.write만 → 403 (admin 필요)
+    ok 3 - billing.write만 → 403 (admin 필요)
+      ---
+      duration_ms: 0.093292
+      type: 'test'
+      ...
+    # Subtest: billing.admin → 200 + 목록 구조
+    ok 4 - billing.admin → 200 + 목록 구조
+      ---
+      duration_ms: 0.254865
+      type: 'test'
+      ...
+    1..4
+ok 58 - [BillingController] GET /billing/exceptions
+  ---
+  duration_ms: 0.723175
+  type: 'suite'
+  ...
+# Subtest: [BillingController] POST /billing/exceptions/:exception_id/approve
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.244205
+      type: 'test'
+      ...
+    # Subtest: billing.write만 → 403 (admin 필요)
+    ok 2 - billing.write만 → 403 (admin 필요)
+      ---
+      duration_ms: 0.159283
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 예외 항목 → 404
+    ok 3 - 존재하지 않는 예외 항목 → 404
+      ---
+      duration_ms: 0.122753
+      type: 'test'
+      ...
+    # Subtest: billing.admin + DISPUTED 인보이스 → 200 + APPROVED exception
+    ok 4 - billing.admin + DISPUTED 인보이스 → 200 + APPROVED exception
+      ---
+      duration_ms: 0.421798
+      type: 'test'
+      ...
+    # Subtest: 이미 승인된 예외 재승인 → 409
+    ok 5 - 이미 승인된 예외 재승인 → 409
+      ---
+      duration_ms: 0.242285
+      type: 'test'
+      ...
+    1..5
+ok 59 - [BillingController] POST /billing/exceptions/:exception_id/approve
+  ---
+  duration_ms: 1.324786
+  type: 'suite'
+  ...
+# Subtest: [BillingController] POST /billing/exceptions/:exception_id/reject
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.174614
+      type: 'test'
+      ...
+    # Subtest: billing.admin + 존재하는 예외 → 200 + REJECTED exception
+    ok 2 - billing.admin + 존재하는 예외 → 200 + REJECTED exception
+      ---
+      duration_ms: 0.151183
+      type: 'test'
+      ...
+    1..2
+ok 60 - [BillingController] POST /billing/exceptions/:exception_id/reject
+  ---
+  duration_ms: 0.386118
+  type: 'suite'
+  ...
+# Subtest: [BillingController] GET /billing/summary
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.197274
+      type: 'test'
+      ...
+    # Subtest: billing.read → 200 + 요약 구조
+    ok 2 - billing.read → 200 + 요약 구조
+      ---
+      duration_ms: 0.209004
+      type: 'test'
+      ...
+    1..2
+ok 61 - [BillingController] GET /billing/summary
+  ---
+  duration_ms: 0.50407
+  type: 'suite'
+  ...
+# Subtest: [BillingController] 오류 응답 구조
+    # Subtest: 403 응답에 code + message 필드 있음
+    ok 1 - 403 응답에 code + message 필드 있음
+      ---
+      duration_ms: 0.173963
+      type: 'test'
+      ...
+    # Subtest: 404 응답에 code + message 필드 있음
+    ok 2 - 404 응답에 code + message 필드 있음
+      ---
+      duration_ms: 0.77027
+      type: 'test'
+      ...
+    # Subtest: correlationId가 오류 응답에 포함됨
+    ok 3 - correlationId가 오류 응답에 포함됨
+      ---
+      duration_ms: 0.185454
+      type: 'test'
+      ...
+    1..3
+ok 62 - [BillingController] 오류 응답 구조
+  ---
+  duration_ms: 1.232459
+  type: 'suite'
+  ...
+# Subtest: [Property] Money: 연산 정합성
+    # Subtest: 양수 금액 × 양수 수량 → 항상 양수 total
+    ok 1 - 양수 금액 × 양수 수량 → 항상 양수 total
+      ---
+      duration_ms: 5.618782
+      type: 'test'
+      ...
+    # Subtest: Money.add 교환법칙: a+b === b+a
+    ok 2 - Money.add 교환법칙: a+b === b+a
+      ---
+      duration_ms: 0.690973
+      type: 'test'
+      ...
+    # Subtest: 통화 불일치 Money.add → Currency mismatch 오류
+    ok 3 - 통화 불일치 Money.add → Currency mismatch 오류
+      ---
+      duration_ms: 1.245785
+      type: 'test'
+      ...
+    1..3
+ok 63 - [Property] Money: 연산 정합성
+  ---
+  duration_ms: 8.373827
+  type: 'suite'
+  ...
+# Subtest: [Property] INV-B001: Invoice total은 항상 lineItems 합산
+    # Subtest: 임의 라인 항목 N개 추가 → total = 각 금액 합산
+    ok 1 - 임의 라인 항목 N개 추가 → total = 각 금액 합산
+      ---
+      duration_ms: 13.109661
+      type: 'test'
+      ...
+    1..1
+ok 64 - [Property] INV-B001: Invoice total은 항상 lineItems 합산
+  ---
+  duration_ms: 13.230994
+  type: 'suite'
+  ...
+# Subtest: [Property] INV-B004: 0 이하 금액 항상 거부
+    # Subtest: amount ≤ 0인 Money로 addLineItem → 거부
+    ok 1 - amount ≤ 0인 Money로 addLineItem → 거부
+      ---
+      duration_ms: 1.174501
+      type: 'test'
+      ...
+    1..1
+ok 65 - [Property] INV-B004: 0 이하 금액 항상 거부
+  ---
+  duration_ms: 1.275853
+  type: 'suite'
+  ...
+# Subtest: [billing smoke] 인보이스 목록 조회 성공
+ok 66 - [billing smoke] 인보이스 목록 조회 성공
+  ---
+  duration_ms: 1.762135
+  type: 'test'
+  ...
+# Subtest: [billing smoke] 권한 없는 인보이스 생성 거부
+ok 67 - [billing smoke] 권한 없는 인보이스 생성 거부
+  ---
+  duration_ms: 1.02236
+  type: 'test'
+  ...
+# Subtest: [billing smoke] 존재하지 않는 결제 조회는 404
+ok 68 - [billing smoke] 존재하지 않는 결제 조회는 404
+  ---
+  duration_ms: 0.378957
+  type: 'test'
+  ...
+# Subtest: [E-1] 경계값 테스트
+    # Subtest: title 정확히 200자 → PASS (경계 포함)
+    ok 1 - title 정확히 200자 → PASS (경계 포함)
+      ---
+      duration_ms: 1.054051
+      type: 'test'
+      ...
+    # Subtest: title 201자 → FAIL (초과)
+    ok 2 - title 201자 → FAIL (초과)
+      ---
+      duration_ms: 0.881848
+      type: 'test'
+      ...
+    # Subtest: description 정확히 2000자 → PASS (경계 포함)
+    ok 3 - description 정확히 2000자 → PASS (경계 포함)
+      ---
+      duration_ms: 0.147013
+      type: 'test'
+      ...
+    # Subtest: description 2001자 → FAIL (초과)
+    ok 4 - description 2001자 → FAIL (초과)
+      ---
+      duration_ms: 0.108542
+      type: 'test'
+      ...
+    # Subtest: due_date = 오늘 → PASS (오늘 포함 허용)
+    ok 5 - due_date = 오늘 → PASS (오늘 포함 허용)
+      ---
+      duration_ms: 0.133423
+      type: 'test'
+      ...
+    # Subtest: title 공백만 → FAIL (trim 후 빈 문자열)
+    ok 6 - title 공백만 → FAIL (trim 후 빈 문자열)
+      ---
+      duration_ms: 0.128902
+      type: 'test'
+      ...
+    # Subtest: assignee_id 공백만 → FAIL (trim 후 빈 문자열, INV001)
+    ok 7 - assignee_id 공백만 → FAIL (trim 후 빈 문자열, INV001)
+      ---
+      duration_ms: 1.247975
+      type: 'test'
+      ...
+    1..7
+ok 69 - [E-1] 경계값 테스트
+  ---
+  duration_ms: 4.608342
+  type: 'suite'
+  ...
+# Subtest: [E-2] null/undefined 입력 방어
+    # Subtest: null assignee_id → INV001 에러
+    ok 1 - null assignee_id → INV001 에러
+      ---
+      duration_ms: 0.210714
+      type: 'test'
+      ...
+    # Subtest: undefined title → 제목 에러
+    ok 2 - undefined title → 제목 에러
+      ---
+      duration_ms: 0.212534
+      type: 'test'
+      ...
+    # Subtest: null title → 제목 에러
+    ok 3 - null title → 제목 에러
+      ---
+      duration_ms: 0.197684
+      type: 'test'
+      ...
+    # Subtest: due_date null → 허용 (선택 필드)
+    ok 4 - due_date null → 허용 (선택 필드)
+      ---
+      duration_ms: 0.094632
+      type: 'test'
+      ...
+    # Subtest: description null → 허용 (선택 필드)
+    ok 5 - description null → 허용 (선택 필드)
+      ---
+      duration_ms: 0.081412
+      type: 'test'
+      ...
+    1..5
+ok 70 - [E-2] null/undefined 입력 방어
+  ---
+  duration_ms: 1.078001
+  type: 'suite'
+  ...
+# Subtest: [E-3] 이벤트 스키마 정합성 (계약 vs 구현)
+    # Subtest: TaskCreated: schema required fields [event_id, event_type, occurred_at, payload] 존재
+    ok 1 - TaskCreated: schema required fields [event_id, event_type, occurred_at, payload] 존재
+      ---
+      duration_ms: 0.249605
+      type: 'test'
+      ...
+    # Subtest: TaskCreated: payload required fields [task_id, title, assignee_id, status] 존재
+    ok 2 - TaskCreated: payload required fields [task_id, title, assignee_id, status] 존재
+      ---
+      duration_ms: 0.092212
+      type: 'test'
+      ...
+    # Subtest: TaskStatusChanged: payload required fields [task_id, old_status, new_status] 존재
+    ok 3 - TaskStatusChanged: payload required fields [task_id, old_status, new_status] 존재
+      ---
+      duration_ms: 1.0004
+      type: 'test'
+      ...
+    # Subtest: TaskReassigned: payload required fields [task_id, old_assignee_id, new_assignee_id] 존재
+    ok 4 - TaskReassigned: payload required fields [task_id, old_assignee_id, new_assignee_id] 존재
+      ---
+      duration_ms: 0.355347
+      type: 'test'
+      ...
+    # Subtest: occurred_at는 ISO 8601 date-time 형식
+    ok 5 - occurred_at는 ISO 8601 date-time 형식
+      ---
+      duration_ms: 0.237535
+      type: 'test'
+      ...
+    1..5
+ok 71 - [E-3] 이벤트 스키마 정합성 (계약 vs 구현)
+  ---
+  duration_ms: 2.088862
+  type: 'suite'
+  ...
+# Subtest: [E-4] 계약 위반 시뮬레이션 (구조적 갭)
+    # Subtest: [갭-1] CANCELLED 상태에서 재할당: 코드는 허용, 계약에 명시 없음 → 계약 갱신 필요
+    ok 1 - [갭-1] CANCELLED 상태에서 재할당: 코드는 허용, 계약에 명시 없음 → 계약 갱신 필요
+      ---
+      duration_ms: 0.490059
+      type: 'test'
+      ...
+    # Subtest: [갭-2 수정] 권한 없이 create-task 호출 → FORBIDDEN 에러
+    ok 2 - [갭-2 수정] 권한 없이 create-task 호출 → FORBIDDEN 에러
+      ---
+      duration_ms: 0.416298
+      type: 'test'
+      ...
+    # Subtest: [갭-3] 존재하지 않는 task 재할당 → 적절한 에러 반환
+    ok 3 - [갭-3] 존재하지 않는 task 재할당 → 적절한 에러 반환
+      ---
+      duration_ms: 0.128332
+      type: 'test'
+      ...
+    1..3
+ok 72 - [E-4] 계약 위반 시뮬레이션 (구조적 갭)
+  ---
+  duration_ms: 1.129323
+  type: 'suite'
+  ...
+# Subtest: [E-5] 동시성 및 낙관적 잠금 누락
+    # Subtest: [동시성-1] 같은 task에 두 번 transitionTo 순차 실행 → 마지막 상태 보장
+    ok 1 - [동시성-1] 같은 task에 두 번 transitionTo 순차 실행 → 마지막 상태 보장
+      ---
+      duration_ms: 0.217525
+      type: 'test'
+      ...
+    # Subtest: [동시성-2] 동일 ID 재생성 시 toSnapshot이 독립적임을 확인
+    ok 2 - [동시성-2] 동일 ID 재생성 시 toSnapshot이 독립적임을 확인
+      ---
+      duration_ms: 0.063051
+      type: 'test'
+      ...
+    1..2
+ok 73 - [E-5] 동시성 및 낙관적 잠금 누락
+  ---
+  duration_ms: 0.465004
+  type: 'suite'
+  ...
+# Subtest: [E-6] 상태 기계 완전성 (State Machine Exhaustive)
+    # Subtest: PENDING → PENDING: 불허
+    ok 1 - PENDING → PENDING: 불허
+      ---
+      duration_ms: 0.224825
+      type: 'test'
+      ...
+    # Subtest: PENDING → IN_PROGRESS: 허용
+    ok 2 - PENDING → IN_PROGRESS: 허용
+      ---
+      duration_ms: 0.063472
+      type: 'test'
+      ...
+    # Subtest: PENDING → DONE: 불허
+    ok 3 - PENDING → DONE: 불허
+      ---
+      duration_ms: 0.052231
+      type: 'test'
+      ...
+    # Subtest: PENDING → CANCELLED: 허용
+    ok 4 - PENDING → CANCELLED: 허용
+      ---
+      duration_ms: 0.037881
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → PENDING: 불허
+    ok 5 - IN_PROGRESS → PENDING: 불허
+      ---
+      duration_ms: 0.043381
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → IN_PROGRESS: 불허
+    ok 6 - IN_PROGRESS → IN_PROGRESS: 불허
+      ---
+      duration_ms: 0.043911
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → DONE: 허용
+    ok 7 - IN_PROGRESS → DONE: 허용
+      ---
+      duration_ms: 0.032271
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → CANCELLED: 허용
+    ok 8 - IN_PROGRESS → CANCELLED: 허용
+      ---
+      duration_ms: 0.029971
+      type: 'test'
+      ...
+    # Subtest: DONE → PENDING: 불허
+    ok 9 - DONE → PENDING: 불허
+      ---
+      duration_ms: 0.172503
+      type: 'test'
+      ...
+    # Subtest: DONE → IN_PROGRESS: 불허
+    ok 10 - DONE → IN_PROGRESS: 불허
+      ---
+      duration_ms: 0.085962
+      type: 'test'
+      ...
+    # Subtest: DONE → DONE: 불허
+    ok 11 - DONE → DONE: 불허
+      ---
+      duration_ms: 0.041841
+      type: 'test'
+      ...
+    # Subtest: DONE → CANCELLED: 불허
+    ok 12 - DONE → CANCELLED: 불허
+      ---
+      duration_ms: 0.039161
+      type: 'test'
+      ...
+    # Subtest: CANCELLED → PENDING: 불허
+    ok 13 - CANCELLED → PENDING: 불허
+      ---
+      duration_ms: 0.03218
+      type: 'test'
+      ...
+    # Subtest: CANCELLED → IN_PROGRESS: 불허
+    ok 14 - CANCELLED → IN_PROGRESS: 불허
+      ---
+      duration_ms: 0.03437
+      type: 'test'
+      ...
+    # Subtest: CANCELLED → DONE: 불허
+    ok 15 - CANCELLED → DONE: 불허
+      ---
+      duration_ms: 0.029801
+      type: 'test'
+      ...
+    # Subtest: CANCELLED → CANCELLED: 불허
+    ok 16 - CANCELLED → CANCELLED: 불허
+      ---
+      duration_ms: 0.029621
+      type: 'test'
+      ...
+    1..16
+ok 74 - [E-6] 상태 기계 완전성 (State Machine Exhaustive)
+  ---
+  duration_ms: 1.982609
+  type: 'suite'
+  ...
+# Subtest: [E-7] capability.yaml ↔ UseCase 1:1 매핑 검증
+    # Subtest: create-task → UseCase 구현 존재
+    ok 1 - create-task → UseCase 구현 존재
+      ---
+      duration_ms: 0.171823
+      type: 'test'
+      ...
+    # Subtest: get-task → UseCase 구현 존재
+    ok 2 - get-task → UseCase 구현 존재
+      ---
+      duration_ms: 0.081251
+      type: 'test'
+      ...
+    # Subtest: list-tasks → UseCase 구현 존재
+    ok 3 - list-tasks → UseCase 구현 존재
+      ---
+      duration_ms: 0.047201
+      type: 'test'
+      ...
+    # Subtest: transition-task-status → UseCase 구현 존재
+    ok 4 - transition-task-status → UseCase 구현 존재
+      ---
+      duration_ms: 0.02824
+      type: 'test'
+      ...
+    # Subtest: reassign-task → UseCase 구현 존재
+    ok 5 - reassign-task → UseCase 구현 존재
+      ---
+      duration_ms: 0.080101
+      type: 'test'
+      ...
+    1..5
+ok 75 - [E-7] capability.yaml ↔ UseCase 1:1 매핑 검증
+  ---
+  duration_ms: 0.50375
+  type: 'suite'
+  ...
+# Subtest: CreateTaskUseCase — outbox dual-write
+    # Subtest: task 생성 시 EventBus와 OutboxRepository 양쪽에 이벤트가 기록된다
+    ok 1 - task 생성 시 EventBus와 OutboxRepository 양쪽에 이벤트가 기록된다
+      ---
+      duration_ms: 1.980439
+      type: 'test'
+      ...
+    # Subtest: outboxRepository 없이도 정상 동작한다 (하위 호환)
+    ok 2 - outboxRepository 없이도 정상 동작한다 (하위 호환)
+      ---
+      duration_ms: 0.165813
+      type: 'test'
+      ...
+    # Subtest: 복수 task 생성 시 outbox에 건수만큼 기록된다
+    ok 3 - 복수 task 생성 시 outbox에 건수만큼 기록된다
+      ---
+      duration_ms: 7.292725
+      type: 'test'
+      ...
+    # Subtest: outbox 이벤트가 OutboxPoller를 통해 EventBus에 재전달된다 (at-least-once)
+    ok 4 - outbox 이벤트가 OutboxPoller를 통해 EventBus에 재전달된다 (at-least-once)
+      ---
+      duration_ms: 0.449719
+      type: 'test'
+      ...
+    1..4
+ok 76 - CreateTaskUseCase — outbox dual-write
+  ---
+  duration_ms: 11.02463
+  type: 'suite'
+  ...
+# Subtest: CreateTaskUseCase
+    # Subtest: 작업 생성 후 조회 가능 (create-task → get-task capability 흐름)
+    ok 1 - 작업 생성 후 조회 가능 (create-task → get-task capability 흐름)
+      ---
+      duration_ms: 1.266925
+      type: 'test'
+      ...
+    # Subtest: [INV001] 담당자 없으면 에러
+    ok 2 - [INV001] 담당자 없으면 에러
+      ---
+      duration_ms: 0.477629
+      type: 'test'
+      ...
+    # Subtest: 도메인 이벤트를 EventPublisher 포트로 발행한다
+    ok 3 - 도메인 이벤트를 EventPublisher 포트로 발행한다
+      ---
+      duration_ms: 0.314576
+      type: 'test'
+      ...
+    1..3
+ok 77 - CreateTaskUseCase
+  ---
+  duration_ms: 2.792416
+  type: 'suite'
+  ...
+# Subtest: ListTasksUseCase
+    # Subtest: 필터 없이 전체 조회
+    ok 1 - 필터 없이 전체 조회
+      ---
+      duration_ms: 0.376037
+      type: 'test'
+      ...
+    # Subtest: 담당자 필터링
+    ok 2 - 담당자 필터링
+      ---
+      duration_ms: 0.252795
+      type: 'test'
+      ...
+    1..2
+ok 78 - ListTasksUseCase
+  ---
+  duration_ms: 0.792436
+  type: 'suite'
+  ...
+# Subtest: TransitionTaskStatusUseCase
+    # Subtest: PENDING → IN_PROGRESS 전이
+    ok 1 - PENDING → IN_PROGRESS 전이
+      ---
+      duration_ms: 1.578112
+      type: 'test'
+      ...
+    # Subtest: [INV002] DONE → IN_PROGRESS 불가
+    ok 2 - [INV002] DONE → IN_PROGRESS 불가
+      ---
+      duration_ms: 0.489659
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 작업 조회 에러
+    ok 3 - 존재하지 않는 작업 조회 에러
+      ---
+      duration_ms: 0.188303
+      type: 'test'
+      ...
+    1..3
+ok 79 - TransitionTaskStatusUseCase
+  ---
+  duration_ms: 2.492649
+  type: 'suite'
+  ...
+# Subtest: ReassignTaskUseCase
+    # Subtest: 담당자 변경 성공
+    ok 1 - 담당자 변경 성공
+      ---
+      duration_ms: 0.433668
+      type: 'test'
+      ...
+    # Subtest: DONE 상태 작업은 담당자 변경 불가
+    ok 2 - DONE 상태 작업은 담당자 변경 불가
+      ---
+      duration_ms: 0.338327
+      type: 'test'
+      ...
+    1..2
+ok 80 - ReassignTaskUseCase
+  ---
+  duration_ms: 0.862227
+  type: 'suite'
+  ...
+# Subtest: GetTaskUseCase
+    # Subtest: 존재하는 task_id → snapshot 반환
+    ok 1 - 존재하는 task_id → snapshot 반환
+      ---
+      duration_ms: 1.734045
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → Error throw
+    ok 2 - 존재하지 않는 task_id → Error throw
+      ---
+      duration_ms: 0.526395
+      type: 'test'
+      ...
+    # Subtest: [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+    ok 3 - [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+      ---
+      duration_ms: 0.283815
+      type: 'test'
+      ...
+    # Subtest: snapshot에 status 필드 포함됨
+    ok 4 - snapshot에 status 필드 포함됨
+      ---
+      duration_ms: 0.256105
+      type: 'test'
+      ...
+    1..4
+ok 81 - GetTaskUseCase
+  ---
+  duration_ms: 3.8187
+  type: 'suite'
+  ...
+# Subtest: ListTasksUseCase
+    # Subtest: 빈 저장소 → items=[], total=0
+    ok 1 - 빈 저장소 → items=[], total=0
+      ---
+      duration_ms: 2.64001
+      type: 'test'
+      ...
+    # Subtest: 작업 3개 → total=3, items 반환
+    ok 2 - 작업 3개 → total=3, items 반환
+      ---
+      duration_ms: 1.091691
+      type: 'test'
+      ...
+    # Subtest: assignee_id 필터 동작
+    ok 3 - assignee_id 필터 동작
+      ---
+      duration_ms: 1.337709
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션: page_size=1
+    ok 4 - 페이지네이션: page_size=1
+      ---
+      duration_ms: 0.315156
+      type: 'test'
+      ...
+    # Subtest: items의 각 snapshot에 id/title/status 포함
+    ok 5 - items의 각 snapshot에 id/title/status 포함
+      ---
+      duration_ms: 0.341047
+      type: 'test'
+      ...
+    1..5
+ok 82 - ListTasksUseCase
+  ---
+  duration_ms: 6.568861
+  type: 'suite'
+  ...
+# Subtest: ReassignTaskUseCase
+    # Subtest: PENDING 상태 작업 담당자 변경 성공
+    ok 1 - PENDING 상태 작업 담당자 변경 성공
+      ---
+      duration_ms: 0.932539
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS 상태 작업 담당자 변경 성공
+    ok 2 - IN_PROGRESS 상태 작업 담당자 변경 성공
+      ---
+      duration_ms: 0.475039
+      type: 'test'
+      ...
+    # Subtest: DONE 상태 작업 담당자 변경 불가 → Error
+    ok 3 - DONE 상태 작업 담당자 변경 불가 → Error
+      ---
+      duration_ms: 0.609152
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → Error
+    ok 4 - 존재하지 않는 task_id → Error
+      ---
+      duration_ms: 0.210204
+      type: 'test'
+      ...
+    # Subtest: INV001: 빈 new_assignee_id → Error
+    ok 5 - INV001: 빈 new_assignee_id → Error
+      ---
+      duration_ms: 0.249615
+      type: 'test'
+      ...
+    # Subtest: [회귀] DONE 작업 재할당 → code=CONFLICT (HTTP 409 보장)
+    ok 6 - [회귀] DONE 작업 재할당 → code=CONFLICT (HTTP 409 보장)
+      ---
+      duration_ms: 0.234264
+      type: 'test'
+      ...
+    # Subtest: [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+    ok 7 - [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+      ---
+      duration_ms: 0.192714
+      type: 'test'
+      ...
+    # Subtest: [회귀] INV001: 빈 new_assignee_id → code=VALIDATION_ERROR (HTTP 400 보장)
+    ok 8 - [회귀] INV001: 빈 new_assignee_id → code=VALIDATION_ERROR (HTTP 400 보장)
+      ---
+      duration_ms: 0.330216
+      type: 'test'
+      ...
+    1..8
+ok 83 - ReassignTaskUseCase
+  ---
+  duration_ms: 4.22677
+  type: 'suite'
+  ...
+# Subtest: TransitionTaskStatusUseCase
+    # Subtest: PENDING → IN_PROGRESS 전이 성공
+    ok 1 - PENDING → IN_PROGRESS 전이 성공
+      ---
+      duration_ms: 1.748094
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → DONE 전이 성공
+    ok 2 - IN_PROGRESS → DONE 전이 성공
+      ---
+      duration_ms: 0.331418
+      type: 'test'
+      ...
+    # Subtest: PENDING → DONE 직접 전이 불가 (INV002)
+    ok 3 - PENDING → DONE 직접 전이 불가 (INV002)
+      ---
+      duration_ms: 0.959588
+      type: 'test'
+      ...
+    # Subtest: DONE → 다시 IN_PROGRESS 불가 (terminal 상태)
+    ok 4 - DONE → 다시 IN_PROGRESS 불가 (terminal 상태)
+      ---
+      duration_ms: 0.668713
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → Error
+    ok 5 - 존재하지 않는 task_id → Error
+      ---
+      duration_ms: 0.171134
+      type: 'test'
+      ...
+    # Subtest: [회귀] INV002 상태 전이 불가 → code=CONFLICT (HTTP 409 보장)
+    ok 6 - [회귀] INV002 상태 전이 불가 → code=CONFLICT (HTTP 409 보장)
+      ---
+      duration_ms: 0.333587
+      type: 'test'
+      ...
+    # Subtest: [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+    ok 7 - [회귀] 존재하지 않는 task_id → code=NOT_FOUND (HTTP 404 보장)
+      ---
+      duration_ms: 0.140493
+      type: 'test'
+      ...
+    # Subtest: result에 task_id/old_status/new_status 포함
+    ok 8 - result에 task_id/old_status/new_status 포함
+      ---
+      duration_ms: 0.360977
+      type: 'test'
+      ...
+    1..8
+ok 84 - TransitionTaskStatusUseCase
+  ---
+  duration_ms: 5.485558
+  type: 'suite'
+  ...
+# Subtest: Task 낙관적 잠금 — 엔티티 version 계약
+    # Subtest: 새로 생성된 Task의 version은 1이다
+    ok 1 - 새로 생성된 Task의 version은 1이다
+      ---
+      duration_ms: 1.039161
+      type: 'test'
+      ...
+    # Subtest: transitionTo()는 version을 1 증가시킨다
+    ok 2 - transitionTo()는 version을 1 증가시킨다
+      ---
+      duration_ms: 0.186324
+      type: 'test'
+      ...
+    # Subtest: reassign()은 version을 1 증가시킨다
+    ok 3 - reassign()은 version을 1 증가시킨다
+      ---
+      duration_ms: 0.272916
+      type: 'test'
+      ...
+    # Subtest: reconstitute()는 snapshot의 version을 그대로 복원한다
+    ok 4 - reconstitute()는 snapshot의 version을 그대로 복원한다
+      ---
+      duration_ms: 0.096102
+      type: 'test'
+      ...
+    1..4
+ok 85 - Task 낙관적 잠금 — 엔티티 version 계약
+  ---
+  duration_ms: 4.977209
+  type: 'suite'
+  ...
+# Subtest: InMemoryTaskRepository 낙관적 잠금 — 충돌 감지
+    # Subtest: 정상 read-modify-write 흐름은 충돌 없이 성공한다
+    ok 1 - 정상 read-modify-write 흐름은 충돌 없이 성공한다
+      ---
+      duration_ms: 0.365498
+      type: 'test'
+      ...
+    # Subtest: 동일 version으로 두 번 저장하면 OPTIMISTIC_LOCK_CONFLICT를 던진다
+    ok 2 - 동일 version으로 두 번 저장하면 OPTIMISTIC_LOCK_CONFLICT를 던진다
+      ---
+      duration_ms: 0.51532
+      type: 'test'
+      ...
+    # Subtest: 신규 엔티티 저장 시 충돌 체크를 생략한다
+    ok 3 - 신규 엔티티 저장 시 충돌 체크를 생략한다
+      ---
+      duration_ms: 0.258885
+      type: 'test'
+      ...
+    1..3
+ok 86 - InMemoryTaskRepository 낙관적 잠금 — 충돌 감지
+  ---
+  duration_ms: 1.424478
+  type: 'suite'
+  ...
+# Subtest: TransitionTaskStatusUseCase 동시 전이 시뮬레이션
+    # Subtest: 두 동시 전이 중 첫 번째만 성공하고 두 번째는 충돌한다
+    ok 1 - 두 동시 전이 중 첫 번째만 성공하고 두 번째는 충돌한다
+      ---
+      duration_ms: 0.757829
+      type: 'test'
+      ...
+    1..1
+ok 87 - TransitionTaskStatusUseCase 동시 전이 시뮬레이션
+  ---
+  duration_ms: 0.908583
+  type: 'suite'
+  ...
+# Subtest: Task.create()
+    # Subtest: 정상 생성 — 필수 필드만
+    ok 1 - 정상 생성 — 필수 필드만
+      ---
+      duration_ms: 2.369457
+      type: 'test'
+      ...
+    # Subtest: 정상 생성 — 선택 필드 포함
+    ok 2 - 정상 생성 — 선택 필드 포함
+      ---
+      duration_ms: 0.289656
+      type: 'test'
+      ...
+    # Subtest: [INV001] 담당자 없이 생성 불가
+    ok 3 - [INV001] 담당자 없이 생성 불가
+      ---
+      duration_ms: 0.362188
+      type: 'test'
+      ...
+    # Subtest: [INV001] 빈 담당자로 생성 불가
+    ok 4 - [INV001] 빈 담당자로 생성 불가
+      ---
+      duration_ms: 0.110212
+      type: 'test'
+      ...
+    # Subtest: [INV003] 과거 마감일로 생성 불가
+    ok 5 - [INV003] 과거 마감일로 생성 불가
+      ---
+      duration_ms: 0.119632
+      type: 'test'
+      ...
+    # Subtest: 제목 빈 문자열 불가
+    ok 6 - 제목 빈 문자열 불가
+      ---
+      duration_ms: 0.108992
+      type: 'test'
+      ...
+    # Subtest: 제목 200자 초과 불가
+    ok 7 - 제목 200자 초과 불가
+      ---
+      duration_ms: 0.092722
+      type: 'test'
+      ...
+    # Subtest: 설명 2000자 초과 불가
+    ok 8 - 설명 2000자 초과 불가
+      ---
+      duration_ms: 0.222955
+      type: 'test'
+      ...
+    # Subtest: 생성 시 TaskCreated 도메인 이벤트 발행
+    ok 9 - 생성 시 TaskCreated 도메인 이벤트 발행
+      ---
+      duration_ms: 0.210984
+      type: 'test'
+      ...
+    # Subtest: pullDomainEvents 후 이벤트 목록 초기화
+    ok 10 - pullDomainEvents 후 이벤트 목록 초기화
+      ---
+      duration_ms: 0.366848
+      type: 'test'
+      ...
+    1..10
+ok 88 - Task.create()
+  ---
+  duration_ms: 5.301066
+  type: 'suite'
+  ...
+# Subtest: Task.transitionTo()
+    # Subtest: PENDING → IN_PROGRESS 성공
+    ok 1 - PENDING → IN_PROGRESS 성공
+      ---
+      duration_ms: 0.246005
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → DONE 성공
+    ok 2 - IN_PROGRESS → DONE 성공
+      ---
+      duration_ms: 0.143023
+      type: 'test'
+      ...
+    # Subtest: [INV002] DONE → IN_PROGRESS 불가
+    ok 3 - [INV002] DONE → IN_PROGRESS 불가
+      ---
+      duration_ms: 0.143983
+      type: 'test'
+      ...
+    1..3
+ok 89 - Task.transitionTo()
+  ---
+  duration_ms: 0.640103
+  type: 'suite'
+  ...
+# Subtest: Task.reassign()
+    # Subtest: 담당자 변경 성공
+    ok 1 - 담당자 변경 성공
+      ---
+      duration_ms: 0.165754
+      type: 'test'
+      ...
+    # Subtest: [INV001] 빈 담당자로 변경 불가
+    ok 2 - [INV001] 빈 담당자로 변경 불가
+      ---
+      duration_ms: 0.126273
+      type: 'test'
+      ...
+    1..2
+ok 90 - Task.reassign()
+  ---
+  duration_ms: 0.351957
+  type: 'suite'
+  ...
+# Subtest: Task.toSnapshot()
+    # Subtest: 스냅샷은 모든 필드를 포함한다
+    ok 1 - 스냅샷은 모든 필드를 포함한다
+      ---
+      duration_ms: 1.286885
+      type: 'test'
+      ...
+    1..1
+ok 91 - Task.toSnapshot()
+  ---
+  duration_ms: 1.346347
+  type: 'suite'
+  ...
+# Subtest: Task.reconstitute()
+    # Subtest: 스냅샷에서 복원된 작업은 동일한 상태를 가진다
+    ok 1 - 스냅샷에서 복원된 작업은 동일한 상태를 가진다
+      ---
+      duration_ms: 0.151033
+      type: 'test'
+      ...
+    1..1
+ok 92 - Task.reconstitute()
+  ---
+  duration_ms: 0.209144
+  type: 'suite'
+  ...
+# Subtest: TaskDomainService.isTerminal()
+    # Subtest: DONE은 terminal
+    ok 1 - DONE은 terminal
+      ---
+      duration_ms: 2.060889
+      type: 'test'
+      ...
+    # Subtest: CANCELLED는 terminal
+    ok 2 - CANCELLED는 terminal
+      ---
+      duration_ms: 0.226225
+      type: 'test'
+      ...
+    # Subtest: PENDING은 terminal이 아님
+    ok 3 - PENDING은 terminal이 아님
+      ---
+      duration_ms: 0.143693
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS는 terminal이 아님
+    ok 4 - IN_PROGRESS는 terminal이 아님
+      ---
+      duration_ms: 0.163554
+      type: 'test'
+      ...
+    1..4
+ok 93 - TaskDomainService.isTerminal()
+  ---
+  duration_ms: 3.61734
+  type: 'suite'
+  ...
+# Subtest: TaskDomainService.canReassign()
+    # Subtest: PENDING 상태는 담당자 변경 가능
+    ok 1 - PENDING 상태는 담당자 변경 가능
+      ---
+      duration_ms: 0.236795
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS 상태는 담당자 변경 가능
+    ok 2 - IN_PROGRESS 상태는 담당자 변경 가능
+      ---
+      duration_ms: 0.206114
+      type: 'test'
+      ...
+    # Subtest: DONE 상태는 담당자 변경 불가
+    ok 3 - DONE 상태는 담당자 변경 불가
+      ---
+      duration_ms: 0.177883
+      type: 'test'
+      ...
+    1..3
+ok 94 - TaskDomainService.canReassign()
+  ---
+  duration_ms: 0.894618
+  type: 'suite'
+  ...
+# Subtest: TaskDomainService.isOverdue()
+    # Subtest: 마감일 없는 작업은 초과 아님
+    ok 1 - 마감일 없는 작업은 초과 아님
+      ---
+      duration_ms: 0.233514
+      type: 'test'
+      ...
+    # Subtest: 미래 마감일은 초과 아님
+    ok 2 - 미래 마감일은 초과 아님
+      ---
+      duration_ms: 0.250655
+      type: 'test'
+      ...
+    # Subtest: 완료된 작업은 마감일 초과라도 isOverdue false
+    ok 3 - 완료된 작업은 마감일 초과라도 isOverdue false
+      ---
+      duration_ms: 0.232515
+      type: 'test'
+      ...
+    1..3
+ok 95 - TaskDomainService.isOverdue()
+  ---
+  duration_ms: 0.883547
+  type: 'suite'
+  ...
+# Subtest: TaskStatus
+    # Subtest: 생성
+        # Subtest: 유효한 상태로 생성된다
+        ok 1 - 유효한 상태로 생성된다
+          ---
+          duration_ms: 0.439869
+          type: 'test'
+          ...
+        # Subtest: 유효하지 않은 상태는 에러를 던진다
+        ok 2 - 유효하지 않은 상태는 에러를 던진다
+          ---
+          duration_ms: 0.671183
+          type: 'test'
+          ...
+        1..2
+    ok 1 - 생성
+      ---
+      duration_ms: 1.608592
+      type: 'suite'
+      ...
+    # Subtest: 상태 전이 (INV002)
+        # Subtest: PENDING → IN_PROGRESS 허용
+        ok 1 - PENDING → IN_PROGRESS 허용
+          ---
+          duration_ms: 0.325177
+          type: 'test'
+          ...
+        # Subtest: PENDING → CANCELLED 허용
+        ok 2 - PENDING → CANCELLED 허용
+          ---
+          duration_ms: 0.098152
+          type: 'test'
+          ...
+        # Subtest: IN_PROGRESS → DONE 허용
+        ok 3 - IN_PROGRESS → DONE 허용
+          ---
+          duration_ms: 0.077401
+          type: 'test'
+          ...
+        # Subtest: IN_PROGRESS → CANCELLED 허용
+        ok 4 - IN_PROGRESS → CANCELLED 허용
+          ---
+          duration_ms: 0.182394
+          type: 'test'
+          ...
+        # Subtest: [INV002] DONE → IN_PROGRESS 불가
+        ok 5 - [INV002] DONE → IN_PROGRESS 불가
+          ---
+          duration_ms: 0.116603
+          type: 'test'
+          ...
+        # Subtest: [INV002] CANCELLED → IN_PROGRESS 불가
+        ok 6 - [INV002] CANCELLED → IN_PROGRESS 불가
+          ---
+          duration_ms: 0.231755
+          type: 'test'
+          ...
+        # Subtest: [INV002] DONE → PENDING 불가
+        ok 7 - [INV002] DONE → PENDING 불가
+          ---
+          duration_ms: 0.193894
+          type: 'test'
+          ...
+        # Subtest: [INV002] DONE → CANCELLED 불가 (terminal)
+        ok 8 - [INV002] DONE → CANCELLED 불가 (terminal)
+          ---
+          duration_ms: 0.227684
+          type: 'test'
+          ...
+        1..8
+    ok 2 - 상태 전이 (INV002)
+      ---
+      duration_ms: 2.857517
+      type: 'suite'
+      ...
+    # Subtest: canTransitionTo
+        # Subtest: 가능한 전이는 true 반환
+        ok 1 - 가능한 전이는 true 반환
+          ---
+          duration_ms: 0.090741
+          type: 'test'
+          ...
+        # Subtest: 불가능한 전이는 false 반환
+        ok 2 - 불가능한 전이는 false 반환
+          ---
+          duration_ms: 0.049631
+          type: 'test'
+          ...
+        1..2
+    ok 3 - canTransitionTo
+      ---
+      duration_ms: 0.208304
+      type: 'suite'
+      ...
+    1..3
+ok 96 - TaskStatus
+  ---
+  duration_ms: 5.067461
+  type: 'suite'
+  ...
+# Subtest: InMemoryTaskRepository — 계약 테스트
+    # Subtest: save → findById 반환
+    ok 1 - save → findById 반환
+      ---
+      duration_ms: 2.033015
+      type: 'test'
+      ...
+    # Subtest: 없는 ID → findById null 반환
+    ok 2 - 없는 ID → findById null 반환
+      ---
+      duration_ms: 0.116402
+      type: 'test'
+      ...
+    # Subtest: findAll 빈 저장소 → total=0, items=[]
+    ok 3 - findAll 빈 저장소 → total=0, items=[]
+      ---
+      duration_ms: 0.110282
+      type: 'test'
+      ...
+    # Subtest: assignee_id 필터 — 해당 담당자의 작업만 반환
+    ok 4 - assignee_id 필터 — 해당 담당자의 작업만 반환
+      ---
+      duration_ms: 0.337236
+      type: 'test'
+      ...
+    # Subtest: status 필터 — PENDING 작업만 반환
+    ok 5 - status 필터 — PENDING 작업만 반환
+      ---
+      duration_ms: 0.142893
+      type: 'test'
+      ...
+    # Subtest: status 필터 — 존재하지 않는 상태 → 빈 결과
+    ok 6 - status 필터 — 존재하지 않는 상태 → 빈 결과
+      ---
+      duration_ms: 0.119523
+      type: 'test'
+      ...
+    # Subtest: due_before 필터 — 마감일이 지정일 이전인 작업만 반환
+    ok 7 - due_before 필터 — 마감일이 지정일 이전인 작업만 반환
+      ---
+      duration_ms: 0.176244
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션 — page=1, page_size=1 → 첫 번째 항목만
+    ok 8 - 페이지네이션 — page=1, page_size=1 → 첫 번째 항목만
+      ---
+      duration_ms: 0.189854
+      type: 'test'
+      ...
+    # Subtest: 페이지네이션 — page=2, page_size=1 → 두 번째 항목
+    ok 9 - 페이지네이션 — page=2, page_size=1 → 두 번째 항목
+      ---
+      duration_ms: 0.182374
+      type: 'test'
+      ...
+    # Subtest: 저장된 task는 재구성 시 원본 값을 유지 (snapshot round-trip)
+    ok 10 - 저장된 task는 재구성 시 원본 값을 유지 (snapshot round-trip)
+      ---
+      duration_ms: 0.204454
+      type: 'test'
+      ...
+    1..10
+ok 97 - InMemoryTaskRepository — 계약 테스트
+  ---
+  duration_ms: 4.431762
+  type: 'suite'
+  ...
+# Subtest: OutboxPoller
+    # Subtest: outboxRepo가 Port 계약을 구현하지 않으면 TypeError
+    ok 1 - outboxRepo가 Port 계약을 구현하지 않으면 TypeError
+      ---
+      duration_ms: 1.114202
+      type: 'test'
+      ...
+    # Subtest: eventBus에 publish가 없으면 TypeError
+    ok 2 - eventBus에 publish가 없으면 TypeError
+      ---
+      duration_ms: 0.291866
+      type: 'test'
+      ...
+    # Subtest: start 후 isRunning이 true
+    ok 3 - start 후 isRunning이 true
+      ---
+      duration_ms: 0.485929
+      type: 'test'
+      ...
+    # Subtest: stop 후 isRunning이 false
+    ok 4 - stop 후 isRunning이 false
+      ---
+      duration_ms: 0.443279
+      type: 'test'
+      ...
+    # Subtest: 이미 실행 중일 때 start 재호출 — no-op (타이머 하나만 유지)
+    ok 5 - 이미 실행 중일 때 start 재호출 — no-op (타이머 하나만 유지)
+      ---
+      duration_ms: 0.177953
+      type: 'test'
+      ...
+    # Subtest: pending 이벤트가 EventBus로 전달되고 delivered 처리된다
+    ok 6 - pending 이벤트가 EventBus로 전달되고 delivered 처리된다
+      ---
+      duration_ms: 62.022036
+      type: 'test'
+      ...
+    # Subtest: 복수 이벤트 배치 전달
+    ok 7 - 복수 이벤트 배치 전달
+      ---
+      duration_ms: 60.841638
+      type: 'test'
+      ...
+    # Subtest: pending이 없으면 EventBus 호출 없음
+    ok 8 - pending이 없으면 EventBus 호출 없음
+      ---
+      duration_ms: 60.647874
+      type: 'test'
+      ...
+# [OutboxPoller] event 251c1b39-4408-4573-beff-3fa6a9d7224e publish failed: Error: bus error
+#     at Object.publish (/root/workspace/my-module/domains/productivity/task-tracking/tests/infrastructure/OutboxPoller.test.js:116:47)
+#     at OutboxPoller._poll (/root/workspace/my-module/domains/productivity/task-tracking/src/infrastructure/OutboxPoller.js:93:26)
+    # Subtest: EventBus publish 에러는 격리되어 다른 이벤트 전달 계속된다
+    ok 9 - EventBus publish 에러는 격리되어 다른 이벤트 전달 계속된다
+      ---
+      duration_ms: 31.275203
+      type: 'test'
+      ...
+    # Subtest: stats.pollCount는 poll 실행 횟수를 추적한다
+    ok 10 - stats.pollCount는 poll 실행 횟수를 추적한다
+      ---
+      duration_ms: 70.902928
+      type: 'test'
+      ...
+    # Subtest: stats.deliveredCount는 전달 이벤트 수를 추적한다
+    ok 11 - stats.deliveredCount는 전달 이벤트 수를 추적한다
+      ---
+      duration_ms: 60.819133
+      type: 'test'
+      ...
+    1..11
+ok 98 - OutboxPoller
+  ---
+  duration_ms: 350.531792
+  type: 'suite'
+  ...
+# Subtest: InMemoryOutboxRepository
+    # Subtest: append: 단일 이벤트를 저장하고 fetchPending에서 조회된다
+    ok 1 - append: 단일 이벤트를 저장하고 fetchPending에서 조회된다
+      ---
+      duration_ms: 1.694654
+      type: 'test'
+      ...
+    # Subtest: append: 복수 이벤트를 한 번에 저장한다
+    ok 2 - append: 복수 이벤트를 한 번에 저장한다
+      ---
+      duration_ms: 5.990319
+      type: 'test'
+      ...
+    # Subtest: append: 빈 배열은 no-op
+    ok 3 - append: 빈 배열은 no-op
+      ---
+      duration_ms: 0.326667
+      type: 'test'
+      ...
+    # Subtest: fetchPending: limit 옵션으로 결과를 자른다
+    ok 4 - fetchPending: limit 옵션으로 결과를 자른다
+      ---
+      duration_ms: 0.366307
+      type: 'test'
+      ...
+    # Subtest: fetchPending: delivered=true 항목은 반환하지 않는다
+    ok 5 - fetchPending: delivered=true 항목은 반환하지 않는다
+      ---
+      duration_ms: 0.47915
+      type: 'test'
+      ...
+    # Subtest: fetchPending: id, event_type, aggregate_id, payload, created_at 필드를 반환한다
+    ok 6 - fetchPending: id, event_type, aggregate_id, payload, created_at 필드를 반환한다
+      ---
+      duration_ms: 0.445288
+      type: 'test'
+      ...
+    # Subtest: markDelivered: 지정한 id를 delivered 처리한다
+    ok 7 - markDelivered: 지정한 id를 delivered 처리한다
+      ---
+      duration_ms: 0.235685
+      type: 'test'
+      ...
+    # Subtest: markDelivered: 빈 배열은 no-op
+    ok 8 - markDelivered: 빈 배열은 no-op
+      ---
+      duration_ms: 0.128933
+      type: 'test'
+      ...
+    # Subtest: markDelivered: 존재하지 않는 id는 무시된다
+    ok 9 - markDelivered: 존재하지 않는 id는 무시된다
+      ---
+      duration_ms: 1.124937
+      type: 'test'
+      ...
+    1..9
+ok 99 - InMemoryOutboxRepository
+  ---
+  duration_ms: 12.047345
+  type: 'suite'
+  ...
+# Subtest: PostgresTaskRepository — 구조 계약 테스트
+    # Subtest: TaskRepository 포트 메서드 save/findById/findAll을 구현한다
+    ok 1 - TaskRepository 포트 메서드 save/findById/findAll을 구현한다
+      ---
+      duration_ms: 0.628743
+      type: 'test'
+      ...
+    # Subtest: client.query 주입이 없으면 생성에 실패한다
+    ok 2 - client.query 주입이 없으면 생성에 실패한다
+      ---
+      duration_ms: 1.368057
+      type: 'test'
+      ...
+    # Subtest: save 후 findById로 동일 task를 재구성한다
+    ok 3 - save 후 findById로 동일 task를 재구성한다
+      ---
+      duration_ms: 1.493729
+      type: 'test'
+      ...
+    # Subtest: findAll은 assignee/status/due_before/page/page_size 필터를 조합한다
+    ok 4 - findAll은 assignee/status/due_before/page/page_size 필터를 조합한다
+      ---
+      duration_ms: 1.220484
+      type: 'test'
+      ...
+    # Subtest: stale version save는 OPTIMISTIC_LOCK_CONFLICT를 던진다
+    ok 5 - stale version save는 OPTIMISTIC_LOCK_CONFLICT를 던진다
+      ---
+      duration_ms: 0.660073
+      type: 'test'
+      ...
+    1..5
+ok 100 - PostgresTaskRepository — 구조 계약 테스트
+  ---
+  duration_ms: 6.465858
+  type: 'suite'
+  ...
+# (node:50675) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SQLiteTaskRepository — 낙관적 잠금
+    # Subtest: 태스크 생성 후 version이 1이다
+    ok 1 - 태스크 생성 후 version이 1이다
+      ---
+      duration_ms: 2.731605
+      type: 'test'
+      ...
+    # Subtest: 전이 후 version이 2로 증가한다
+    ok 2 - 전이 후 version이 2로 증가한다
+      ---
+      duration_ms: 1.224924
+      type: 'test'
+      ...
+    # Subtest: 재배정 후 version이 2로 증가한다
+    ok 3 - 재배정 후 version이 2로 증가한다
+      ---
+      duration_ms: 1.680453
+      type: 'test'
+      ...
+    # Subtest: stale version으로 save하면 OPTIMISTIC_LOCK_CONFLICT를 던진다
+    ok 4 - stale version으로 save하면 OPTIMISTIC_LOCK_CONFLICT를 던진다
+      ---
+      duration_ms: 1.49301
+      type: 'test'
+      ...
+    # Subtest: 동시 전이 시뮬레이션 — 두 번째 save는 OPTIMISTIC_LOCK_CONFLICT
+    ok 5 - 동시 전이 시뮬레이션 — 두 번째 save는 OPTIMISTIC_LOCK_CONFLICT
+      ---
+      duration_ms: 0.927999
+      type: 'test'
+      ...
+    # Subtest: 전체 생명주기(생성→전이→재배정)에서 version이 1→2→3으로 증가한다
+    ok 6 - 전체 생명주기(생성→전이→재배정)에서 version이 1→2→3으로 증가한다
+      ---
+      duration_ms: 1.977709
+      type: 'test'
+      ...
+    1..6
+ok 101 - SQLiteTaskRepository — 낙관적 잠금
+  ---
+  duration_ms: 10.916738
+  type: 'suite'
+  ...
+# (node:50681) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SQLiteTaskRepository는 저장 후 조회와 목록 조회를 지원한다
+ok 102 - SQLiteTaskRepository는 저장 후 조회와 목록 조회를 지원한다
+  ---
+  duration_ms: 2.483859
+  type: 'test'
+  ...
+# Subtest: CreateTaskUseCase + EventBusPublisher 통합
+    # Subtest: task 생성 후 TaskCreated 이벤트가 EventBus에 발행된다
+    ok 1 - task 생성 후 TaskCreated 이벤트가 EventBus에 발행된다
+      ---
+      duration_ms: 1.538401
+      type: 'test'
+      ...
+    # Subtest: EventPublisher 없이 실행해도 정상 동작 (publisher=null)
+    ok 2 - EventPublisher 없이 실행해도 정상 동작 (publisher=null)
+      ---
+      duration_ms: 0.268415
+      type: 'test'
+      ...
+    # Subtest: 와일드카드 구독자는 모든 task 이벤트를 수신한다
+    ok 3 - 와일드카드 구독자는 모든 task 이벤트를 수신한다
+      ---
+      duration_ms: 1.378317
+      type: 'test'
+      ...
+    1..3
+ok 103 - CreateTaskUseCase + EventBusPublisher 통합
+  ---
+  duration_ms: 4.106002
+  type: 'suite'
+  ...
+# Subtest: OutboxPoller + EventBus 연결 통합
+    # Subtest: OutboxRepository에 추가된 이벤트가 Poller를 통해 EventBus에 도달한다
+    ok 1 - OutboxRepository에 추가된 이벤트가 Poller를 통해 EventBus에 도달한다
+      ---
+      duration_ms: 61.297336
+      type: 'test'
+      ...
+    # Subtest: Poller delivered 후 EventBus history에 기록된다
+    ok 2 - Poller delivered 후 EventBus history에 기록된다
+      ---
+      duration_ms: 61.928365
+      type: 'test'
+      ...
+    1..2
+ok 104 - OutboxPoller + EventBus 연결 통합
+  ---
+  duration_ms: 123.649539
+  type: 'suite'
+  ...
+# Subtest: 모든 Task Use Case — EventBus 발행 + Outbox dual-write
+    # Subtest: CreateTaskUseCase: TaskCreated 이벤트가 EventBus와 Outbox 양쪽에 기록된다
+    ok 1 - CreateTaskUseCase: TaskCreated 이벤트가 EventBus와 Outbox 양쪽에 기록된다
+      ---
+      duration_ms: 1.942449
+      type: 'test'
+      ...
+    # Subtest: TransitionTaskStatusUseCase: TaskStatusChanged 이벤트가 EventBus와 Outbox에 기록된다
+    ok 2 - TransitionTaskStatusUseCase: TaskStatusChanged 이벤트가 EventBus와 Outbox에 기록된다
+      ---
+      duration_ms: 1.885112
+      type: 'test'
+      ...
+    # Subtest: ReassignTaskUseCase: TaskReassigned 이벤트가 EventBus와 Outbox에 기록된다
+    ok 3 - ReassignTaskUseCase: TaskReassigned 이벤트가 EventBus와 Outbox에 기록된다
+      ---
+      duration_ms: 0.757265
+      type: 'test'
+      ...
+    # Subtest: 전체 태스크 생명주기(생성→전이→재배정)에서 Outbox에 3건이 기록된다
+    ok 4 - 전체 태스크 생명주기(생성→전이→재배정)에서 Outbox에 3건이 기록된다
+      ---
+      duration_ms: 0.735974
+      type: 'test'
+      ...
+    1..4
+ok 105 - 모든 Task Use Case — EventBus 발행 + Outbox dual-write
+  ---
+  duration_ms: 6.082886
+  type: 'suite'
+  ...
+# Subtest: POST /tasks — 권한
+    # Subtest: task:write 없으면 403
+    ok 1 - task:write 없으면 403
+      ---
+      duration_ms: 1.176793
+      type: 'test'
+      ...
+    # Subtest: task:write 있으면 201
+    ok 2 - task:write 있으면 201
+      ---
+      duration_ms: 0.441169
+      type: 'test'
+      ...
+    # Subtest: 권한 없음(빈 배열) → 403
+    ok 3 - 권한 없음(빈 배열) → 403
+      ---
+      duration_ms: 0.243385
+      type: 'test'
+      ...
+    1..3
+ok 106 - POST /tasks — 권한
+  ---
+  duration_ms: 2.574172
+  type: 'suite'
+  ...
+# Subtest: POST /tasks — 입력 검증
+    # Subtest: assignee_id 없으면 400 (INV001)
+    ok 1 - assignee_id 없으면 400 (INV001)
+      ---
+      duration_ms: 0.939689
+      type: 'test'
+      ...
+    # Subtest: title 없으면 400
+    ok 2 - title 없으면 400
+      ---
+      duration_ms: 0.170443
+      type: 'test'
+      ...
+    # Subtest: 과거 due_date → 400 (INV003)
+    ok 3 - 과거 due_date → 400 (INV003)
+      ---
+      duration_ms: 0.178454
+      type: 'test'
+      ...
+    1..3
+ok 107 - POST /tasks — 입력 검증
+  ---
+  duration_ms: 1.48716
+  type: 'suite'
+  ...
+# Subtest: GET /tasks — 권한
+    # Subtest: task:read 없으면 403
+    ok 1 - task:read 없으면 403
+      ---
+      duration_ms: 0.244525
+      type: 'test'
+      ...
+    # Subtest: task:read 있으면 200
+    ok 2 - task:read 있으면 200
+      ---
+      duration_ms: 0.282775
+      type: 'test'
+      ...
+    # Subtest: task:write만 있어도 read 가능
+    ok 3 - task:write만 있어도 read 가능
+      ---
+      duration_ms: 0.186954
+      type: 'test'
+      ...
+    # Subtest: [회귀] invalid page_size → 400
+    ok 4 - [회귀] invalid page_size → 400
+      ---
+      duration_ms: 0.379428
+      type: 'test'
+      ...
+    # Subtest: [회귀] validation error에도 instance가 포함된다
+    ok 5 - [회귀] validation error에도 instance가 포함된다
+      ---
+      duration_ms: 0.151503
+      type: 'test'
+      ...
+    1..5
+ok 108 - GET /tasks — 권한
+  ---
+  duration_ms: 1.53574
+  type: 'suite'
+  ...
+# Subtest: GET /tasks/{task_id}
+    # Subtest: task:read 없으면 403
+    ok 1 - task:read 없으면 403
+      ---
+      duration_ms: 0.236565
+      type: 'test'
+      ...
+    # Subtest: 존재하는 작업 조회 → 200
+    ok 2 - 존재하는 작업 조회 → 200
+      ---
+      duration_ms: 0.215854
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → 404
+    ok 3 - 존재하지 않는 task_id → 404
+      ---
+      duration_ms: 0.120383
+      type: 'test'
+      ...
+    1..3
+ok 109 - GET /tasks/{task_id}
+  ---
+  duration_ms: 0.914318
+  type: 'suite'
+  ...
+# Subtest: PATCH /tasks/{task_id}/status — 권한
+    # Subtest: task:write 없으면 403
+    ok 1 - task:write 없으면 403
+      ---
+      duration_ms: 0.161873
+      type: 'test'
+      ...
+    1..1
+ok 110 - PATCH /tasks/{task_id}/status — 권한
+  ---
+  duration_ms: 0.209944
+  type: 'suite'
+  ...
+# Subtest: PATCH /tasks/{task_id}/status — 상태 전이
+    # Subtest: PENDING → IN_PROGRESS → 200
+    ok 1 - PENDING → IN_PROGRESS → 200
+      ---
+      duration_ms: 0.415698
+      type: 'test'
+      ...
+    # Subtest: IN_PROGRESS → DONE → 200
+    ok 2 - IN_PROGRESS → DONE → 200
+      ---
+      duration_ms: 0.173914
+      type: 'test'
+      ...
+    # Subtest: DONE → IN_PROGRESS 역전이 → 409 (INV002)
+    ok 3 - DONE → IN_PROGRESS 역전이 → 409 (INV002)
+      ---
+      duration_ms: 0.117813
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 taskId → 404
+    ok 4 - 존재하지 않는 taskId → 404
+      ---
+      duration_ms: 0.089332
+      type: 'test'
+      ...
+    1..4
+ok 111 - PATCH /tasks/{task_id}/status — 상태 전이
+  ---
+  duration_ms: 1.056181
+  type: 'suite'
+  ...
+# Subtest: PATCH /tasks/{task_id}/assignee — 권한
+    # Subtest: task:write 없으면 403
+    ok 1 - task:write 없으면 403
+      ---
+      duration_ms: 0.176524
+      type: 'test'
+      ...
+    1..1
+ok 112 - PATCH /tasks/{task_id}/assignee — 권한
+  ---
+  duration_ms: 0.250365
+  type: 'suite'
+  ...
+# Subtest: PATCH /tasks/{task_id}/assignee — 담당자 변경
+    # Subtest: PENDING 작업 담당자 변경 → 200
+    ok 1 - PENDING 작업 담당자 변경 → 200
+      ---
+      duration_ms: 1.149303
+      type: 'test'
+      ...
+    # Subtest: DONE 작업 담당자 변경 → 409 (INV004)
+    ok 2 - DONE 작업 담당자 변경 → 409 (INV004)
+      ---
+      duration_ms: 0.256695
+      type: 'test'
+      ...
+    # Subtest: new_assignee_id 없으면 400 (INV001)
+    ok 3 - new_assignee_id 없으면 400 (INV001)
+      ---
+      duration_ms: 0.177763
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 task_id → 404
+    ok 4 - 존재하지 않는 task_id → 404
+      ---
+      duration_ms: 0.140852
+      type: 'test'
+      ...
+    1..4
+ok 113 - PATCH /tasks/{task_id}/assignee — 담당자 변경
+  ---
+  duration_ms: 2.007
+  type: 'suite'
+  ...
+# Subtest: correlationId 전파
+    # Subtest: 오류 응답에 correlationId 포함
+    ok 1 - 오류 응답에 correlationId 포함
+      ---
+      duration_ms: 0.118922
+      type: 'test'
+      ...
+    1..1
+ok 114 - correlationId 전파
+  ---
+  duration_ms: 0.165294
+  type: 'suite'
+  ...
+# Subtest: [task-management smoke] 생성 후 상세 조회 성공
+ok 115 - [task-management smoke] 생성 후 상세 조회 성공
+  ---
+  duration_ms: 1.760525
+  type: 'test'
+  ...
+# Subtest: [task-management smoke] 권한 없는 목록 조회 거부
+ok 116 - [task-management smoke] 권한 없는 목록 조회 거부
+  ---
+  duration_ms: 0.305606
+  type: 'test'
+  ...
+# Subtest: [task-management smoke] 존재하지 않는 작업 조회는 404
+ok 117 - [task-management smoke] 존재하지 않는 작업 조회는 404
+  ---
+  duration_ms: 0.204684
+  type: 'test'
+  ...
+# Subtest: [Stage E] INV-V001: 필수 필드 공백/null 주입
+    # Subtest: title 빈 문자열 → VALIDATION_ERROR
+    ok 1 - title 빈 문자열 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.938199
+      type: 'test'
+      ...
+    # Subtest: title 공백만 → VALIDATION_ERROR
+    ok 2 - title 공백만 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.096732
+      type: 'test'
+      ...
+    # Subtest: uploaderId 빈 문자 → VALIDATION_ERROR
+    ok 3 - uploaderId 빈 문자 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.063701
+      type: 'test'
+      ...
+    # Subtest: fileRef 빈 문자 → VALIDATION_ERROR
+    ok 4 - fileRef 빈 문자 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.060762
+      type: 'test'
+      ...
+    1..4
+ok 118 - [Stage E] INV-V001: 필수 필드 공백/null 주입
+  ---
+  duration_ms: 1.783715
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-V002: 터미널 상태에서 전이 불가
+    # Subtest: ARCHIVED 영상에서 어떤 전이도 불가
+    ok 1 - ARCHIVED 영상에서 어떤 전이도 불가
+      ---
+      duration_ms: 1.100781
+      type: 'test'
+      ...
+    # Subtest: FAILED 영상에서 어떤 전이도 불가
+    ok 2 - FAILED 영상에서 어떤 전이도 불가
+      ---
+      duration_ms: 0.205874
+      type: 'test'
+      ...
+    # Subtest: ARCHIVED 영상 아카이브 재시도 → CONFLICT (이중 아카이브 방어)
+    ok 3 - ARCHIVED 영상 아카이브 재시도 → CONFLICT (이중 아카이브 방어)
+      ---
+      duration_ms: 0.217424
+      type: 'test'
+      ...
+    1..3
+ok 119 - [Stage E] INV-V002: 터미널 상태에서 전이 불가
+  ---
+  duration_ms: 1.771405
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-V003: PRIVATE 영상 무단 접근 방어
+    # Subtest: 다른 사용자는 PRIVATE 영상 직접 조회 불가
+    ok 1 - 다른 사용자는 PRIVATE 영상 직접 조회 불가
+      ---
+      duration_ms: 0.277885
+      type: 'test'
+      ...
+    # Subtest: canRead() 직접 호출: PRIVATE + 다른 userId → false
+    ok 2 - canRead() 직접 호출: PRIVATE + 다른 userId → false
+      ---
+      duration_ms: 0.164713
+      type: 'test'
+      ...
+    # Subtest: ARCHIVED 영상의 AccessPolicy 변경 시도 → CONFLICT
+    ok 3 - ARCHIVED 영상의 AccessPolicy 변경 시도 → CONFLICT
+      ---
+      duration_ms: 0.266616
+      type: 'test'
+      ...
+    # Subtest: 유효하지 않은 AccessPolicy 주입 → VALIDATION_ERROR
+    ok 4 - 유효하지 않은 AccessPolicy 주입 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.120022
+      type: 'test'
+      ...
+    1..4
+ok 120 - [Stage E] INV-V003: PRIVATE 영상 무단 접근 방어
+  ---
+  duration_ms: 0.98867
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-V004: 동시 RUNNING Job 방어
+    # Subtest: 이미 RUNNING Job 있으면 StartTranscodeJob → CONFLICT
+    ok 1 - 이미 RUNNING Job 있으면 StartTranscodeJob → CONFLICT
+      ---
+      duration_ms: 0.280356
+      type: 'test'
+      ...
+    # Subtest: COMPLETED Job 존재 시 새 Job 시작 가능 (RUNNING 아님)
+    ok 2 - COMPLETED Job 존재 시 새 Job 시작 가능 (RUNNING 아님)
+      ---
+      duration_ms: 0.186764
+      type: 'test'
+      ...
+    # Subtest: PENDING Job 존재 시 새 Job 시작 가능 (PENDING은 RUNNING이 아님)
+    ok 3 - PENDING Job 존재 시 새 Job 시작 가능 (PENDING은 RUNNING이 아님)
+      ---
+      duration_ms: 0.104152
+      type: 'test'
+      ...
+    1..3
+ok 121 - [Stage E] INV-V004: 동시 RUNNING Job 방어
+  ---
+  duration_ms: 0.634413
+  type: 'suite'
+  ...
+# Subtest: [Stage E] INV-V005: COMPLETED 전이 시 outputRenditionRef 필수
+    # Subtest: outputRenditionRef 없이 COMPLETED 전이 → VALIDATION_ERROR
+    ok 1 - outputRenditionRef 없이 COMPLETED 전이 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.086072
+      type: 'test'
+      ...
+    # Subtest: outputRenditionRef 빈 문자열 → VALIDATION_ERROR
+    ok 2 - outputRenditionRef 빈 문자열 → VALIDATION_ERROR
+      ---
+      duration_ms: 0.048311
+      type: 'test'
+      ...
+    # Subtest: FAILED 전이 시 outputRenditionRef 없어도 가능
+    ok 3 - FAILED 전이 시 outputRenditionRef 없어도 가능
+      ---
+      duration_ms: 0.069162
+      type: 'test'
+      ...
+    1..3
+ok 122 - [Stage E] INV-V005: COMPLETED 전이 시 outputRenditionRef 필수
+  ---
+  duration_ms: 0.247785
+  type: 'suite'
+  ...
+# Subtest: [Stage E] 객체 불변성 방어
+    # Subtest: Video는 Object.freeze — 속성 직접 변경 불가
+    ok 1 - Video는 Object.freeze — 속성 직접 변경 불가
+      ---
+      duration_ms: 0.121482
+      type: 'test'
+      ...
+    # Subtest: TranscodeJob은 Object.freeze — 속성 직접 변경 불가
+    ok 2 - TranscodeJob은 Object.freeze — 속성 직접 변경 불가
+      ---
+      duration_ms: 0.159223
+      type: 'test'
+      ...
+    # Subtest: transitionTo는 새 인스턴스 반환 — 원본 불변
+    ok 3 - transitionTo는 새 인스턴스 반환 — 원본 불변
+      ---
+      duration_ms: 0.075211
+      type: 'test'
+      ...
+    1..3
+ok 123 - [Stage E] 객체 불변성 방어
+  ---
+  duration_ms: 0.421799
+  type: 'suite'
+  ...
+# Subtest: [Stage E] 권한 우회 공격 벡터
+    # Subtest: caller=null → FORBIDDEN (크래시 없음)
+    ok 1 - caller=null → FORBIDDEN (크래시 없음)
+      ---
+      duration_ms: 0.108052
+      type: 'test'
+      ...
+    # Subtest: caller.permissions=undefined → FORBIDDEN
+    ok 2 - caller.permissions=undefined → FORBIDDEN
+      ---
+      duration_ms: 0.068972
+      type: 'test'
+      ...
+    # Subtest: video:write만으로 archive 시도 → FORBIDDEN (video:admin 필요)
+    ok 3 - video:write만으로 archive 시도 → FORBIDDEN (video:admin 필요)
+      ---
+      duration_ms: 0.142363
+      type: 'test'
+      ...
+    # Subtest: 권한 문자열 대소문자 구분: VIDEO:WRITE는 거부
+    ok 4 - 권한 문자열 대소문자 구분: VIDEO:WRITE는 거부
+      ---
+      duration_ms: 0.319757
+      type: 'test'
+      ...
+    1..4
+ok 124 - [Stage E] 권한 우회 공격 벡터
+  ---
+  duration_ms: 0.720154
+  type: 'suite'
+  ...
+# Subtest: ArchiveVideoUseCase
+    # Subtest: READY → ARCHIVED 성공 (INV-V002)
+    ok 1 - READY → ARCHIVED 성공 (INV-V002)
+      ---
+      duration_ms: 1.066802
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 (NO_PERM) → FORBIDDEN 에러
+    ok 2 - 권한 없음 (NO_PERM) → FORBIDDEN 에러
+      ---
+      duration_ms: 0.635053
+      type: 'test'
+      ...
+    # Subtest: video:write만으로는 아카이브 불가 (video:admin 필요)
+    ok 3 - video:write만으로는 아카이브 불가 (video:admin 필요)
+      ---
+      duration_ms: 1.415158
+      type: 'test'
+      ...
+    # Subtest: UPLOADED → ARCHIVED 실패 (INV-V002)
+    ok 4 - UPLOADED → ARCHIVED 실패 (INV-V002)
+      ---
+      duration_ms: 0.198424
+      type: 'test'
+      ...
+    # Subtest: PROCESSING → ARCHIVED 실패 (INV-V002)
+    ok 5 - PROCESSING → ARCHIVED 실패 (INV-V002)
+      ---
+      duration_ms: 0.213034
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 Video → NOT_FOUND 에러
+    ok 6 - 존재하지 않는 Video → NOT_FOUND 에러
+      ---
+      duration_ms: 0.140683
+      type: 'test'
+      ...
+    # Subtest: 이미 ARCHIVED 영상 재아카이브 시도 → CONFLICT (INV-V002)
+    ok 7 - 이미 ARCHIVED 영상 재아카이브 시도 → CONFLICT (INV-V002)
+      ---
+      duration_ms: 0.217615
+      type: 'test'
+      ...
+    1..7
+ok 125 - ArchiveVideoUseCase
+  ---
+  duration_ms: 5.061791
+  type: 'suite'
+  ...
+# Subtest: ChangeAccessPolicyUseCase
+    # Subtest: 정상 변경 — PRIVATE → PUBLIC
+    ok 1 - 정상 변경 — PRIVATE → PUBLIC
+      ---
+      duration_ms: 1.159513
+      type: 'test'
+      ...
+    # Subtest: 정상 변경 — PUBLIC → ORG_INTERNAL
+    ok 2 - 정상 변경 — PUBLIC → ORG_INTERNAL
+      ---
+      duration_ms: 0.245215
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 3 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 1.932213
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 Video → NOT_FOUND 에러
+    ok 4 - 존재하지 않는 Video → NOT_FOUND 에러
+      ---
+      duration_ms: 0.153283
+      type: 'test'
+      ...
+    # Subtest: ARCHIVED 영상 정책 변경 불가 (INV-V002)
+    ok 5 - ARCHIVED 영상 정책 변경 불가 (INV-V002)
+      ---
+      duration_ms: 0.187144
+      type: 'test'
+      ...
+    # Subtest: PROCESSING 상태에서도 정책 변경 가능
+    ok 6 - PROCESSING 상태에서도 정책 변경 가능
+      ---
+      duration_ms: 0.240435
+      type: 'test'
+      ...
+    # Subtest: [회귀] 비소유자 video:write → FORBIDDEN (INV-V003)
+    ok 7 - [회귀] 비소유자 video:write → FORBIDDEN (INV-V003)
+      ---
+      duration_ms: 0.231685
+      type: 'test'
+      ...
+    # Subtest: [회귀] video:admin은 타인 영상 정책 변경 가능
+    ok 8 - [회귀] video:admin은 타인 영상 정책 변경 가능
+      ---
+      duration_ms: 0.194924
+      type: 'test'
+      ...
+    1..8
+ok 126 - ChangeAccessPolicyUseCase
+  ---
+  duration_ms: 5.419902
+  type: 'suite'
+  ...
+# Subtest: GetTranscodeJobUseCase
+    # Subtest: 정상 조회 — video:read 권한 + 존재하는 Job
+    ok 1 - 정상 조회 — video:read 권한 + 존재하는 Job
+      ---
+      duration_ms: 2.092412
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN
+    ok 2 - 권한 없음 → FORBIDDEN
+      ---
+      duration_ms: 0.691373
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 videoId → NOT_FOUND
+    ok 3 - 존재하지 않는 videoId → NOT_FOUND
+      ---
+      duration_ms: 0.182684
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 jobId → NOT_FOUND
+    ok 4 - 존재하지 않는 jobId → NOT_FOUND
+      ---
+      duration_ms: 0.133953
+      type: 'test'
+      ...
+    # Subtest: 다른 videoId의 Job 조회 시도 → NOT_FOUND (소유권 강제)
+    ok 5 - 다른 videoId의 Job 조회 시도 → NOT_FOUND (소유권 강제)
+      ---
+      duration_ms: 0.419768
+      type: 'test'
+      ...
+    # Subtest: RUNNING 상태 Job 조회 성공
+    ok 6 - RUNNING 상태 Job 조회 성공
+      ---
+      duration_ms: 0.343457
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상의 Job을 비소유자가 조회 → FORBIDDEN (INV-V003)
+    ok 7 - [회귀] PRIVATE 영상의 Job을 비소유자가 조회 → FORBIDDEN (INV-V003)
+      ---
+      duration_ms: 0.168634
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상의 Job을 소유자가 조회 → 성공 (INV-V003)
+    ok 8 - [회귀] PRIVATE 영상의 Job을 소유자가 조회 → 성공 (INV-V003)
+      ---
+      duration_ms: 0.232945
+      type: 'test'
+      ...
+    # Subtest: COMPLETED 상태 Job + outputRenditionRef 포함 조회 성공
+    ok 9 - COMPLETED 상태 Job + outputRenditionRef 포함 조회 성공
+      ---
+      duration_ms: 0.436369
+      type: 'test'
+      ...
+    1..9
+ok 127 - GetTranscodeJobUseCase
+  ---
+  duration_ms: 5.900988
+  type: 'suite'
+  ...
+# Subtest: GetVideoUseCase
+    # Subtest: PUBLIC 영상 — video:read 권한으로 조회 성공
+    ok 1 - PUBLIC 영상 — video:read 권한으로 조회 성공
+      ---
+      duration_ms: 1.283746
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 videoId → NOT_FOUND 에러
+    ok 2 - 존재하지 않는 videoId → NOT_FOUND 에러
+      ---
+      duration_ms: 0.51289
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 3 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 0.214264
+      type: 'test'
+      ...
+    # Subtest: INV-V003: PRIVATE 영상 — 업로더 본인은 조회 가능
+    ok 4 - INV-V003: PRIVATE 영상 — 업로더 본인은 조회 가능
+      ---
+      duration_ms: 0.222774
+      type: 'test'
+      ...
+    # Subtest: INV-V003: PRIVATE 영상 — 다른 사용자는 FORBIDDEN
+    ok 5 - INV-V003: PRIVATE 영상 — 다른 사용자는 FORBIDDEN
+      ---
+      duration_ms: 0.156853
+      type: 'test'
+      ...
+    # Subtest: [회귀] INV-V003: PRIVATE 영상 — video:admin은 조회 가능 (일관성)
+    ok 6 - [회귀] INV-V003: PRIVATE 영상 — video:admin은 조회 가능 (일관성)
+      ---
+      duration_ms: 0.176204
+      type: 'test'
+      ...
+    1..6
+ok 128 - GetVideoUseCase
+  ---
+  duration_ms: 5.079197
+  type: 'suite'
+  ...
+# Subtest: ListVideosUseCase
+    # Subtest: 정상 조회 — 빈 저장소
+    ok 1 - 정상 조회 — 빈 저장소
+      ---
+      duration_ms: 1.163973
+      type: 'test'
+      ...
+    # Subtest: FORBIDDEN — video:read 권한 없음
+    ok 2 - FORBIDDEN — video:read 권한 없음
+      ---
+      duration_ms: 0.47856
+      type: 'test'
+      ...
+    # Subtest: PUBLIC 영상은 모든 video:read 사용자에게 노출
+    ok 3 - PUBLIC 영상은 모든 video:read 사용자에게 노출
+      ---
+      duration_ms: 0.811637
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상은 비소유자에게 노출되지 않음 (INV-V003)
+    ok 4 - [회귀] PRIVATE 영상은 비소유자에게 노출되지 않음 (INV-V003)
+      ---
+      duration_ms: 0.184374
+      type: 'test'
+      ...
+    # Subtest: [회귀] PRIVATE 영상은 소유자 본인에게는 노출
+    ok 5 - [회귀] PRIVATE 영상은 소유자 본인에게는 노출
+      ---
+      duration_ms: 0.125592
+      type: 'test'
+      ...
+    # Subtest: [회귀] video:admin은 PRIVATE 영상 포함 전체 목록 조회 가능
+    ok 6 - [회귀] video:admin은 PRIVATE 영상 포함 전체 목록 조회 가능
+      ---
+      duration_ms: 0.192064
+      type: 'test'
+      ...
+    # Subtest: 혼합 정책 — PUBLIC + PRIVATE 혼재 시 비소유자에게 PUBLIC만 노출
+    ok 7 - 혼합 정책 — PUBLIC + PRIVATE 혼재 시 비소유자에게 PUBLIC만 노출
+      ---
+      duration_ms: 0.276006
+      type: 'test'
+      ...
+    # Subtest: uploaderId 필터 적용 — 본인 업로드 영상만 조회
+    ok 8 - uploaderId 필터 적용 — 본인 업로드 영상만 조회
+      ---
+      duration_ms: 0.388758
+      type: 'test'
+      ...
+    # Subtest: [회귀] 권한 필터는 페이지네이션보다 먼저 적용된다
+    ok 9 - [회귀] 권한 필터는 페이지네이션보다 먼저 적용된다
+      ---
+      duration_ms: 0.47505
+      type: 'test'
+      ...
+    1..9
+ok 129 - ListVideosUseCase
+  ---
+  duration_ms: 5.216704
+  type: 'suite'
+  ...
+# Subtest: StartTranscodeJobUseCase
+    # Subtest: 정상 시작 — PENDING 상태 TranscodeJob 반환
+    ok 1 - 정상 시작 — PENDING 상태 TranscodeJob 반환
+      ---
+      duration_ms: 1.816041
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 2 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 0.659673
+      type: 'test'
+      ...
+    # Subtest: Video 없음 → NOT_FOUND 에러
+    ok 3 - Video 없음 → NOT_FOUND 에러
+      ---
+      duration_ms: 0.234685
+      type: 'test'
+      ...
+    # Subtest: INV-V004: 이미 RUNNING Job 존재 → CONFLICT 에러
+    ok 4 - INV-V004: 이미 RUNNING Job 존재 → CONFLICT 에러
+      ---
+      duration_ms: 0.339387
+      type: 'test'
+      ...
+    # Subtest: [회귀] ARCHIVED 영상 트랜스코딩 시도 → CONFLICT (INV-V002 terminal 상태)
+    ok 5 - [회귀] ARCHIVED 영상 트랜스코딩 시도 → CONFLICT (INV-V002 terminal 상태)
+      ---
+      duration_ms: 0.429228
+      type: 'test'
+      ...
+    # Subtest: INV-V004: PENDING Job만 있으면 새 Job 시작 가능 (RUNNING 아님)
+    ok 6 - INV-V004: PENDING Job만 있으면 새 Job 시작 가능 (RUNNING 아님)
+      ---
+      duration_ms: 0.272326
+      type: 'test'
+      ...
+    1..6
+ok 130 - StartTranscodeJobUseCase
+  ---
+  duration_ms: 4.920664
+  type: 'suite'
+  ...
+# Subtest: StartTranscodeJobUseCase — Worker Thread NFR
+    # Subtest: [NFR] workerAdapter 없이 실행 — 기존 동작 회귀 없음 (PENDING 반환)
+    ok 1 - [NFR] workerAdapter 없이 실행 — 기존 동작 회귀 없음 (PENDING 반환)
+      ---
+      duration_ms: 1.620566
+      type: 'test'
+      ...
+    # Subtest: [NFR] NullWorkerAdapter 주입 — dispatch 호출 확인, PENDING 즉시 반환
+    ok 2 - [NFR] NullWorkerAdapter 주입 — dispatch 호출 확인, PENDING 즉시 반환
+      ---
+      duration_ms: 0.353628
+      type: 'test'
+      ...
+    # Subtest: [NFR] Worker Thread 실제 분리 실행 — PENDING 반환 후 Worker 완료 메시지 비동기 수신
+    ok 3 - [NFR] Worker Thread 실제 분리 실행 — PENDING 반환 후 Worker 완료 메시지 비동기 수신
+      ---
+      duration_ms: 52.181025
+      type: 'test'
+      ...
+    1..3
+ok 131 - StartTranscodeJobUseCase — Worker Thread NFR
+  ---
+  duration_ms: 55.20854
+  type: 'suite'
+  ...
+# Subtest: UploadVideoUseCase
+    # Subtest: 정상 업로드 — UPLOADED 상태 Video 반환
+    ok 1 - 정상 업로드 — UPLOADED 상태 Video 반환
+      ---
+      duration_ms: 1.310086
+      type: 'test'
+      ...
+    # Subtest: 권한 없음 → FORBIDDEN 에러
+    ok 2 - 권한 없음 → FORBIDDEN 에러
+      ---
+      duration_ms: 0.630033
+      type: 'test'
+      ...
+    # Subtest: title 누락 → VALIDATION_ERROR (INV-V001)
+    ok 3 - title 누락 → VALIDATION_ERROR (INV-V001)
+      ---
+      duration_ms: 0.210944
+      type: 'test'
+      ...
+    # Subtest: originalFileRef 누락 → VALIDATION_ERROR (INV-V001)
+    ok 4 - originalFileRef 누락 → VALIDATION_ERROR (INV-V001)
+      ---
+      duration_ms: 0.138743
+      type: 'test'
+      ...
+    # Subtest: 기본 accessPolicy는 PRIVATE
+    ok 5 - 기본 accessPolicy는 PRIVATE
+      ---
+      duration_ms: 0.128442
+      type: 'test'
+      ...
+    # Subtest: 업로드 후 repository에 저장됨
+    ok 6 - 업로드 후 repository에 저장됨
+      ---
+      duration_ms: 0.176303
+      type: 'test'
+      ...
+    1..6
+ok 132 - UploadVideoUseCase
+  ---
+  duration_ms: 3.402598
+  type: 'suite'
+  ...
+# Subtest: TranscodeJob Entity
+    # Subtest: TranscodeJob.create()
+        # Subtest: 유효한 입력으로 PENDING 상태 생성
+        ok 1 - 유효한 입력으로 PENDING 상태 생성
+          ---
+          duration_ms: 1.165943
+          type: 'test'
+          ...
+        # Subtest: videoId 누락 → 에러
+        ok 2 - videoId 누락 → 에러
+          ---
+          duration_ms: 1.206759
+          type: 'test'
+          ...
+        # Subtest: 유효하지 않은 targetFormat → 에러
+        ok 3 - 유효하지 않은 targetFormat → 에러
+          ---
+          duration_ms: 0.206474
+          type: 'test'
+          ...
+        # Subtest: targetResolution 누락 → 에러
+        ok 4 - targetResolution 누락 → 에러
+          ---
+          duration_ms: 0.132423
+          type: 'test'
+          ...
+        # Subtest: HLS 포맷 지원
+        ok 5 - HLS 포맷 지원
+          ---
+          duration_ms: 0.142642
+          type: 'test'
+          ...
+        # Subtest: DASH 포맷 지원
+        ok 6 - DASH 포맷 지원
+          ---
+          duration_ms: 0.099572
+          type: 'test'
+          ...
+        1..6
+    ok 1 - TranscodeJob.create()
+      ---
+      duration_ms: 3.611637
+      type: 'suite'
+      ...
+    # Subtest: INV-V004: 상태 전이 검증
+        # Subtest: PENDING → RUNNING 허용
+        ok 1 - PENDING → RUNNING 허용
+          ---
+          duration_ms: 0.321957
+          type: 'test'
+          ...
+        # Subtest: RUNNING → COMPLETED 허용 (outputRenditionRef 필수)
+        ok 2 - RUNNING → COMPLETED 허용 (outputRenditionRef 필수)
+          ---
+          duration_ms: 0.238075
+          type: 'test'
+          ...
+        # Subtest: RUNNING → FAILED 허용
+        ok 3 - RUNNING → FAILED 허용
+          ---
+          duration_ms: 0.234545
+          type: 'test'
+          ...
+        # Subtest: PENDING → FAILED 허용
+        ok 4 - PENDING → FAILED 허용
+          ---
+          duration_ms: 0.205754
+          type: 'test'
+          ...
+        # Subtest: COMPLETED → RUNNING 금지
+        ok 5 - COMPLETED → RUNNING 금지
+          ---
+          duration_ms: 0.124143
+          type: 'test'
+          ...
+        # Subtest: FAILED → RUNNING 금지
+        ok 6 - FAILED → RUNNING 금지
+          ---
+          duration_ms: 0.128813
+          type: 'test'
+          ...
+        # Subtest: 상태 전이 후 새 인스턴스 반환 (불변 패턴)
+        ok 7 - 상태 전이 후 새 인스턴스 반환 (불변 패턴)
+          ---
+          duration_ms: 0.115892
+          type: 'test'
+          ...
+        1..7
+    ok 2 - INV-V004: 상태 전이 검증
+      ---
+      duration_ms: 1.705384
+      type: 'suite'
+      ...
+    # Subtest: INV-V005: COMPLETED 시 output_rendition_ref 필수
+        # Subtest: outputRenditionRef 없이 COMPLETED → INV-V005 에러
+        ok 1 - outputRenditionRef 없이 COMPLETED → INV-V005 에러
+          ---
+          duration_ms: 0.118352
+          type: 'test'
+          ...
+        # Subtest: 빈 문자열 outputRenditionRef → INV-V005 에러
+        ok 2 - 빈 문자열 outputRenditionRef → INV-V005 에러
+          ---
+          duration_ms: 0.073541
+          type: 'test'
+          ...
+        # Subtest: 유효한 outputRenditionRef로 COMPLETED 성공
+        ok 3 - 유효한 outputRenditionRef로 COMPLETED 성공
+          ---
+          duration_ms: 0.060351
+          type: 'test'
+          ...
+        1..3
+    ok 3 - INV-V005: COMPLETED 시 output_rendition_ref 필수
+      ---
+      duration_ms: 0.340986
+      type: 'suite'
+      ...
+    1..3
+ok 133 - TranscodeJob Entity
+  ---
+  duration_ms: 6.054735
+  type: 'suite'
+  ...
+# Subtest: Video Entity
+    # Subtest: INV-V001: Video.create() 필수 필드 검증
+        # Subtest: 유효한 입력으로 UPLOADED 상태 생성
+        ok 1 - 유효한 입력으로 UPLOADED 상태 생성
+          ---
+          duration_ms: 1.955429
+          type: 'test'
+          ...
+        # Subtest: title 누락 → INV-V001 에러
+        ok 2 - title 누락 → INV-V001 에러
+          ---
+          duration_ms: 0.389698
+          type: 'test'
+          ...
+        # Subtest: title undefined → INV-V001 에러
+        ok 3 - title undefined → INV-V001 에러
+          ---
+          duration_ms: 0.144012
+          type: 'test'
+          ...
+        # Subtest: uploaderId 누락 → INV-V001 에러
+        ok 4 - uploaderId 누락 → INV-V001 에러
+          ---
+          duration_ms: 0.126443
+          type: 'test'
+          ...
+        # Subtest: originalFileRef 누락 → INV-V001 에러
+        ok 5 - originalFileRef 누락 → INV-V001 에러
+          ---
+          duration_ms: 0.261775
+          type: 'test'
+          ...
+        # Subtest: 기본 accessPolicy는 PRIVATE
+        ok 6 - 기본 accessPolicy는 PRIVATE
+          ---
+          duration_ms: 0.113493
+          type: 'test'
+          ...
+        # Subtest: accessPolicy 명시적으로 PUBLIC 지정
+        ok 7 - accessPolicy 명시적으로 PUBLIC 지정
+          ---
+          duration_ms: 0.150713
+          type: 'test'
+          ...
+        # Subtest: fileSizeBytes=0은 null로 손실되지 않는다
+        ok 8 - fileSizeBytes=0은 null로 손실되지 않는다
+          ---
+          duration_ms: 0.099382
+          type: 'test'
+          ...
+        # Subtest: snapshot 기반 재구성 시 0 값(duration/fileSize)을 유지한다
+        ok 9 - snapshot 기반 재구성 시 0 값(duration/fileSize)을 유지한다
+          ---
+          duration_ms: 0.209425
+          type: 'test'
+          ...
+        1..9
+    ok 1 - INV-V001: Video.create() 필수 필드 검증
+      ---
+      duration_ms: 4.362897
+      type: 'suite'
+      ...
+    # Subtest: INV-V002: 상태 전이 검증
+        # Subtest: UPLOADED → PROCESSING 허용
+        ok 1 - UPLOADED → PROCESSING 허용
+          ---
+          duration_ms: 0.247555
+          type: 'test'
+          ...
+        # Subtest: PROCESSING → READY 허용
+        ok 2 - PROCESSING → READY 허용
+          ---
+          duration_ms: 0.099242
+          type: 'test'
+          ...
+        # Subtest: READY → ARCHIVED 허용
+        ok 3 - READY → ARCHIVED 허용
+          ---
+          duration_ms: 0.086122
+          type: 'test'
+          ...
+        # Subtest: UPLOADED → FAILED 허용
+        ok 4 - UPLOADED → FAILED 허용
+          ---
+          duration_ms: 0.068071
+          type: 'test'
+          ...
+        # Subtest: PROCESSING → FAILED 허용
+        ok 5 - PROCESSING → FAILED 허용
+          ---
+          duration_ms: 0.137702
+          type: 'test'
+          ...
+        # Subtest: ARCHIVED → UPLOADED 금지 (INV-V002)
+        ok 6 - ARCHIVED → UPLOADED 금지 (INV-V002)
+          ---
+          duration_ms: 0.195074
+          type: 'test'
+          ...
+        # Subtest: READY → UPLOADED 금지 (INV-V002)
+        ok 7 - READY → UPLOADED 금지 (INV-V002)
+          ---
+          duration_ms: 0.156143
+          type: 'test'
+          ...
+        # Subtest: FAILED → UPLOADED 금지 (INV-V002)
+        ok 8 - FAILED → UPLOADED 금지 (INV-V002)
+          ---
+          duration_ms: 0.135293
+          type: 'test'
+          ...
+        # Subtest: ARCHIVED → PROCESSING 금지 (INV-V002)
+        ok 9 - ARCHIVED → PROCESSING 금지 (INV-V002)
+          ---
+          duration_ms: 0.084072
+          type: 'test'
+          ...
+        # Subtest: UPLOADED → READY 직접 전이 금지 (INV-V002)
+        ok 10 - UPLOADED → READY 직접 전이 금지 (INV-V002)
+          ---
+          duration_ms: 0.097892
+          type: 'test'
+          ...
+        # Subtest: 상태 전이 후 새 인스턴스 반환 (불변 패턴)
+        ok 11 - 상태 전이 후 새 인스턴스 반환 (불변 패턴)
+          ---
+          duration_ms: 0.090872
+          type: 'test'
+          ...
+        1..11
+    ok 2 - INV-V002: 상태 전이 검증
+      ---
+      duration_ms: 2.735864
+      type: 'suite'
+      ...
+    # Subtest: INV-V003: AccessPolicy PRIVATE 검증
+        # Subtest: PRIVATE 영상 — 업로더 본인은 canRead = true
+        ok 1 - PRIVATE 영상 — 업로더 본인은 canRead = true
+          ---
+          duration_ms: 0.190354
+          type: 'test'
+          ...
+        # Subtest: PRIVATE 영상 — 다른 사용자는 canRead = false
+        ok 2 - PRIVATE 영상 — 다른 사용자는 canRead = false
+          ---
+          duration_ms: 0.078472
+          type: 'test'
+          ...
+        # Subtest: PUBLIC 영상 — 누구나 canRead = true
+        ok 3 - PUBLIC 영상 — 누구나 canRead = true
+          ---
+          duration_ms: 0.056721
+          type: 'test'
+          ...
+        # Subtest: ORG_INTERNAL 영상 — 누구나 canRead = true (정책 제한은 외부 계층)
+        ok 4 - ORG_INTERNAL 영상 — 누구나 canRead = true (정책 제한은 외부 계층)
+          ---
+          duration_ms: 0.051121
+          type: 'test'
+          ...
+        1..4
+    ok 3 - INV-V003: AccessPolicy PRIVATE 검증
+      ---
+      duration_ms: 0.50841
+      type: 'suite'
+      ...
+    # Subtest: changeAccessPolicy() 검증
+        # Subtest: 정상 변경 — PUBLIC으로
+        ok 1 - 정상 변경 — PUBLIC으로
+          ---
+          duration_ms: 0.154133
+          type: 'test'
+          ...
+        # Subtest: ARCHIVED 영상은 정책 변경 불가 (INV-V002)
+        ok 2 - ARCHIVED 영상은 정책 변경 불가 (INV-V002)
+          ---
+          duration_ms: 0.109172
+          type: 'test'
+          ...
+        # Subtest: 유효하지 않은 정책값 거부
+        ok 3 - 유효하지 않은 정책값 거부
+          ---
+          duration_ms: 0.068571
+          type: 'test'
+          ...
+        # Subtest: 정책 변경 후 새 인스턴스 반환 (불변 패턴)
+        ok 4 - 정책 변경 후 새 인스턴스 반환 (불변 패턴)
+          ---
+          duration_ms: 0.059661
+          type: 'test'
+          ...
+        1..4
+    ok 4 - changeAccessPolicy() 검증
+      ---
+      duration_ms: 0.490509
+      type: 'suite'
+      ...
+    1..4
+ok 134 - Video Entity
+  ---
+  duration_ms: 8.547291
+  type: 'suite'
+  ...
+# Subtest: PostgresVideoRepository: client.query 없으면 TypeError
+ok 135 - PostgresVideoRepository: client.query 없으면 TypeError
+  ---
+  duration_ms: 0.715034
+  type: 'test'
+  ...
+# Subtest: PostgresVideoRepository: save → findById 왕복 (fake client)
+ok 136 - PostgresVideoRepository: save → findById 왕복 (fake client)
+  ---
+  duration_ms: 0.433169
+  type: 'test'
+  ...
+# Subtest: PostgresVideoRepository: findAll (fake client)
+ok 137 - PostgresVideoRepository: findAll (fake client)
+  ---
+  duration_ms: 0.884018
+  type: 'test'
+  ...
+# Subtest: PostgresTranscodeJobRepository: save → findById (fake client)
+ok 138 - PostgresTranscodeJobRepository: save → findById (fake client)
+  ---
+  duration_ms: 0.265656
+  type: 'test'
+  ...
+# Subtest: PostgresTranscodeJobRepository: INV-V004 — RUNNING 중복 불가 (fake client)
+ok 139 - PostgresTranscodeJobRepository: INV-V004 — RUNNING 중복 불가 (fake client)
+  ---
+  duration_ms: 0.349017
+  type: 'test'
+  ...
+# Subtest: PostgresTranscodeJobRepository: findRunningByVideoId (fake client)
+ok 140 - PostgresTranscodeJobRepository: findRunningByVideoId (fake client)
+  ---
+  duration_ms: 0.283395
+  type: 'test'
+  ...
+# (node:50797) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SQLiteVideoRepository: save → findById 왕복
+ok 141 - SQLiteVideoRepository: save → findById 왕복
+  ---
+  duration_ms: 1.764949
+  type: 'test'
+  ...
+# Subtest: SQLiteVideoRepository: findById 없으면 null
+ok 142 - SQLiteVideoRepository: findById 없으면 null
+  ---
+  duration_ms: 1.305676
+  type: 'test'
+  ...
+# Subtest: SQLiteVideoRepository: findAll 페이지네이션
+ok 143 - SQLiteVideoRepository: findAll 페이지네이션
+  ---
+  duration_ms: 0.881217
+  type: 'test'
+  ...
+# Subtest: SQLiteVideoRepository: upsert — status 갱신
+ok 144 - SQLiteVideoRepository: upsert — status 갱신
+  ---
+  duration_ms: 0.683783
+  type: 'test'
+  ...
+# Subtest: SQLiteTranscodeJobRepository: save → findById 왕복
+ok 145 - SQLiteTranscodeJobRepository: save → findById 왕복
+  ---
+  duration_ms: 0.886183
+  type: 'test'
+  ...
+# Subtest: SQLiteTranscodeJobRepository: findAllByVideoId
+ok 146 - SQLiteTranscodeJobRepository: findAllByVideoId
+  ---
+  duration_ms: 1.2845
+  type: 'test'
+  ...
+# Subtest: SQLiteTranscodeJobRepository: findRunningByVideoId
+ok 147 - SQLiteTranscodeJobRepository: findRunningByVideoId
+  ---
+  duration_ms: 0.713054
+  type: 'test'
+  ...
+# Subtest: SQLiteTranscodeJobRepository: INV-V004 — 동일 Video에 RUNNING Job 중복 불가
+ok 148 - SQLiteTranscodeJobRepository: INV-V004 — 동일 Video에 RUNNING Job 중복 불가
+  ---
+  duration_ms: 1.176374
+  type: 'test'
+  ...
+# Subtest: SQLiteTranscodeJobRepository: RUNNING → COMPLETED upsert (INV-V004 통과)
+ok 149 - SQLiteTranscodeJobRepository: RUNNING → COMPLETED upsert (INV-V004 통과)
+  ---
+  duration_ms: 0.539731
+  type: 'test'
+  ...
+# Subtest: [VideoController authz] POST /videos
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 1.00778
+      type: 'test'
+      ...
+    # Subtest: video:read만 → 403
+    ok 2 - video:read만 → 403
+      ---
+      duration_ms: 0.895838
+      type: 'test'
+      ...
+    1..2
+ok 150 - [VideoController authz] POST /videos
+  ---
+  duration_ms: 2.450479
+  type: 'suite'
+  ...
+# Subtest: [VideoController authz] GET /videos
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.331757
+      type: 'test'
+      ...
+    # Subtest: video:write만 → 403
+    ok 2 - video:write만 → 403
+      ---
+      duration_ms: 0.122703
+      type: 'test'
+      ...
+    1..2
+ok 151 - [VideoController authz] GET /videos
+  ---
+  duration_ms: 0.584972
+  type: 'suite'
+  ...
+# Subtest: [VideoController authz] GET /videos/:videoId
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.627772
+      type: 'test'
+      ...
+    1..1
+ok 152 - [VideoController authz] GET /videos/:videoId
+  ---
+  duration_ms: 0.705644
+  type: 'suite'
+  ...
+# Subtest: [VideoController authz] POST /videos/:videoId/transcode
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.337236
+      type: 'test'
+      ...
+    # Subtest: video:read만 → 403
+    ok 2 - video:read만 → 403
+      ---
+      duration_ms: 0.190094
+      type: 'test'
+      ...
+    1..2
+ok 153 - [VideoController authz] POST /videos/:videoId/transcode
+  ---
+  duration_ms: 0.782896
+  type: 'suite'
+  ...
+# Subtest: [VideoController authz] GET /videos/:videoId/transcode-jobs/:jobId
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.326356
+      type: 'test'
+      ...
+    1..1
+ok 154 - [VideoController authz] GET /videos/:videoId/transcode-jobs/:jobId
+  ---
+  duration_ms: 0.386698
+  type: 'suite'
+  ...
+# Subtest: [VideoController authz] PATCH /videos/:videoId/access-policy
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.348987
+      type: 'test'
+      ...
+    # Subtest: video:read만 → 403
+    ok 2 - video:read만 → 403
+      ---
+      duration_ms: 0.300086
+      type: 'test'
+      ...
+    1..2
+ok 155 - [VideoController authz] PATCH /videos/:videoId/access-policy
+  ---
+  duration_ms: 0.731825
+  type: 'suite'
+  ...
+# Subtest: [VideoController authz] PATCH /videos/:videoId/access-policy 소유권
+    # Subtest: [회귀] 비소유자 video:write → 403 (INV-V003 소유권 강제)
+    ok 1 - [회귀] 비소유자 video:write → 403 (INV-V003 소유권 강제)
+      ---
+      duration_ms: 0.304496
+      type: 'test'
+      ...
+    # Subtest: [회귀] video:admin은 타인 영상 정책 변경 가능 → 200
+    ok 2 - [회귀] video:admin은 타인 영상 정책 변경 가능 → 200
+      ---
+      duration_ms: 0.304256
+      type: 'test'
+      ...
+    1..2
+ok 156 - [VideoController authz] PATCH /videos/:videoId/access-policy 소유권
+  ---
+  duration_ms: 0.717934
+  type: 'suite'
+  ...
+# Subtest: [VideoController authz] POST /videos/:videoId/archive
+    # Subtest: 권한 없음 → 403
+    ok 1 - 권한 없음 → 403
+      ---
+      duration_ms: 0.284295
+      type: 'test'
+      ...
+    # Subtest: video:write만 → 403 (video:admin 필요)
+    ok 2 - video:write만 → 403 (video:admin 필요)
+      ---
+      duration_ms: 0.123872
+      type: 'test'
+      ...
+    # Subtest: video:read만 → 403 (video:admin 필요)
+    ok 3 - video:read만 → 403 (video:admin 필요)
+      ---
+      duration_ms: 0.116932
+      type: 'test'
+      ...
+    1..3
+ok 157 - [VideoController authz] POST /videos/:videoId/archive
+  ---
+  duration_ms: 0.611342
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] 알 수 없는 라우트
+    # Subtest: 매핑되지 않은 경로 → 404
+    ok 1 - 매핑되지 않은 경로 → 404
+      ---
+      duration_ms: 2.54144
+      type: 'test'
+      ...
+    # Subtest: 404 응답에 code + message 필드 있음
+    ok 2 - 404 응답에 code + message 필드 있음
+      ---
+      duration_ms: 0.173544
+      type: 'test'
+      ...
+    # Subtest: [회귀] 404 응답은 RFC 9457 Problem Details 구조를 따른다
+    ok 3 - [회귀] 404 응답은 RFC 9457 Problem Details 구조를 따른다
+      ---
+      duration_ms: 0.162033
+      type: 'test'
+      ...
+    # Subtest: [회귀] unknown route 404에도 instance가 포함된다
+    ok 4 - [회귀] unknown route 404에도 instance가 포함된다
+      ---
+      duration_ms: 0.140113
+      type: 'test'
+      ...
+    1..4
+ok 158 - [VideoController smoke] 알 수 없는 라우트
+  ---
+  duration_ms: 3.686974
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] POST /videos
+    # Subtest: video:write → 201 + Video body
+    ok 1 - video:write → 201 + Video body
+      ---
+      duration_ms: 0.932479
+      type: 'test'
+      ...
+    # Subtest: [회귀] file_size_bytes=0을 null로 바꾸지 않는다
+    ok 2 - [회귀] file_size_bytes=0을 null로 바꾸지 않는다
+      ---
+      duration_ms: 0.180874
+      type: 'test'
+      ...
+    # Subtest: title 누락 → 400
+    ok 3 - title 누락 → 400
+      ---
+      duration_ms: 0.301156
+      type: 'test'
+      ...
+    1..3
+ok 159 - [VideoController smoke] POST /videos
+  ---
+  duration_ms: 1.700324
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] GET /videos
+    # Subtest: video:read → 200 + 목록 구조
+    ok 1 - video:read → 200 + 목록 구조
+      ---
+      duration_ms: 0.755985
+      type: 'test'
+      ...
+    # Subtest: 빈 목록 → 200 + 빈 배열
+    ok 2 - 빈 목록 → 200 + 빈 배열
+      ---
+      duration_ms: 0.331997
+      type: 'test'
+      ...
+    # Subtest: [회귀] page_size > 100 → 400
+    ok 3 - [회귀] page_size > 100 → 400
+      ---
+      duration_ms: 0.368957
+      type: 'test'
+      ...
+    # Subtest: [회귀] validation error에도 instance가 포함된다
+    ok 4 - [회귀] validation error에도 instance가 포함된다
+      ---
+      duration_ms: 0.266015
+      type: 'test'
+      ...
+    1..4
+ok 160 - [VideoController smoke] GET /videos
+  ---
+  duration_ms: 1.97051
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] GET /videos/:videoId
+    # Subtest: 존재하는 영상 → 200 + Video body
+    ok 1 - 존재하는 영상 → 200 + Video body
+      ---
+      duration_ms: 0.303746
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 videoId → 404
+    ok 2 - 존재하지 않는 videoId → 404
+      ---
+      duration_ms: 0.130103
+      type: 'test'
+      ...
+    1..2
+ok 161 - [VideoController smoke] GET /videos/:videoId
+  ---
+  duration_ms: 0.51904
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] POST /videos/:videoId/transcode
+    # Subtest: video:write + Video 존재 → 201 + TranscodeJob body
+    ok 1 - video:write + Video 존재 → 201 + TranscodeJob body
+      ---
+      duration_ms: 0.456229
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 videoId → 404
+    ok 2 - 존재하지 않는 videoId → 404
+      ---
+      duration_ms: 0.174193
+      type: 'test'
+      ...
+    # Subtest: 이미 RUNNING Job 존재 → 409 (INV-V004)
+    ok 3 - 이미 RUNNING Job 존재 → 409 (INV-V004)
+      ---
+      duration_ms: 0.264285
+      type: 'test'
+      ...
+    1..3
+ok 162 - [VideoController smoke] POST /videos/:videoId/transcode
+  ---
+  duration_ms: 1.01094
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] GET /videos/:videoId/transcode-jobs/:jobId
+    # Subtest: 존재하는 Job → 200 + TranscodeJob body
+    ok 1 - 존재하는 Job → 200 + TranscodeJob body
+      ---
+      duration_ms: 0.256505
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 jobId → 404
+    ok 2 - 존재하지 않는 jobId → 404
+      ---
+      duration_ms: 0.123223
+      type: 'test'
+      ...
+    1..2
+ok 163 - [VideoController smoke] GET /videos/:videoId/transcode-jobs/:jobId
+  ---
+  duration_ms: 0.465479
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] PATCH /videos/:videoId/access-policy
+    # Subtest: video:write → 200 + 변경된 Video body
+    ok 1 - video:write → 200 + 변경된 Video body
+      ---
+      duration_ms: 1.118207
+      type: 'test'
+      ...
+    1..1
+ok 164 - [VideoController smoke] PATCH /videos/:videoId/access-policy
+  ---
+  duration_ms: 1.180208
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] POST /videos/:videoId/archive
+    # Subtest: video:admin + READY 상태 → 200 + ARCHIVED Video
+    ok 1 - video:admin + READY 상태 → 200 + ARCHIVED Video
+      ---
+      duration_ms: 0.284456
+      type: 'test'
+      ...
+    # Subtest: UPLOADED 상태 아카이브 시도 → 409 (INV-V002)
+    ok 2 - UPLOADED 상태 아카이브 시도 → 409 (INV-V002)
+      ---
+      duration_ms: 0.122892
+      type: 'test'
+      ...
+    # Subtest: 존재하지 않는 videoId → 404
+    ok 3 - 존재하지 않는 videoId → 404
+      ---
+      duration_ms: 0.090402
+      type: 'test'
+      ...
+    1..3
+ok 165 - [VideoController smoke] POST /videos/:videoId/archive
+  ---
+  duration_ms: 0.584802
+  type: 'suite'
+  ...
+# Subtest: [VideoController smoke] 오류 응답 구조
+    # Subtest: 403 응답에 code + message 필드 있음
+    ok 1 - 403 응답에 code + message 필드 있음
+      ---
+      duration_ms: 0.212184
+      type: 'test'
+      ...
+    # Subtest: correlationId가 오류 응답에 포함됨
+    ok 2 - correlationId가 오류 응답에 포함됨
+      ---
+      duration_ms: 0.128653
+      type: 'test'
+      ...
+    1..2
+ok 166 - [VideoController smoke] 오류 응답 구조
+  ---
+  duration_ms: 0.403528
+  type: 'suite'
+  ...
+# Subtest: [보안] VideoController uploaderId 소유권 강제
+    # Subtest: caller.userId가 uploaderId로 사용됨 (body.uploader_id 무시)
+    ok 1 - caller.userId가 uploaderId로 사용됨 (body.uploader_id 무시)
+      ---
+      duration_ms: 1.500238
+      type: 'test'
+      ...
+    # Subtest: caller.userId 없는 경우 빈 uploaderId → VALIDATION_ERROR
+    ok 2 - caller.userId 없는 경우 빈 uploaderId → VALIDATION_ERROR
+      ---
+      duration_ms: 0.250135
+      type: 'test'
+      ...
+    # Subtest: 두 사용자가 서로 다른 uploaderId로 영상 생성
+    ok 3 - 두 사용자가 서로 다른 uploaderId로 영상 생성
+      ---
+      duration_ms: 0.329427
+      type: 'test'
+      ...
+    1..3
+ok 167 - [보안] VideoController uploaderId 소유권 강제
+  ---
+  duration_ms: 3.025738
+  type: 'suite'
+  ...
+# Subtest: [Property] Video INV-V001: 항상 title/uploaderId/originalFileRef 필수
+    # Subtest: 임의 공백 title → VALIDATION_ERROR
+    ok 1 - 임의 공백 title → VALIDATION_ERROR
+      ---
+      duration_ms: 8.484309
+      type: 'test'
+      ...
+    # Subtest: 임의 비공백 title → Video 생성 성공
+    ok 2 - 임의 비공백 title → Video 생성 성공
+      ---
+      duration_ms: 4.298046
+      type: 'test'
+      ...
+    1..2
+ok 168 - [Property] Video INV-V001: 항상 title/uploaderId/originalFileRef 필수
+  ---
+  duration_ms: 13.55064
+  type: 'suite'
+  ...
+# Subtest: [Property] Video INV-V002: 상태 전이 방향성
+    # Subtest: 상태 전이 후 원본 상태 불변
+    ok 1 - 상태 전이 후 원본 상태 불변
+      ---
+      duration_ms: 0.876908
+      type: 'test'
+      ...
+    # Subtest: VALID_TRANSITIONS 외 전이는 항상 CONFLICT
+    ok 2 - VALID_TRANSITIONS 외 전이는 항상 CONFLICT
+      ---
+      duration_ms: 1.338587
+      type: 'test'
+      ...
+    1..2
+ok 169 - [Property] Video INV-V002: 상태 전이 방향성
+  ---
+  duration_ms: 2.424588
+  type: 'suite'
+  ...
+# Subtest: [Property] Video INV-V003: AccessPolicy 유효성
+    # Subtest: 유효한 AccessPolicy 값만 허용
+    ok 1 - 유효한 AccessPolicy 값만 허용
+      ---
+      duration_ms: 0.610212
+      type: 'test'
+      ...
+    # Subtest: 임의 문자열은 대부분 VALIDATION_ERROR (유효값 제외)
+    ok 2 - 임의 문자열은 대부분 VALIDATION_ERROR (유효값 제외)
+      ---
+      duration_ms: 1.847812
+      type: 'test'
+      ...
+    1..2
+ok 170 - [Property] Video INV-V003: AccessPolicy 유효성
+  ---
+  duration_ms: 2.705449
+  type: 'suite'
+  ...
+# Subtest: [Property] TranscodeJob: format 유효성
+    # Subtest: 유효한 targetFormat만 허용
+    ok 1 - 유효한 targetFormat만 허용
+      ---
+      duration_ms: 1.039756
+      type: 'test'
+      ...
+    # Subtest: 유효하지 않은 format → VALIDATION_ERROR
+    ok 2 - 유효하지 않은 format → VALIDATION_ERROR
+      ---
+      duration_ms: 1.751755
+      type: 'test'
+      ...
+    1..2
+ok 171 - [Property] TranscodeJob: format 유효성
+  ---
+  duration_ms: 2.983975
+  type: 'suite'
+  ...
+# [EventBus] handler "(anonymous)" threw: Error: boom
+#     at /root/workspace/my-module/src/tests/unit/EventBus.test.js:100:40
+#     at EventBus.publish (/root/workspace/my-module/src/shared/EventBus.js:128:9)
+#     at /root/workspace/my-module/src/tests/unit/EventBus.test.js:102:35
+#     at getActual (node:assert:609:5)
+#     at Function.doesNotThrow (node:assert:777:32)
+#     at TestContext.<anonymous> (/root/workspace/my-module/src/tests/unit/EventBus.test.js:102:12)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+# [EventBus] handler "(anonymous)" threw: Error: fail
+#     at /root/workspace/my-module/src/tests/unit/EventBus.test.js:163:40
+#     at EventBus.publish (/root/workspace/my-module/src/shared/EventBus.js:128:9)
+#     at TestContext.<anonymous> (/root/workspace/my-module/src/tests/unit/EventBus.test.js:164:9)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+# [EventBus] handler "(anonymous)" threw: Error: boom
+#     at /root/workspace/my-module/src/tests/unit/EventBus.test.js:193:47
+#     at EventBus.publish (/root/workspace/my-module/src/shared/EventBus.js:128:9)
+#     at TestContext.<anonymous> (/root/workspace/my-module/src/tests/unit/EventBus.test.js:195:9)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Promise.all (index 0)
+#     at async Suite.run (node:internal/test_runner/test:1442:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# [EventBus] handler "(anonymous)" threw: Error: x
+#     at /root/workspace/my-module/src/tests/unit/EventBus.test.js:207:38
+#     at EventBus.publish (/root/workspace/my-module/src/shared/EventBus.js:128:9)
+#     at TestContext.<anonymous> (/root/workspace/my-module/src/tests/unit/EventBus.test.js:208:9)
+#     at Test.runInAsyncScope (node:async_hooks:214:14)
+#     at Test.run (node:internal/test_runner/test:1047:25)
+#     at async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+# Subtest: EventBus Singleton
+    # Subtest: getInstance()는 동일 인스턴스를 반환한다
+    ok 1 - getInstance()는 동일 인스턴스를 반환한다
+      ---
+      duration_ms: 0.755355
+      type: 'test'
+      ...
+    # Subtest: new EventBus()는 두 번째 호출 시 에러를 던진다
+    ok 2 - new EventBus()는 두 번째 호출 시 에러를 던진다
+      ---
+      duration_ms: 0.46594
+      type: 'test'
+      ...
+    # Subtest: _resetForTest() 후 새 인스턴스를 생성할 수 있다
+    ok 3 - _resetForTest() 후 새 인스턴스를 생성할 수 있다
+      ---
+      duration_ms: 0.150813
+      type: 'test'
+      ...
+    1..3
+ok 172 - EventBus Singleton
+  ---
+  duration_ms: 2.138112
+  type: 'suite'
+  ...
+# Subtest: EventBus.subscribe
+    # Subtest: handler를 등록하고 해당 타입 이벤트 수신
+    ok 1 - handler를 등록하고 해당 타입 이벤트 수신
+      ---
+      duration_ms: 0.427248
+      type: 'test'
+      ...
+    # Subtest: 다른 타입 이벤트는 수신하지 않는다
+    ok 2 - 다른 타입 이벤트는 수신하지 않는다
+      ---
+      duration_ms: 0.263216
+      type: 'test'
+      ...
+    # Subtest: 와일드카드("*") 구독자는 모든 이벤트를 수신한다
+    ok 3 - 와일드카드("*") 구독자는 모든 이벤트를 수신한다
+      ---
+      duration_ms: 0.416689
+      type: 'test'
+      ...
+    # Subtest: subscribe()는 unsubscribe 함수를 반환한다
+    ok 4 - subscribe()는 unsubscribe 함수를 반환한다
+      ---
+      duration_ms: 0.231445
+      type: 'test'
+      ...
+    # Subtest: 잘못된 eventType 인수 시 TypeError를 던진다
+    ok 5 - 잘못된 eventType 인수 시 TypeError를 던진다
+      ---
+      duration_ms: 0.212974
+      type: 'test'
+      ...
+    # Subtest: handler가 함수가 아니면 TypeError를 던진다
+    ok 6 - handler가 함수가 아니면 TypeError를 던진다
+      ---
+      duration_ms: 0.243555
+      type: 'test'
+      ...
+    1..6
+ok 173 - EventBus.subscribe
+  ---
+  duration_ms: 2.129132
+  type: 'suite'
+  ...
+# Subtest: EventBus.publish
+    # Subtest: type 필드 없는 이벤트는 TypeError를 던진다
+    ok 1 - type 필드 없는 이벤트는 TypeError를 던진다
+      ---
+      duration_ms: 0.850587
+      type: 'test'
+      ...
+    # Subtest: 한 핸들러 에러가 다른 핸들러 실행을 막지 않는다
+    ok 2 - 한 핸들러 에러가 다른 핸들러 실행을 막지 않는다
+      ---
+      duration_ms: 0.90544
+      type: 'test'
+      ...
+    # Subtest: publishAll은 배열 이벤트를 순서대로 발행한다
+    ok 3 - publishAll은 배열 이벤트를 순서대로 발행한다
+      ---
+      duration_ms: 0.206274
+      type: 'test'
+      ...
+    # Subtest: publishAll에 배열이 아닌 값을 넘기면 TypeError
+    ok 4 - publishAll에 배열이 아닌 값을 넘기면 TypeError
+      ---
+      duration_ms: 0.169863
+      type: 'test'
+      ...
+    1..4
+ok 174 - EventBus.publish
+  ---
+  duration_ms: 2.268387
+  type: 'suite'
+  ...
+# Subtest: EventBus.listenerCount
+    # Subtest: 특정 타입 핸들러 수를 반환한다
+    ok 1 - 특정 타입 핸들러 수를 반환한다
+      ---
+      duration_ms: 0.094031
+      type: 'test'
+      ...
+    # Subtest: 전체 핸들러 수를 반환한다
+    ok 2 - 전체 핸들러 수를 반환한다
+      ---
+      duration_ms: 0.049481
+      type: 'test'
+      ...
+    # Subtest: unsubscribe 후 카운트가 감소한다
+    ok 3 - unsubscribe 후 카운트가 감소한다
+      ---
+      duration_ms: 0.044751
+      type: 'test'
+      ...
+    1..3
+ok 175 - EventBus.listenerCount
+  ---
+  duration_ms: 0.235885
+  type: 'suite'
+  ...
+# Subtest: EventBus getStats()
+    # Subtest: publish 호출마다 publishCount가 증가한다
+    ok 1 - publish 호출마다 publishCount가 증가한다
+      ---
+      duration_ms: 0.074672
+      type: 'test'
+      ...
+    # Subtest: 핸들러 오류 발생 시 handlerErrorCount가 증가한다
+    ok 2 - 핸들러 오류 발생 시 handlerErrorCount가 증가한다
+      ---
+      duration_ms: 0.197564
+      type: 'test'
+      ...
+    # Subtest: clearForTest() 후 stats가 0으로 초기화된다
+    ok 3 - clearForTest() 후 stats가 0으로 초기화된다
+      ---
+      duration_ms: 0.181884
+      type: 'test'
+      ...
+    # Subtest: listenerCount를 stats에 포함한다
+    ok 4 - listenerCount를 stats에 포함한다
+      ---
+      duration_ms: 0.095772
+      type: 'test'
+      ...
+    1..4
+ok 176 - EventBus getStats()
+  ---
+  duration_ms: 0.622842
+  type: 'suite'
+  ...
+# Subtest: EventBus handler error callback (DLQ)
+    # Subtest: setHandlerErrorCallback: 구독자 오류 발생 시 콜백이 호출된다
+    ok 1 - setHandlerErrorCallback: 구독자 오류 발생 시 콜백이 호출된다
+      ---
+      duration_ms: 0.238175
+      type: 'test'
+      ...
+    # Subtest: clearForTest()는 handler error callback을 null로 초기화한다
+    ok 2 - clearForTest()는 handler error callback을 null로 초기화한다
+      ---
+      duration_ms: 0.223285
+      type: 'test'
+      ...
+    1..2
+ok 177 - EventBus handler error callback (DLQ)
+  ---
+  duration_ms: 0.52461
+  type: 'suite'
+  ...
+# Subtest: EventBus history
+    # Subtest: enableHistory() 후 발행 이벤트가 기록된다
+    ok 1 - enableHistory() 후 발행 이벤트가 기록된다
+      ---
+      duration_ms: 0.845887
+      type: 'test'
+      ...
+    # Subtest: getHistory()는 내부 배열 복사본을 반환한다
+    ok 2 - getHistory()는 내부 배열 복사본을 반환한다
+      ---
+      duration_ms: 0.173733
+      type: 'test'
+      ...
+    1..2
+ok 178 - EventBus history
+  ---
+  duration_ms: 1.125092
+  type: 'suite'
+  ...
+# Subtest: EventBusPublisher
+    # Subtest: EventPublisher 포트를 구현한다 (publish 메서드 존재)
+    ok 1 - EventPublisher 포트를 구현한다 (publish 메서드 존재)
+      ---
+      duration_ms: 0.848897
+      type: 'test'
+      ...
+    # Subtest: publish: 도메인 이벤트가 EventBus를 통해 구독자에게 전달된다
+    ok 2 - publish: 도메인 이벤트가 EventBus를 통해 구독자에게 전달된다
+      ---
+      duration_ms: 0.394978
+      type: 'test'
+      ...
+    # Subtest: publish: event.type 필드를 우선 사용한다
+    ok 3 - publish: event.type 필드를 우선 사용한다
+      ---
+      duration_ms: 0.199754
+      type: 'test'
+      ...
+    # Subtest: publish: event_type 없으면 domain.unknown 폴백
+    ok 4 - publish: event_type 없으면 domain.unknown 폴백
+      ---
+      duration_ms: 0.271455
+      type: 'test'
+      ...
+    # Subtest: publish: 배열이 아닌 단일 이벤트도 처리한다
+    ok 5 - publish: 배열이 아닌 단일 이벤트도 처리한다
+      ---
+      duration_ms: 0.378767
+      type: 'test'
+      ...
+    # Subtest: publish: 복수 이벤트 배열을 순서대로 발행한다
+    ok 6 - publish: 복수 이벤트 배열을 순서대로 발행한다
+      ---
+      duration_ms: 0.734285
+      type: 'test'
+      ...
+    # Subtest: constructor: 외부 EventBus 인스턴스를 주입할 수 있다
+    ok 7 - constructor: 외부 EventBus 인스턴스를 주입할 수 있다
+      ---
+      duration_ms: 0.2635
+      type: 'test'
+      ...
+    # Subtest: constructor: 인자 없으면 EventBus.getInstance() 사용
+    ok 8 - constructor: 인자 없으면 EventBus.getInstance() 사용
+      ---
+      duration_ms: 0.160393
+      type: 'test'
+      ...
+    1..8
+ok 179 - EventBusPublisher
+  ---
+  duration_ms: 4.179617
+  type: 'suite'
+  ...
+# Subtest: [harness dashboard] computeMetrics returns all 6 KPI keys
+ok 180 - [harness dashboard] computeMetrics returns all 6 KPI keys
+  ---
+  duration_ms: 374.021971
+  type: 'test'
+  ...
+# Subtest: [harness dashboard] evaluateMetric PASS for value meeting gte target
+ok 181 - [harness dashboard] evaluateMetric PASS for value meeting gte target
+  ---
+  duration_ms: 0.119612
+  type: 'test'
+  ...
+# Subtest: [harness dashboard] evaluateMetric FAIL for value below gte target
+ok 182 - [harness dashboard] evaluateMetric FAIL for value below gte target
+  ---
+  duration_ms: 0.049481
+  type: 'test'
+  ...
+# Subtest: [harness dashboard] evaluateMetric PASS for value meeting lte target
+ok 183 - [harness dashboard] evaluateMetric PASS for value meeting lte target
+  ---
+  duration_ms: 0.043091
+  type: 'test'
+  ...
+# Subtest: [harness dashboard] evaluateMetric FAIL for value exceeding lte target
+ok 184 - [harness dashboard] evaluateMetric FAIL for value exceeding lte target
+  ---
+  duration_ms: 0.194794
+  type: 'test'
+  ...
+# Subtest: [harness dashboard] evaluateMetric NO_DATA for null value
+ok 185 - [harness dashboard] evaluateMetric NO_DATA for null value
+  ---
+  duration_ms: 0.072601
+  type: 'test'
+  ...
+# Subtest: [harness dashboard] truthfulness_violation_rate is 0 in clean state
+ok 186 - [harness dashboard] truthfulness_violation_rate is 0 in clean state
+  ---
+  duration_ms: 333.37133
+  type: 'test'
+  ...
+# Subtest: [harness dashboard] avg_token_per_wp is below MPO v1.0 target of 15000
+ok 187 - [harness dashboard] avg_token_per_wp is below MPO v1.0 target of 15000
+  ---
+  duration_ms: 342.38244
+  type: 'test'
+  ...
+# {"timestamp":"2026-04-22T14:42:49.695Z","level":"info","service":"my-module","event":"span.end","trace_id":"9725e64662b440509ec0c0738c7f3409","span_id":"3283dd71ffc14e27","parent_span_id":null,"name":"harness.provider.route","duration_ms":0,"status":"ok","attributes":{"harness.route.id":"standard-build","harness.route.mode":"Build","harness.route.tier":"standard"}}
+# {"timestamp":"2026-04-22T14:42:49.696Z","level":"info","service":"my-module","event":"span.end","trace_id":"520a1204dd684f6bb2b16b344bb9eae7","span_id":"e0641430d5f14f64","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"error","attributes":{"harness.provider.id":"openai-responses","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"provider timed out"}}
+# {"timestamp":"2026-04-22T14:42:49.696Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-1","request_id":"req-1","provider_id":"openai-responses","route_id":"standard-build","error_code":"PROVIDER_TIMEOUT","error_message":"provider timed out"}
+# {"timestamp":"2026-04-22T14:42:49.696Z","level":"info","service":"my-module","event":"span.end","trace_id":"4e9e674ac503455e874df6382d433e8b","span_id":"8ce74dec02f54aa7","parent_span_id":null,"name":"harness.provider.fallback","duration_ms":0,"status":"ok","attributes":{"harness.provider.from":"openai-responses","harness.provider.to":"null-harness-provider","harness.provider.reason":"PROVIDER_TIMEOUT"}}
+# {"timestamp":"2026-04-22T14:42:49.696Z","level":"info","service":"my-module","event":"metric.histogram","name":"gen_ai_client_operation_duration_ms","value":0,"unit":"ms","attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.696Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_input_tokens","delta":67,"total":67,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.697Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_output_tokens","delta":5,"total":5,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.697Z","level":"info","service":"my-module","event":"span.end","trace_id":"a01f4d84f7c14479a6e8cd3cf14d2fab","span_id":"11bc8c0263a84243","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":1,"status":"ok","attributes":{"harness.provider.id":"null-harness-provider","harness.route.id":"standard-build","harness.route.mode":"Build","harness.provider.fallback_applied":true,"harness.provider.model":"null-standard"}}
+# {"timestamp":"2026-04-22T14:42:49.697Z","level":"info","service":"my-module","event":"harness.provider.invoke","correlation_id":"corr-1","request_id":"req-1","provider_id":"null-harness-provider","model":"null-standard","route_id":"standard-build","reasoning_effort":"medium","prompt_version":"0.2.0","retry_count":0,"fallback_applied":true,"latency_ms":0,"input_tokens":67,"output_tokens":5}
+# {"timestamp":"2026-04-22T14:42:49.697Z","level":"info","service":"my-module","event":"span.end","trace_id":"24c10a6f3ad74b1eb11f951b5dbd4b2d","span_id":"b9cf3db21c5c4abe","parent_span_id":null,"name":"harness.provider.route","duration_ms":0,"status":"ok","attributes":{"harness.route.id":"standard-build","harness.route.mode":"Build","harness.route.tier":"standard"}}
+# {"timestamp":"2026-04-22T14:42:49.698Z","level":"info","service":"my-module","event":"span.end","trace_id":"478ddbb17e604deeaad786044b0c0ae6","span_id":"ba2a47480aff4652","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":1,"status":"error","attributes":{"harness.provider.id":"openai-responses","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"response payload invalid"}}
+# {"timestamp":"2026-04-22T14:42:49.698Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-2","request_id":"req-2","provider_id":"openai-responses","route_id":"standard-build","error_code":"PROVIDER_SCHEMA_MISMATCH","error_message":"response payload invalid"}
+# {"timestamp":"2026-04-22T14:42:49.698Z","level":"info","service":"my-module","event":"span.end","trace_id":"1f7236a2fb3344ca811e2decda753cd0","span_id":"011a03a0c4634580","parent_span_id":null,"name":"harness.provider.route","duration_ms":0,"status":"ok","attributes":{"harness.route.id":"standard-build","harness.route.mode":"Build","harness.route.tier":"standard"}}
+# {"timestamp":"2026-04-22T14:42:49.698Z","level":"info","service":"my-module","event":"span.end","trace_id":"0e05e9bf221b4a97b694540925c4410b","span_id":"12f9a26d075b4925","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"error","attributes":{"harness.provider.id":"openai-responses","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"OpenAI provider requester or API key is not configured"}}
+# {"timestamp":"2026-04-22T14:42:49.698Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-3","request_id":"req-3","provider_id":"openai-responses","route_id":"standard-build","error_code":"PROVIDER_NOT_CONFIGURED","error_message":"OpenAI provider requester or API key is not configured"}
+# {"timestamp":"2026-04-22T14:42:49.699Z","level":"info","service":"my-module","event":"span.end","trace_id":"b5eb3a9cbeb6472eb3e9ff822038f64b","span_id":"59522d5ff6574dc2","parent_span_id":null,"name":"harness.provider.fallback","duration_ms":1,"status":"ok","attributes":{"harness.provider.from":"openai-responses","harness.provider.to":"null-harness-provider","harness.provider.reason":"PROVIDER_NOT_CONFIGURED"}}
+# {"timestamp":"2026-04-22T14:42:49.699Z","level":"info","service":"my-module","event":"metric.histogram","name":"gen_ai_client_operation_duration_ms","value":0,"unit":"ms","attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.699Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_input_tokens","delta":67,"total":134,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.699Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_output_tokens","delta":5,"total":10,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.699Z","level":"info","service":"my-module","event":"span.end","trace_id":"4600bf7bdf6743e4a4fa4f11aa759ccc","span_id":"2386e18a354f4620","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"ok","attributes":{"harness.provider.id":"null-harness-provider","harness.route.id":"standard-build","harness.route.mode":"Build","harness.provider.fallback_applied":true,"harness.provider.model":"null-standard"}}
+# {"timestamp":"2026-04-22T14:42:49.699Z","level":"info","service":"my-module","event":"harness.provider.invoke","correlation_id":"corr-3","request_id":"req-3","provider_id":"null-harness-provider","model":"null-standard","route_id":"standard-build","reasoning_effort":"medium","prompt_version":"0.2.0","retry_count":0,"fallback_applied":true,"latency_ms":0,"input_tokens":67,"output_tokens":5}
+# {"timestamp":"2026-04-22T14:42:49.699Z","level":"info","service":"my-module","event":"span.end","trace_id":"8801c65ebe004623bd46a4fcb771263b","span_id":"732966ae7c4c46ae","parent_span_id":null,"name":"harness.provider.route","duration_ms":0,"status":"ok","attributes":{"harness.route.id":"standard-build","harness.route.mode":"Build","harness.route.tier":"standard"}}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"info","service":"my-module","event":"span.end","trace_id":"962f8e3aaf8e4e969cda159d488f129c","span_id":"aa7949613ab64e67","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":1,"status":"error","attributes":{"harness.provider.id":"openai-responses","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"auth denied"}}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-4","request_id":"req-4","provider_id":"openai-responses","route_id":"standard-build","error_code":"PROVIDER_AUTH_FAILED","error_message":"auth denied"}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"info","service":"my-module","event":"span.end","trace_id":"5dcbe362ce314eb987df4876c70c41be","span_id":"6a7e5aa8578843da","parent_span_id":null,"name":"harness.provider.fallback","duration_ms":0,"status":"ok","attributes":{"harness.provider.from":"openai-responses","harness.provider.to":"null-harness-provider","harness.provider.reason":"PROVIDER_AUTH_FAILED"}}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"info","service":"my-module","event":"metric.histogram","name":"gen_ai_client_operation_duration_ms","value":0,"unit":"ms","attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_input_tokens","delta":67,"total":201,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_output_tokens","delta":5,"total":15,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"info","service":"my-module","event":"span.end","trace_id":"1bf1effede264d56a5ceccf7fb5b15e2","span_id":"438c031c3e9b4c0a","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"ok","attributes":{"harness.provider.id":"null-harness-provider","harness.route.id":"standard-build","harness.route.mode":"Build","harness.provider.fallback_applied":true,"harness.provider.model":"null-standard"}}
+# {"timestamp":"2026-04-22T14:42:49.700Z","level":"info","service":"my-module","event":"harness.provider.invoke","correlation_id":"corr-4","request_id":"req-4","provider_id":"null-harness-provider","model":"null-standard","route_id":"standard-build","reasoning_effort":"medium","prompt_version":"0.2.0","retry_count":0,"fallback_applied":true,"latency_ms":0,"input_tokens":67,"output_tokens":5}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"span.end","trace_id":"5fa3367d78914d63bdafe23cc8961ca5","span_id":"e5eb9460daf04a9a","parent_span_id":null,"name":"harness.provider.route","duration_ms":0,"status":"ok","attributes":{"harness.route.id":"standard-build","harness.route.mode":"Build","harness.route.tier":"standard"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"span.end","trace_id":"d5468edd0ca848d589c70f17c836cc93","span_id":"de9b889d47f3478f","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"error","attributes":{"harness.provider.id":"openai-responses","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"rate limited"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-5","request_id":"req-5","provider_id":"openai-responses","route_id":"standard-build","error_code":"PROVIDER_RATE_LIMITED","error_message":"rate limited"}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"span.end","trace_id":"6ea7841a65134f8192c617bae2a70047","span_id":"727995ce8bc840d4","parent_span_id":null,"name":"harness.provider.fallback","duration_ms":0,"status":"ok","attributes":{"harness.provider.from":"openai-responses","harness.provider.to":"null-harness-provider","harness.provider.reason":"PROVIDER_RATE_LIMITED"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"metric.histogram","name":"gen_ai_client_operation_duration_ms","value":0,"unit":"ms","attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_input_tokens","delta":67,"total":268,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_output_tokens","delta":6,"total":21,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"span.end","trace_id":"0187a34442b8419da76f11f856cbbda2","span_id":"5fcb0f1055d74045","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"ok","attributes":{"harness.provider.id":"null-harness-provider","harness.route.id":"standard-build","harness.route.mode":"Build","harness.provider.fallback_applied":true,"harness.provider.model":"null-standard"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"harness.provider.invoke","correlation_id":"corr-5","request_id":"req-5","provider_id":"null-harness-provider","model":"null-standard","route_id":"standard-build","reasoning_effort":"medium","prompt_version":"0.2.0","retry_count":0,"fallback_applied":true,"latency_ms":0,"input_tokens":67,"output_tokens":6}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"span.end","trace_id":"beea79fe7b054432943fa4d7c988e9eb","span_id":"ca4065c95a6a4a81","parent_span_id":null,"name":"harness.provider.route","duration_ms":0,"status":"ok","attributes":{"harness.route.id":"standard-build","harness.route.mode":"Build","harness.route.tier":"standard"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"span.end","trace_id":"5086f9685805404c981432e7bf4e70bf","span_id":"8945cd9c4da2487a","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"error","attributes":{"harness.provider.id":"openai-responses","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"budget exceeded"}}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-6","request_id":"req-6","provider_id":"openai-responses","route_id":"standard-build","error_code":"PROVIDER_BUDGET_EXCEEDED","error_message":"budget exceeded"}
+# {"timestamp":"2026-04-22T14:42:49.701Z","level":"info","service":"my-module","event":"span.end","trace_id":"4cd9841abc2f4b9f8e94506116d051c7","span_id":"ea564154f36d4267","parent_span_id":null,"name":"harness.provider.fallback","duration_ms":0,"status":"ok","attributes":{"harness.provider.from":"openai-responses","harness.provider.to":"null-harness-provider","harness.provider.reason":"PROVIDER_BUDGET_EXCEEDED"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"metric.histogram","name":"gen_ai_client_operation_duration_ms","value":0,"unit":"ms","attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_input_tokens","delta":67,"total":335,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"metric.counter","name":"gen_ai_client_output_tokens","delta":5,"total":26,"attributes":{"provider_id":"null-harness-provider","route_id":"standard-build","mode":"Build"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"span.end","trace_id":"aa57d579b081419188c5511bdcd39bbc","span_id":"9a29fd7d27984477","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"ok","attributes":{"harness.provider.id":"null-harness-provider","harness.route.id":"standard-build","harness.route.mode":"Build","harness.provider.fallback_applied":true,"harness.provider.model":"null-standard"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"harness.provider.invoke","correlation_id":"corr-6","request_id":"req-6","provider_id":"null-harness-provider","model":"null-standard","route_id":"standard-build","reasoning_effort":"medium","prompt_version":"0.2.0","retry_count":0,"fallback_applied":true,"latency_ms":0,"input_tokens":67,"output_tokens":5}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"span.end","trace_id":"bb51c03efe104a038a777fa1ccd98dce","span_id":"2ee83f8157f14c4c","parent_span_id":null,"name":"harness.provider.route","duration_ms":0,"status":"ok","attributes":{"harness.route.id":"standard-build","harness.route.mode":"Build","harness.route.tier":"standard"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"span.end","trace_id":"fcb9bb67f17e42c1b97834c2df7cd6b2","span_id":"f67141c67c674c00","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"error","attributes":{"harness.provider.id":"openai-responses","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"openai unavailable"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-7","request_id":"req-7","provider_id":"openai-responses","route_id":"standard-build","error_code":"PROVIDER_UNAVAILABLE","error_message":"openai unavailable"}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"span.end","trace_id":"13f28697be92471e9c5053882a4020c3","span_id":"1bd28416b6ad4019","parent_span_id":null,"name":"harness.provider.fallback","duration_ms":0,"status":"ok","attributes":{"harness.provider.from":"openai-responses","harness.provider.to":"null-harness-provider","harness.provider.reason":"PROVIDER_UNAVAILABLE"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"info","service":"my-module","event":"span.end","trace_id":"3deb2b9889844aa8950164168779e329","span_id":"6466675f15704577","parent_span_id":null,"name":"harness.provider.invoke","duration_ms":0,"status":"error","attributes":{"harness.provider.id":"null-harness-provider","harness.route.id":"standard-build","harness.route.mode":"Build","exception.type":"Error","exception.message":"null also failed"}}
+# {"timestamp":"2026-04-22T14:42:49.702Z","level":"warn","service":"my-module","event":"harness.provider.invoke_failed","correlation_id":"corr-7","request_id":"req-7","provider_id":"null-harness-provider","route_id":"standard-build","error_code":"PROVIDER_UNAVAILABLE","error_message":"null also failed"}
+# Subtest: [harness provider adapter] shouldFallback: PROVIDER_NOT_CONFIGURED → true
+ok 188 - [harness provider adapter] shouldFallback: PROVIDER_NOT_CONFIGURED → true
+  ---
+  duration_ms: 1.02294
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: PROVIDER_TIMEOUT → true
+ok 189 - [harness provider adapter] shouldFallback: PROVIDER_TIMEOUT → true
+  ---
+  duration_ms: 0.144633
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: PROVIDER_RATE_LIMITED → true
+ok 190 - [harness provider adapter] shouldFallback: PROVIDER_RATE_LIMITED → true
+  ---
+  duration_ms: 0.077571
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: PROVIDER_AUTH_FAILED → true
+ok 191 - [harness provider adapter] shouldFallback: PROVIDER_AUTH_FAILED → true
+  ---
+  duration_ms: 0.071631
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: PROVIDER_BUDGET_EXCEEDED → true
+ok 192 - [harness provider adapter] shouldFallback: PROVIDER_BUDGET_EXCEEDED → true
+  ---
+  duration_ms: 1.257379
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: PROVIDER_UNAVAILABLE → true
+ok 193 - [harness provider adapter] shouldFallback: PROVIDER_UNAVAILABLE → true
+  ---
+  duration_ms: 0.098992
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: PROVIDER_SCHEMA_MISMATCH → false (non-retriable)
+ok 194 - [harness provider adapter] shouldFallback: PROVIDER_SCHEMA_MISMATCH → false (non-retriable)
+  ---
+  duration_ms: 0.129033
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: unknown code → false
+ok 195 - [harness provider adapter] shouldFallback: unknown code → false
+  ---
+  duration_ms: 0.180385
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] shouldFallback: null or undefined error → false
+ok 196 - [harness provider adapter] shouldFallback: null or undefined error → false
+  ---
+  duration_ms: 0.305297
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] buildProviderResult merges route fields and propagates fallbackApplied
+ok 197 - [harness provider adapter] buildProviderResult merges route fields and propagates fallbackApplied
+  ---
+  duration_ms: 0.357187
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] buildProviderResult prefers result fields over route fields
+ok 198 - [harness provider adapter] buildProviderResult prefers result fields over route fields
+  ---
+  duration_ms: 0.158043
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] buildEvalArtifactEntry produces required schema fields
+ok 199 - [harness provider adapter] buildEvalArtifactEntry produces required schema fields
+  ---
+  duration_ms: 0.447569
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] createRouteAttributes maps route to OTEL attribute keys
+ok 200 - [harness provider adapter] createRouteAttributes maps route to OTEL attribute keys
+  ---
+  duration_ms: 0.066001
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] createRouteAttributes returns empty strings for missing fields
+ok 201 - [harness provider adapter] createRouteAttributes returns empty strings for missing fields
+  ---
+  duration_ms: 0.028191
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] appendEvalArtifact creates file and sets last_provider_invocation
+ok 202 - [harness provider adapter] appendEvalArtifact creates file and sets last_provider_invocation
+  ---
+  duration_ms: 1.73798
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] appendEvalArtifact rotates provider_invocations to max 20 entries
+ok 203 - [harness provider adapter] appendEvalArtifact rotates provider_invocations to max 20 entries
+  ---
+  duration_ms: 0.833707
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] appendEvalArtifact recovers from corrupt JSON and overwrites
+ok 204 - [harness provider adapter] appendEvalArtifact recovers from corrupt JSON and overwrites
+  ---
+  duration_ms: 0.583112
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] resolveProviderChain: no preferred provider → null-only chain
+ok 205 - [harness provider adapter] resolveProviderChain: no preferred provider → null-only chain
+  ---
+  duration_ms: 0.600772
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] resolveProviderChain: openai preferred + configured → [openai, null]
+ok 206 - [harness provider adapter] resolveProviderChain: openai preferred + configured → [openai, null]
+  ---
+  duration_ms: 0.308256
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] timeout fallback uses null provider and appends eval artifact
+ok 207 - [harness provider adapter] timeout fallback uses null provider and appends eval artifact
+  ---
+  duration_ms: 2.023621
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] schema mismatch does not fall back to null provider
+ok 208 - [harness provider adapter] schema mismatch does not fall back to null provider
+  ---
+  duration_ms: 0.99253
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] missing live provider config falls back to null provider
+ok 209 - [harness provider adapter] missing live provider config falls back to null provider
+  ---
+  duration_ms: 1.123167
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] auth failure fallback does not leak secrets into eval artifact
+ok 210 - [harness provider adapter] auth failure fallback does not leak secrets into eval artifact
+  ---
+  duration_ms: 1.290316
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] rate limit triggers fallback to null provider
+ok 211 - [harness provider adapter] rate limit triggers fallback to null provider
+  ---
+  duration_ms: 0.719194
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] budget exceeded triggers fallback to null provider
+ok 212 - [harness provider adapter] budget exceeded triggers fallback to null provider
+  ---
+  duration_ms: 0.666453
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] both providers fail — throws primary error without null provider fallback
+ok 213 - [harness provider adapter] both providers fail — throws primary error without null provider fallback
+  ---
+  duration_ms: 0.52229
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] executeWorkPacket uses openai provider result and appends eval artifact
+ok 214 - [harness provider adapter] executeWorkPacket uses openai provider result and appends eval artifact
+  ---
+  duration_ms: 0.663474
+  type: 'test'
+  ...
+# Subtest: [harness provider adapter] executeWorkPacket schema mismatch does not fall back to null provider
+ok 215 - [harness provider adapter] executeWorkPacket schema mismatch does not fall back to null provider
+  ---
+  duration_ms: 0.346187
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Research mode prefers frontier when enabled
+ok 216 - [harness runtime router] Research mode prefers frontier when enabled
+  ---
+  duration_ms: 1.462159
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Research mode falls back to standard when frontier flag disabled
+ok 217 - [harness runtime router] Research mode falls back to standard when frontier flag disabled
+  ---
+  duration_ms: 0.284206
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Build mode prefers mini when enabled
+ok 218 - [harness runtime router] Build mode prefers mini when enabled
+  ---
+  duration_ms: 0.275396
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Build mode falls back to standard when mini flag disabled
+ok 219 - [harness runtime router] Build mode falls back to standard when mini flag disabled
+  ---
+  duration_ms: 0.149233
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Debug mode uses frontier-debug when frontier flag enabled
+ok 220 - [harness runtime router] Debug mode uses frontier-debug when frontier flag enabled
+  ---
+  duration_ms: 0.196294
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Debug mode uses standard-debug when frontier flag disabled
+ok 221 - [harness runtime router] Debug mode uses standard-debug when frontier flag disabled
+  ---
+  duration_ms: 0.193444
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Operate mode uses mini-operate when mini flag enabled
+ok 222 - [harness runtime router] Operate mode uses mini-operate when mini flag enabled
+  ---
+  duration_ms: 0.204874
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Operate mode uses standard-operate when mini flag disabled
+ok 223 - [harness runtime router] Operate mode uses standard-operate when mini flag disabled
+  ---
+  duration_ms: 0.132962
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Policy mode uses frontier-policy when frontier flag enabled
+ok 224 - [harness runtime router] Policy mode uses frontier-policy when frontier flag enabled
+  ---
+  duration_ms: 0.304286
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] Policy mode uses standard-policy when frontier flag disabled
+ok 225 - [harness runtime router] Policy mode uses standard-policy when frontier flag disabled
+  ---
+  duration_ms: 0.45989
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] unknown mode falls back to standard-default
+ok 226 - [harness runtime router] unknown mode falls back to standard-default
+  ---
+  duration_ms: 0.223595
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] no flagsProvider → all standard routes and all flags false
+ok 227 - [harness runtime router] no flagsProvider → all standard routes and all flags false
+  ---
+  duration_ms: 0.124772
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] batch_recommended true for Research + batchEval
+ok 228 - [harness runtime router] batch_recommended true for Research + batchEval
+  ---
+  duration_ms: 0.102532
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] batch_recommended true for Policy + batchEval
+ok 229 - [harness runtime router] batch_recommended true for Policy + batchEval
+  ---
+  duration_ms: 0.080982
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] batch_recommended false for Build + batchEval
+ok 230 - [harness runtime router] batch_recommended false for Build + batchEval
+  ---
+  duration_ms: 0.077752
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] batch_recommended false for Operate + batchEval
+ok 231 - [harness runtime router] batch_recommended false for Operate + batchEval
+  ---
+  duration_ms: 0.756395
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] flags_consumed always lists all 4 feature flags
+ok 232 - [harness runtime router] flags_consumed always lists all 4 feature flags
+  ---
+  duration_ms: 0.653424
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] loadHarnessReleaseMetadata returns required shape
+ok 233 - [harness runtime router] loadHarnessReleaseMetadata returns required shape
+  ---
+  duration_ms: 0.197884
+  type: 'test'
+  ...
+# Subtest: [harness runtime router] resolveHarnessRuntimeRoute includes release metadata fields
+ok 234 - [harness runtime router] resolveHarnessRuntimeRoute includes release metadata fields
+  ---
+  duration_ms: 0.096332
+  type: 'test'
+  ...
+# Subtest: [mpo automation] failure escalation inserts remediation wp into queue on third failure
+ok 235 - [mpo automation] failure escalation inserts remediation wp into queue on third failure
+  ---
+  duration_ms: 104.900301
+  type: 'test'
+  ...
+# Subtest: [mpo automation] routing learning snapshot summarizes invocation log
+ok 236 - [mpo automation] routing learning snapshot summarizes invocation log
+  ---
+  duration_ms: 1.528951
+  type: 'test'
+  ...
+# Subtest: [mpo automation] pipeline auto-replans after boundary violation and completes replanned packet
+ok 237 - [mpo automation] pipeline auto-replans after boundary violation and completes replanned packet
+  ---
+  duration_ms: 5322.04137
+  type: 'test'
+  ...
+# Subtest: [security eval] V1 — boundary violation: changed file outside allowed_paths is rejected
+ok 238 - [security eval] V1 — boundary violation: changed file outside allowed_paths is rejected
+  ---
+  duration_ms: 63.7106
+  type: 'test'
+  ...
+# Subtest: [security eval] V2 — forbidden path takes precedence over allowed_paths glob
+ok 239 - [security eval] V2 — forbidden path takes precedence over allowed_paths glob
+  ---
+  duration_ms: 56.407789
+  type: 'test'
+  ...
+# Subtest: [security eval] V3 — evidence fabrication: PASS claim with empty evidence fails schema
+ok 240 - [security eval] V3 — evidence fabrication: PASS claim with empty evidence fails schema
+  ---
+  duration_ms: 0.666234
+  type: 'test'
+  ...
+# Subtest: [security eval] V4 — goal injection: shell metacharacters are treated as plain text
+ok 241 - [security eval] V4 — goal injection: shell metacharacters are treated as plain text
+  ---
+  duration_ms: 0.634073
+  type: 'test'
+  ...
+# Subtest: [security eval] V5 — verification skip: PASS claim overridden by failed command results
+ok 242 - [security eval] V5 — verification skip: PASS claim overridden by failed command results
+  ---
+  duration_ms: 42.711387
+  type: 'test'
+  ...
+# Subtest: [mpo core] ContractValidator enforces raw-intent schema
+ok 243 - [mpo core] ContractValidator enforces raw-intent schema
+  ---
+  duration_ms: 1.454089
+  type: 'test'
+  ...
+# Subtest: [mpo core] planning modules produce executable dag metadata
+ok 244 - [mpo core] planning modules produce executable dag metadata
+  ---
+  duration_ms: 107.698376
+  type: 'test'
+  ...
+# Subtest: [mpo execution] truthfulness gate rejects PASS claims when command results fail
+ok 245 - [mpo execution] truthfulness gate rejects PASS claims when command results fail
+  ---
+  duration_ms: 4.327599
+  type: 'test'
+  ...
+# Subtest: [mpo execution] truthfulness gate rejects changed files outside allowed boundary
+ok 246 - [mpo execution] truthfulness gate rejects changed files outside allowed boundary
+  ---
+  duration_ms: 2.579582
+  type: 'test'
+  ...
+# Subtest: [mpo execution] completeWorkPacket updates memory and report atomically-shaped outputs
+ok 247 - [mpo execution] completeWorkPacket updates memory and report atomically-shaped outputs
+  ---
+  duration_ms: 2361.275539
+  type: 'test'
+  ...
+# Subtest: [mpo execution] HarnessProviderAdapter executeWorkPacket falls back to null provider
+ok 248 - [mpo execution] HarnessProviderAdapter executeWorkPacket falls back to null provider
+  ---
+  duration_ms: 0.805361
+  type: 'test'
+  ...
+# Subtest: [mpo execution] pipeline merges provider summary and evidence into completion report
+ok 249 - [mpo execution] pipeline merges provider summary and evidence into completion report
+  ---
+  duration_ms: 5170.693783
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] buildOpenAiInput compacts empty fields to reduce token overhead
+ok 250 - [openai responses provider] buildOpenAiInput compacts empty fields to reduce token overhead
+  ---
+  duration_ms: 2.345237
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] buildWorkPacketInput preserves route/session metadata and emits compact JSON
+ok 251 - [openai responses provider] buildWorkPacketInput preserves route/session metadata and emits compact JSON
+  ---
+  duration_ms: 0.301686
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] buildPromptPayload strips empty arrays and strings
+ok 252 - [openai responses provider] buildPromptPayload strips empty arrays and strings
+  ---
+  duration_ms: 0.132272
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] buildPromptPayload keeps all non-empty fields
+ok 253 - [openai responses provider] buildPromptPayload keeps all non-empty fields
+  ---
+  duration_ms: 0.133553
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] extractOutputText reads output_text field
+ok 254 - [openai responses provider] extractOutputText reads output_text field
+  ---
+  duration_ms: 0.150413
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] extractOutputText falls back to prompt field
+ok 255 - [openai responses provider] extractOutputText falls back to prompt field
+  ---
+  duration_ms: 0.108542
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] extractOutputText reads nested output array
+ok 256 - [openai responses provider] extractOutputText reads nested output array
+  ---
+  duration_ms: 0.133482
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] extractOutputText returns empty string for empty or unknown shape
+ok 257 - [openai responses provider] extractOutputText returns empty string for empty or unknown shape
+  ---
+  duration_ms: 0.078251
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] isConfigured returns true when injected request fn is provided
+ok 258 - [openai responses provider] isConfigured returns true when injected request fn is provided
+  ---
+  duration_ms: 0.369847
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] isConfigured returns true when apiKey is provided
+ok 259 - [openai responses provider] isConfigured returns true when apiKey is provided
+  ---
+  duration_ms: 0.344287
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] isConfigured returns false without key or request
+ok 260 - [openai responses provider] isConfigured returns false without key or request
+  ---
+  duration_ms: 0.159543
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] resolveModel selects correct model for each tier
+ok 261 - [openai responses provider] resolveModel selects correct model for each tier
+  ---
+  duration_ms: 0.128663
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] resolveModel falls back to standard for unknown or missing tier
+ok 262 - [openai responses provider] resolveModel falls back to standard for unknown or missing tier
+  ---
+  duration_ms: 0.064211
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generatePromptRecommendation keeps non-empty prompt context
+ok 263 - [openai responses provider] generatePromptRecommendation keeps non-empty prompt context
+  ---
+  duration_ms: 0.446229
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generatePromptRecommendation throws PROVIDER_NOT_CONFIGURED without key or request
+ok 264 - [openai responses provider] generatePromptRecommendation throws PROVIDER_NOT_CONFIGURED without key or request
+  ---
+  duration_ms: 0.417748
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generatePromptRecommendation throws PROVIDER_SCHEMA_MISMATCH on empty output
+ok 265 - [openai responses provider] generatePromptRecommendation throws PROVIDER_SCHEMA_MISMATCH on empty output
+  ---
+  duration_ms: 0.252785
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generatePromptRecommendation propagates PROVIDER_AUTH_FAILED from request fn
+ok 266 - [openai responses provider] generatePromptRecommendation propagates PROVIDER_AUTH_FAILED from request fn
+  ---
+  duration_ms: 0.205194
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generatePromptRecommendation propagates PROVIDER_RATE_LIMITED from request fn
+ok 267 - [openai responses provider] generatePromptRecommendation propagates PROVIDER_RATE_LIMITED from request fn
+  ---
+  duration_ms: 0.914348
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generatePromptRecommendation propagates PROVIDER_TIMEOUT from request fn
+ok 268 - [openai responses provider] generatePromptRecommendation propagates PROVIDER_TIMEOUT from request fn
+  ---
+  duration_ms: 0.188044
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generatePromptRecommendation returns correct result shape on success
+ok 269 - [openai responses provider] generatePromptRecommendation returns correct result shape on success
+  ---
+  duration_ms: 0.261376
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generateWorkPacketResult parses strict JSON payload
+ok 270 - [openai responses provider] generateWorkPacketResult parses strict JSON payload
+  ---
+  duration_ms: 0.399918
+  type: 'test'
+  ...
+# Subtest: [openai responses provider] generateWorkPacketResult throws PROVIDER_SCHEMA_MISMATCH on invalid JSON
+ok 271 - [openai responses provider] generateWorkPacketResult throws PROVIDER_SCHEMA_MISMATCH on invalid JSON
+  ---
+  duration_ms: 0.247565
+  type: 'test'
+  ...
+# Subtest: [system api controller] flag toggle requires system.admin permission
+ok 272 - [system api controller] flag toggle requires system.admin permission
+  ---
+  duration_ms: 0.848257
+  type: 'test'
+  ...
+# Subtest: [system api controller] rollback requires system.admin permission
+ok 273 - [system api controller] rollback requires system.admin permission
+  ---
+  duration_ms: 0.351687
+  type: 'test'
+  ...
+# Subtest: [system api controller] runtime flag details are exposed ahead of raw yaml fallback
+ok 274 - [system api controller] runtime flag details are exposed ahead of raw yaml fallback
+  ---
+  duration_ms: 0.911898
+  type: 'test'
+  ...
+# (node:50924) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: [task repository routing] sqlite 선택 시 SQLiteTaskRepository를 반환한다
+ok 275 - [task repository routing] sqlite 선택 시 SQLiteTaskRepository를 반환한다
+  ---
+  duration_ms: 1.250925
+  type: 'test'
+  ...
+# Subtest: [task repository routing] postgres 선택 시 PostgresTaskRepository를 반환한다
+ok 276 - [task repository routing] postgres 선택 시 PostgresTaskRepository를 반환한다
+  ---
+  duration_ms: 0.167593
+  type: 'test'
+  ...
+# Subtest: [task repository routing] postgres 미구성 client는 명시적 오류를 던진다
+ok 277 - [task repository routing] postgres 미구성 client는 명시적 오류를 던진다
+  ---
+  duration_ms: 0.566491
+  type: 'test'
+  ...
+# Subtest: [task repository routing] inmemory 선택 시 InMemoryTaskRepository를 반환한다
+ok 278 - [task repository routing] inmemory 선택 시 InMemoryTaskRepository를 반환한다
+  ---
+  duration_ms: 0.128522
+  type: 'test'
+  ...
+# Subtest: [task repository routing] 지원하지 않는 DB_TYPE은 즉시 실패한다
+ok 279 - [task repository routing] 지원하지 않는 DB_TYPE은 즉시 실패한다
+  ---
+  duration_ms: 0.184704
+  type: 'test'
+  ...
+# Subtest: [telemetry] harness context can be set and read without losing unknown defaults
+ok 280 - [telemetry] harness context can be set and read without losing unknown defaults
+  ---
+  duration_ms: 0.666783
+  type: 'test'
+  ...
+# Subtest: [ui runtime contracts] control center runtime exposes execution guidance for control and failure visibility
+ok 281 - [ui runtime contracts] control center runtime exposes execution guidance for control and failure visibility
+  ---
+  duration_ms: 1.294996
+  type: 'test'
+  ...
+1..281
+# tests 791
+# suites 166
+# pass 791
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7987.295017

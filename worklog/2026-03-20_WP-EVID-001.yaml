@@ -1,0 +1,40 @@
+wp_id: "WP-EVID-001"
+goal: "root current-state에 release summary를 추가해 release evidence의 legacy fallback을 제거한다."
+completed: true
+completed_at: "2026-03-20"
+tier: "arch"
+
+files_created:
+  - path: "worklog/2026-03-20_WP-EVID-001.yaml"
+    purpose: "Structured evidence for root-native release evidence generation"
+
+files_modified:
+  - path: "memory/current-state.yaml"
+    change: "Added root-native release_summary with quality gate result and evidence artifact paths"
+  - path: "scripts/generate_release_evidence.py"
+    change: "Prefer root release_summary.quality_gate_result before any legacy fallback"
+  - path: "artifacts/release-evidence/release-evidence.json"
+    change: "Regenerated release evidence showing PASS and the current root next action"
+
+validation:
+  layer1_schema:
+    - cmd: "python3 - <<'PY' ... json.loads('artifacts/release-evidence/release-evidence.json') ..."
+      result: "PASS"
+  layer2_contract:
+    - cmd: "npm run generate:release-evidence"
+      result: "PASS"
+  layer3_scenario:
+    - cmd: "npm run project:status"
+      result: "PASS"
+    - cmd: "python3 scripts/generate_release_evidence.py"
+      result: "PASS"
+
+decisions:
+  - id: "EVID-001-D1"
+    decision: "Keep the release evidence artifact shape stable while moving its truth source into root current-state"
+    rationale: "Consumers keep the same JSON contract while the generator stops depending on legacy stage-era state."
+
+risks:
+  - id: "EVID-001-R1"
+    risk: "The generator still retains legacy path constants as compatibility fallback if root files disappear"
+    mitigation: "Root files are now present and authoritative; future cleanup can remove the constants once all legacy consumers are retired."

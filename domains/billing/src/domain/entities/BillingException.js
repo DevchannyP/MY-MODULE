@@ -13,6 +13,7 @@ const EXCEPTION_STATUSES = Object.freeze({ OPEN: 'OPEN', APPROVED: 'APPROVED', R
  *   status: string,
  *   reason?: string|null,
  *   approvedBy?: string|null,
+ *   rejectedBy?: string|null,
  *   resolvedAt?: string|null,
  *   createdAt: string,
  * }} BillingExceptionSnapshot
@@ -35,7 +36,7 @@ class BillingException {
   /**
    * @param {BillingExceptionSnapshot} param0
    */
-  constructor({ exceptionId, invoiceId, paymentId, exceptionType, status, reason, approvedBy, resolvedAt, createdAt }) {
+  constructor({ exceptionId, invoiceId, paymentId, exceptionType, status, reason, approvedBy, rejectedBy, resolvedAt, createdAt }) {
     this.exceptionId   = exceptionId;
     this.invoiceId     = invoiceId;
     this.paymentId     = paymentId   || null;
@@ -43,6 +44,7 @@ class BillingException {
     this.status        = status;
     this.reason        = reason      || null;
     this.approvedBy    = approvedBy  || null;
+    this.rejectedBy    = rejectedBy  || null;
     this.resolvedAt    = resolvedAt  || null;
     this.createdAt     = createdAt;
 
@@ -65,9 +67,12 @@ class BillingException {
    */
   approve({ approvedBy, reason }) {
     if (!this.isOpen()) {
-      throw new Error('INV-B005: 이미 처리된 예외 항목은 승인할 수 없다');
+      throw Object.assign(
+        new Error('INV-B005: 이미 처리된 예외 항목은 승인할 수 없다'),
+        { code: 'CONFLICT' },
+      );
     }
-    if (!approvedBy) throw new Error('approvedBy is required');
+    if (!approvedBy) throw Object.assign(new Error('approvedBy is required'), { code: 'VALIDATION_ERROR' });
     return new BillingException({
       ...this._snapshot(),
       status:      EXCEPTION_STATUSES.APPROVED,
@@ -83,12 +88,16 @@ class BillingException {
    */
   reject({ rejectedBy, reason }) {
     if (!this.isOpen()) {
-      throw new Error('이미 처리된 예외 항목은 거부할 수 없다');
+      throw Object.assign(
+        new Error('INV-B005: 이미 처리된 예외 항목은 거부할 수 없다'),
+        { code: 'CONFLICT' },
+      );
     }
     return new BillingException({
       ...this._snapshot(),
       status:     EXCEPTION_STATUSES.REJECTED,
-      approvedBy: rejectedBy,
+      approvedBy: null,
+      rejectedBy,
       reason,
       resolvedAt: new Date().toISOString(),
     });
@@ -106,6 +115,7 @@ class BillingException {
       status:        this.status,
       reason:        this.reason,
       approvedBy:    this.approvedBy,
+      rejectedBy:    this.rejectedBy,
       resolvedAt:    this.resolvedAt,
       createdAt:     this.createdAt,
     };
@@ -121,6 +131,7 @@ class BillingException {
       status:         this.status,
       reason:         this.reason,
       approved_by:    this.approvedBy,
+      rejected_by:    this.rejectedBy,
       resolved_at:    this.resolvedAt,
       created_at:     this.createdAt,
     };

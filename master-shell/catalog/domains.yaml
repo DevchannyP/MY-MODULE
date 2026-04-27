@@ -1,9 +1,24 @@
 # Master Shell - 도메인 카탈로그
 # 마스터 UI 포털에서 탐색 가능한 도메인 목록
-version: "0.2.0"
-last_updated: "2026-03-18"
+version: "0.3.0"
+last_updated: "2026-03-25"
 
 domains:
+  - id: "system"
+    name: "System OS"
+    description: "Workflow OS 운영 포털 — 헬스 모니터링, 피처 플래그, 감사 로그, 품질 게이트, 라이프사이클, 롤백 콘솔"
+    bounded_contexts:
+      - id: "system-api"
+        name: "System API"
+        description: "System OS가 Master UI에 노출하는 REST + SSE API. INV-SYS-001~005 authz 불변조건 유지."
+        stage_a_memory: "memory/stageA/system.yaml"
+        stage_b_memory: "memory/stageB/ui-shell-composition.yaml"
+    plugins:
+      - "system-api-plugin"
+    status: "inactive"
+    registered_at: "2026-04-15"
+    note: "Stage C 등록 완료. Stage D/E PASS 후 active 전환 예정."
+
   - id: "productivity"
     name: "생산성 관리"
     description: "담당자가 작업을 체계적으로 생성·관리·완료하여 업무 효율을 높이는 도메인 영역"
@@ -18,7 +33,25 @@ domains:
     domain_map_ref: "requirements/domain-map.yaml"
     status: "active"
     registered_at: "2026-03-17"
-    note: "task-management 플러그인은 feature_flag=false 상태. Stage D PASS 후 활성화 예정."
+    activated_at: "2026-03-25"
+    note: "B_review PASS → full(100%) rollout 완료. enable_task_management: true."
+
+  - id: "video"
+    name: "콘텐츠 관리"
+    description: "영상 업로드·트랜스코딩·재생 관리. INV-V001~V005 불변조건을 유지하는 비디오 도메인 영역."
+    bounded_contexts:
+      - id: "video-content"
+        name: "비디오 콘텐츠"
+        description: "Video 생애주기(UPLOADED→READY→ARCHIVED) 관리와 TranscodeJob 비동기 처리."
+        stage_a_memory: "memory/stageA/video.yaml"
+    stage_b_memory: "memory/stageB/video.yaml"
+    plugins:
+      - "video-plugin"
+    domain_map_ref: "requirements/domain-map.yaml"
+    status: "active"
+    registered_at: "2026-03-20"
+    activated_at: "2026-03-25"
+    note: "B_review PASS → full(100%) rollout 완료. video.enabled: true. 8개 이벤트 중앙 레지스트리 등록 완료."
 
   - id: "billing"
     name: "정산관리"
@@ -40,6 +73,7 @@ domains:
     plugins:
       - "billing-plugin"
     domain_map_ref: "requirements/domain-map.yaml"
-    status: "inactive"
+    status: "active"
     registered_at: "2026-03-18"
-    note: "billing 플러그인은 feature_flag=false 상태. Stage D PASS 후 internal 5% rollout 시작."
+    activated_at: "2026-03-25"
+    note: "B_review PASS → full(100%) rollout 완료. billing.enabled: true."

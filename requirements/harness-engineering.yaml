@@ -1,0 +1,377 @@
+version: "0.2.0"
+last_updated: "2026-04-12"
+
+identity:
+  id: "ai-harness"
+  name: "AI Harness Engineering"
+  description: "반복 프롬프트를 짧게 유지하면서도 계획, 점진 실행, 검증 루프를 강제하는 저장소 고정 운영 계약"
+
+operating_principles:
+  - id: "HP-01"
+    rule: "모든 요청은 목표, 맥락, 제약, 완료조건, 작업방식, 검증으로 재구성한다."
+    why: "모호한 요청도 동일한 실행 구조로 정렬해 토큰 낭비와 재해석 비용을 줄인다."
+  - id: "HP-02"
+    rule: "어려운 작업은 바로 구현하지 않고 먼저 원인 분석과 변경 포인트를 좁힌다."
+    why: "큰 리라이트와 불필요한 코드 생성을 막는다."
+  - id: "HP-03"
+    rule: "반복 규칙은 채팅이 아니라 파일에 고정하고, 채팅은 현재 packet 차이만 전달한다."
+    why: "세션마다 같은 지시를 반복하지 않아도 된다."
+  - id: "HP-04"
+    rule: "작업은 작은 change set으로 나누고 각 change set 뒤에 즉시 검증한다."
+    why: "실패 반경을 줄이고 다음 세션 재개를 쉽게 만든다."
+  - id: "HP-05"
+    rule: "완료 선언 전에는 항상 검증 루프와 남은 리스크를 남긴다."
+    why: "거짓 완료를 방지하고 후속 작업 연결성을 높인다."
+
+intake_packet:
+  required_fields:
+    - "goal"
+    - "context"
+    - "constraints"
+    - "done_when"
+    - "work_mode"
+    - "verification"
+  packet_template:
+    goal: "무엇을 달성해야 하는가"
+    context:
+      - "어떤 함수/파일/데이터 구조를 기준으로 볼 것인가"
+    constraints:
+      - "건드리면 안 되는 영역"
+      - "유지해야 하는 기존 동작"
+    done_when:
+      - "사용자 관점 완료조건"
+    work_mode:
+      - "먼저 원인 분석"
+      - "그다음 변경 포인트만 제시"
+      - "마지막에 테스트 시나리오 제시"
+    verification:
+      - "변경 후 반드시 확인할 관찰 지점"
+
+execution_protocol:
+  - step: "root memory, 현재 브랜치, 관련 요구사항 파일을 먼저 읽는다."
+  - step: "사용자 요청을 intake packet으로 구조화한다."
+  - step: "원인 분석 후 change point를 최소 집합으로 확정한다."
+  - step: "한 번에 하나의 작은 change set만 구현한다."
+  - step: "관련 검증을 즉시 실행하고 실패 시 바로 수정한다."
+  - step: "결과, 남은 리스크, 다음 한 단계만 보고한다."
+
+decision_policy:
+  minimize_change_first: true
+  preserve_existing_behavior: true
+  preserve_storage_logic: true
+  avoid_large_rewrite: true
+  favor_contract_memory_docs_before_code: true
+
+architecture_policy:
+  primary_strategy: "composition-first"
+  coupling: "lowest practical"
+  cohesion: "highest practical"
+  modularity: "maximize within current repo structure"
+  information_hiding: "apply"
+  encapsulation: "apply when it shortens reasoning paths and protects invariants"
+  inheritance: "use only when true subtype semantics and shared lifecycle exist"
+  polymorphism: "prefer port/adapter polymorphism over class hierarchy expansion"
+  abstraction: "prefer thin abstractions over speculative framework layers"
+  singleton: "allow only for truly process-wide coordinators such as config, registry, telemetry"
+  builder: "allow for complex object assembly, test fixtures, or multi-step packet generation"
+  factory_method: "allow when adapter creation branches repeatedly by type or runtime mode"
+  template_method: "allow when lifecycle skeleton is fixed and step overrides are bounded"
+  anti_patterns:
+    - "pattern for pattern's sake"
+    - "forced singleton for mutable business state"
+    - "inheritance used only to satisfy style preference"
+    - "new abstraction with no repeated consumer"
+
+branch_and_commit_policy:
+  branch_rule: "새 독립 작업은 작은 작업 브랜치로 분리하고, 같은 packet이면 같은 브랜치에서 마무리한다."
+  commit_rule: "진단, 구현, 검증, 문서 동기화를 의미 단위로 나눈다."
+  auto_commit_gate: "관련 단위/통합/회귀 검증 통과 후에만 자동 커밋 후보가 된다."
+  protection_rule: "사용자 기존 변경은 되돌리지 않는다."
+
+test_policy:
+  unit: "핵심 불변조건과 함수 단위 회귀를 우선"
+  integration: "저장/조회/조합 경로 우선"
+  regression: "이번 결함이 재발하지 않도록 최소 1개 이상"
+  white_box: "분기와 상태 전이 위험이 높은 곳에 한정"
+  system: "브랜치 병합 전 또는 중요한 흐름 통합 시"
+  packet_validation_profile_source: "requirements/validation-profiles.yaml"
+
+ui_policy:
+  master_ui:
+    show_status_bar: true
+    show_current_lane: true
+    show_next_action: true
+    show_validation_state: true
+    show_kanban_flow: true
+    flow_model: "spiral"
+
+deliverable_contract:
+  analysis_first: true
+  change_points_only: true
+  test_scenarios_min: 3
+  always_report:
+    - "원인 분석"
+    - "변경 포인트"
+    - "검증 결과"
+    - "남은 리스크"
+    - "다음 작업"
+  metadata_fields:
+    - "prompt_version"
+    - "mode"
+    - "risk_level"
+    - "evidence_status"
+    - "output_contract"
+  output_schema_ref: "contracts/harness/output.schema.json"
+
+mode_router:
+  modes:
+    Research:
+      preferred_tier: "frontier"
+      use_when: "open-ended investigation, hypothesis formation"
+    Build:
+      preferred_tier: "mini"
+      use_when: "implementation, code generation, refactoring"
+    Debug:
+      preferred_tier: "standard"
+      use_when: "root cause analysis, error trace, fix"
+    Operate:
+      preferred_tier: "mini"
+      use_when: "deployment, ops tasks, status checks"
+    Policy:
+      preferred_tier: "frontier"
+      use_when: "compliance, security review, governance"
+
+provider_adapter_contract:
+  contract_ref: "contracts/harness/provider-adapter.yaml"
+  stage_a_memory_ref: "memory/stageA/harness-provider-adapter.yaml"
+  stage_b_memory_ref: "memory/stageB/harness-provider-adapter.yaml"
+  adr_ref: "docs/adr/0013-harness-provider-adapter-strategy.md"
+  known_issue_ref: "KI-HARNESS-001"
+
+# ─────────────────────────────────────────────────────────
+# 기능 요구사항 (Functional Requirements)
+# ─────────────────────────────────────────────────────────
+functional_requirements:
+  # Harness 핵심 실행 흐름
+  - id: "FR-001"
+    category: "intake"
+    description: "모든 사용자 요청을 intake_packet 6개 필드(goal/context/constraints/done_when/work_mode/verification)로 자동 재구성한다."
+    priority: "P0"
+    verification: "임의 입력 10종에 대해 intake packet 재구성 결과 검증"
+
+  - id: "FR-002"
+    category: "planning"
+    description: "어려운 작업은 바로 코드를 생성하지 않고 원인 분석 → 변경 포인트 확정 → 구현 순으로 실행한다."
+    priority: "P0"
+    verification: "Stage A/B 단계 없이 Stage D로 직행하는 경우 차단"
+
+  - id: "FR-003"
+    category: "rules"
+    description: "반복되는 규칙과 제약을 채팅이 아닌 파일(CLAUDE.md, requirements/*.yaml)에 고정한다."
+    priority: "P0"
+    verification: "세션 시작 시 파일 읽기 순서 준수 여부 확인"
+
+  - id: "FR-004"
+    category: "incremental"
+    description: "작업을 Work Packet 단위로 분할하고 각 packet 완료 후 즉시 검증 루프를 실행한다."
+    priority: "P0"
+    verification: "WP 완료 시 validation_profile 명령 실행 여부 확인"
+
+  - id: "FR-005"
+    category: "verification"
+    description: "완료 선언 전 관련 검증 루프(lint/test/contract/smoke)를 모두 통과해야 한다."
+    priority: "P0"
+    verification: "FAIL 상태에서 완료 선언 차단 테스트"
+
+  # UI / 시각화
+  - id: "FR-010"
+    category: "ui"
+    description: "Master UI 홈에 칸반 보드(Backlog/Analysis/Build/Verify/Done 5레인)를 표시한다."
+    priority: "P1"
+    data_source: "memory/wp-queue.yaml"
+    verification: "wp-queue.yaml의 WP 상태별 카드가 올바른 레인에 렌더링됨"
+
+  - id: "FR-011"
+    category: "ui"
+    description: "각 칸반 카드에 Stage 사이클(A→B→C→D→E) 진행 상태를 배지로 표시한다."
+    priority: "P1"
+    verification: "stage 필드 없는 WP도 graceful 렌더링"
+
+  - id: "FR-012"
+    category: "ui"
+    description: "Master UI 상단 상태바에 현재 레인, 다음 액션, 검증 상태를 표시한다."
+    priority: "P1"
+    verification: "project_status 데이터와 UI 일치 확인"
+
+  - id: "FR-013"
+    category: "ui"
+    description: "나선형(Spiral) 모델 시각화 — 각 반복(iteration)이 A→E 사이클로 구성됨을 표현한다."
+    priority: "P2"
+    verification: "spiral 시각화가 도메인별 iteration 번호를 올바르게 반영"
+
+  # 형상관리
+  - id: "FR-020"
+    category: "scm"
+    description: "작업 유형별 브랜치 전략(feature/fix/chore/docs/test/report)을 자동 제안한다."
+    priority: "P1"
+    verification: "branch_bootstrap.js 출력이 packet type과 일치"
+
+  - id: "FR-021"
+    category: "scm"
+    description: "검증 게이트 통과 후에만 커밋 후보로 등록하는 guard를 실행한다."
+    priority: "P0"
+    verification: "테스트 미통과 상태에서 auto-commit 차단 확인"
+
+  - id: "FR-022"
+    category: "scm"
+    description: "Conventional Commit 형식(type(scope): subject)을 강제하고 commitlint로 검증한다."
+    priority: "P0"
+    verification: "비규격 메시지 커밋 시 hook 실패 확인"
+
+  # 테스트 계층
+  - id: "FR-030"
+    category: "testing"
+    description: "단위 테스트: 핵심 불변조건과 함수 단위 회귀를 검증한다."
+    priority: "P0"
+    coverage_min_pct: 80
+    verification: "jest --coverage 통과"
+
+  - id: "FR-031"
+    category: "testing"
+    description: "통합 테스트: 저장/조회/조합 경로를 실제 의존성으로 검증한다."
+    priority: "P0"
+    verification: "test:integration 통과"
+
+  - id: "FR-032"
+    category: "testing"
+    description: "회귀 테스트: 이번 결함이 재발하지 않도록 최소 1개 이상 추가한다."
+    priority: "P0"
+    verification: "결함 수정 PR에 회귀 테스트 포함 여부 확인"
+
+  - id: "FR-033"
+    category: "testing"
+    description: "화이트박스 테스트: 분기/상태전이 위험이 높은 경로의 내부 분기를 검증한다."
+    priority: "P1"
+    verification: "분기 커버리지 리포트 확인"
+
+  - id: "FR-034"
+    category: "testing"
+    description: "시스템 테스트: 브랜치 병합 전 전체 도메인 통합 흐름을 검증한다."
+    priority: "P0"
+    verification: "test:e2e-smoke + test:authn-authz 통과"
+
+  # 데이터베이스
+  - id: "FR-040"
+    category: "database"
+    description: "도메인별 Repository 인터페이스를 Port로 정의하고 구현체(SQLite/In-Memory)를 어댑터로 분리한다."
+    priority: "P0"
+    verification: "Repository 인터페이스와 구현체 분리 여부 architecture-fitness 검증"
+
+  - id: "FR-041"
+    category: "database"
+    description: "추후 PostgreSQL 전환 대비 마이그레이션 스크립트 경로와 명명 규칙을 지금 고정한다."
+    priority: "P1"
+    verification: "docs/db/migration-strategy.md 존재 확인"
+
+  - id: "FR-042"
+    category: "database"
+    description: "자료사전(Data Dictionary)을 docs/reference/ai-harness-data-dictionary.md에 유지하고 도메인 계약 변경 시 동기화한다."
+    priority: "P1"
+    verification: "계약 변경 시 자료사전 업데이트 여부 확인"
+
+# ─────────────────────────────────────────────────────────
+# 비기능 요구사항 확장 (NFR Extended)
+# ─────────────────────────────────────────────────────────
+nfr_extended:
+  concurrency:
+    model: "async-first"
+    rule: "I/O 바운드 작업은 async/await + Promise.all 병렬화 우선."
+    rule_cpu: "CPU 바운드 작업은 Worker Thread 분리. 메인 이벤트 루프 블로킹 금지."
+    rule_shared_state: "공유 가변 상태는 단일 Coordinator(Singleton) 경유. 직접 mutate 금지."
+    thread_safety: "Repository 구현체는 동시 읽기 안전, 쓰기는 낙관적 잠금 또는 직렬화."
+
+  database_strategy:
+    current: "SQLite (로컬 개발/단일 인스턴스)"
+    target: "PostgreSQL (수평 확장 필요 시)"
+    migration_path: "Repository Port 유지 → 어댑터만 교체 (zero domain-code change)"
+    partitioning: "도메인별 스키마 접두어(task_, billing_, video_) — 추후 DB 분리 용이"
+    connection_pool: "single-process 기준 max 10 — 확장 시 PgBouncer layer 추가"
+    index_policy: "쿼리 패턴 먼저 확정 후 인덱스 추가. 선제적 인덱스 금지."
+
+  data_dictionary:
+    location: "docs/reference/ai-harness-data-dictionary.md"
+    sync_trigger: "계약(contracts/*.yaml) 변경 시 반드시 동기화"
+    fields_required:
+      - "field_name"
+      - "type"
+      - "nullable"
+      - "domain"
+      - "description"
+      - "invariants_ref"
+
+  design_patterns:
+    singleton:
+      rule: "프로세스 전역 코디네이터(config, registry, telemetry)에만 허용."
+      anti_rule: "가변 비즈니스 상태를 Singleton으로 보유 금지."
+    builder:
+      rule: "복잡한 객체 조립, 테스트 픽스처, 멀티스텝 패킷 생성에 적용."
+    factory_method:
+      rule: "타입 또는 런타임 모드별로 어댑터 생성이 반복 분기될 때 적용."
+    template_method:
+      rule: "생명주기 골격이 고정되고 스텝 오버라이드만 다를 때 적용."
+    port_adapter:
+      rule: "도메인 내부와 외부 인프라 경계를 항상 Port 인터페이스로 분리."
+    observer:
+      rule: "도메인 이벤트 발행/구독은 EventBus를 경유. 직접 핸들러 호출 금지."
+
+  oop_principles:
+    encapsulation:
+      rule: "엔티티 내부 필드는 메서드를 통해서만 접근. 직접 프로퍼티 노출 최소화."
+    inheritance:
+      rule: "진짜 서브타입 관계 + 공유 생명주기가 존재할 때만 사용. 코드 재사용 목적의 상속 금지."
+    polymorphism:
+      rule: "Port/Adapter 다형성 우선. 클래스 계층 확장보다 인터페이스 교체."
+    abstraction:
+      rule: "반복 소비자가 없는 추상화 금지. 얇은 추상화 선호."
+    information_hiding:
+      rule: "모듈 내부 구현 세부사항을 공개 API에 노출하지 않는다. contracts/만 공개 경계."
+
+  modularity:
+    fan_in_fan_out: "고려하지 않음 — 응집도(cohesion) 최대화 우선 설계."
+    cohesion: "기능적 응집(Functional Cohesion) 최고 등급 목표. 우연적/논리적 응집 제거."
+    coupling: "데이터 결합(Data Coupling)만 허용. 내용/공통/외부 결합 금지."
+    module_boundary: "도메인 경계 = bounded context. 경계 횡단은 계약(Port) 경유만 허용."
+
+# ─────────────────────────────────────────────────────────
+example_packet:
+  goal: "파일첨부 삭제 버그를 최소 변경으로 수정"
+  context:
+    - "fn_file_delete"
+    - "fn_delete_temp_file_rows"
+    - "/root/file_info 구조"
+  constraints:
+    - "백엔드 delete 문은 건드리지 말 것"
+    - "인스턴스 추가 금지"
+    - "기존 저장 로직 유지"
+  done_when:
+    - "저장파일/미저장파일 혼합 상태에서 일부 삭제 후 저장해도 필수값 누락 없이 정상 저장"
+  work_mode:
+    - "먼저 원인 분석"
+    - "그다음 변경 포인트만 제시"
+    - "마지막에 테스트 시나리오 3개 제시"
+  verification:
+    - "삭제 후 file_info 재정렬"
+    - "저장 루프 통과"
+    - "재조회 결과 일치 확인"
+
+# ─────────────────────────────────────────────────────────
+# 보안 정책
+# ─────────────────────────────────────────────────────────
+security_policy:
+  trust_boundary_ref: "security/policies/trust-boundary.yaml"
+  redteam_ref: "security/redteam/owasp-core.yaml"
+  required_attacks:
+    - "prompt_injection"
+    - "system_prompt_exfiltration"
+    - "data_exfiltration"
+    - "tool_abuse"

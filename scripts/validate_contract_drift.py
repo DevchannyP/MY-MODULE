@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate contract drift between capability/ui/openapi/events and interface code."""
+"""Validate contract drift between domain contracts, central event contracts, and interface code."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import re
 import sys
 
 import yaml
+import jsonschema
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -22,6 +23,10 @@ def load_yaml(relative_path: str) -> dict:
 def load_json(relative_path: str) -> dict:
     with (REPO_ROOT / relative_path).open("r", encoding="utf-8") as handle:
         return json.load(handle)
+
+
+def load_data(relative_path: str) -> dict:
+    return load_json(relative_path) if relative_path.endswith(".json") else load_yaml(relative_path)
 
 
 def load_text(relative_path: str) -> str:
@@ -66,7 +71,23 @@ def task_event_ids(events_schema: dict) -> set[str]:
     return set(events_schema.get("definitions", {}).keys())
 
 
+def video_event_ids(events_schema: dict) -> set[str]:
+    return {
+        name
+        for name in events_schema.get("definitions", {}).keys()
+        if name != "EventEnvelope"
+    }
+
+
 def billing_event_ids(events_schema: dict) -> set[str]:
+    definitions = {
+        name
+        for name in events_schema.get("definitions", {}).keys()
+        if name not in {"Money", "EventEnvelope"}
+    }
+    if definitions:
+        return definitions
+
     names: set[str] = set()
     for variant in events_schema.get("oneOf", []):
         for item in variant.get("allOf", []):
@@ -79,6 +100,26 @@ def billing_event_ids(events_schema: dict) -> set[str]:
 def assert_contains(errors: list[str], source: str, needle: str, context: str) -> None:
     if needle not in source:
         errors.append(f"{context}: missing source snippet -> {needle}")
+
+
+def resolve_pointer(document: dict, pointer: str):
+    if not pointer:
+        return document
+    if not pointer.startswith("#/"):
+        raise ValueError(f"unsupported pointer format: {pointer}")
+
+    current = document
+    for token in pointer[2:].split("/"):
+        token = token.replace("~1", "/").replace("~0", "~")
+        if isinstance(current, list):
+            try:
+                index = int(token)
+            except ValueError as exc:
+                raise KeyError(token) from exc
+            current = current[index]
+            continue
+        current = current[token]
+    return current
 
 
 def validate_task_management(errors: list[str]) -> None:
@@ -180,10 +221,266 @@ def validate_billing(errors: list[str]) -> None:
         )
 
 
+def validate_video(errors: list[str]) -> None:
+    capability = load_yaml("domains/video/contract/capability.yaml")
+    ui = load_yaml("domains/video/contract/ui-contract.yaml")
+    openapi_spec = load_yaml("domains/video/contract/openapi.yaml")
+    events_schema = load_json("domains/video/contract/events.schema.json")
+    controller_source = load_text("domains/video/src/interface/VideoController.js")
+
+    operations = operation_map(openapi_spec)
+    ui_module_keys = {screen["module_key"] for screen in ui.get("screens", [])}
+
+    for item in capability.get("capabilities", []):
+        for operation_id in item.get("http_operations", []):
+            if operation_id not in operations:
+                errors.append(f"video: capability {item['id']} references unknown operationId {operation_id}")
+        for screen_key in item.get("screens", []):
+            if screen_key not in ui_module_keys:
+                errors.append(f"video: capability {item['id']} references unknown screen {screen_key}")
+
+    defined_event_ids = video_event_ids(events_schema)
+    for event_id in capability.get("events_emitted", []):
+        if event_id not in defined_event_ids:
+            errors.append(f"video: events.schema.json missing event definition {event_id}")
+
+    for operation_id, detail in operations.items():
+        normalized_path = re.sub(r"\{([^}]+)\}", r":\1", detail["path"])
+        assert_contains(
+            errors,
+            controller_source,
+            f"path === '{normalized_path}'",
+            f"video controller routing for {operation_id}",
+        )
+
+
+def validate_event_registry(errors: list[str]) -> None:
+    registry = load_yaml("contracts/events/registry.yaml")
+    envelope_path = registry.get("envelope")
+
+    if not isinstance(envelope_path, str) or not (REPO_ROOT / envelope_path).exists():
+        errors.append("events-registry: envelope path is missing or does not exist")
+        return
+
+    envelope_schema = load_json(envelope_path)
+    required_envelope_fields = {"specversion", "id", "source", "type", "time"}
+    if not required_envelope_fields.issubset(set(envelope_schema.get("required", []))):
+        errors.append("events-registry: envelope.schema.json is missing CloudEvents required fields")
+
+    task_events_schema = load_json("domains/productivity/task-tracking/contract/events.schema.json")
+    billing_events_schema = load_json("domains/billing/contracts/events.schema.json")
+    video_events_schema = load_json("domains/video/contract/events.schema.json")
+    registry_task_defs: set[str] = set()
+    registry_billing_defs: set[str] = set()
+    registry_video_defs: set[str] = set()
+    seen_types: set[str] = set()
+
+    for event in registry.get("events", []):
+        event_type = event.get("type")
+        source = event.get("source")
+        schema_ref = event.get("schema")
+
+        if not isinstance(event_type, str) or not event_type.startswith("com.workflow-os."):
+            errors.append(f"events-registry: invalid event type {event_type!r}")
+        elif event_type in seen_types:
+            errors.append(f"events-registry: duplicate event type {event_type}")
+        else:
+            seen_types.add(event_type)
+
+        if not isinstance(source, str) or not source.startswith("//workflow-os/"):
+            errors.append(f"events-registry: invalid event source for {event_type!r}")
+
+        if not isinstance(schema_ref, str) or "#/" not in schema_ref:
+            errors.append(f"events-registry: invalid schema ref for {event_type!r}")
+            continue
+
+        schema_path, pointer = schema_ref.split("#", 1)
+        schema_file = REPO_ROOT / schema_path
+        if not schema_file.exists():
+            errors.append(f"events-registry: schema file missing for {event_type}: {schema_path}")
+            continue
+
+        document = load_data(schema_path)
+        try:
+            resolve_pointer(document, f"#{pointer}")
+        except (KeyError, IndexError, ValueError):
+            errors.append(f"events-registry: schema pointer missing for {event_type}: {schema_ref}")
+            continue
+
+        definition_name = pointer.rsplit("/", 1)[-1]
+        normalized_schema_path = schema_path.replace("\\", "/")
+        if normalized_schema_path == "domains/productivity/task-tracking/contract/events.schema.json":
+            registry_task_defs.add(definition_name)
+        if normalized_schema_path == "domains/billing/contracts/events.schema.json":
+            registry_billing_defs.add(definition_name)
+        if normalized_schema_path == "domains/video/contract/events.schema.json":
+            registry_video_defs.add(definition_name)
+
+        for producer in event.get("produced_by", []):
+            if not (REPO_ROOT / producer).exists():
+                errors.append(f"events-registry: produced_by path missing for {event_type}: {producer}")
+
+    missing_task = sorted(task_event_ids(task_events_schema) - registry_task_defs)
+    if missing_task:
+        errors.append(f"events-registry: task-tracking registry coverage missing {missing_task}")
+
+    missing_billing = sorted(billing_event_ids(billing_events_schema) - registry_billing_defs)
+    if missing_billing:
+        errors.append(f"events-registry: billing registry coverage missing {missing_billing}")
+
+    missing_video = sorted(video_event_ids(video_events_schema) - registry_video_defs)
+    if missing_video:
+        errors.append(f"events-registry: video registry coverage missing {missing_video}")
+
+
+def validate_ui_shell_contract(errors: list[str]) -> None:
+    """Validate contracts/ui-shell/openapi.yaml structural consistency."""
+    openapi = load_yaml("contracts/ui-shell/openapi.yaml")
+    schemas = openapi.get("components", {}).get("schemas", {})
+    headers = openapi.get("components", {}).get("headers", {})
+
+    required_schemas = [
+        "StageRunRequest",
+        "StageRunReport",
+        "StageRunEnvelope",
+        "StageRunRuntimeObservability",
+        "StageOperatorGuidance",
+        "StageCommandResult",
+    ]
+    for name in required_schemas:
+        if name not in schemas:
+            errors.append(f"ui-shell: schema {name} missing from components/schemas")
+
+    obs = schemas.get("StageRunRuntimeObservability", {})
+    obs_required = set(obs.get("required", []))
+    for field in ("report_saved", "save_exit_code", "correlation_id", "request_id"):
+        if field not in obs_required:
+            errors.append(f"ui-shell: StageRunRuntimeObservability.required missing {field}")
+        if field not in obs.get("properties", {}):
+            errors.append(f"ui-shell: StageRunRuntimeObservability.properties missing {field}")
+    if "save_error" not in obs.get("properties", {}):
+        errors.append("ui-shell: StageRunRuntimeObservability.properties missing save_error")
+
+    report = schemas.get("StageRunReport", {})
+    report_props = set(report.get("properties", {}).keys())
+    for field in ("runtime_observability", "operator_guidance"):
+        if field not in report_props:
+            errors.append(f"ui-shell: StageRunReport.properties missing {field}")
+
+    if "StageRunReportSaved" not in headers:
+        errors.append("ui-shell: components/headers missing StageRunReportSaved")
+
+    stage_run_post = (
+        openapi.get("paths", {})
+        .get("/planning-studio/stage-run", {})
+        .get("post", {})
+    )
+    resp_headers = stage_run_post.get("responses", {}).get("200", {}).get("headers", {})
+    if "X-Stage-Run-Report-Saved" not in resp_headers:
+        errors.append("ui-shell: /planning-studio/stage-run POST 200 missing X-Stage-Run-Report-Saved header")
+
+
+def validate_harness_contracts(errors: list[str]) -> None:
+    """Validate contracts/harness/intake.schema.json against golden eval cases."""
+    intake_schema = load_json("contracts/harness/intake.schema.json")
+    output_schema = load_json("contracts/harness/output.schema.json")
+    golden_path = REPO_ROOT / "evals" / "golden" / "harness-core.jsonl"
+
+    if not golden_path.exists():
+        errors.append("harness-contracts: evals/golden/harness-core.jsonl not found")
+        return
+
+    # Verify required top-level schema fields
+    for field in ("$schema", "type", "required", "properties"):
+        if field not in intake_schema:
+            errors.append(f"harness-contracts: intake.schema.json missing top-level field: {field}")
+
+    required_intake_fields = {"goal", "context", "constraints", "done_when", "work_mode", "verification"}
+    actual_required = set(intake_schema.get("required", []))
+    missing_required = required_intake_fields - actual_required
+    if missing_required:
+        errors.append(f"harness-contracts: intake.schema.json required missing: {sorted(missing_required)}")
+
+    # Validate each golden record's input field against the intake schema
+    validator = jsonschema.Draft202012Validator(intake_schema)
+    with golden_path.open("r", encoding="utf-8") as fh:
+        lines = [line.strip() for line in fh if line.strip()]
+
+    for line in lines:
+        record = json.loads(line)
+        record_id = record.get("id", "unknown")
+        input_data = record.get("input")
+        if not isinstance(input_data, dict):
+            errors.append(f"harness-contracts: golden record {record_id} has non-object input")
+            continue
+        schema_errors = sorted(validator.iter_errors(input_data), key=lambda e: e.path)
+        for err in schema_errors:
+            path = "/".join(str(p) for p in err.absolute_path) or "(root)"
+            errors.append(f"harness-contracts: golden record {record_id} input schema violation at {path}: {err.message}")
+
+    # Verify output schema has the canonical section names used in golden expect
+    output_properties = set(output_schema.get("properties", {}).keys())
+    canonical_sections = {"summary", "analysis", "change_points", "verification", "risks", "next_action"}
+    missing_sections = canonical_sections - output_properties
+    if missing_sections:
+        errors.append(f"harness-contracts: output.schema.json properties missing canonical sections: {sorted(missing_sections)}")
+
+    # Verify golden expect.required_sections reference valid output schema properties
+    for line in lines:
+        record = json.loads(line)
+        record_id = record.get("id", "unknown")
+        required_sections = record.get("expect", {}).get("required_sections", [])
+        for section in required_sections:
+            if section not in output_properties:
+                errors.append(f"harness-contracts: golden record {record_id} expect.required_sections references unknown output property: {section}")
+
+
+def validate_system_api_contract(errors: list[str]) -> None:
+    """Validate contracts/system-api/ internal consistency."""
+    capability = load_yaml("contracts/system-api/capability.yaml")
+    openapi_spec = load_yaml("contracts/system-api/openapi.yaml")
+    events_schema = load_json("contracts/system-api/events.schema.json")
+
+    # Collect all http_operations declared in capabilities
+    capability_ops: set[str] = set()
+    for cap in capability.get("capabilities", []):
+        for op in cap.get("http_operations", []):
+            capability_ops.add(op)
+
+    # Collect operationIds from openapi
+    openapi_ops = set(operation_map(openapi_spec).keys())
+
+    # Bidirectional check
+    missing_in_openapi = sorted(capability_ops - openapi_ops)
+    if missing_in_openapi:
+        errors.append(
+            f"system-api: capability http_operations not in openapi: {missing_in_openapi}"
+        )
+
+    extra_in_openapi = sorted(openapi_ops - capability_ops)
+    if extra_in_openapi:
+        errors.append(
+            f"system-api: openapi operationIds not declared in any capability: {extra_in_openapi}"
+        )
+
+    # events_emitted vs events.schema.json definitions
+    event_definitions = set(events_schema.get("definitions", {}).keys())
+    for event_id in capability.get("events_emitted", []):
+        if event_id not in event_definitions:
+            errors.append(
+                f"system-api: events_emitted {event_id!r} not in events.schema.json definitions"
+            )
+
+
 def main() -> int:
     errors: list[str] = []
     validate_task_management(errors)
     validate_billing(errors)
+    validate_video(errors)
+    validate_event_registry(errors)
+    validate_ui_shell_contract(errors)
+    validate_harness_contracts(errors)
+    validate_system_api_contract(errors)
 
     if errors:
         for error in errors:

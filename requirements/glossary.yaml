@@ -1,6 +1,6 @@
 # Workflow OS - 도메인 용어 사전
 # Stage A에서 확정되어야 하며, 변경 시 Stage A를 재실행한다.
-version: "0.1.0"
+version: "0.1.0"등
 last_updated: "2026-03-17"
 
 # ── task-tracking 도메인 용어 (Stage A 확정) ──────────────────────────────

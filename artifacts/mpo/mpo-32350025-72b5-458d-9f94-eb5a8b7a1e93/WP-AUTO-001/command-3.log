@@ -1,0 +1,37 @@
+$ npm run wp:reconcile
+
+> my-module@0.2.0 wp:reconcile
+> python3 scripts/reconcile_state.py
+
+
+==============================================================
+  State Reconciler  [Kubernetes-Style]
+==============================================================
+  Satisfied : 18  |  Scheduled : 1  |  Uncovered : 0
+
+  SATISFIED (18):
+    ✓ dag-wp-scheduler
+    ✓ requirements-gap-detector
+    ✓ session-health-metrics
+    ✓ release-evidence-automation
+    ✓ video-domain-stage-a
+    ✓ billing-domain-contracts
+    ✓ cross-domain-event-bus
+    ✓ self-improvement-loop
+    ✓ rfc7807-error-standard
+    ✓ feature-flag-runtime
+    ✓ event-publishing
+    ✓ opentelemetry-instrumentation
+    ✓ sqlite-persistence
+    ✓ wp-queue-ci-validation
+    ✓ branch-protection-ci
+    ✓ deployment-environment-smoke-runner
+    ✓ deployment-environment-binding
+    ✓ deployment-environment-provisioning-audit
+
+  SCHEDULED — WP exists, not yet complete (1):
+    ⏳ handoff-operating-loop
+       WP: WP-HO-020  [pending]
+
+  1 capability gap(s) remain until full reconciliation.
+==============================================================

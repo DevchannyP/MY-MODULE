@@ -13,13 +13,8 @@
  *   task:write → task-owner 이상
  */
 
-const ERROR_STATUS_MAP = {
-  FORBIDDEN:        403,
-  NOT_FOUND:        404,
-  CONFLICT:         409,
-  VALIDATION_ERROR: 400,
-  INTERNAL_ERROR:   500,
-};
+const { fromError } = require('../../../../../src/shared/ProblemDetails');
+const { parsePagination } = require('../../../../../src/shared/QueryValidation');
 
 class TaskController {
   /**
@@ -57,7 +52,7 @@ class TaskController {
     try {
       return await this._route(req);
     } catch (err) {
-      return this._errorResponse(err, req.correlationId);
+      return this._errorResponse(err, req.path, req.correlationId);
     }
   }
 
@@ -92,7 +87,8 @@ class TaskController {
       return this._handleReassign(req, assigneeMatch[1]);
     }
 
-    return { status: 404, body: { code: 'NOT_FOUND', message: '경로를 찾을 수 없습니다.' } };
+    const err = Object.assign(new Error('경로를 찾을 수 없습니다.'), { code: 'NOT_FOUND' });
+    return fromError(err, { path: req.path, correlationId: req.correlationId });
   }
 
   // ── 핸들러 ────────────────────────────────────────────────────────────────
@@ -100,40 +96,41 @@ class TaskController {
   async _handleListTasks(req) {
     this._requirePermission(req.caller, 'task:read');
     const { assignee_id, status, due_before, page, page_size } = req.query || {};
+    const pagination = parsePagination({ page, page_size });
     const result = await this._listTasks.execute({
       assignee_id,
       status,
       due_before,
-      page:      page      ? Number(page)      : 1,
-      page_size: page_size ? Number(page_size) : 20,
-    });
+      page:      pagination.page,
+      page_size: pagination.pageSize,
+    }, req.caller);
     return { status: 200, body: result };
   }
 
   async _handleCreateTask(req) {
     this._requirePermission(req.caller, 'task:write');
     const { title, assignee_id, due_date, description } = req.body || {};
-    const result = await this._createTask.execute({ title, assignee_id, due_date, description });
+    const result = await this._createTask.execute({ title, assignee_id, due_date, description }, req.caller);
     return { status: 201, body: { task_id: result.task_id, status: result.status } };
   }
 
   async _handleGetTask(req, taskId) {
     this._requirePermission(req.caller, 'task:read');
-    const task = await this._getTask.execute({ task_id: taskId });
+    const task = await this._getTask.execute({ task_id: taskId }, req.caller);
     return { status: 200, body: this._serializeTask(task) };
   }
 
   async _handleTransitionStatus(req, taskId) {
     this._requirePermission(req.caller, 'task:write');
     const { new_status } = req.body || {};
-    const result = await this._transitionTaskStatus.execute({ task_id: taskId, new_status });
+    const result = await this._transitionTaskStatus.execute({ task_id: taskId, new_status }, req.caller);
     return { status: 200, body: result };
   }
 
   async _handleReassign(req, taskId) {
     this._requirePermission(req.caller, 'task:write');
     const { new_assignee_id } = req.body || {};
-    const result = await this._reassignTask.execute({ task_id: taskId, new_assignee_id });
+    const result = await this._reassignTask.execute({ task_id: taskId, new_assignee_id }, req.caller);
     return { status: 200, body: this._serializeTask(result) };
   }
 
@@ -159,30 +156,15 @@ class TaskController {
       status:      snapshot.status,
       created_at:  snapshot.created_at,
       updated_at:  snapshot.updated_at,
+      version:     snapshot.version ?? 1,
     };
   }
 
   // ── 오류 응답 ─────────────────────────────────────────────────────────────
 
-  _errorResponse(err, correlationId) {
-    const code   = err.code || this._inferErrorCode(err.message || '');
-    const status = ERROR_STATUS_MAP[code] || 500;
-    const body   = { code, message: err.message || '서버 오류가 발생했습니다.' };
-    if (correlationId) body.correlationId = correlationId;
-    return { status, body };
-  }
-
-  _inferErrorCode(message) {
-    if (message.includes('찾을 수 없습니다'))          return 'NOT_FOUND';
-    if (message.includes('[INV002]'))                  return 'CONFLICT';
-    if (message.includes('역전이'))                    return 'CONFLICT';
-    if (message.includes('DONE 상태 작업은'))           return 'CONFLICT';
-    if (message.includes('[INV001]'))                  return 'VALIDATION_ERROR';
-    if (message.includes('[INV003]'))                  return 'VALIDATION_ERROR';
-    if (message.includes('필수입니다'))                 return 'VALIDATION_ERROR';
-    if (message.includes('초과할 수 없습니다'))          return 'VALIDATION_ERROR';
-    if (message.includes('이후여야 합니다'))             return 'VALIDATION_ERROR';
-    return 'INTERNAL_ERROR';
+  /** RFC 7807 Problem Details 에러 응답 (IETF 표준) */
+  _errorResponse(err, path, correlationId) {
+    return fromError(err, { path, correlationId });
   }
 }
 

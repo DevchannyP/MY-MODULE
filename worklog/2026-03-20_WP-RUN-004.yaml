@@ -1,0 +1,72 @@
+wp_id: "WP-RUN-004"
+goal: "원격 GitHub deployment environment provisioning을 저장소 안의 policy/template/validator 기준으로 감사 가능하게 만든다."
+completed: true
+completed_at: "2026-03-20"
+tier: "governance"
+
+files_created:
+  - path: "master-shell/operations/deployment-environment-provisioning.yaml"
+    purpose: "Repo-local provisioning policy for remote GitHub deployment environments"
+  - path: "scripts/validate_deployment_environment_provisioning.py"
+    purpose: "Validate registry/policy/template drift for deployment environment provisioning"
+  - path: "scripts/generate_deployment_environment_audit_template.py"
+    purpose: "Generate an operator-facing audit template without inventing live remote evidence"
+  - path: "worklog/2026-03-20_WP-RUN-004.yaml"
+    purpose: "Structured evidence for deployment environment provisioning governance"
+
+files_modified:
+  - path: ".github/workflows/quality-gates.yml"
+    change: "Added deployment environment provisioning governance validation to CI"
+  - path: "package.json"
+    change: "Added generator and validator scripts for deployment environment provisioning audit"
+  - path: "docs/how-to/run-stage-d.md"
+    change: "Documented the provisioning governance check in Stage D baseline"
+  - path: "docs/how-to/run-stage-e.md"
+    change: "Documented audit template generation and operator-collected live evidence flow"
+  - path: "docs/reference/quality-gates.md"
+    change: "Recorded the new provisioning governance baseline and clarified the in-repo vs live-remote boundary"
+  - path: "README.md"
+    change: "Updated runtime posture to mention provisioning policy and generated audit template"
+  - path: "memory/current-state.yaml"
+    change: "Recorded deployment-environment-provisioning-audit capability and reduced KI-RUN-001 to live audit evidence collection"
+  - path: "memory/current-wp.yaml"
+    change: "Tracked and closed WP-RUN-004"
+  - path: "memory/wp-queue.yaml"
+    change: "Registered WP-RUN-004 and CAP-15 as done"
+  - path: "memory/checkpoint.yaml"
+    change: "Added WP-RUN-004 to the completed packet ledger and next-session context"
+  - path: "scripts/reconcile_state.py"
+    change: "Mapped deployment-environment-provisioning-audit to CAP-15"
+
+validation: {}
+
+artifacts:
+  - path: "artifacts/deployment-smoke/environment-provisioning-audit-template.json"
+    note: "Generated operator template for collecting live GitHub environment audit evidence"
+
+benchmark_sources:
+  - source: "GitHub Docs - Managing environments for deployment"
+    url: "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments"
+    adopted: "Used protection-rule concepts such as required reviewers, self-review prevention, admin bypass, and deployment branch restrictions as the policy baseline surface"
+  - source: "GitHub Docs - REST API endpoints for deployment environments"
+    url: "https://docs.github.com/en/enterprise-server%403.14/rest/deployments/environments"
+    adopted: "Used the environment endpoint shape as the basis for operator-collected audit metadata and evidence expectations"
+  - source: "GitHub Docs - REST API endpoints for deployment branch policies"
+    url: "https://docs.github.com/en/enterprise-server%403.14/rest/deployments/branch-policies"
+    adopted: "Used custom branch policy concepts to model selected-branch rollout requirements for canary and production"
+  - source: "GitHub Docs - REST API endpoints for GitHub Actions variables"
+    url: "https://docs.github.com/en/enterprise-server%403.14/rest/actions/variables"
+    adopted: "Used environment-variable endpoint semantics to define the required variable audit checklist"
+
+decisions:
+  - id: "RUN-004-D1"
+    decision: "Model remote environment provisioning as operator-collected audit evidence instead of pretending the repository can prove live GitHub state"
+    rationale: "The repo can declare the contract and validate drift locally, but without authenticated remote access it cannot truthfully assert that the live environments are provisioned."
+  - id: "RUN-004-D2"
+    decision: "Generate an audit template from registry + policy rather than hand-maintaining a free-form checklist"
+    rationale: "A generated template keeps the evidence contract synchronized with the environment registry and reduces drift between documentation and operations."
+
+risks:
+  - id: "RUN-004-R1"
+    risk: "Operators may still fail to collect or attach live audit evidence after the template is generated."
+    mitigation: "Keep KI-RUN-001 open at low severity and make live audit evidence collection the next runtime packet."

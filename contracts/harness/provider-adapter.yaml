@@ -1,0 +1,226 @@
+version: "0.1.1"
+last_updated: "2026-04-18"
+
+contract_id: "harness-provider-adapter"
+name: "Harness Provider Adapter Contract"
+objective: "HarnessRuntimeRouter가 계산한 routing snapshot을 실제 provider invocation 경계에 안전하게 연결한다."
+
+non_goals:
+  - "이번 계약만으로 실제 외부 provider 네트워크 호출을 구현하지 않는다."
+  - "응답 본문 계약을 contracts/harness/output.schema.json 밖으로 확장하지 않는다."
+  - "UI surface가 provider vendor 세부사항을 직접 알게 만들지 않는다."
+
+constraints:
+  - "src/infrastructure/HarnessRuntimeRouter.js의 route snapshot을 provider selection의 단일 truth surface로 사용한다."
+  - "모든 provider 결과는 contracts/harness/output.schema.json을 만족하거나 구조화된 실패로 종료해야 한다."
+  - "예산, timeout, retry, fallback이 없는 live provider path는 금지한다."
+  - "null/local fallback provider는 자격증명 부재 및 샌드박스 경로를 위해 유지한다."
+
+assumptions:
+  - "OpenAI Responses 계열이 첫 live provider 후보이며 추가 provider는 동일 port 계약으로 확장한다."
+  - "release evidence는 prompt_version, rollout_stage, rollback_target을 계속 공급한다."
+  - "eval artifact와 telemetry는 provider metadata를 응답 본문이 아니라 별도 운영 증적으로 저장한다."
+
+inputs:
+  route_snapshot_source: "src/infrastructure/HarnessRuntimeRouter.js"
+  required_route_fields:
+    - "mode"
+    - "route_id"
+    - "selected_model_tier"
+    - "reasoning_effort"
+    - "prompt_version"
+    - "rollout_stage"
+    - "output_schema_ref"
+    - "prompt_caching_enabled"
+    - "batch_eval_enabled"
+  required_request_context:
+    - "goal"
+    - "context"
+    - "constraints"
+    - "done_when"
+    - "work_mode"
+    - "verification"
+  allowed_tools:
+    interactive:
+      - "file-search"
+      - "function-calling"
+      - "repo-tools"
+    background:
+      - "batch-eval"
+      - "replay"
+      - "artifact-writer"
+
+output_contract:
+  schema_ref: "contracts/harness/output.schema.json"
+  provider_metadata_sink:
+    - "telemetry spans/logs"
+    - "eval artifact"
+    - "release evidence"
+  required_metadata_fields:
+    - "provider_id"
+    - "model"
+    - "route_id"
+    - "prompt_version"
+    - "latency_ms"
+    - "retry_count"
+    - "fallback_applied"
+
+provider_profiles:
+  - id: "null-harness-provider"
+    role: "offline/local fallback"
+    allowed_tiers: ["frontier", "standard", "mini"]
+    supports:
+      - "structured-output"
+      - "deterministic-test-double"
+    used_when:
+      - "live provider credentials are not configured"
+      - "sandbox/network policy blocks outbound provider calls"
+      - "provider rollout flag is disabled"
+
+  - id: "openai-responses"
+    role: "primary live provider"
+    allowed_tiers: ["frontier", "standard", "mini"]
+    supports:
+      - "structured-output"
+      - "tool-calling"
+      - "prompt-caching"
+      - "batch-eval"
+    tier_defaults:
+      frontier:
+        best_for: ["Research", "Policy", "Debug"]
+        timeout_ms: 45000
+        max_retries: 1
+      standard:
+        best_for: ["Build", "Debug", "Operate"]
+        timeout_ms: 30000
+        max_retries: 1
+      mini:
+        best_for: ["Build", "Operate"]
+        timeout_ms: 20000
+        max_retries: 0
+
+routing_policy:
+  source_of_truth: "src/infrastructure/HarnessRuntimeRouter.js"
+  mode_resolution:
+    Research:
+      preferred_tier: "frontier"
+      fallback_tiers: ["standard"]
+    Build:
+      preferred_tier: "mini"
+      fallback_tiers: ["standard"]
+    Debug:
+      preferred_tier: "standard"
+      fallback_tiers: ["frontier"]
+    Operate:
+      preferred_tier: "mini"
+      fallback_tiers: ["standard"]
+    Policy:
+      preferred_tier: "frontier"
+      fallback_tiers: ["standard"]
+  caching_policy:
+    flag: "harness_prompt_caching_enabled"
+    applies_to_tiers: ["frontier", "standard"]
+  batch_policy:
+    flag: "harness_batch_eval_enabled"
+    allowed_modes: ["Research", "Policy"]
+    forbidden_for_interactive_modes: ["Build", "Debug", "Operate"]
+
+budget_policy:
+  token_ceiling:
+    frontier:
+      input_tokens: 32000
+      output_tokens: 8000
+    standard:
+      input_tokens: 24000
+      output_tokens: 6000
+    mini:
+      input_tokens: 16000
+      output_tokens: 4000
+  stop_conditions:
+    - "projected token usage exceeds selected tier ceiling"
+    - "timeout budget is exhausted"
+    - "output cannot satisfy contracts/harness/output.schema.json"
+
+failure_model:
+  - code: "PROVIDER_NOT_CONFIGURED"
+    retryable: false
+    fallback: "null-harness-provider"
+  - code: "PROVIDER_TIMEOUT"
+    retryable: true
+    fallback: "next provider/tier in fallback chain"
+  - code: "PROVIDER_RATE_LIMITED"
+    retryable: true
+    fallback: "next provider/tier in fallback chain"
+  - code: "PROVIDER_AUTH_FAILED"
+    retryable: false
+    fallback: "null-harness-provider"
+  - code: "PROVIDER_SCHEMA_MISMATCH"
+    retryable: false
+    fallback: "return structured FAIL envelope"
+  - code: "PROVIDER_BUDGET_EXCEEDED"
+    retryable: false
+    fallback: "lower tier or null-harness-provider"
+  - code: "PROVIDER_UNAVAILABLE"
+    retryable: true
+    fallback: "next provider/tier in fallback chain"
+
+observability:
+  spans:
+    - "harness.provider.route"
+    - "harness.provider.invoke"
+    - "harness.provider.fallback"
+  metrics:
+    # gen_ai_client_operation_duration_ms: HarnessProviderAdapter.recordProviderMetrics()에서 histogram으로 기록
+    - "gen_ai_client_operation_duration_ms"
+    - "gen_ai_client_input_tokens"
+    - "gen_ai_client_output_tokens"
+    - "gen_ai_client_cache_read_input_tokens"
+  log_fields:
+    # logProviderSuccess() 실제 출력 필드와 동기화 (2026-04-18)
+    - "correlation_id"
+    - "request_id"
+    - "provider_id"
+    - "model"
+    - "route_id"
+    - "reasoning_effort"
+    - "prompt_version"
+    - "retry_count"
+    - "fallback_applied"
+    - "latency_ms"
+    - "input_tokens"
+    - "output_tokens"
+
+eval_logging:
+  artifact_path: "artifacts/evals/harness/latest/harness-eval-report.json"
+  required_fields:
+    - "provider_id"
+    - "selected_model_tier"
+    - "route_id"
+    - "prompt_version"
+    - "schema_valid"
+    - "fallback_applied"
+    - "retry_count"
+    - "latency_ms"
+
+validation_rules:
+  # 실제 실행 가능한 명령어만 등록 (2026-04-18 기준)
+  - "node --test src/tests/unit/harnessRuntimeRouter.test.js"
+  - "node --test src/tests/unit/harnessProviderAdapter.test.js"
+  - "node --test src/tests/unit/openAiResponsesProvider.test.js"
+  - "node --test src/tests/smoke/harnessProviderFailure.smoke.test.js"
+  - "python3 scripts/validate_harness_routing.py"
+  - "npm run harness:check -- --json"
+
+budget:
+  ceiling_strategy: "tier-based token ceiling + timeout ceiling"
+  escalation: "budget breach는 provider downgrade 또는 structured FAIL로 종료한다."
+
+escalation:
+  blocked_if:
+    - "live provider credential 또는 deployment secret이 없다"
+    - "provider output이 output schema를 반복적으로 깨뜨린다"
+    - "telemetry/eval sink가 provider metadata를 기록하지 못한다"
+  operator_actions:
+    - "null-harness-provider fallback 유지"
+    - "release evidence에 planned 또는 mixed 상태 기록"
+    - "rollout flag를 이전 prompt/provider 조합으로 되돌림"

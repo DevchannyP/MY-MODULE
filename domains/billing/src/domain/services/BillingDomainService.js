@@ -49,10 +49,16 @@ class BillingDomainService {
    */
   canTransitionDisputedToPaid(invoice, hasAdminApproval) {
     if (!invoice.status.equals('DISPUTED')) {
-      throw new Error('이 검사는 DISPUTED 상태 인보이스에만 적용된다');
+      throw Object.assign(
+        new Error('이 검사는 DISPUTED 상태 인보이스에만 적용된다'),
+        { code: 'CONFLICT' },
+      );
     }
     if (!hasAdminApproval) {
-      throw new Error('INV-B005: DISPUTED → PAID는 관리자 승인이 필요하다');
+      throw Object.assign(
+        new Error('INV-B005: DISPUTED → PAID는 관리자 승인이 필요하다'),
+        { code: 'CONFLICT' },
+      );
     }
     return true;
   }

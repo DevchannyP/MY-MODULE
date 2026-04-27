@@ -1,0 +1,79 @@
+version: "0.1.0"
+last_updated: "2026-03-20"
+registry: "master-shell/operations/deployment-environments.yaml"
+evidence_template: "artifacts/deployment-smoke/environment-provisioning-audit-template.json"
+
+audit_contract:
+  mode: "operator-audit"
+  freshness_days: 7
+  transport: "gh-api-or-equivalent"
+  required_metadata:
+    - "captured_at"
+    - "captured_by"
+    - "source"
+    - "owner"
+    - "repo"
+
+defaults:
+  branch_patterns:
+    - "main"
+    - "release/*"
+
+environments:
+  - id: "internal"
+    github_environment: "internal"
+    required_environment_vars:
+      - "DEPLOYMENT_BASE_URL"
+      - "TASK_WRITE_PERMISSIONS"
+      - "TASK_READ_PERMISSIONS"
+      - "FLAG_OFF_PATH"
+      - "FLAG_OFF_PERMISSIONS"
+    protection_rules:
+      required_reviewers_min: 0
+      prevent_self_review: false
+      allow_admin_bypass: true
+      wait_timer_minutes: 0
+      deployment_branch_policy:
+        mode: "no-restriction"
+        patterns: []
+    rationale: "내부 환경은 빠른 smoke 복구를 우선하지만, 존재 여부와 변수 wiring 자체는 여전히 감사 대상이다."
+
+  - id: "canary"
+    github_environment: "canary"
+    required_environment_vars:
+      - "DEPLOYMENT_BASE_URL"
+      - "TASK_WRITE_PERMISSIONS"
+      - "TASK_READ_PERMISSIONS"
+      - "FLAG_OFF_PATH"
+      - "FLAG_OFF_PERMISSIONS"
+    protection_rules:
+      required_reviewers_min: 1
+      prevent_self_review: true
+      allow_admin_bypass: false
+      wait_timer_minutes: 0
+      deployment_branch_policy:
+        mode: "selected"
+        patterns:
+          - "main"
+          - "release/*"
+    rationale: "canary는 점진 배포 경계이므로 최소 1명 승인과 배포 브랜치 제한이 필요하다."
+
+  - id: "production"
+    github_environment: "production"
+    required_environment_vars:
+      - "DEPLOYMENT_BASE_URL"
+      - "TASK_WRITE_PERMISSIONS"
+      - "TASK_READ_PERMISSIONS"
+      - "FLAG_OFF_PATH"
+      - "FLAG_OFF_PERMISSIONS"
+    protection_rules:
+      required_reviewers_min: 1
+      prevent_self_review: true
+      allow_admin_bypass: false
+      wait_timer_minutes: 0
+      deployment_branch_policy:
+        mode: "selected"
+        patterns:
+          - "main"
+          - "release/*"
+    rationale: "production은 canary보다 느슨해지면 안 되므로 같은 승인/브랜치 정책 이상을 요구한다."

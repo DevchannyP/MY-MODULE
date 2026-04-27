@@ -1,0 +1,33 @@
+{
+  "schema_version": "1",
+  "deployment_protection": {
+    "required_reviewers_min": 1,
+    "smoke_must_pass": true,
+    "error_budget_policy": "block-on-failure"
+  },
+  "budgets": {
+    "health": {
+      "latency_budget_ms": 200
+    },
+    "task-management-plugin": {
+      "latency_budget_ms": 400,
+      "availability_percent": 99.9,
+      "error_budget_percent": 0.1
+    },
+    "billing-plugin": {
+      "latency_budget_ms": 500,
+      "availability_percent": 99.9,
+      "error_budget_percent": 0.1
+    },
+    "video-plugin": {
+      "latency_budget_ms": 700,
+      "availability_percent": 99.5,
+      "error_budget_percent": 0.5
+    },
+    "system-api-plugin": {
+      "latency_budget_ms": 300,
+      "availability_percent": 99.9,
+      "error_budget_percent": 0.1
+    }
+  }
+}

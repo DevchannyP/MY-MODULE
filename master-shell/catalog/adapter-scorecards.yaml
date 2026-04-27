@@ -1,0 +1,159 @@
+# Master Shell - Adapter Scorecards
+# 각 아키텍처 어댑터를 성능/확장성/AI 적합성 기준으로 비교한다.
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+score_scale:
+  min: 1
+  max: 5
+  meaning:
+    "1": "낮음"
+    "3": "보통"
+    "5": "매우 높음"
+
+scorecards:
+  - adapter_id: "master-ui-plugin-shell"
+    metrics:
+      extensibility: 5
+      performance: 4
+      learning_clarity: 4
+      ai_compatibility: 4
+      swap_safety: 5
+    strengths:
+      - "ui-contract만으로 화면을 조합할 수 있어 모듈 추가 비용이 낮다."
+      - "기술 구현과 기획 구조를 분리해 마스터 UI가 안정적으로 유지된다."
+    tradeoffs:
+      - "실제 렌더링 엔진이 없으면 기획 중심으로만 보일 수 있다."
+    best_for:
+      - "도메인 포털을 통합하는 마스터 쉘"
+
+  - adapter_id: "master-ui-static-planner"
+    metrics:
+      extensibility: 4
+      performance: 5
+      learning_clarity: 5
+      ai_compatibility: 3
+      swap_safety: 5
+    strengths:
+      - "정적 산출물이라 운영 부담이 낮고 공유가 쉽다."
+      - "학습용 문맥과 프로젝트 구조를 한 화면에서 설명하기 좋다."
+    tradeoffs:
+      - "실시간 상호작용보다는 기획/학습 중심에 가깝다."
+    best_for:
+      - "사전 기획, 리포트, 학습 화면"
+
+  - adapter_id: "http-problem-details"
+    metrics:
+      extensibility: 4
+      performance: 4
+      learning_clarity: 4
+      ai_compatibility: 4
+      swap_safety: 4
+    strengths:
+      - "표준 HTTP와 Problem Details를 써서 외부 도구 연결이 쉽다."
+      - "timeout, drain, rate limit, idempotency를 한 계층에서 제공한다."
+    tradeoffs:
+      - "비동기 이벤트 기반 처리에는 별도 게이트웨이가 필요할 수 있다."
+    best_for:
+      - "외부 연동과 운영 관측이 중요한 도메인 API"
+
+  - adapter_id: "feature-flag-provider"
+    metrics:
+      extensibility: 5
+      performance: 4
+      learning_clarity: 3
+      ai_compatibility: 4
+      swap_safety: 5
+    strengths:
+      - "rollout과 targeting을 분리해 도메인 코어 변경 없이 운영 제어가 가능하다."
+    tradeoffs:
+      - "개념을 이해하지 못하면 플래그가 복잡해질 수 있다."
+    best_for:
+      - "점진 배포와 실험이 필요한 기능"
+
+  - adapter_id: "planner-state-memory"
+    metrics:
+      extensibility: 4
+      performance: 4
+      learning_clarity: 5
+      ai_compatibility: 5
+      swap_safety: 4
+    strengths:
+      - "YAML 기반이라 사람과 AI가 함께 읽기 쉽다."
+      - "세션 상태, work packet, checkpoint를 기획과 운영에 동시에 쓸 수 있다."
+    tradeoffs:
+      - "원격 상태 저장소가 필요해지면 별도 동기화 계층이 필요하다."
+    best_for:
+      - "기획과 실행이 결합된 Workflow OS"
+
+  - adapter_id: "openai-responses-agent"
+    metrics:
+      extensibility: 5
+      performance: 4
+      learning_clarity: 4
+      ai_compatibility: 5
+      swap_safety: 4
+    strengths:
+      - "tool calling, retrieval, MCP를 같은 런타임에서 다룰 수 있다."
+      - "마스터 UI가 읽는 기획서와 실제 AI orchestration을 연결하기 쉽다."
+    tradeoffs:
+      - "툴 설계 품질이 낮으면 AI 응답 품질도 함께 흔들린다."
+    best_for:
+      - "기획서 기반 AI workflow orchestration"
+
+  - adapter_id: "remote-mcp-connector"
+    metrics:
+      extensibility: 5
+      performance: 4
+      learning_clarity: 3
+      ai_compatibility: 5
+      swap_safety: 5
+    strengths:
+      - "프레임워크 독립적인 툴 확장이 가능하다."
+      - "문서 검색, 결제, 내부 API를 표준 프로토콜로 연결할 수 있다."
+    tradeoffs:
+      - "도구 설계와 권한 설계가 느슨하면 운영 위험이 커진다."
+    best_for:
+      - "외부 도구를 AI에 연결하는 플랫폼 계층"
+
+  - adapter_id: "observability-otel"
+    metrics:
+      extensibility: 4
+      performance: 4
+      learning_clarity: 3
+      ai_compatibility: 4
+      swap_safety: 4
+    strengths:
+      - "traceparent와 structured logs를 유지해 운영 흐름을 복기하기 쉽다."
+    tradeoffs:
+      - "시각화 대시보드가 없으면 체감이 약할 수 있다."
+    best_for:
+      - "운영 증적과 추적성을 중시하는 서비스"
+
+  - adapter_id: "repository-inmemory"
+    metrics:
+      extensibility: 4
+      performance: 5
+      learning_clarity: 5
+      ai_compatibility: 3
+      swap_safety: 5
+    strengths:
+      - "테스트와 스모크에서 빠르고 단순하다."
+    tradeoffs:
+      - "실서비스 상태 보존에는 부적합하다."
+    best_for:
+      - "테스트, 학습, 초기 모델링"
+
+  - adapter_id: "repository-sqlite"
+    metrics:
+      extensibility: 4
+      performance: 4
+      learning_clarity: 4
+      ai_compatibility: 3
+      swap_safety: 4
+    strengths:
+      - "작은 상태 저장형 모듈을 빠르게 실서비스 수준으로 끌어올리기 쉽다."
+    tradeoffs:
+      - "고부하 분산 환경에서는 추가 전략이 필요하다."
+    best_for:
+      - "상태 저장형 워크플로우 서비스"

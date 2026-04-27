@@ -1,0 +1,46 @@
+wp_id: "WP-HARNESS-VNEXT-006"
+goal: "Harness vNext Phase 4 telemetry에 하네스 메타 컨텍스트와 GenAI 지표 이름을 추가한다."
+completed: true
+completed_at: "2026-04-14"
+tier: "arch"
+result: "PASS"
+
+context: |
+  Phase 3까지 eval runner는 생겼지만, telemetry는 아직 prompt_version, mode, evidence_status,
+  eval_run_id, token/cache 계열 메타를 공통 로그에 넣지 못한다.
+
+root_cause: |
+  telemetry.js의 logger는 호출 시 전달된 fields만 emit하고,
+  하네스 공통 컨텍스트를 유지하거나 GenAI 계열 metric 이름을 별도로 정의하지 않았다.
+
+fix_applied: |
+  telemetry.js에 하네스 공통 컨텍스트(prompt_version, mode, risk_level, evidence_status,
+  model, reasoning_effort, eval_run_id)를 추가하고,
+  StructuredLogger가 모든 로그에 이를 자동 부착하도록 확장했다.
+  또한 GenAI 토큰/캐시/operation duration 및 harness eval/tool call용 metric 이름을 정의하고,
+  observability 설정 required_log_fields를 새 메타에 맞게 갱신했다.
+
+files_created:
+  - "src/tests/unit/telemetry.test.js"
+  - "worklog/2026-04-14_WP-HARNESS-VNEXT-006.yaml"
+
+files_modified:
+  - "src/infrastructure/telemetry.js"
+  - "master-shell/observability/config.yaml"
+
+validation:
+  telemetry_unit_test: "PASS"
+  lint: "PASS"
+
+decisions:
+  - id: "HARNESS-VNEXT-006-D1"
+    decision: "telemetry 메타는 호출부마다 개별 전달하지 않고 process-wide harness context로 유지한다"
+    rationale: "현재 저장소 구조에서는 logger/tracer 호출부가 많아 일일이 필드를 넘기기보다 공통 컨텍스트를 자동 부착하는 편이 변경 비용이 낮다."
+  - id: "HARNESS-VNEXT-006-D2"
+    decision: "OTel GenAI semantic conventions와 유사한 metric 이름을 먼저 별칭 수준으로 도입한다"
+    rationale: "기존 경량 telemetry surface를 유지하면서도 이후 OTLP/OTel 교체 시 마이그레이션 비용을 줄일 수 있다."
+
+risks:
+  - id: "HARNESS-VNEXT-006-R1"
+    risk: "하네스 컨텍스트는 추가됐지만 아직 주요 실행 경로에서 setHarnessTelemetryContext를 호출하지 않는다."
+    mitigation: "후속 packet에서 bootstrap/operator/eval runner가 실행 시작 시 컨텍스트를 세팅하도록 연결한다."

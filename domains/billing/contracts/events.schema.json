@@ -7,7 +7,7 @@
       "type": "object",
       "required": ["amount", "currency"],
       "properties": {
-        "amount":   { "type": "number", "minimum": 0 },
+        "amount": { "type": "number", "minimum": 0 },
         "currency": { "type": "string", "minLength": 3, "maxLength": 3 }
       }
     },
@@ -15,16 +15,14 @@
       "type": "object",
       "required": ["event_id", "event_type", "domain", "occurred_at", "correlation_id", "payload"],
       "properties": {
-        "event_id":       { "type": "string" },
-        "event_type":     { "type": "string" },
-        "domain":         { "type": "string", "const": "billing" },
-        "occurred_at":    { "type": "string", "format": "date-time" },
+        "event_id": { "type": "string" },
+        "event_type": { "type": "string" },
+        "domain": { "type": "string", "const": "billing" },
+        "occurred_at": { "type": "string", "format": "date-time" },
         "correlation_id": { "type": "string" }
       }
-    }
-  },
-  "oneOf": [
-    {
+    },
+    "InvoiceCreated": {
       "allOf": [
         { "$ref": "#/definitions/EventEnvelope" },
         {
@@ -34,16 +32,16 @@
               "type": "object",
               "required": ["invoice_id", "customer_id", "status"],
               "properties": {
-                "invoice_id":  { "type": "string" },
+                "invoice_id": { "type": "string" },
                 "customer_id": { "type": "string" },
-                "status":      { "type": "string", "const": "DRAFT" }
+                "status": { "type": "string", "const": "DRAFT" }
               }
             }
           }
         }
       ]
     },
-    {
+    "InvoiceStatusChanged": {
       "allOf": [
         { "$ref": "#/definitions/EventEnvelope" },
         {
@@ -53,17 +51,17 @@
               "type": "object",
               "required": ["invoice_id", "from_status", "to_status"],
               "properties": {
-                "invoice_id":  { "type": "string" },
+                "invoice_id": { "type": "string" },
                 "from_status": { "type": "string", "enum": ["DRAFT", "PENDING", "PAID", "CANCELLED", "DISPUTED"] },
-                "to_status":   { "type": "string", "enum": ["DRAFT", "PENDING", "PAID", "CANCELLED", "DISPUTED"] },
-                "changed_by":  { "type": "string" }
+                "to_status": { "type": "string", "enum": ["DRAFT", "PENDING", "PAID", "CANCELLED", "DISPUTED"] },
+                "changed_by": { "type": "string" }
               }
             }
           }
         }
       ]
     },
-    {
+    "InvoiceTotalMismatchDetected": {
       "allOf": [
         { "$ref": "#/definitions/EventEnvelope" },
         {
@@ -73,16 +71,16 @@
               "type": "object",
               "required": ["invoice_id", "declared_total", "computed_total"],
               "properties": {
-                "invoice_id":      { "type": "string" },
-                "declared_total":  { "$ref": "#/definitions/Money" },
-                "computed_total":  { "$ref": "#/definitions/Money" }
+                "invoice_id": { "type": "string" },
+                "declared_total": { "$ref": "#/definitions/Money" },
+                "computed_total": { "$ref": "#/definitions/Money" }
               }
             }
           }
         }
       ]
     },
-    {
+    "PaymentMismatchDetected": {
       "allOf": [
         { "$ref": "#/definitions/EventEnvelope" },
         {
@@ -92,17 +90,17 @@
               "type": "object",
               "required": ["payment_id", "invoice_id", "payment_amount", "invoice_total"],
               "properties": {
-                "payment_id":      { "type": "string" },
-                "invoice_id":      { "type": "string" },
-                "payment_amount":  { "$ref": "#/definitions/Money" },
-                "invoice_total":   { "$ref": "#/definitions/Money" }
+                "payment_id": { "type": "string" },
+                "invoice_id": { "type": "string" },
+                "payment_amount": { "$ref": "#/definitions/Money" },
+                "invoice_total": { "$ref": "#/definitions/Money" }
               }
             }
           }
         }
       ]
     },
-    {
+    "BillingExceptionApproved": {
       "allOf": [
         { "$ref": "#/definitions/EventEnvelope" },
         {
@@ -113,16 +111,16 @@
               "required": ["exception_id", "invoice_id", "approved_by", "reason"],
               "properties": {
                 "exception_id": { "type": "string" },
-                "invoice_id":   { "type": "string" },
-                "approved_by":  { "type": "string" },
-                "reason":       { "type": "string" }
+                "invoice_id": { "type": "string" },
+                "approved_by": { "type": "string" },
+                "reason": { "type": "string" }
               }
             }
           }
         }
       ]
     },
-    {
+    "BillingExceptionRejected": {
       "allOf": [
         { "$ref": "#/definitions/EventEnvelope" },
         {
@@ -133,14 +131,22 @@
               "required": ["exception_id", "invoice_id", "rejected_by", "reason"],
               "properties": {
                 "exception_id": { "type": "string" },
-                "invoice_id":   { "type": "string" },
-                "rejected_by":  { "type": "string" },
-                "reason":       { "type": "string" }
+                "invoice_id": { "type": "string" },
+                "rejected_by": { "type": "string" },
+                "reason": { "type": "string" }
               }
             }
           }
         }
       ]
     }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/InvoiceCreated" },
+    { "$ref": "#/definitions/InvoiceStatusChanged" },
+    { "$ref": "#/definitions/InvoiceTotalMismatchDetected" },
+    { "$ref": "#/definitions/PaymentMismatchDetected" },
+    { "$ref": "#/definitions/BillingExceptionApproved" },
+    { "$ref": "#/definitions/BillingExceptionRejected" }
   ]
 }

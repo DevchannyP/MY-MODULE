@@ -1,14 +1,133 @@
 {
-  "generated_at_utc": "2026-03-18T15:19:54.322767+00:00",
+  "schema_version": "3",
+  "generated_at_utc": "2026-04-26T14:53:12.908769+00:00",
   "repository": "my-module",
-  "branch": "master",
-  "head_commit": "UNAVAILABLE",
-  "last_completed_stage": "D(4차)",
+  "branch": "chore/core-git-governance-activation",
+  "head_commit": "fc978da506f48471bb587e28b40bb50198f02b6e",
+  "build_environment": {
+    "ci": "false",
+    "github_sha": "fc978da506f48471bb587e28b40bb50198f02b6e",
+    "github_ref": "local",
+    "github_run_id": "local",
+    "github_workflow": "local"
+  },
+  "git_status": {
+    "available": true,
+    "is_clean": false,
+    "modified_paths": [
+      "artifacts/decision-apply/latest/benchmark-pack.json",
+      "artifacts/decision-apply/latest/context-lock.json",
+      "artifacts/decision-apply/latest/decision-apply-report.json",
+      "artifacts/decision-apply/latest/handoff-bundle.json",
+      "artifacts/decision-apply/latest/promoted-packet.yaml",
+      "artifacts/evals/harness/latest/harness-eval-report.json",
+      "artifacts/evals/harness/latest/mpo-routing-learning.json",
+      "artifacts/index.html",
+      "artifacts/master-planner/index.html",
+      "artifacts/mindmap/index.html",
+      "artifacts/promotion-pipeline/latest/benchmark-pack.json",
+      "artifacts/promotion-pipeline/latest/context-lock.json",
+      "artifacts/promotion-pipeline/latest/handoff-bundle.json",
+      "artifacts/promotion-pipeline/latest/promoted-packet.yaml",
+      "artifacts/release-evidence/release-evidence.json",
+      "scripts/architecture-fitness.js",
+      "scripts/env-init.js",
+      "scripts/generate-ui-home.js",
+      "scripts/validate_ui_shell_contract.py",
+      "src/tests/smoke/architectureFitness.smoke.test.js",
+      "src/tests/smoke/billingVideoEventWiring.smoke.test.js",
+      "src/tests/smoke/contractDrift.smoke.test.js",
+      "src/tests/smoke/deploymentIngressFailure.smoke.test.js",
+      "src/tests/smoke/dynamicFrontendServer.smoke.test.js",
+      "src/tests/smoke/envInit.test.js",
+      "src/tests/smoke/eventBusWiring.smoke.test.js",
+      "src/tests/smoke/harnessEvals.smoke.test.js",
+      "src/tests/smoke/mindmapRebuildWorker.smoke.test.js",
+      "src/tests/smoke/optimisticLockHttp.smoke.test.js",
+      "src/tests/smoke/outboxPollerWiring.smoke.test.js",
+      "src/tests/smoke/staticUiHome.smoke.test.js"
+    ],
+    "untracked_paths": []
+  },
+  "memory_sources": {
+    "current_state": "memory/current-state.yaml",
+    "next_actions": "memory/next-actions.yaml"
+  },
+  "last_completed_stage": "WORK_PACKET_MODE",
+  "last_completed_unit": {
+    "mode": "work_packet",
+    "id": "WP-HO-011",
+    "completed_at": "2026-04-26",
+    "result": "PASS"
+  },
   "quality_gate_result": "PASS",
+  "quality_gate_inputs": [
+    "npm run validate:requirements",
+    "npm run test:contract",
+    "npm test",
+    "npm run lint"
+  ],
+  "stage_run_evidence": {
+    "available": true,
+    "report_path": "memory/project/stage-run-latest.yaml",
+    "history_path": "memory/project/stage-run-history.yaml",
+    "history_count": 5,
+    "requested_stage": "D",
+    "requested_module": "all",
+    "execution_mode": "dry-run-only",
+    "status": "ready",
+    "quality_gate_result": "DRY_RUN_ONLY",
+    "recorded_at": "2026-04-26T23:16:30",
+    "docs_ref": "docs/how-to/run-stage-d.md",
+    "report_saved": true,
+    "request_id": "51d0e1e8-34c5-496a-98ca-d726736e0a65",
+    "correlation_id": "51d0e1e8-34c5-496a-98ca-d726736e0a65",
+    "artifact_paths": {
+      "last_report": "memory/project/stage-run-latest.yaml",
+      "recent_reports": "memory/project/stage-run-history.yaml"
+    },
+    "save_command": "python3 scripts/planning_studio_api.py save-stage-run",
+    "stage_run_contract": {
+      "drift_status": "clean",
+      "latest_history_head_match": true,
+      "history_head_available": true,
+      "release_evidence_surface_complete": true,
+      "release_evidence_generated": false,
+      "release_evidence_trigger_reason": "not-requested",
+      "issues": []
+    },
+    "release_evidence_ready": false,
+    "release_evidence_blocker": "quality gate DRY_RUN_ONLY"
+  },
+  "release_artifacts": {
+    "release_evidence": {
+      "path": "artifacts/release-evidence/release-evidence.json",
+      "exists": true,
+      "digest_strategy": "external-verification-required"
+    },
+    "provenance": {
+      "path": "artifacts/provenance/workflow-os-provenance.json",
+      "exists": true,
+      "sha256": "0c3a6fedc800f6a666f5d5f640e1b6ca007957817131c13f7331d0c9af6ed4ae"
+    },
+    "sbom": {
+      "path": "artifacts/sbom/workflow-os.spdx.json",
+      "exists": true,
+      "sha256": "06d6109a8d60b8be79830bf770668d6de7ce094d8d58a0174ec6071a4789ba58"
+    }
+  },
   "next_action": {
-    "priority": "9",
-    "id": "Q-110",
-    "track": "CORE-SECURITY",
-    "action": "dependency scan 기준선 실동작화"
+    "priority": "P1",
+    "id": "WP-HO-012",
+    "track": "WORK_PACKET",
+    "action": "NONE"
+  },
+  "harness_release": {
+    "prompt_version": "0.2.0",
+    "output_schema_ref": "contracts/harness/output.schema.json",
+    "provider_contract_ref": "contracts/harness/provider-adapter.yaml",
+    "rollout_stage": "internal",
+    "rollback_target": "null-harness-provider",
+    "rollback_strategy": "set HARNESS_PROVIDER= in .env and restart server"
   }
 }

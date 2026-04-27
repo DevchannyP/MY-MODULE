@@ -1,14 +1,16 @@
 # Workflow OS - 현재 저장소 상태
-# 갱신 시점: Stage 종료마다 반드시 갱신할 것
+# STATUS: legacy detail surface
+# root memory/current-state.yaml 이 canonical state 이며, 이 파일은 legacy stage-era 상세 기록이다.
+# 갱신 시점: root current-state 와 충돌하지 않는 범위에서만 상세 히스토리를 보강한다.
 
-as_of: "2026-03-18"
+as_of: "2026-04-12"
 schema_version: "0.1.0"
 
 repository:
   name: "my-module"
   purpose: "Workflow OS 코어 플랫폼 - 격리 모듈 생성·조합·검증 엔진"
-  phase: "core-platform-upgrade-for-video-era"
-  scm_governance: "IN_PROGRESS (git governance docs + release evidence baseline 추가 중)"
+  phase: "continuous-self-improvement"
+  scm_governance: "PASS (main baseline commit + working branch workflow activated)"
 
 stage_states:
   A: "PASS"
@@ -28,9 +30,12 @@ active_modules:
     stage_b_memory: "memory/stageB/task-management-composition.yaml"
     stage_c_memory: "memory/stageC/task-management-plugin.yaml"
     contract_dir: "domains/productivity/task-tracking/contract/"
-    plugin_status: "inactive"
+    plugin_status: "active"
     feature_flag: "enable_task_management"
-    feature_flag_value: false
+    feature_flag_value: true
+    rollout_phase: "full"
+    rollout_percentage: 100
+    activated_at: "2026-03-25"
     interface_layer: "PASS (TaskController.js — 5경로, authz regression suite PASS, smoke PASS)"
 
   - module_id: "billing"
@@ -46,9 +51,12 @@ active_modules:
       - "memory/stageA/billing.exception.yaml"
     stage_b_memory: "memory/stageB/billing.yaml"
     contract_dir: "domains/billing/contracts/"
-    plugin_status: "inactive"
+    plugin_status: "active"
     feature_flag: "billing.enabled"
-    feature_flag_value: false
+    feature_flag_value: true
+    rollout_phase: "full"
+    rollout_percentage: 100
+    activated_at: "2026-03-25"
     unit_tests: "PASS (89/89)"
     stage_a: "PASS"
     stage_b: "PASS"
@@ -60,7 +68,7 @@ active_modules:
       unit: "PASS (133/133 billing — 89 domain/app + 44 interface)"
       lint: "PASS (0 errors)"
       secret_scan: "PASS"
-      dependency_scan: "PASS (외부 의존 없음)"
+      dependency_scan: "PASS (lockfile baseline validator: runtime deps 0, integrity/license complete)"
       contract_test: "PASS (task-management+billing drift validator)"
       e2e_smoke: "PASS (BillingController smoke suite)"
       authn_authz: "PASS (BillingController authz regression suite)"
@@ -86,19 +94,51 @@ active_modules:
         status: "FIXED"
         fix: "null로 명시 반환"
 
-quality_gate_last_run: "2026-03-18"
+  - module_id: "video"
+    domain: "video"
+    bounded_context: "video-content"
+    plugin_id: "video-plugin"
+    stage_a_memory: "memory/stageA/video.yaml"
+    stage_b_memory: "memory/stageB/video.yaml"
+    contract_dir: "domains/video/contract/"
+    plugin_status: "active"
+    feature_flag: "video.enabled"
+    feature_flag_value: true
+    rollout_phase: "full"
+    rollout_percentage: 100
+    activated_at: "2026-03-25"
+    stage_a: "PASS"
+    stage_b: "PASS"
+    stage_c: "PASS"
+    stage_d: "PASS"
+    stage_e: "PASS"
+    interface_layer: "PASS (VideoController.js — 7경로, authz regression suite PASS, smoke PASS)"
+    event_registry: "PASS (8개 이벤트 contracts/events/registry.yaml 등록 완료 2026-03-25)"
+
+quality_gate_last_run: "2026-04-12"
 quality_gate_result: "PASS"
+harness_version: "v0.2.0"
+harness_features:
+  - "requirements/harness-engineering.yaml FR-001~042 + NFR extended"
+  - "docs/harness/CONTINUOUS_PROMPT.md — session 재진입 프로토콜"
+  - "artifacts/index.html Kanban 5-lane + Spiral model 시각화"
+  - "scripts: branch_bootstrap, operator_cockpit, session_bootstrap, verified_auto_commit_guard, resolve_validation_profile"
+  - "smoke tests 14종 + property test 추가 (scheduler 포함)"
+  - "docs/db/migration-strategy.md — FR-041 SQLite→PG 3단계 경로"
+  - "ESLint v10 no-useless-escape warn (generate-mindmap.js 회귀 방지)"
 quality_gate_detail:
-  unit_tests: "PASS (247/247)"        # task-management 91+23 + billing 89+44 = 247
+  unit_tests: "PASS (570/570)"        # 550 + 14 harness smoke + 6 property
   integration_tests: "PASS (유스케이스 수준)"
-  adversarial_tests: "PASS (43/43, Stage E)"
-  contract_tests: "PASS (test:contract — task-management+billing drift validator)"
+  adversarial_tests: "PASS (Stage E 3도메인)"
+  contract_tests: "PASS (test:contract — task-management+billing+video drift validator)"
   e2e_smoke: "PASS (controller-level smoke suites 2/2, scenarios 6)"
   lint_syntax: "PASS (repo-wide node --check: domains + src + scripts)"
   type_check: "PASS (JSDoc + @ts-check boundary validator)"
   static_analysis: "PASS (ESLint 10.0.3, repo-wide domains + src + scripts, 0 errors)"
   secret_scan: "PASS"
-  dependency_scan: "PASS (runtime deps 0, dev deps 2 locked)"
+  dependency_scan: "PASS (lockfile baseline validator: runtime deps 0, direct dev deps 2, integrity/license complete)"
+  advisory_policy: "PASS (offline/online split + blocking policy baseline)"
+  branch_protection_policy: "PASS (main protection + required checks baseline)"
   authn_authz: "PASS (interface controller regression suites 2/2)"
   input_validation: "PASS (INV001~INV004 경계 강제)"
   sbom: "PASS (SPDX baseline artifact generated)"
@@ -158,5 +198,63 @@ notes: |
   2026-03-18: authn/authz 회귀 게이트 실동작화 - test:authn-authz 추가, interface controller regression 67/67 PASS.
   2026-03-18: e2e smoke 기준선 도입 - controller-level smoke 6/6 PASS, Stage D 전체 PASS로 전환.
   2026-03-19: Git 거버넌스 기준선 도입 - ADR 0007, branch/commit/PR 규칙, learning log 템플릿, release evidence 생성기 추가.
+  2026-03-19: 실제 git 흐름 적용 - 기본 브랜치를 main으로 전환하고 root baseline commit 후 작업 브랜치로 이동.
+  2026-03-19: dependency scan 기준선 실동작화 - validate_dependency_baseline.py 도입, lockfile/runtime/license/integrity 기준 PASS.
+  2026-03-19: advisory feed 전략 기준선 도입 - ADR 0008, advisory policy file, policy validator 추가.
+  2026-03-19: branch protection 기준선 도입 - ADR 0009, branch protection policy file, validator, PR required checks 반영.
+  2026-03-20: CLAUDE.md v3.0 통합 재작성 및 백업 완료. legacy memory/project 상태를 현재 HEAD와 재정렬.
+  2026-03-20: Workflow OS v3.0 최종 통합 검증 재실행 - npm test, npm run lint, validate-contracts, architecture-fitness PASS.
   Phase 2 잔여 조건: 실제 서버 기동 smoke, dependency scan 실검증, CI/CD release evidence 연동.
   기능 플래그 활성화는 운영 환경 준비 후 별도 판단한다.
+  2026-03-21: video Stage A~E 완료 + 전 도메인 자가개선 4라운드 (478 tests PASS)
+  2026-03-21: 자가개선 5라운드 - 보안/에러코드/일관성 수정 (500 tests PASS)
+  2026-04-12: AI 하네스 v0.2 완성 — Kanban UI, FR/NFR 42종, 연속 실행 프롬프트, DB 마이그레이션 전략 (570 tests PASS)
+  2026-04-12: 하네스 운영 스크립트 14종 + smoke tests 14종 추가 — 모든 WP 35/35 완료
+  2026-04-12: 메모리 상태 재정렬 — next-actions/current-state as_of 2026-04-12로 갱신
+    - GAP-V001: ListVideosUseCase PRIVATE 영상 비소유자 노출 차단
+    - GAP-V002: ChangeAccessPolicyUseCase 소유권 검사 추가
+    - GAP-V003: GetTranscodeJobUseCase PRIVATE 영상 접근 차단
+    - GetVideoUseCase admin bypass 일관성 추가
+    - StartTranscodeJobUseCase ARCHIVED 영상 트랜스코딩 차단
+    - task-tracking 전체 use case + entity error code 추가
+    - billing Invoice/InvoiceStatus/BillingDomainService/Money error code 추가
+    - SQLiteTaskRepository due_before 필터 누락 수정
+    - video capability.yaml 계약 INV-V002/V003 적용범위 정확화
+    - 회귀 테스트 22개 추가
+
+upgrade_v3:
+  status: completed
+  date: "2026-03-20"
+  completed_phases: [0, 1, 2, 3, 4, 5, 6]
+  features_added:
+    - "3-Tier 메모리 계층 (L0-hot/L1-warm/L2-cold)"
+    - "Git Hooks + Conventional Commits (Husky + commitlint)"
+    - "Turborepo 병렬 태스크 러너"
+    - "Claude Skills 7종 + Subagents 6종"
+    - "학습보고서 자동 생성기 (기승전결 4막)"
+    - "도메인 마이그레이션 CLI (export/import/detach)"
+    - "Semantic Release + CHANGELOG 자동화"
+    - "Chain-of-Verification 자기검증"
+    - "Dual-Observer 독립 감사"
+    - "Property-Based Testing (fast-check)"
+    - "Cross-Model Review 프로토콜"
+    - "아키텍처 피트니스 (C001/C002/C003)"
+    - "SHA-256 해시 체인 감사 추적"
+    - "3종 아키타입 (crud-entity/financial-ledger/approval-workflow)"
+    - "계약 드리프트 검증 + 호환성 매트릭스"
+    - "의존성 그래프 Mermaid 시각화"
+    - "계약 기반 코드 스켈레톤 생성기"
+    - "DAG 기반 병렬 스케줄러"
+    - "ADR 자동생성 + 지식그래프"
+    - "건강도 대시보드 (4지표 종합)"
+    - "Error Budget SLO 판단"
+    - "릴리즈 증거 패키지"
+    - "도메인 카탈로그 정적 사이트"
+  final_verification:
+    - "npm test PASS"
+    - "npm run lint PASS"
+    - "node scripts/validate-contracts.js PASS"
+    - "node scripts/architecture-fitness.js PASS"
+  backward_compatible: true
+  files_deleted: 0
+  existing_tests_broken: 0

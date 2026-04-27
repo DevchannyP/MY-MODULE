@@ -1,0 +1,114 @@
+# Video 도메인 — Stage A 청사진
+# 작성일: 2026-03-19  WP: WP-2026-03-19-10
+# Benchmark: DDD Blue Book (Evans), Event Storming (Brandolini), Team Topologies
+
+domain_id: "video"
+bounded_context: "video-content"
+stage: "A"
+owner: "video-team"
+
+# ── 1. Bounded Context 정의 ────────────────────────────────────────────────────
+description: |
+  사용자가 동영상을 업로드·처리·재생하는 흐름을 관리한다.
+  동영상은 원본 파일로부터 트랜스코딩되어 스트리밍 가능한 포맷(HLS/DASH)으로 변환되고,
+  접근 권한이 있는 사용자만 재생할 수 있다.
+
+ubiquitous_language:
+  Video:          "업로드된 원본 영상 파일과 그 메타데이터의 집합. 도메인 애그리게이트 루트."
+  Rendition:      "Video의 특정 해상도/포맷 변환본 (720p mp4, 1080p HLS 등)."
+  TranscodeJob:   "Video → Rendition 변환 작업. 상태를 추적한다."
+  Playlist:       "HLS/DASH 재생 목록 파일 (m3u8/mpd). Rendition이 생성되면 만들어짐."
+  ViewSession:    "단일 재생 세션. 재생 위치·시청 시간을 추적한다."
+  AccessPolicy:   "Video에 대한 접근 허용 조건 (공개/비공개/조직 내부)."
+
+# ── 2. 집합체 (Aggregates) ──────────────────────────────────────────────────────
+aggregates:
+  - name: "Video"
+    invariants:
+      - id: "INV-V001"
+        rule: "Video는 title, uploader_id, original_file_ref를 반드시 가진다."
+      - id: "INV-V002"
+        rule: "Video 상태는 UPLOADED→PROCESSING→READY→ARCHIVED 단방향 전이만 허용한다. FAILED는 UPLOADED에서만 진입 가능."
+      - id: "INV-V003"
+        rule: "AccessPolicy가 PRIVATE이면 uploader_id만 재생 가능하다."
+    events_emitted:
+      - "VideoUploaded"
+      - "VideoProcessingStarted"
+      - "VideoReady"
+      - "VideoAccessPolicyChanged"
+      - "VideoArchived"
+
+  - name: "TranscodeJob"
+    invariants:
+      - id: "INV-V004"
+        rule: "TranscodeJob은 단일 Video를 참조하며, 동시에 하나의 RUNNING 상태 Job만 허용된다."
+      - id: "INV-V005"
+        rule: "COMPLETED 상태의 Job은 output_rendition_ref가 반드시 존재해야 한다."
+    events_emitted:
+      - "TranscodeJobStarted"
+      - "TranscodeJobCompleted"
+      - "TranscodeJobFailed"
+
+# ── 3. 공개 계약 (Public Contracts) ────────────────────────────────────────────
+contracts:
+  http:        "domains/video/contract/openapi.yaml"
+  events:      "domains/video/contract/events.schema.json"
+  ui:          "domains/video/contract/ui-contract.yaml"
+  capability:  "domains/video/contract/capability.yaml"
+
+# ── 4. 권한 집합 (ADR-0002 패턴) ───────────────────────────────────────────────
+permissions:
+  - "video:read"     # 영상 목록 조회, 재생 (public 영상)
+  - "video:write"    # 업로드, 삭제, 접근 정책 변경
+  - "video:admin"    # 전체 영상 관리, 강제 아카이브
+
+# ── 5. NFR ──────────────────────────────────────────────────────────────────────
+nfr:
+  latency_p99_ms:      500    # 스트리밍 시작 시간 (P99)
+  availability_percent: 99.9
+  rpo_minutes:          60
+  rto_minutes:          30
+  max_video_size_mb:    2048   # 2GB 업로드 제한
+  transcode_sla_min:    30     # 트랜스코딩 완료 SLA
+
+# ── 6. 리스크 프로파일 ──────────────────────────────────────────────────────────
+risks:
+  - id: "RISK-V001"
+    severity: "high"
+    risk: "대용량 파일 업로드가 서버 메모리를 소진할 수 있다."
+    mitigation: "멀티파트 스트리밍 업로드 + 파일 크기 제한 미들웨어."
+
+  - id: "RISK-V002"
+    severity: "high"
+    risk: "트랜스코딩이 동기 처리면 타임아웃 발생."
+    mitigation: "비동기 TranscodeJob 큐. UseCase는 Job ID만 반환하고 완료는 이벤트로 알림."
+
+  - id: "RISK-V003"
+    severity: "medium"
+    risk: "재생 URL을 추측하면 미인가 접근 가능."
+    mitigation: "서명된 URL(Signed URL) 패턴 + 만료 시간 적용."
+
+  - id: "RISK-V004"
+    severity: "medium"
+    risk: "원본 파일 저장소 장애 시 VideoReady 상태로 전이 불가."
+    mitigation: "TranscodeJob 실패 시 FAILED 상태 + 재시도 큐 정책 (ADR-0006 패턴 참고)."
+
+  - id: "RISK-V005"
+    severity: "low"
+    risk: "metadata 변경이 transcode 중 충돌 가능."
+    mitigation: "낙관적 잠금 (ADR-0003 패턴 참고) 또는 PROCESSING 상태에서 metadata 변경 금지."
+
+# ── 7. 의존성 ────────────────────────────────────────────────────────────────────
+depends_on: []         # 독립 도메인 (task-tracking, billing 의존 없음)
+provides:
+  - "domains/video/contract/capability.yaml"
+
+# ── 8. Stage A 완료 조건 ──────────────────────────────────────────────────────
+stage_a_done_when:
+  - "모든 불변조건(INV-V001~V005)이 문서화됨"
+  - "공개 계약 경로 4개가 정의됨"
+  - "리스크 5개가 mitigation과 함께 정의됨"
+  - "권한 집합이 3개 레벨로 정의됨"
+  - "ubiquitous language 6개 이상 정의됨"
+
+stage_a_status: "PASS"

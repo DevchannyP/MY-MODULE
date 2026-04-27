@@ -9,6 +9,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Python
+__pycache__/
+*.pyc
+
 # 빌드 산출물
 dist/
 build/
@@ -30,3 +34,22 @@ Thumbs.db
 # SBOM (빌드 시 생성, 저장소에 포함하지 않음)
 sbom.spdx.json
 sbom.cyclonedx.json
+
+# 런타임 생성 stage run 이력 (API 실행 시 자동 생성, 저장소에 포함하지 않음)
+memory/project/stage-run-latest.yaml
+memory/project/stage-run-history.yaml
+
+# 임시 생성물 (artifacts/는 의도적으로 추적 — 설계 산출물)
+# artifacts/master-planner/index.html → 의도적으로 커밋 (design deliverable)
+# artifacts/catalog/  → 의도적으로 커밋 (domain catalog)
+# artifacts/*/latest/ → 의도적으로 커밋 (현재 상태 대표 스냅샷)
+# artifacts/*/history/ → 런타임 실행 로그, 커밋하지 않음 (무한 증가 방지)
+artifacts/decision-apply/history/
+artifacts/promotion-pipeline/history/
+tmp/
+*.tmp
+
+# 도구 캐시 / 임시
+.turbo/
+.codex
+.env.bak

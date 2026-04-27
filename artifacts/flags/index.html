@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>피처 플래그 — Workflow OS</title>
+<link rel="stylesheet" href="/shared/shell.css">
+
+<script src="/shared/shell.js"></script>
+</head>
+<body>
+<header class="wf-shell-header" data-component="nav-header">
+  <div class="wf-shell-header__brand">
+    <a href="/" class="wf-shell-header__logo">Workflow OS</a>
+  </div>
+  <nav class="wf-shell-header__nav" role="navigation" aria-label="주 메뉴">
+      <a href="/" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">대시보드</a>
+      <a href="/catalog" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">카탈로그</a>
+      <a href="/flags" class="wf-nav-link wf-nav-link--active wf-nav-link--disabled" aria-disabled="true" tabindex="-1">피처 플래그</a>
+      <a href="/audit" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">감사 로그</a>
+      <a href="/quality" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">품질 게이트</a>
+      <a href="/lifecycle" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">라이프사이클</a>
+      <a href="/rollback" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">롤백 콘솔</a>
+      <a href="/tasks" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">작업 관리</a>
+      <a href="/billing" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산관리 홈</a>
+      <a href="/billing/invoices" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">인보이스 목록</a>
+      <a href="/billing/payments" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">결제상태 추적</a>
+      <a href="/billing/exceptions" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">정산 예외처리</a>
+      <a href="/videos" class="wf-nav-link wf-nav-link--disabled" aria-disabled="true" tabindex="-1">비디오 관리</a>
+  </nav>
+  <div class="wf-shell-header__status">
+    <span class="wf-sse-indicator wf-sse-indicator--offline"
+          data-sse-indicator
+          title="System OS 실시간 연결 상태"
+          aria-label="실시간 연결 끊김">●</span>
+  </div>
+</header>
+<span data-sse-connect="/api/v1/system/events" hidden aria-hidden="true"></span>
+<main class="wf-page" id="main-content">
+
+  <div class="wf-status-bar">
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">전체 플래그</span>
+      <span class="wf-status-item__value">20</span>
+    </div>
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">활성</span>
+      <span class="wf-status-item__value" style="color:var(--wf-color-pass);">0</span>
+    </div>
+    <div class="wf-status-item">
+      <span class="wf-status-item__label">비활성</span>
+      <span class="wf-status-item__value" style="color:var(--wf-color-neutral);">20</span>
+    </div>
+    <div style="flex:1;"></div>
+    <div id="flag-toggle-notice" class="wf-badge wf-badge--warn" style="display:none;">
+      system_api.flag_toggle_ui.enabled=false — 읽기 전용
+    </div>
+  </div>
+
+  
+  <section class="wf-section">
+    <div class="wf-section__title">global_flags</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;">
+    <div class="wf-card" data-flag-id="enable_experimental_features" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">enable_experimental_features</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: global_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="enable_experimental_features 토글"
+               onchange="handleFlagToggle(event,'enable_experimental_features')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="enable_debug_mode" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">enable_debug_mode</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: global_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="enable_debug_mode 토글"
+               onchange="handleFlagToggle(event,'enable_debug_mode')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="harness_routing_frontier_research" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">harness_routing_frontier_research</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: global_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="harness_routing_frontier_research 토글"
+               onchange="handleFlagToggle(event,'harness_routing_frontier_research')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="harness_routing_mini_build" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">harness_routing_mini_build</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: global_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="harness_routing_mini_build 토글"
+               onchange="handleFlagToggle(event,'harness_routing_mini_build')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="harness_prompt_caching_enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">harness_prompt_caching_enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: global_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="harness_prompt_caching_enabled 토글"
+               onchange="handleFlagToggle(event,'harness_prompt_caching_enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="harness_batch_eval_enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">harness_batch_eval_enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: global_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="harness_batch_eval_enabled 토글"
+               onchange="handleFlagToggle(event,'harness_batch_eval_enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div></div>
+  </section>
+  <section class="wf-section">
+    <div class="wf-section__title">plugin_flags</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;">
+    <div class="wf-card" data-flag-id="system_api.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">system_api.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="system_api.enabled 토글"
+               onchange="handleFlagToggle(event,'system_api.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="system_api.sse_stream.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">system_api.sse_stream.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="system_api.sse_stream.enabled 토글"
+               onchange="handleFlagToggle(event,'system_api.sse_stream.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="system_api.flag_toggle_ui.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">system_api.flag_toggle_ui.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="system_api.flag_toggle_ui.enabled 토글"
+               onchange="handleFlagToggle(event,'system_api.flag_toggle_ui.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="system_api.rollback_ui.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">system_api.rollback_ui.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="system_api.rollback_ui.enabled 토글"
+               onchange="handleFlagToggle(event,'system_api.rollback_ui.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="enable_task_management" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">enable_task_management</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="enable_task_management 토글"
+               onchange="handleFlagToggle(event,'enable_task_management')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="enable_bulk_assign" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">enable_bulk_assign</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="enable_bulk_assign 토글"
+               onchange="handleFlagToggle(event,'enable_bulk_assign')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="billing.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">billing.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="billing.enabled 토글"
+               onchange="handleFlagToggle(event,'billing.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="billing.invoice.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">billing.invoice.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="billing.invoice.enabled 토글"
+               onchange="handleFlagToggle(event,'billing.invoice.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="billing.payment.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">billing.payment.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="billing.payment.enabled 토글"
+               onchange="handleFlagToggle(event,'billing.payment.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="billing.exception.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">billing.exception.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="billing.exception.enabled 토글"
+               onchange="handleFlagToggle(event,'billing.exception.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="video.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">video.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="video.enabled 토글"
+               onchange="handleFlagToggle(event,'video.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="video.upload.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">video.upload.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="video.upload.enabled 토글"
+               onchange="handleFlagToggle(event,'video.upload.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="video.transcode.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">video.transcode.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="video.transcode.enabled 토글"
+               onchange="handleFlagToggle(event,'video.transcode.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div>
+    <div class="wf-card" data-flag-id="video.admin.enabled" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:1rem;padding:.75rem 1rem;">
+      <div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+          <code style="font-size:.85rem;font-family:var(--wf-font-mono);">video.admin.enabled</code>
+          <span class="wf-badge" style="background:#22c55e1a;color:#22c55e;">released</span>
+        </div>
+        <div class="wf-card__meta">도메인: plugin_flags</div>
+      </div>
+      <label class="wf-toggle" title="비활성"
+             data-disable-without-permission="system.admin">
+        <input type="checkbox"  disabled
+               aria-label="video.admin.enabled 토글"
+               onchange="handleFlagToggle(event,'video.admin.enabled')">
+        <span style="font-size:.8rem;color:var(--wf-color-neutral);">
+          OFF
+        </span>
+      </label>
+    </div></div>
+  </section>
+
+  <!-- 확인 모달 (FlagToggle flow step 1~4) -->
+  <div id="flag-modal" class="wf-modal-overlay" hidden>
+    <div class="wf-modal">
+      <div class="wf-modal__title">피처 플래그 변경</div>
+      <div class="wf-modal__body" id="flag-modal-body"></div>
+      <div class="wf-modal__actions">
+        <button class="wf-btn wf-btn--ghost" onclick="closeFlagModal()">취소</button>
+        <button class="wf-btn wf-btn--primary" id="flag-modal-confirm">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // INV-SYS-004: flag_toggle_ui.enabled=false 시 모든 토글 비활성화
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/v1/system/flags')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if (!data) return;
+        var toggleEnabled = data.flags.some(function(f){ return f.id === 'system_api.flag_toggle_ui.enabled' && f.enabled; });
+        if (!toggleEnabled) {
+          document.getElementById('flag-toggle-notice').style.display = '';
+        }
+        // Update each flag state from live data
+        data.flags.forEach(function(f){
+          var card = document.querySelector('[data-flag-id="' + f.id + '"]');
+          if (!card) return;
+          var input = card.querySelector('input[type=checkbox]');
+          var label = card.querySelector('.wf-toggle span');
+          if (input) input.checked = f.enabled;
+          if (label) {
+            label.textContent = f.enabled ? 'ON' : 'OFF';
+            label.style.color = f.enabled ? 'var(--wf-color-pass)' : 'var(--wf-color-neutral)';
+          }
+        });
+      })
+      .catch(function(){});
+  });
+
+  function handleFlagToggle(evt, flagId) {
+    evt.preventDefault();
+    var newVal = evt.target.checked;
+    document.getElementById('flag-modal-body').textContent =
+      flagId + ' 을(를) ' + (newVal ? '활성화' : '비활성화') + '하시겠습니까?';
+    var modal = document.getElementById('flag-modal');
+    modal.hidden = false;
+    document.getElementById('flag-modal-confirm').onclick = function() {
+      closeFlagModal();
+      fetch('/api/v1/system/flags/' + encodeURIComponent(flagId), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', 'x-system-role': 'system.admin' },
+        body: JSON.stringify({ enabled: newVal, reason: 'UI toggle' }),
+      })
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(){ WfShell.toast(flagId + ' 변경 완료', 'pass'); })
+      .catch(function(e){ WfShell.toast('변경 실패: ' + e, 'fail'); });
+    };
+  }
+
+  function closeFlagModal() {
+    document.getElementById('flag-modal').hidden = true;
+  }
+
+  // SSE: system.flag.toggled — already handled by shell.js WfShell.sse
+  </script>
+</main>
+</body>
+</html>

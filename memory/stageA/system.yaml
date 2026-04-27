@@ -1,0 +1,59 @@
+# Stage A Memory — system 도메인
+# WP: WP-UI-001 / WP-UI-003
+# Created: 2026-04-15
+
+module_key: system
+stage: A
+status: composed
+
+bounded_context: system-api
+description: >
+  Workflow OS System OS가 Master UI에 노출하는 REST + SSE API 레이어.
+  INV-SYS-001~005 authz 불변조건을 유지한다.
+
+ubiquitous_language:
+  - term: system.admin
+    definition: "System OS의 변이 작업(플래그 토글, 롤백 트리거)을 실행할 수 있는 최상위 권한"
+  - term: domain.viewer
+    definition: "도메인 상태를 조회할 수 있는 읽기 전용 권한"
+  - term: SSE
+    definition: "Server-Sent Events — 서버에서 클라이언트로 단방향 실시간 이벤트 스트림"
+  - term: feature_gate
+    definition: "feature flag 값에 따라 API 경로를 404/503으로 차단하는 미들웨어"
+
+invariants:
+  - id: INV-SYS-001
+    description: "플래그 토글은 system.admin 권한 없이 실행 불가 → 403"
+  - id: INV-SYS-002
+    description: "롤백 트리거는 system.admin 권한 없이 실행 불가 → 403"
+  - id: INV-SYS-003
+    description: "system_api.enabled=false 시 전체 /api/v1/system/* → 404"
+  - id: INV-SYS-004
+    description: "system_api.flag_toggle_ui.enabled=false 시 PATCH /flags/:id → 503"
+  - id: INV-SYS-005
+    description: "system_api.rollback_ui.enabled=false 시 POST /rollback/:domain → 503"
+
+risk_profile:
+  level: HIGH
+  reasons:
+    - "시스템 전체 플래그 조작 가능 — 잘못된 toggle이 전체 도메인 비활성화로 이어질 수 있음"
+    - "롤백 트리거는 비가역적 운영 액션"
+  mitigations:
+    - "system.admin 이중 방어 (서버 authz + UI disabled)"
+    - "롤백 확인 텍스트 입력 강제 ('ROLLBACK {domain}')"
+    - "모든 변이 요청 감사 로그 기록"
+
+permissions:
+  roles:
+    - name: system.admin
+      scope: [toggleFlag, triggerRollback]
+    - name: system.viewer
+      scope: [getHealth, getFlags, getCatalog, getAuditLog, getQualityGate, getDomainLifecycle, streamEvents]
+    - name: domain.viewer
+      scope: [getCatalog, getDomainLifecycle]
+
+contracts:
+  capability: contracts/system-api/capability.yaml
+  openapi: contracts/system-api/openapi.yaml
+  events: contracts/system-api/events.schema.json
+  ui_contract: contracts/ui-shell/ui-contract.yaml

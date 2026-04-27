@@ -1,0 +1,103 @@
+# Video 도메인 — Stage B 조합 충돌 검사 결과
+# 작성일: 2026-03-20
+# Stage: B (composition)
+
+domain_id: "video"
+bounded_context: "video-content"
+stage: "B"
+
+# ── 1. 도메인 간 의존성 분석 ─────────────────────────────────────────────────
+dependency_analysis:
+  depends_on: []
+  depended_by: []
+  notes: |
+    video 도메인은 task-management, billing과 직접 의존 관계가 없다.
+    독립 bounded context로서 자체 Aggregate(Video, TranscodeJob)만 운영한다.
+    향후 billing 연동(유료 영상 과금)이 발생할 경우 이벤트 기반 느슨한 결합을 사용한다.
+
+# ── 2. 이름 충돌 검사 ────────────────────────────────────────────────────────
+naming_conflicts:
+  route_conflicts: []       # /videos/* 경로는 기존 도메인과 충돌 없음
+  event_conflicts: []       # Video* / TranscodeJob* 접두사는 기존 이벤트와 겹치지 않음
+  permission_conflicts: []  # video:read/write/admin은 기존 billing.*/task:*와 충돌 없음
+  schema_conflicts: []      # Video, TranscodeJob, Rendition 스키마명은 고유함
+
+# ── 3. 계약 교차 검증 ───────────────────────────────────────────────────────
+cross_contract_verification:
+  capability_vs_openapi:
+    status: "PASS"
+    notes: "capability.yaml의 7개 능력이 openapi.yaml의 7개 operationId와 1:1 매핑 확인"
+    mapping:
+      - capability: "can.upload.video"
+        operationId: "uploadVideo"
+      - capability: "can.read.video"
+        operationId: "listVideos, getVideo"
+      - capability: "can.start.transcode"
+        operationId: "startTranscodeJob"
+      - capability: "can.read.transcode.status"
+        operationId: "getTranscodeJob"
+      - capability: "can.change.access.policy"
+        operationId: "changeAccessPolicy"
+      - capability: "can.archive.video"
+        operationId: "archiveVideo"
+
+  capability_vs_ui:
+    status: "PASS"
+    notes: "capability.yaml의 screens 참조가 ui-contract.yaml의 module_key와 일치 확인"
+
+  capability_vs_events:
+    status: "PASS"
+    notes: "capability.yaml의 events_emitted 8개가 events.schema.json의 definitions 8개와 일치 확인"
+
+  invariant_coverage:
+    status: "PASS"
+    notes: |
+      INV-V001: capability can.upload.video에서 참조, openapi UploadVideoRequest required 필드로 강제
+      INV-V002: capability can.archive.video에서 참조, openapi archiveVideo 409 응답으로 방어
+      INV-V003: capability can.change.access.policy에서 참조, openapi changeAccessPolicy에서 설명
+      INV-V004: capability can.start.transcode에서 참조, openapi startTranscodeJob 409 응답으로 방어
+      INV-V005: events.schema.json TranscodeJobCompleted에서 output_rendition_ref required로 강제
+
+# ── 4. 기존 도메인과의 조합 안전성 ───────────────────────────────────────────
+composition_safety:
+  billing:
+    status: "SAFE"
+    notes: "billing 도메인과 라우트(/billing/*), 이벤트(Invoice*), 권한(billing.*) 모두 네임스페이스 분리됨"
+  task_management:
+    status: "SAFE"
+    notes: "task-management 도메인과 라우트(/tasks/*), 이벤트(Task*), 권한(task:*) 모두 네임스페이스 분리됨"
+
+# ── 5. 라우트 기준선 ─────────────────────────────────────────────────────────
+routes:
+  base: /videos
+  pages:
+    - path: /videos
+      module_key: video.list
+      feature_flag: video.enabled
+    - path: /videos/upload
+      module_key: video.upload
+      feature_flag: video.enabled
+    - path: /videos/:video_id
+      module_key: video.detail
+      feature_flag: video.enabled
+    - path: /videos/:video_id/transcode
+      module_key: video.transcode
+      feature_flag: video.transcode.enabled
+
+navigation_flow:
+  entry: /videos
+  primary_actions:
+    - label: "영상 업로드"
+      route: /videos/upload
+    - label: "영상 목록"
+      route: /videos
+
+# ── 6. 결론 ──────────────────────────────────────────────────────────────────
+result: "PASS"
+summary: |
+
+  video 도메인은 독립 bounded context로서 기존 도메인(billing, task-management)과
+  라우트, 이벤트, 권한, 스키마 이름 충돌이 없다.
+  4종 계약(capability, openapi, ui-contract, events) 간 교차 검증 통과.
+  INV-V001~V005 전체가 계약에 반영됨을 확인.
+  조합 결과: PASS.

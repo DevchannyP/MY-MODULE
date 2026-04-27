@@ -1,0 +1,134 @@
+# Master Shell - AI Runtime Recipes
+# 마스터 OS가 AI를 어떤 조합으로 다뤄야 하는지 프로젝트 시작 전에 읽히는 운영 레시피.
+version: "0.1.0"
+last_updated: "2026-03-24"
+
+recipes:
+  - id: "planner-first-hybrid"
+    name: "Planner-First Hybrid"
+    objective: "기획서와 memory를 먼저 읽고, 필요한 순간에만 tools를 호출하는 안정형 AI 레시피"
+    best_for:
+      - "새 프로젝트 시작"
+      - "요구사항 분석"
+      - "학습용 GUI 기반 탐색"
+    architecture_profile: "master-os-shell"
+    adapters:
+      - "planner-state-memory"
+      - "master-ui-static-planner"
+      - "openai-responses-agent"
+      - "remote-mcp-connector"
+    tool_stack:
+      - "file-search"
+      - "function-calling"
+      - "remote-mcp"
+      - "web-search"
+    operating_sequence:
+      - "requirements / memory / planner artifact를 먼저 읽는다"
+      - "부족한 지식만 MCP나 web search로 보강한다"
+      - "결과는 Work Packet과 planner guide로 다시 환원한다"
+    guardrails:
+      - "내부 truth surface를 읽기 전에 외부 검색으로 바로 뛰지 않는다"
+      - "planner 결과는 launch brief나 Work Packet으로 다시 남긴다"
+      - "학습 구조와 실행 구조를 분리하지 않는다"
+    evidence_outputs:
+      - "launch brief"
+      - "planner artifact"
+      - "work packet 업데이트"
+    blueprint_refs:
+      - "master-os-ai-studio"
+    learning_track_refs:
+      - "master-os-foundation"
+      - "project-bootstrap"
+
+  - id: "contract-first-module-builder"
+    name: "Contract-First Module Builder"
+    objective: "새 모듈을 추가할 때 계약과 adapter profile을 먼저 고정하는 확장 레시피"
+    best_for:
+      - "새 bounded context 추가"
+      - "모듈 확장"
+    architecture_profile: "workflow-domain-module"
+    adapters:
+      - "master-ui-plugin-shell"
+      - "http-problem-details"
+      - "feature-flag-provider"
+      - "observability-otel"
+      - "repository-inmemory"
+    tool_stack:
+      - "file-search"
+      - "function-calling"
+    operating_sequence:
+      - "Stage A 설계 메모를 작성한다"
+      - "OpenAPI, ui-contract, capability를 먼저 만든다"
+      - "plugin-registry와 learning map에 연결한다"
+      - "feature flag와 smoke를 추가한다"
+    guardrails:
+      - "모듈 코어는 외부 transport/storage 프레임워크를 직접 모르면 안 된다"
+      - "계약 없이 구현부터 시작하지 않는다"
+      - "기존 도메인과 직접 import로 결합하지 않는다"
+    evidence_outputs:
+      - "stage A memory"
+      - "contract bundle"
+      - "plugin registration change set"
+    blueprint_refs:
+      - "domain-module-extension"
+    learning_track_refs:
+      - "module-extension-lab"
+
+  - id: "stateful-ops-guarded"
+    name: "Stateful Ops Guarded"
+    objective: "상태 저장형 서비스에서도 transport 안전장치와 운영 관측을 우선시하는 운영 레시피"
+    best_for:
+      - "실서비스 운영"
+      - "배포 안정성"
+      - "영속 저장소 사용"
+    architecture_profile: "stateful-domain-module"
+    adapters:
+      - "http-problem-details"
+      - "repository-sqlite"
+      - "observability-otel"
+      - "feature-flag-provider"
+    tool_stack:
+      - "function-calling"
+      - "web-search"
+    operating_sequence:
+      - "idempotency, timeout, drain, readiness를 transport에 고정한다"
+      - "persistent adapter를 붙이되 repository port는 유지한다"
+      - "deployment smoke와 planner evidence를 함께 갱신한다"
+    guardrails:
+      - "영속 저장소 도입이 domain/use case 변경으로 번지지 않게 한다"
+      - "운영 안전장치 없이 서비스 런타임을 열지 않는다"
+      - "smoke와 evidence가 없는 rollout은 완료로 보지 않는다"
+    evidence_outputs:
+      - "deployment smoke evidence"
+      - "observability baseline"
+      - "planner runtime update"
+    blueprint_refs:
+      - "stateful-workflow-service"
+    learning_track_refs:
+      - "runtime-operations"
+
+  - id: "harness-vnext-router"
+    name: "Harness vNext Router Recipe"
+    objective: "AI 하네스의 모드별 provider tier와 routing 전략을 결정하는 레시피"
+    best_for:
+      - "AI 하네스 provider 선택"
+      - "Research/Build/Debug/Operate 모드 라우팅"
+      - "비실시간 replay/eval batch 처리"
+    architecture_profile: "master-os-shell"
+    adapters:
+      - "openai-responses-agent"
+      - "feature-flag-provider"
+      - "observability-otel"
+    tool_stack:
+      - "function-calling"
+      - "web-search"
+    operating_sequence:
+      - "HARNESS_PROVIDER 환경 변수와 feature flag로 provider tier를 결정한다"
+      - "Research/Policy는 frontier, Build/Operate는 mini, Debug는 standard 경로로 라우팅한다"
+      - "provider 실패 시 null-harness-provider로 자동 폴백하고 eval artifact를 기록한다"
+    guardrails:
+      - "provider 키 없이 운영 환경을 열지 않는다"
+      - "폴백 발생 시 반드시 eval artifact에 기록한다"
+    evidence_outputs:
+      - "eval artifact (harness-eval-report.json)"
+      - "provider invocation telemetry"

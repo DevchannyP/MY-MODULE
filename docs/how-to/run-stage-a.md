@@ -7,15 +7,28 @@
 - `requirements/requirements.yaml`의 `stage` 필드가 `"A"`인지 확인한다.
 - `requirements/glossary.yaml`에 핵심 용어가 정의되어 있는지 확인한다.
 
+## 빠른 상태 확인
+
+```bash
+npm run stage:a
+```
+
+이 명령은 현재 저장소 상태를 읽는 dry-run executor다.
+실제 파일을 변경하지 않고 Stage A 진입 가능 여부와 참조 문서를 JSON으로 출력한다.
+
 ## 실행 절차
 
 ### 1단계: 요구사항 검토
 
 ```bash
-# requirements.yaml 검증
+# Stage A 입력 계약 검증
+npm run validate:requirements
+
+# 현재 입력값 확인
 cat requirements/requirements.yaml
-# module.domain, module.bounded_context 필드가 채워져 있는지 확인
 ```
+
+검증 실패 시 Stage A를 진행하지 말고 `requirements/requirements.yaml`을 먼저 수정한다.
 
 ### 2단계: Bounded Context 확정
 
