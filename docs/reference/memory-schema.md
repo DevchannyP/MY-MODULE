@@ -56,7 +56,11 @@ legacy_refs: {}
 
 ## current-wp.yaml 스키마
 
+> **INV**: `as_of` 필드는 필수이며 `current-state.yaml`, `next-actions.yaml`과 동일한 날짜여야 한다.  
+> `session_end.verify_memory_consistency()`가 이 불변식을 실행 시마다 검사한다.
+
 ```yaml
+as_of: "YYYY-MM-DD"   # 필수 — 세 파일이 같은 날짜를 가져야 한다
 id: "WP-YYYY-MM-DD-NN"
 goal: "single sentence"
 type: "policy | domain | shell | executor | governance"
@@ -154,6 +158,39 @@ feature_flags: {}
 rollout_policy: ""
 registered_at: ""
 gate_result: "PASS | FAIL"
+```
+
+## Memory Triad 원자 갱신 규칙 (WP-HO-013)
+
+세 파일(`current-state.yaml`, `current-wp.yaml`, `next-actions.yaml`)은 **항상 동시에** 갱신해야 한다.
+
+### 갱신 순서 (반드시 이 순서)
+
+1. 세 파일을 모두 메모리에 읽는다.
+2. 같은 `as_of` 날짜를 세 파일에 적용한다.
+3. 각 파일을 `.yaml.tmp` 임시 파일에 먼저 쓴다.
+4. 임시 파일을 원본 경로로 rename한다 (OS 레벨 원자 보장).
+
+### 자동 검증
+
+`session_end.verify_memory_consistency()` 를 호출하면 세 파일의 불변식을 검사한다:
+- 모든 파일에 `as_of` 필드가 존재하는가
+- 세 파일의 `as_of` 값이 동일한가
+- `current-wp.id` ≠ `current-state.last_completed_wp.id` (활성 ≠ 완료)
+
+`generate_apply_checkpoint.py`는 이 검사를 pre-flight으로 실행하며, 실패 시 exit(1)한다.
+
+### 프로그래매틱 갱신
+
+```python
+from scripts.session_end import atomic_write_memory_triad
+
+atomic_write_memory_triad(
+    active_wp_id="WP-HO-014",
+    last_completed_wp_id="WP-HO-013",
+    last_completed_result="PASS",
+    next_wp="WP-HO-014",
+)
 ```
 
 ## 조합기와 마스터 UI의 Memory 읽기 원칙

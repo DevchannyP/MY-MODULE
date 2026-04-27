@@ -15,6 +15,9 @@ import sys
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from session_end import verify_memory_consistency  # noqa: E402
+
 from export_context_bundle import CURRENT_WP_PATH, infer_goal_from_current_wp, load_yaml
 from generate_promotion_decision import build_promotion_decision
 from promote_packet import build_promotion_report
@@ -58,6 +61,18 @@ def build_apply_checkpoint(goal: str, current_wp: dict) -> dict:
 
 def main() -> None:
     args = parse_args()
+
+    # Pre-flight: memory triad must be consistent before generating a checkpoint
+    check = verify_memory_consistency()
+    if not check["consistent"]:
+        msg = {"error": "memory_triad_inconsistent", "details": check["errors"]}
+        if args.json:
+            print(json.dumps(msg, ensure_ascii=False))
+        else:
+            for e in check["errors"]:
+                print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
     current_wp = load_yaml(Path(args.current_wp_path).resolve())
     goal = infer_goal_from_current_wp(current_wp, args.goal)
     payload = build_apply_checkpoint(goal, current_wp)

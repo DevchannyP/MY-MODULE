@@ -28,6 +28,118 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# ── Memory triad: three files that must stay in sync ────────
+MEMORY_TRIAD = (
+    ROOT / "memory" / "current-state.yaml",
+    ROOT / "memory" / "current-wp.yaml",
+    ROOT / "memory" / "next-actions.yaml",
+)
+
+
+def _triad_wp_ref(path: Path, data: dict) -> str | None:
+    """Extract the WP pointer from a triad file."""
+    name = path.name
+    if name == "current-state.yaml":
+        lwp = data.get("last_completed_wp") or {}
+        return lwp.get("id") if isinstance(lwp, dict) else None
+    if name == "current-wp.yaml":
+        return data.get("id")
+    if name == "next-actions.yaml":
+        return data.get("next_wp")
+    return None
+
+
+def verify_memory_consistency() -> dict:
+    """
+    Verify memory triad consistency (INV: atomic update guarantee).
+
+    Invariants checked:
+      1. All three files have an as_of field.
+      2. All as_of values are identical.
+      3. current-wp.id ≠ current-state.last_completed_wp.id
+         (active packet must differ from the already-completed one).
+
+    Returns: {consistent: bool, errors: list[str], refs: dict, timestamps: dict}
+    """
+    errors: list[str] = []
+    refs: dict[str, str | None] = {}
+    timestamps: dict[str, str | None] = {}
+
+    for path in MEMORY_TRIAD:
+        name = path.name
+        try:
+            data = load_yaml(path)
+        except FileNotFoundError:
+            errors.append(f"{name}: file not found")
+            continue
+        as_of = data.get("as_of")
+        timestamps[name] = as_of
+        refs[name] = _triad_wp_ref(path, data)
+        if as_of is None:
+            errors.append(f"{name}: missing as_of field")
+
+    ts_set = {v for v in timestamps.values() if v is not None}
+    if len(ts_set) > 1:
+        errors.append(f"as_of drift: {timestamps}")
+
+    active = refs.get("current-wp.yaml")
+    last_done = refs.get("current-state.yaml")
+    if active and last_done and active == last_done:
+        errors.append(
+            f"current-wp.id ({active}) equals last_completed_wp.id — "
+            "active packet must differ from the completed one"
+        )
+
+    return {
+        "consistent": len(errors) == 0,
+        "errors": errors,
+        "refs": refs,
+        "timestamps": timestamps,
+    }
+
+
+def atomic_write_memory_triad(
+    *,
+    active_wp_id: str,
+    last_completed_wp_id: str,
+    last_completed_result: str = "PASS",
+    as_of: str | None = None,
+    next_wp: str | None = None,
+) -> None:
+    """
+    Write all three memory triad files with the same as_of timestamp.
+    Uses write-then-rename so an interrupted write leaves prior files intact.
+
+    Args:
+        active_wp_id: The WP currently being worked on (current-wp.id).
+        last_completed_wp_id: The WP just finished (current-state.last_completed_wp.id).
+        last_completed_result: Gate result for the completed WP.
+        as_of: Override date; defaults to today.
+        next_wp: Optional next_wp pointer for next-actions.yaml.
+    """
+    today = as_of or date.today().isoformat()
+
+    cs = load_yaml(MEMORY_TRIAD[0])
+    cw = load_yaml(MEMORY_TRIAD[1])
+    na = load_yaml(MEMORY_TRIAD[2])
+
+    cs["as_of"] = today
+    cs["last_completed_wp"] = {
+        "id": last_completed_wp_id,
+        "completed_at": today,
+        "result": last_completed_result,
+    }
+    cw["as_of"] = today
+    cw["id"] = active_wp_id
+    na["as_of"] = today
+    if next_wp is not None:
+        na["next_wp"] = next_wp
+
+    for path, data in zip(MEMORY_TRIAD, [cs, cw, na]):
+        tmp = path.with_suffix(".yaml.tmp")
+        save_yaml(tmp, data)
+        tmp.rename(path)
+
 
 def run_script(script: str, *args: str) -> dict:
     """Run a sibling script with --json and return parsed output."""
@@ -84,6 +196,14 @@ def main() -> None:
         print(f"  Session End — Self-Improvement Loop")
         print(f"{'='*W}")
 
+    # Step 0: Memory triad consistency
+    consistency = verify_memory_consistency()
+    triad_ok = consistency["consistent"]
+    if not as_json and not triad_ok:
+        print(f"  ⚠ Memory Triad Drift ({len(consistency['errors'])} issue(s)):")
+        for e in consistency["errors"]:
+            print(f"    · {e}")
+
     # Step 1: Requirements gap
     gap_report = run_script("requirements_gap.py")
     gaps = gap_report.get("gap_count", 0)
@@ -112,6 +232,8 @@ def main() -> None:
 
     summary = {
         "date": date.today().isoformat(),
+        "triad_consistent": triad_ok,
+        "triad_errors": consistency.get("errors", []),
         "requirements_gaps": gaps,
         "high_severity_gaps": high_gaps,
         "state_uncovered": uncovered,

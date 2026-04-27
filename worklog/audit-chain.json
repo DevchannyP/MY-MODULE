@@ -207,7 +207,15 @@
       "details": "promotion pipeline handoff 연결 — handoff_bundle_path/evidence_status/drift_status/promotion_handoff_conflict 필드 추가. 816/816 PASS",
       "prev_hash": "0eea6e468980314b6219c7e87cb5f96856b2621713cb8947e198ec32fc07914c",
       "hash": "deec5ebcbb7f49ff511669175a1a92aa201848b75da3e75a1600ee3682c540c8"
+    },
+    {
+      "seq": 27,
+      "timestamp": "2026-04-27T01:17:15.313Z",
+      "action": "UI/home-hero",
+      "details": "hero section upgraded: pulse dot, gradient h1, quick-status bar, numbered step cards, push 3585b16",
+      "prev_hash": "deec5ebcbb7f49ff511669175a1a92aa201848b75da3e75a1600ee3682c540c8",
+      "hash": "affa7754b843b0e463d6f00d5725a8abfba304ea2b45df4eba4fb694af9b6f87"
     }
   ],
-  "last_hash": "deec5ebcbb7f49ff511669175a1a92aa201848b75da3e75a1600ee3682c540c8"
+  "last_hash": "affa7754b843b0e463d6f00d5725a8abfba304ea2b45df4eba4fb694af9b6f87"
 }
